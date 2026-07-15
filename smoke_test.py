@@ -108,6 +108,20 @@ def _run_pipeline(cfg: Config, label: str) -> None:
         print("\n[2/5] Building model...")
         model = CooperatingExperts(cfg, tokenizers)
         model.to(device)
+        if cfg.shared.cross_attn:
+            exp = model.expert(names[1])
+            assert exp.cross_attn.residual == cfg.shared.cross_attn_residual
+            ids = torch.tensor([[tokenizers[names[1]].pad_id]], device=device)
+            mem0 = torch.zeros(1, cfg.shared.bridge_len, exp.cfg.d_model, device=device)
+            mem1 = torch.randn_like(mem0)
+            exp.eval()
+            out0 = exp.encode_with_cross_attn(ids, mem0)
+            out1 = exp.encode_with_cross_attn(ids, mem1)
+            assert not torch.allclose(out0, out1), "cross-attention ignores memory"
+            out1.sum().backward()
+            assert all(p.grad is not None for p in exp.cross_attn.parameters()), \
+                "cross-attention parameter missing gradient"
+            model.zero_grad(set_to_none=True)
         for n in names:
             print(f"  {n}: {model.expert(n).num_params()/1e6:.2f}M params")
 

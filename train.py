@@ -233,12 +233,18 @@ def joint_finetune(
             p.requires_grad = False
         exp.to_shared.weight.requires_grad = True
         exp.from_shared.weight.requires_grad = True
+        # Cross-attention is absent from independent pre-training, so train its
+        # randomly initialized parameters during stitching.
+        if exp.cross_attn is not None:
+            for p in exp.cross_attn.parameters():
+                p.requires_grad = True
 
     proj_params = []
     for n in model.expert_names:
-        proj_params.extend(
-            [model.expert(n).to_shared.weight, model.expert(n).from_shared.weight]
-        )
+        exp = model.expert(n)
+        proj_params.extend([exp.to_shared.weight, exp.from_shared.weight])
+        if exp.cross_attn is not None:
+            proj_params.extend(exp.cross_attn.parameters())
     opt = torch.optim.AdamW(proj_params, lr=cfg.train.joint_lr,
                             weight_decay=cfg.train.joint_weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=cfg.train.fp16 and device.type == "cuda")

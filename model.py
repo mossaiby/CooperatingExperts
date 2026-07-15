@@ -88,11 +88,13 @@ class CrossAttention(nn.Module):
     applied so it can be composed with the expert's own blocks.
     """
 
-    def __init__(self, d_model: int, n_heads: int, dropout: float):
+    def __init__(self, d_model: int, n_heads: int, dropout: float,
+                 residual: bool = True):
         super().__init__()
         assert d_model % n_heads == 0, (
             f"cross-attn: d_model ({d_model}) must be divisible by n_heads ({n_heads})"
         )
+        self.residual = residual
         self.n_heads = n_heads
         self.head_dim = d_model // n_heads
         # Separate projections for query (from own hidden) and key/value
@@ -127,9 +129,9 @@ class CrossAttention(nn.Module):
         y = y.transpose(1, 2).reshape(B, T, C)
         y = self.out_proj(y)
         y = self.drop(y)
-        # Residual + final LayerNorm (CALM-style: cross-attn refines, not
-        # replaces, the expert's own representation).
-        return self.norm_out(x + y)
+        # Refine the expert representation residually, or replace it when
+        # explicitly configured to use a non-residual bridge.
+        return self.norm_out(x + y if self.residual else y)
 
 
 class Block(nn.Module):
@@ -180,6 +182,7 @@ class Expert(nn.Module):
             self.cross_attn = CrossAttention(
                 cfg.d_model, shared_cfg.cross_attn_n_heads,
                 shared_cfg.cross_attn_dropout,
+                residual=shared_cfg.cross_attn_residual,
             )
 
         # Causal mask is built dynamically in _blocks (see above).

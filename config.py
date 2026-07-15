@@ -124,7 +124,9 @@ class SharedSpaceConfig:
     only consumed via cross-attention, never prepended).
     """
     dim: int = 256
-    bridge_len: int = 1
+    # K > 1 permits genuinely content-selective attention. K=1 remains a
+    # supported degenerate transformed-memory mode.
+    bridge_len: int = 4
     # CALM-style cross-attention bridge between experts.
     cross_attn: bool = False
     cross_attn_n_heads: int = 8

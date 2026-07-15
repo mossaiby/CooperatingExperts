@@ -188,17 +188,17 @@ class CooperatingExperts(nn.Module):
         #      0..k-1; output is [B, k+Tb, d_b] and the Tb predicting logits
         #      are h_b[:, k-1:k-1+Tb, :].
         if self._cross_attn_enabled():
-            h_b = exp_b.encode_with_cross_attn(ids_b, seed_b)  # [B, Tb, d_b]
-            Tb = ids_b.size(1)
-            logits_b = exp_b.logits_from_hidden(h_b[:, :-1, :])  # [B, Tb-1, V_b]
-            targets_b = ids_b[:, 1:]                              # [B, Tb-1]
-            # For the alignment regularizer we need B's own hidden over its
-            # real tokens (without the cross-attn residual). Re-derive from
-            # the pre-cross-attn representation would require a second pass;
-            # instead use h_b (post cross-attn) detached -- the round-trip
-            # regularizer only constrains the projection matrices, and using
-            # the refined states is a valid (if slightly stronger) target.
-            ref_b_hidden = h_b.detach()
+            # Match generation: a hand-off query predicts the first token,
+            # then each real token predicts its successor.
+            handoff = torch.full(
+                (ids_b.size(0), 1), self.tokenizers[name_b].pad_id,
+                dtype=ids_b.dtype, device=ids_b.device,
+            )
+            query_ids = torch.cat([handoff, ids_b], dim=1)
+            h_b = exp_b.encode_with_cross_attn(query_ids, seed_b)
+            logits_b = exp_b.logits_from_hidden(h_b[:, :-1, :])
+            targets_b = ids_b
+            ref_b_hidden = h_b[:, 1:, :].detach()
         else:
             h_b = exp_b.encode_with_seed(ids_b, seed_b)  # [B, k + Tb, d_b]
             Tb = ids_b.size(1)
@@ -274,22 +274,27 @@ class CooperatingExperts(nn.Module):
                 ids = ids[:, -exp.cfg.max_seq_len:]
                 T = ids.size(1)
 
-            # Seed the segment with the carried states from the previous
-            # expert. For the FIRST segment we seed with K zero vectors so
-            # every segment uses the same "index k-1 predicts ids[0]" offset
-            # (legacy path) or, with cross-attn, a zero memory bank.
-            if carried is None:
-                carried = torch.zeros(B, K, exp.cfg.d_model, device=device)
-            k = carried.size(1)
-
             if self._cross_attn_enabled():
-                # CALM path: cross-attend to carried memory; output is
-                # [B, T, d] with no seed prefix, so logits predicting ids
-                # are h[:, :-1, :] vs targets ids[:, 1:].
-                h = exp.encode_with_cross_attn(ids, carried)  # [B, T, d]
-                logits = exp.logits_from_hidden(h[:, :-1, :])  # [B, T-1, V]
-                targets = ids[:, 1:]                            # [B, T-1]
+                if carried is None:
+                    # No external memory on the first segment: preserve normal
+                    # causal-LM behavior without an extra normalization pass.
+                    h = exp.encode(ids)
+                    logits = exp.logits_from_hidden(h[:, :-1, :])
+                    targets = ids[:, 1:]
+                else:
+                    # Match generation and train the first destination token.
+                    handoff = torch.full(
+                        (B, 1), self.tokenizers[name].pad_id,
+                        dtype=ids.dtype, device=device,
+                    )
+                    query_ids = torch.cat([handoff, ids], dim=1)
+                    h = exp.encode_with_cross_attn(query_ids, carried)
+                    logits = exp.logits_from_hidden(h[:, :-1, :])
+                    targets = ids
             else:
+                if carried is None:
+                    carried = torch.zeros(B, K, exp.cfg.d_model, device=device)
+                k = carried.size(1)
                 # Legacy seed-prepend path.
                 h = exp.encode_with_seed(ids, carried)  # [B, k + T, d]
                 logits = exp.logits_from_hidden(h[:, k - 1:k - 1 + T, :])  # [B, T, V]
