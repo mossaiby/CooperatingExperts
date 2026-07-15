@@ -373,6 +373,126 @@ class HandoffDataset(Dataset):
 
 
 # ---------------------------------------------------------------------- #
+# Session-aware hand-off pairs (real code<->text boundaries)
+# ---------------------------------------------------------------------- #
+def _reconstruct_sessions(
+    cfg: Config, max_sessions: int
+) -> List[List[Tuple[str, str]]]:
+    """Rebuild the ordered (kind, piece) stream for each synthetic session."""
+    sessions: Dict[str, List[Tuple[str, str]]] = {}
+    order: List[str] = []
+    last_session: Optional[str] = None
+    for ev in _iter_synthetic_events(max_files=cfg.train.extract_max_files):
+        sid = ev.get("session_id") or f"__anon_{last_session}"
+        if sid not in sessions:
+            sessions[sid] = []
+            order.append(sid)
+        last_session = sid
+        for kind, piece in _event_to_pieces(ev):
+            piece = " ".join(piece.split())
+            if piece:
+                sessions[sid].append((kind, piece))
+        if len(order) >= max_sessions:
+            break
+    return [sessions[s] for s in order if sessions[s]]
+
+
+def build_boundary_handoff_pairs(
+    tokenizers: Dict[str, ExpertTokenizer],
+    seq_len: int,
+    max_pairs: int = None,
+    cfg: Config = None,
+) -> Tuple[List[Tuple[List[int], List[int]]], List[Tuple[List[int], List[int]]]]:
+    """Build hand-off pairs from REAL code<->text boundaries within sessions.
+
+    Unlike the (legacy) `HandoffDataset`, which pairs a random code snippet
+    with an unrelated prose snippet, this walks each session, merges
+    consecutive same-kind pieces into segments, and for every boundary between
+    a code segment and a text segment emits a (prefix, continuation) pair:
+
+      - prefix      = the TAIL of the segment before the boundary
+                      (its last `seq_len//2` tokens -- the hand-off happens at
+                      its end, and joint_loss carries the last hidden states),
+      - continuation = the HEAD of the segment after the boundary.
+
+    Both are tokenized in their own expert's vocabulary, so the projection has
+    a *semantically related* continuation to learn from.
+
+    Returns (ab_pairs, ba_pairs):
+      ab_pairs: python -> english  (prefix in python vocab, cont in english vocab)
+      ba_pairs: english -> python
+    """
+    if cfg is None:
+        cfg = Config.default()
+    if max_pairs is None:
+        max_pairs = cfg.train.joint_max_pairs
+    tok_py = tokenizers["python"]
+    tok_en = tokenizers["english"]
+    half = max(8, seq_len // 2)
+    ab: List[Tuple[List[int], List[int]]] = []
+    ba: List[Tuple[List[int], List[int]]] = []
+
+    for pieces in _reconstruct_sessions(cfg, cfg.train.extract_max_sessions):
+        # Merge consecutive same-kind pieces into segments.
+        merged: List[Tuple[str, str]] = []
+        for kind, piece in pieces:
+            if merged and merged[-1][0] == kind:
+                merged[-1] = (kind, merged[-1][1] + " " + piece)
+            else:
+                merged.append((kind, piece))
+        for i in range(len(merged) - 1):
+            k0, p0 = merged[i]
+            k1, p1 = merged[i + 1]
+            if k0 == k1:
+                continue
+            tok0 = tok_py if k0 == "code" else tok_en
+            tok1 = tok_py if k1 == "code" else tok_en
+            ids0 = tok0.tokenizer.encode(p0).ids
+            ids1 = tok1.tokenizer.encode(p1).ids
+            if len(ids0) < 8 or len(ids1) < 8:
+                continue
+            prefix = ids0[-half:]
+            cont = ids1[:half]
+            if k0 == "code":       # python -> english
+                ab.append((prefix, cont))
+            else:                  # english -> python
+                ba.append((prefix, cont))
+        if len(ab) >= max_pairs and len(ba) >= max_pairs:
+            break
+    return ab[:max_pairs], ba[:max_pairs]
+
+
+class BoundaryHandoffDataset(Dataset):
+    """Padded (prefix, continuation) pairs produced by build_boundary_handoff_pairs.
+
+    `pad_prefix` / `pad_cont` are the pad ids of the prefix and continuation
+    experts respectively (they can differ, since each expert has its own vocab).
+    """
+
+    def __init__(
+        self,
+        pairs: List[Tuple[List[int], List[int]]],
+        pad_prefix: int,
+        pad_cont: int,
+        seq_len: int,
+    ):
+        self.data: List[Tuple[List[int], List[int]]] = []
+        for a, b in pairs:
+            a = a[:seq_len]
+            b = b[:seq_len]
+            a = a + [pad_prefix] * (seq_len - len(a))
+            b = b + [pad_cont] * (seq_len - len(b))
+            self.data.append((a, b))
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        a, b = self.data[idx]
+        return torch.tensor(a, dtype=torch.long), torch.tensor(b, dtype=torch.long)
+
+
+# ---------------------------------------------------------------------- #
 # Interleaved (mixed) dataset for joint training on the WHOLE data
 # ---------------------------------------------------------------------- #
 class MixedDataset(Dataset):

@@ -65,7 +65,7 @@ _CONSTRAINTS = [
 # Concrete code templates keyed by subject so the generated Python is real,
 # parseable code (not just `pass`). Each subject has SEVERAL template variants
 # (different algorithmic approaches) so the corpus is structurally diverse and
-# the model cannot memorise a single template per subject (see PLAN.md item 3).
+# the model cannot memorise a single template per subject.
 # Each template fills in the task id via `{i}`.
 _CODE_TEMPLATES = {
     "graph": [

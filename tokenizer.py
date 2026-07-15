@@ -5,7 +5,7 @@ vocabularies are genuinely different (code tokens vs. prose tokens). We then
 append a *fixed* set of special tokens to every expert so that the switching
 mechanism is uniform:
 
-    <pad>  <eos>  <switch:python>  <switch:english>
+    <unk>  <pad>  <eos>  <switch:python>  <switch:english>
 
 The wrapper rewrites the switch-token ids to absolute positions at runtime, so
 the per-expert tokenizer only needs to expose:

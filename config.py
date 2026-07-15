@@ -1,24 +1,29 @@
 """Central configuration for the Cooperating Experts test framework.
 
-Architecture (sized for 11 GB VRAM — RTX 2080 / RTX 3060 class):
-  - decoder-only transformer: d_model=768, 8 layers, 12 heads, d_ff=3072
-  - shared latent space: dim=384  (bottleneck < d_model forces meaningful compression)
-  - per-expert BPE vocab capped at 12 000 merges (realistic for a 20k-function corpus)
-  - context window: 1024 tokens
-  - mixed-precision (fp16) training throughout
-  - ~60M params per expert, ~120M total
+Single source of truth for every hyper-parameter. The DEFAULT config below is
+the one that all the documentation and the reported results refer to:
 
-VRAM budget (one expert training at a time, batch=8, seq=1024):
-  weights fp16  : ~120 MB
-  Adam states   : ~480 MB (fp32 m + v)
-  activations   : ~1.5 GB (fp16 via AMP)
-  gradients     : ~240 MB
-  other expert  : ~120 MB (frozen, fp16)
-  ─────────────
-  Total         : ~2.5 GB  (comfortable inside 11 GB; room for larger batches)
+  - decoder-only transformer: d_model=512, 6 layers, 8 heads, d_ff=2048
+  - context window: 512 tokens
+  - shared latent bridge: dim=256  (bottleneck < d_model forces compression)
+  - bridge width: 1 hidden state carried across a hand-off (see SharedSpaceConfig.bridge_len)
+  - per-expert BPE vocab capped at 12 000 merges; on the synthetic corpus the
+    trainer actually finds ~5.6k (python) / ~5.7k (english) merges, so each
+    expert is ~22.3 M params -> ~44.6 M total. fp16 weights ~= 90 MB.
+  - mixed-precision (fp16) training throughout.
 
-For 4 GB GPUs, downgrade to d_model=512, n_layers=6, n_heads=8, d_ff=2048,
-max_seq_len=512, shared dim=256 (~22M params/expert).
+VRAM budget for this default (one expert training at a time, batch=8, seq=512):
+  weights fp16  : ~45 MB
+  Adam states   : ~180 MB (fp32 m + v)
+  activations   : ~0.8 GB (fp16 via AMP)
+  gradients     : ~90 MB
+  other expert  : ~45 MB (frozen, fp16)
+  -------------
+  Total         : ~1.2 GB  -> comfortable on a 4 GB laptop GPU (RTX 3050 Ti).
+
+To scale up for an 11 GB GPU (RTX 2080 / 3060) use `Config.large()`, which sets
+d_model=768, 8 layers, 12 heads, d_ff=3072, max_seq_len=1024, shared dim=384
+(~63-67 M params/expert, ~125-134 M total, depending on realized vocab).
 """
 from __future__ import annotations
 
@@ -35,26 +40,25 @@ CACHE_DIR = ROOT / ".cache"
 
 @dataclass
 class ExpertConfig:
-    """Configuration for a single expert."""
+    """Configuration for a single expert.
+
+    Defaults are the laptop-friendly (4 GB VRAM) sizes. `Config.large()`
+    overrides these for an 11 GB GPU.
+    """
 
     name: str
-    # Tokenizer — realistic upper bound for a real code corpus.
-    # The BPE trainer will stop at the actual number of unique merge pairs
-    # it finds, so setting this too high wastes tokenizer-training time but
-    # doesn't break anything. 12 000 is comfortably above what a 20k-function
-    # corpus produces while leaving room to grow.
+    # Tokenizer merge cap. The BPE trainer stops at the actual number of
+    # unique merge pairs it finds, so setting this above the real vocab just
+    # wastes a little tokenizer-training time. 12 000 is comfortably above
+    # what the synthetic corpus (or a ~20k-function real corpus) produces.
     vocab_size: int = 12_000
 
-    # Transformer (sized for 11 GB VRAM — RTX 2080 / RTX 3060 class).
-    # d_model=768, 8 layers, 12 heads → ~60M params/expert (~120M total).
-    # This gives the model enough capacity to learn real code structure from
-    # a diverse corpus, while leaving VRAM headroom for longer sequences and
-    # larger batches. Downgrade to d_model=512/6L/8 heads for 4 GB GPUs.
-    d_model:    int   = 768
-    n_heads:    int   = 12
-    n_layers:   int   = 8
-    d_ff:       int   = 3072
-    max_seq_len: int  = 1024
+    # Transformer (default: ~22.3 M params/expert with the ~5.6k real vocab).
+    d_model:    int   = 512
+    n_heads:    int   = 8
+    n_layers:   int   = 6
+    d_ff:       int   = 2048
+    max_seq_len: int  = 512
     dropout:    float = 0.1
 
     # Special tokens
@@ -68,11 +72,9 @@ class PretrainOverride:
     """Per-expert overrides for pre-training hyper-parameters.
 
     Any field left as None falls back to the global TrainConfig default, so
-    you only need to list the values you want to change for a specific expert.
-    This exists because the two experts converge at very different rates
-    (templated code fits fast; free-form prose is much slower), so a single
-    shared `pretrain_steps_max` either under-trains the hard expert or
-    over-trains the easy one.
+    you only list the values you want to change for a specific expert. This
+    exists because the two experts can converge at different rates, so a
+    single shared schedule may under-train one and over-train the other.
     """
     steps_max:    int   = None
     lr:           float = None
@@ -90,29 +92,34 @@ class PretrainOverride:
 class SharedSpaceConfig:
     """Configuration of the shared latent bridge space.
 
-    dim < d_model enforces an information bottleneck: the projection must
+    `dim < d_model` enforces an information bottleneck: the projections must
     compress each expert's hidden state into a smaller space, which prevents
-    the to_shared / from_shared matrices from collapsing to identity and
-    forces them to learn a genuinely compact inter-expert representation.
-    dim = d_model // 2 = 384 is a good default for d_model = 768.
+    `to_shared`/`from_shared` from collapsing to identity. dim = d_model // 2
+    = 256 is the default for d_model = 512.
+
+    `bridge_len` is how many hidden states are carried across a hand-off. The
+    original design carried a single vector (bridge_len=1). Because a single
+    256-d vector is a very narrow channel, this is now configurable: setting
+    bridge_len=K carries the last K hidden states of the sending expert
+    through the shared space, giving the receiving expert a short sequence of
+    seed positions to attend to instead of one. K=1 reproduces the original
+    behaviour exactly.
     """
-    dim: int = 384
+    dim: int = 256
+    bridge_len: int = 1
 
 
 @dataclass
 class TrainConfig:
-    """Training hyper-parameters — all phases."""
+    """Training hyper-parameters -- all phases."""
 
-    # ── Pre-training (per expert, independent) ─────────────────────────────
-    # Batch size raised for 11 GB VRAM (was 24 for 4 GB). With d_model=768
-    # and seq=1024, batch=8 fits comfortably; adjust down if OOM.
+    # -- Pre-training (per expert, independent) --------------------------
     pretrain_batch_size:   int   = 8
     pretrain_lr:           float = 2e-4
-    # With a real code corpus (20k functions) the model can't memorize in a
-    # few hundred steps, so we allow more. Early stopping (patience 3) will
-    # halt at the val minimum regardless.
+    # Early stopping (patience below) halts at the val minimum regardless, so
+    # a generous ceiling is safe.
     pretrain_steps_max:    int   = 5_000
-    pretrain_warmup_steps: int   = 300
+    pretrain_warmup_steps: int   = 100
     pretrain_min_lr:       float = 1e-5
     pretrain_weight_decay: float = 0.01
     pretrain_grad_clip:    float = 1.0
@@ -122,20 +129,19 @@ class TrainConfig:
     pretrain_val_frac:     float = 0.1
     # Log validation loss every N optimizer steps during pre-training.
     pretrain_val_every:    int   = 200
+    # Number of val batches averaged per check. The val estimate is averaged
+    # over this many batches (capped by the val split size) so early-stopping
+    # decisions are not made off a single noisy batch.
+    pretrain_val_batches:  int   = 20
     # Early stopping: if val loss hasn't improved by at least
     # pretrain_val_min_delta for this many consecutive val checks, stop.
-    # 0 disables early stopping (run the full steps_max). This auto-catches
-    # the val minimum regardless of the configured step count, so an expert
-    # never wastes steps memorising past its generalisation ceiling.
+    # 0 disables early stopping (run the full steps_max).
     pretrain_early_stop_patience: int   = 3
     pretrain_val_min_delta:       float = 0.0
-    # Per-expert overrides keyed by expert name. Any field left as None in a
-    # PretrainOverride falls back to the global default above. Use this to
-    # give a harder-to-fit expert more steps or a different LR without
-    # affecting the others. See Config.default() for the python/english split.
+    # Per-expert overrides keyed by expert name. See Config.default().
     pretrain_overrides:   Dict[str, PretrainOverride] = field(default_factory=dict)
 
-    # ── Joint projection fine-tuning ("stitching" phase) ───────────────────
+    # -- Joint projection fine-tuning ("stitching" phase) ----------------
     joint_epochs:      int   = 4
     joint_batch_size:  int   = 12
     joint_lr:          float = 1e-4
@@ -148,18 +154,14 @@ class TrainConfig:
     # Weight of the alignment regulariser in joint_loss.
     align_weight:      float = 0.1
 
-    # ── Interleaved end-to-end mixed training ───────────────────────────────
+    # -- Interleaved end-to-end mixed training ---------------------------
     mixed_batch_size:  int   = 1          # variable-length segments; use grad accum
-    mixed_grad_accum:  int   = 16         # was 8; larger effective batch → more stable
-    # Lowered from 3e-5: the full 44.6M model is pre-trained and fragile, so
-    # this is fine-tuning, not training from scratch. 3e-5 caused monotonic
-    # divergence (loss 1.40 → 2.12 over 1500 steps) by eroding the pre-trained
-    # weights faster than the switch mechanics could stabilise.
+    mixed_grad_accum:  int   = 16
+    # The full ~44.6 M model is pre-trained and fragile, so the mixed phase is
+    # fine-tuning, not training from scratch. 3e-5 caused monotonic divergence;
+    # 1e-5 is stable.
     mixed_lr:          float = 1e-5
-    mixed_steps_max:   int   = 5_000      # was 3 000; more data → more useful steps
-    # Longer warmup for the large unfrozen model: 100 steps let the LR spike
-    # before the projections/LM heads have re-aligned, which kicked off the
-    # divergence. 300 lets gradients settle in gently.
+    mixed_steps_max:   int   = 5_000
     mixed_warmup_steps: int  = 300
     mixed_min_lr:      float = 5e-6
     mixed_weight_decay: float = 0.01
@@ -168,39 +170,25 @@ class TrainConfig:
     mixed_grad_clip:   float = 0.5
 
     # Down-weight switch tokens in mixed_loss so the model isn't equally
-    # rewarded for switching as for generating real content. Lowered from 0.3
-    # to 0.1 so the LM signal dominates early; the switch head stabilises
-    # once the LM heads are solid, instead of destabilising routing first.
-    # Values in (0, 1); lower = stronger suppression of over-switching.
+    # rewarded for switching as for generating real content. Values in (0, 1);
+    # lower = stronger suppression of over-switching.
     switch_loss_weight: float = 0.1
 
-    # ── Mixed-phase early stopping & best-checkpoint saving ────────────────
-    # The mixed phase is slow (batch=1, ~0.1 it/s on a 4 GB GPU) and the loss
-    # can plateau or rise after its minimum (observed: min ~0.86 at step 1650,
-    # then slow rise to 0.89 by step 3050). These knobs save the best model
-    # seen so far and halt training once the loss stops improving, so you
-    # never waste hours past the minimum.
-    # Evaluate the monitor every N optimizer steps (use the smoothed running
-    # average over the last `mixed_val_every` steps, since batch=1 is noisy).
+    # -- Mixed-phase early stopping & best-checkpoint saving -------------
+    # Evaluate the monitor every N optimizer steps, using the smoothed running
+    # average over the last `mixed_val_every` steps (batch=1 is noisy).
     mixed_val_every:        int   = 100
-    # Early stopping: stop if the smoothed loss hasn't improved by at least
-    # mixed_val_min_delta for this many consecutive checks. 0 disables.
-    mixed_early_stop_patience: int   = 10
+    mixed_early_stop_patience: int = 10
     mixed_val_min_delta:       float = 0.0
-    # Save the best checkpoint (lowest smoothed loss) to model_final.pt
-    # whenever a new best is found. True by default — the mixed phase is slow
-    # and you want the best model, not necessarily the last.
+    # Save the best checkpoint (lowest smoothed loss) to model_final.pt.
     mixed_save_best:        bool  = True
 
-    # ── Data / corpus ───────────────────────────────────────────────────────
-    # Number of sessions to generate/use. With the hybrid pipeline (real code
-    # + LLM prose) 10k–50k sessions is the sweet spot for a 60M-param model.
+    # -- Data / corpus ---------------------------------------------------
     n_sessions:           int = 10_000
     mixed_max_sessions:   int = 10_000
     extract_max_files:    int = 12_000
     extract_max_sessions: int = 10_000
     extract_shard_size:   int = 1_000
-    # Max windows/examples — raised to match the larger corpus.
     window_max_windows:   int = 100_000
     max_examples:         int = 20_000
     # Max functions to extract from the real code corpus (download_code_corpus.py).
@@ -209,11 +197,11 @@ class TrainConfig:
     llm_max_tokens:       int   = 1024
     llm_temperature:      float = 0.9
 
-    # ── Misc ────────────────────────────────────────────────────────────────
+    # -- Misc ------------------------------------------------------------
     fp16:        bool = True
     seed:        int  = 42
     log_every:   int  = 50
-    num_workers: int  = 0   # Windows-friendly default; set to 2–4 on Linux
+    num_workers: int  = 0   # Windows-friendly default; set to 2-4 on Linux
 
 
 @dataclass
@@ -223,9 +211,8 @@ class GenConfig:
     max_new_tokens: int   = 80
     temperature:    float = 0.8
     top_k:          int   = 40
-    # Hard cap on expert switches per generate() call.
-    # Prevents the rapid-cycling failure mode observed when switch tokens
-    # are over-predicted (as seen in early runs with no budget).
+    # Hard cap on expert switches per generate() call. Prevents the
+    # rapid-cycling failure mode observed when switch tokens are over-predicted.
     max_switches:   int   = 4
 
 
@@ -238,17 +225,13 @@ class Config:
 
     @classmethod
     def default(cls) -> "Config":
-        """Two experts: Python code and English prose.
+        """Two experts (Python code + English prose), laptop (4 GB) sizes.
 
-        With the hybrid data pipeline (real Python code from
-        download_code_corpus.py + LLM-generated prose from
-        generate_llm_data.py), the corpus is genuinely diverse and the model
-        can't memorize it in a few hundred steps. Both experts use the global
-        pretrain_steps_max (5000) and rely on early stopping (patience 3) to
-        halt at their val minimum. The per-expert overrides only tweak the
-        warmup/LR: python (real code) uses the global defaults; english
-        (LLM-generated prose) gets a slightly lower LR and longer warmup
-        since prose is noisier than code.
+        Both experts start from the global pre-train schedule and rely on
+        early stopping to halt at their val minimum. The per-expert overrides
+        only tweak warmup/LR: python (code) uses the global 2e-4 LR with a
+        100-step warmup; english (prose) gets a slightly lower LR and a longer
+        warmup since prose is noisier.
         """
         cfg = cls()
         cfg.experts = {
@@ -256,19 +239,27 @@ class Config:
             "english": ExpertConfig(name="english"),
         }
         cfg.train.pretrain_overrides = {
-            "python": PretrainOverride(
-                warmup_steps=300,
-            ),
-            "english": PretrainOverride(
-                warmup_steps=400, lr=1.5e-4,
-            ),
+            "python":  PretrainOverride(warmup_steps=100),
+            "english": PretrainOverride(warmup_steps=200, lr=1.5e-4),
         }
         return cfg
 
+    @classmethod
+    def large(cls) -> "Config":
+        """Larger preset for an 11 GB GPU (~63-67 M params/expert, ~125-134 M total, depending on realized vocab)."""
+        cfg = cls.default()
+        big = dict(d_model=768, n_heads=12, n_layers=8, d_ff=3072, max_seq_len=1024)
+        cfg.experts = {
+            "python":  ExpertConfig(name="python", **big),
+            "english": ExpertConfig(name="english", **big),
+        }
+        cfg.shared = SharedSpaceConfig(dim=384, bridge_len=cfg.shared.bridge_len)
+        return cfg
 
-# Absolute special-token ids (relative to each expert's vocab) are assigned
-# *after* the BPE vocab is built. The tokenizer appends these special tokens
-# to every expert's vocabulary:
-#   <unk>, <pad>, <eos>, and one <switch:NAME> per expert (self included).
-# For the default 2-expert config: 1 + 1 + 1 + 2 = 5 special tokens.
+
+# Special tokens appended to every expert's vocabulary:
+#   <unk>, <pad>, <eos>, and one <switch:NAME> per expert.
+# For the default 2-expert config: 3 + 2 = 5 special tokens per expert.
+# (A "self" switch is <switch:NAME> where NAME is the expert's own name; it is
+# masked out during generation, so there is no separate <switch:self> token.)
 NUM_SPECIAL_TOKENS_PER_EXPERT = 5

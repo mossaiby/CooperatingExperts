@@ -29,7 +29,12 @@ import torch
 
 from config import CKPT_DIR, DATA_DIR, Config
 from cooperating import CooperatingExperts
-from dataset import configure_socks_proxy, extract_synthetic_corpora, load_raw_texts
+from dataset import (
+    build_boundary_handoff_pairs,
+    configure_socks_proxy,
+    extract_synthetic_corpora,
+    load_raw_texts,
+)
 from synthetic_data import write_combined, write_synthetic
 from tokenizer import ExpertTokenizer, build_tokenizer
 from train import joint_finetune, load_checkpoint, pretrain_expert, save_checkpoint, train_mixed
@@ -153,8 +158,14 @@ def cmd_joint(cfg: Config) -> None:
     # layers so the experts' latent spaces align at the boundaries before
     # the full end-to-end phase.
     print("== Joint projection fine-tuning (stitching phase) ==")
-    texts = {name: load_raw_texts(name, cfg=cfg) for name in model.expert_names}
-    joint_finetune(model, texts, tokenizers, cfg)
+    seq_len = cfg.experts[model.expert_names[0]].max_seq_len
+    ab_pairs, ba_pairs = build_boundary_handoff_pairs(tokenizers, seq_len, cfg=cfg)
+    if ab_pairs and ba_pairs:
+        joint_finetune(model, tokenizers, cfg, ab_pairs=ab_pairs, ba_pairs=ba_pairs)
+    else:
+        # Fallback (e.g. no session boundaries found): random pairing.
+        texts = {name: load_raw_texts(name, cfg=cfg) for name in model.expert_names}
+        joint_finetune(model, tokenizers, cfg, texts=texts)
     save_checkpoint(model, tokenizers, cfg, tag="stitched")
 
     # Phase 2: interleaved end-to-end training on the whole synthetic
@@ -277,6 +288,13 @@ def main() -> None:
     parser.add_argument("prompt", nargs="?", default=None)
     parser.add_argument("--expert", default="english", choices=["python", "english"])
     parser.add_argument("--max-tokens", type=int, default=80)
+    parser.add_argument("--config", choices=["default", "large"], default="default",
+                        help="'default' = laptop 4 GB preset (~44.6M params); "
+                             "'large' = 11 GB preset (d_model=768, 8 layers, "
+                             "12 heads, dim 384, seq 1024, ~134M params) for an "
+                             "RTX 2080 Ti / 3060.")
+    parser.add_argument("--large", action="store_true",
+                        help="Shorthand for --config large.")
     parser.add_argument("--n", type=int, default=None,
                         help="number of sessions (for gen-data / all-hybrid)")
     parser.add_argument("--model", type=str, default=None,
@@ -298,7 +316,9 @@ def main() -> None:
     if args.socks5:
         configure_socks_proxy(args.socks5)
 
-    cfg = Config.default()
+    use_large = args.large or args.config == "large"
+    cfg = Config.large() if use_large else Config.default()
+    print(f"Using {'LARGE (11 GB)' if use_large else 'DEFAULT (4 GB laptop)'} config.")
     torch.manual_seed(cfg.train.seed)
 
     if args.command == "extract":

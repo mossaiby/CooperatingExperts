@@ -18,7 +18,13 @@ from torch.utils.data import DataLoader
 
 from config import Config, CKPT_DIR
 from cooperating import CooperatingExperts
-from dataset import HandoffDataset, MixedDataset, WindowDataset, load_raw_texts
+from dataset import (
+    BoundaryHandoffDataset,
+    HandoffDataset,
+    MixedDataset,
+    WindowDataset,
+    load_raw_texts,
+)
 from tokenizer import ExpertTokenizer
 
 
@@ -156,19 +162,25 @@ def pretrain_expert(
             )
         # Periodic validation: evaluate the held-out windows without
         # back-prop. A rising val loss while train loss falls is the
-        # definitive over-fitting signal (see PLAN.md). Skipped if the val
+        # definitive over-fitting signal. Skipped if the val
         # set is too small to form even one batch. Early stopping halts
         # training if val loss hasn't improved for `patience` consecutive
         # checks, so the expert stops near its val minimum.
         if step % pt_val_every == 0 and val_iter is not None:
             exp.eval()
+            # Average over several val batches (capped by the val split size)
+            # so the early-stopping decision is not made off a single noisy
+            # batch.
+            n_vb = max(1, min(cfg.train.pretrain_val_batches, len(val_loader)))
+            vtot = 0.0
             with torch.no_grad():
-                vbatch = next(val_iter).to(device)
-                with torch.amp.autocast("cuda", enabled=cfg.train.fp16 and device.type == "cuda"):
-                    vloss = model.pretrain_loss(name, vbatch)
+                for _ in range(n_vb):
+                    vbatch = next(val_iter).to(device)
+                    with torch.amp.autocast("cuda", enabled=cfg.train.fp16 and device.type == "cuda"):
+                        vtot += model.pretrain_loss(name, vbatch).item()
             exp.train()
-            v = vloss.item()
-            print(f"  [{name}] step {step:5d} | val_loss {v:.4f}")
+            v = vtot / n_vb
+            print(f"  [{name}] step {step:5d} | val_loss {v:.4f} (avg of {n_vb})")
             if patience > 0:
                 if v < best_val - min_delta:
                     best_val = v
@@ -192,9 +204,11 @@ def pretrain_expert(
 # ---------------------------------------------------------------------- #
 def joint_finetune(
     model: CooperatingExperts,
-    texts: Dict[str, List[str]],
     tokenizers: Dict[str, ExpertTokenizer],
     cfg: Config,
+    texts: Dict[str, List[str]] = None,
+    ab_pairs: List = None,
+    ba_pairs: List = None,
 ) -> Dict[str, float]:
     """Fine-tune the shared-space projections jointly across experts.
 
@@ -202,6 +216,13 @@ def joint_finetune(
     `from_shared` linear layers, plus the LM heads stay as-is. This is the
     "stitching" phase: the experts are already good at their own languages,
     we just need to align their latent spaces at the boundaries.
+
+    Hand-off pairs can be supplied two ways:
+      - `ab_pairs` / `ba_pairs`: real within-session code<->text boundary pairs
+        (from dataset.build_boundary_handoff_pairs) -- PREFERRED, since the
+        continuation is semantically related to the prefix.
+      - `texts`: per-expert text lists, paired randomly (legacy fallback, used
+        by the smoke test where no session data is on disk).
     """
     device = _get_device()
     model.to(device)
@@ -225,16 +246,28 @@ def joint_finetune(
     names = model.expert_names
     # Build hand-off datasets in both directions: A->B and B->A.
     seq_len = cfg.experts[names[0]].max_seq_len
-    pairs_ab = HandoffDataset(
-        texts[names[0]], tokenizers[names[0]],
-        texts[names[1]], tokenizers[names[1]],
-        seq_len, max_pairs=cfg.train.joint_max_pairs,
-    )
-    pairs_ba = HandoffDataset(
-        texts[names[1]], tokenizers[names[1]],
-        texts[names[0]], tokenizers[names[0]],
-        seq_len, max_pairs=cfg.train.joint_max_pairs,
-    )
+    use_boundary = bool(ab_pairs) and bool(ba_pairs)
+    if use_boundary:
+        print(f"  [joint] using {len(ab_pairs)} real python->english and "
+              f"{len(ba_pairs)} english->python boundary pairs")
+        pairs_ab = BoundaryHandoffDataset(
+            ab_pairs, tokenizers[names[0]].pad_id, tokenizers[names[1]].pad_id, seq_len)
+        pairs_ba = BoundaryHandoffDataset(
+            ba_pairs, tokenizers[names[1]].pad_id, tokenizers[names[0]].pad_id, seq_len)
+    else:
+        if texts is None:
+            raise ValueError("joint_finetune needs either ab_pairs/ba_pairs or texts")
+        print("  [joint] WARNING: no boundary pairs; falling back to random pairing")
+        pairs_ab = HandoffDataset(
+            texts[names[0]], tokenizers[names[0]],
+            texts[names[1]], tokenizers[names[1]],
+            seq_len, max_pairs=cfg.train.joint_max_pairs,
+        )
+        pairs_ba = HandoffDataset(
+            texts[names[1]], tokenizers[names[1]],
+            texts[names[0]], tokenizers[names[0]],
+            seq_len, max_pairs=cfg.train.joint_max_pairs,
+        )
 
     loader_ab = DataLoader(pairs_ab, batch_size=cfg.train.joint_batch_size,
                            shuffle=True, num_workers=cfg.train.num_workers, drop_last=True)

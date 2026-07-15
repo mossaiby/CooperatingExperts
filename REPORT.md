@@ -26,7 +26,11 @@ Cooperation happens through two mechanisms:
 
 The shared space is a **bottleneck** (`dim=256 < d_model=512`), which forces
 the projections to learn a genuinely compact inter-expert representation
-instead of collapsing to identity.
+instead of collapsing to identity. The **bridge width** `shared.bridge_len` (K)
+controls how many hidden states are carried across a hand-off: K=1 is the
+original single-vector channel; K>1 carries the last K hidden states, giving the
+receiving expert several seed positions to attend to. A single vector is a very
+narrow channel, so `bridge_len` is exposed for experimentation.
 
 ### The two experts
 
@@ -186,26 +190,33 @@ independently.
 ### 5.2 Joint hand-off loss (`joint_loss`)
 
 This is the **stitching** loss. Given a prefix `ids_a` (expert A) and a
-continuation `ids_b` (expert B):
+continuation `ids_b` (expert B), with bridge width `K = shared.bridge_len`:
 
-1. **Encode the prefix with A**, take the last-position hidden state
-   `h_a_last = A.encode(ids_a)[:, -1, :]`  →  `[B, d_a]`.
-2. **Project to shared space**: `z = A.to_shared_space(h_a_last)`  →  `[B, 256]`.
-3. **Project into B's space**: `h_b0 = B.from_shared_space(z)`  →  `[B, d_b]`.
-4. **Run B on `ids_b`**, prepending `h_b0` as a virtual "position 0" hidden
-   state: embed `ids_b`, concatenate `h_b0` at the front, run the transformer
-   blocks over the combined `[B, Tb+1, d]` sequence.
-5. **LM loss**: B's next-token loss on `ids_b` (shifted by one because of the
-   prepended state). `logits_b = B.logits_from_hidden(h_b[:, :-1, :])`.
-6. **Alignment regularizer**: encourages the round-trip through each expert's
-   own projections to be close to identity:
-   `||A.from_shared(A.to_shared(h_a_last)) - h_a_last||²` (and same for B).
-   This is the representation-alignment assumption from the model-stitching
-   literature — it keeps the projections approximately invertible so the
-   shared space carries enough signal for the receiving expert.
+1. **Encode the prefix with A**, take the last `k = min(K, Ta)` hidden states
+   (the tokens right at the hand-off boundary): `seed_src = A.encode(ids_a)[:, -k:, :]`.
+2. **Project to shared space**: `z = A.to_shared_space(seed_src)`  →  `[B, k, 256]`.
+3. **Project into B's space**: `seed_b = B.from_shared_space(z)`  →  `[B, k, d_b]`.
+4. **Run B on `ids_b`**, seeded by the `k` carried states as virtual positions
+   `0..k-1` (`B.encode_with_seed(ids_b, seed_b)` → `[B, k+Tb, d_b]`).
+5. **LM loss**: output index `k-1` (the last seed) predicts `ids_b[0]`, so the
+   `Tb` logits that predict `ids_b` are `h_b[:, k-1 : k-1+Tb, :]`.
+6. **Alignment regularizer**: encourages each expert's own round-trip
+   (`from_shared∘to_shared`) to be close to identity:
+   `||A.from_shared(A.to_shared(ref_a)) - ref_a||²` (and same for B). The
+   references are **hidden states already computed** — A's boundary states and
+   B's own hidden taken from `h_b[:, k:, :]` — so no second forward pass through
+   B is needed; they are detached so this term only trains the projection
+   weights. This is the representation-alignment assumption from the
+   model-stitching literature.
 
 `total = lm_loss + align_weight * (align_a + align_b)`, with
 `align_weight = 0.1` by default.
+
+> **Hand-off pairs come from real boundaries.** The prefix/continuation pairs
+> are built by `dataset.build_boundary_handoff_pairs` from adjacent code↔text
+> segments *within the same session*, so B's continuation is semantically
+> related to A's prefix. (An earlier version paired random, unrelated snippets,
+> which gave the projection no real continuation signal to learn.)
 
 ### 5.3 Mixed interleaved loss (`mixed_loss`)
 
@@ -213,23 +224,29 @@ This is the **end-to-end** loss over whole switch-token-annotated sessions.
 Each example is a list of `(expert_name, ids)` segments. The loss mirrors
 generation exactly:
 
-1. For each segment, embed the ids and **prepend a carried hidden state** as a
-   virtual first position (zeros for the first segment, so all segments use the
-   same T-token prediction offset).
-2. Run the expert's transformer blocks over the `[B, T+1, d]` sequence.
-3. Compute LM loss over the T real tokens: `logits = head(h[:, :T, :])`,
+1. For each segment, embed the ids and **prepend the `K = bridge_len` carried
+   hidden states** as virtual positions `0..K-1` (`K` zero vectors for the first
+   segment, so every segment uses the same "index `K-1` predicts `ids[0]`"
+   offset). See `Expert.encode_with_seed`.
+2. Run the expert's transformer blocks over the `[B, K+T, d]` sequence.
+3. Compute LM loss over the T real tokens: `logits = head(h[:, K-1:K-1+T, :])`,
    `targets = ids`. **Switch tokens are real targets** but down-weighted by
    `switch_loss_weight` (0.1) via a per-class cross-entropy weight vector, so
    the model isn't equally rewarded for switching as for generating content.
-4. **Carry the last hidden state** through the shared space to the next expert:
-   `z = exp.to_shared_space(h[:, -1, :])`, then
-   `carried_h = next_expert.from_shared_space(z)`. The carried state is
+4. **Carry the last `K` hidden states** through the shared space to the next
+   expert: `z = exp.to_shared_space(h[:, -K:, :])`, then
+   `carried = next_expert.from_shared_space(z)`. The carried states are
    **detached** so gradients don't flow back through the previous expert's
    entire transformer via `from_shared` — this bounds memory for long
    batch=1 sessions and matches generation (where the carried state is
    produced under `no_grad`).
 5. The total loss is the **mean of per-segment losses**
    (`torch.stack(seg_losses).mean()`), so gradients flow to both experts.
+
+> Real-token positions are kept at `arange(T)` (the seed positions carry no
+> token-position embedding), so the positional table is never indexed past
+> `max_seq_len - 1` regardless of `K` — long segments cannot trigger an
+> out-of-range lookup.
 
 ### 5.4 Generation (`generate`)
 
@@ -238,16 +255,16 @@ Autoregressive sampling with live expert switching:
 1. Encode the prompt in the starting expert's vocab.
 2. At each step, encode the current sequence (prepending the carried state if
    any), take the last-position logits.
-3. **Mask out `<switch:self>`** (no-op loops) and, once the switch budget is
-   exhausted, mask out all switch tokens (`max_switches = 4` by default).
+3. **Mask out the self-switch** `<switch:<active>>` (no-op loops) and, once the
+   switch budget is exhausted, mask out all switch tokens (`max_switches = 4`).
 4. Apply temperature + top-k sampling.
 5. If the sampled token is a `<switch:NAME>`:
-   - Carry the last hidden state through the shared space:
-     `z = exp.to_shared_space(h_last)`, `carried_h = target.from_shared_space(z)`.
+   - Carry the last `K = bridge_len` hidden states through the shared space:
+     `z = exp.to_shared_space(h[:, -K:, :])`, `carried = target.from_shared_space(z)`.
    - Switch active expert to the target.
    - **Reset the context to empty** — the new expert starts from just the
-     carried state (no lossy re-tokenization of the old history in the new
-     tokenizer). The carried state *is* the hand-off signal, by design.
+     `K` carried states (no lossy re-tokenization of the old history in the new
+     tokenizer). The carried states *are* the hand-off signal, by design.
 6. If the sampled token is EOS, stop.
 7. Otherwise append the token and continue.
 8. The output is rendered by grouping consecutive tokens by expert and
@@ -306,8 +323,10 @@ update LR via cosine schedule.
 
 Only the **projection layers** are trained; the transformer blocks are frozen.
 
-**Data**: `HandoffDataset` builds (prefix_A, continuation_B) pairs in both
-directions (A→B and B→A), up to `joint_max_pairs=8000` each.
+**Data**: `build_boundary_handoff_pairs` builds (prefix_A, continuation_B) pairs
+in both directions (A→B and B→A) from **real code↔text boundaries within each
+session**, up to `joint_max_pairs=8000` each. (The legacy random-pairing
+`HandoffDataset` remains only as a fallback for the offline smoke test.)
 
 **Loss**: `joint_loss` (§5.2) — B's LM loss on the continuation plus the
 alignment regularizer. Both directions are computed per step and summed.
@@ -384,12 +403,19 @@ Samples fixed-length windows from a list of raw texts. Each window is
 `max_seq_len` tokens; windows are drawn at random offsets until
 `max_windows` is reached. Used by `pretrain_expert`.
 
-### 7.2 `HandoffDataset` (joint stitching)
+### 7.2 Hand-off pairs (joint stitching)
 
-Builds (prefix, continuation) pairs for the hand-off loss. Given expert A's
-texts and expert B's texts, it pairs a random A-text (truncated to `seq_len//2`)
-as the prefix with a random B-text (truncated to `seq_len//2`) as the
-continuation. Both directions (A→B and B→A) are constructed.
+`build_boundary_handoff_pairs` walks each session, merges consecutive same-kind
+pieces into segments, and for every code↔text boundary emits a (prefix,
+continuation) pair: the **tail** of the segment before the boundary (its last
+`seq_len//2` tokens — the hand-off happens at its end, and `joint_loss` carries
+the last hidden states) paired with the **head** of the segment after it, each
+tokenized in its own expert's vocab. Both directions (A→B and B→A) come out
+naturally from python→english and english→python boundaries. `BoundaryHandoffDataset`
+pads these to `seq_len`.
+
+The legacy `HandoffDataset` (random, unrelated A-text ↔ B-text pairing) is kept
+only as a fallback for the offline smoke test, where no session data exists.
 
 ### 7.3 `MixedDataset` (mixed training)
 
@@ -413,7 +439,10 @@ key dataclasses:
 
 - **`ExpertConfig`**: per-expert transformer dimensions (`d_model`, `n_heads`,
   `n_layers`, `d_ff`, `max_seq_len`, `dropout`) and tokenizer size.
-- **`SharedSpaceConfig`**: `dim=256` (the bottleneck).
+- **`SharedSpaceConfig`**: `dim=256` (the bottleneck) and `bridge_len` (how many
+  hidden states are carried across a hand-off; default 1).
+- **`Config.large()`**: a bigger preset (`d_model=768`, 8 layers, 12 heads,
+  dim 384, `max_seq_len=1024` → ~63-67 M/expert) for 11 GB GPUs.
 - **`PretrainOverride`**: per-expert overrides for pre-training knobs; any
   `None` field falls back to the global default.
 - **`TrainConfig`**: all training hyper-parameters for all three phases, plus
@@ -507,3 +536,38 @@ generate()        (live switching via shared space)
   approaches) raise the loss floor and force more transferable
   representations, instead of letting the model memorise one template per
   subject.
+
+---
+
+## 12. Revisions
+
+This version reconciles the docs with the shipped config and addresses several
+limitations of the original prototype:
+
+- **Single default config.** The default is now the laptop (4 GB) config
+  (`d_model=512`, 6 layers, dim 256 → ~44.6 M total) that all reported numbers
+  refer to; the larger 768/8 preset moved to `Config.large()`. Earlier the
+  shipped default and the documented results described different configs.
+- **Real hand-off pairs.** The joint (stitching) phase now trains on
+  code↔text boundary pairs taken from within the same session
+  (`build_boundary_handoff_pairs`) instead of random, unrelated snippet pairs,
+  so the receiving expert has a semantically related continuation to model.
+- **Configurable bridge width.** `shared.bridge_len` (K) carries the last K
+  hidden states across a hand-off; K=1 reproduces the original single-vector
+  channel. This is the main lever for the (deliberately narrow) inter-expert
+  channel.
+- **Cheaper joint loss.** The alignment regularizer reuses hidden states already
+  computed rather than running a second forward pass through expert B.
+- **Robust validation.** Pre-training val loss is averaged over several batches
+  (`pretrain_val_batches`) instead of a single noisy batch, so early stopping is
+  more reliable.
+- **Honest caveats.** Losses on the templated Option-A corpus mostly reflect
+  memorisation; the hybrid Option-B pipeline is preferred for any real signal.
+
+> **A note on positional embeddings.** Seed states are prepended as virtual
+> positions while the real tokens keep their own `arange(T)` position
+> embeddings. Because attention localises tokens purely via those absolute
+> position embeddings (there is no relative-position bias), a token is treated
+> as the same position in pre-training and in the seeded phases; the seed is
+> simply an extra attendable context vector at the front. This is intentional
+> and also keeps the positional table from ever being indexed out of range.

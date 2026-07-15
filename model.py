@@ -148,6 +148,33 @@ class Expert(nn.Module):
         x = self._embed(ids)
         return self._blocks(x)
 
+    def encode_with_seed(
+        self, ids: torch.Tensor, seed: torch.Tensor = None
+    ) -> torch.Tensor:
+        """Encode ids, optionally seeded by carried hidden states.
+
+        `seed` is [B, K, d_model] (or None). When provided, the K seed vectors
+        are prepended as virtual positions 0..K-1 that every real token can
+        attend to (causally). The real tokens keep their own positional
+        embeddings (arange(T)); the seed vectors carry no token-position
+        embedding -- they are hand-off signals from another expert, not tokens.
+
+        Returns the full last-layer hidden states:
+          - shape [B, K + T, d_model] when a seed is given (index 0..K-1 are
+            the seed outputs; K.. are the real-token outputs), or
+          - shape [B, T, d_model] when seed is None.
+
+        Keeping the real tokens' positions at arange(T) (rather than shifting
+        them by K) means the positional-embedding table is never indexed past
+        max_seq_len - 1, so long segments cannot cause an out-of-range lookup.
+        """
+        x = self._embed(ids)  # [B, T, d]; real tokens keep positions arange(T)
+        if seed is not None:
+            if seed.dim() == 2:
+                seed = seed.unsqueeze(1)  # [B, d] -> [B, 1, d]
+            x = torch.cat([seed, x], dim=1)  # [B, K + T, d]
+        return self._blocks(x)
+
     def logits_from_hidden(self, h: torch.Tensor) -> torch.Tensor:
         """Map a hidden state (this expert's space) to its vocab logits."""
         return self.head(h)

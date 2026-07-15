@@ -114,48 +114,50 @@ class CooperatingExperts(nn.Module):
         exp_b = self.expert(name_b)
         if align_weight is None:
             align_weight = self.config.train.align_weight
+        K = self.config.shared.bridge_len
 
-        # 1. Encode prefix with A, take last-position hidden state.
-        h_full = exp_a.encode(ids_a)          # [B, Ta, d_a]
-        h_a_last = h_full[:, -1, :]           # [B, d_a]
+        # 1. Encode prefix with A, take the LAST k hidden states (the tokens
+        #    right at the hand-off boundary). k = bridge_len, clamped to Ta.
+        h_full = exp_a.encode(ids_a)              # [B, Ta, d_a]
+        k = min(K, h_full.size(1))
+        seed_src = h_full[:, -k:, :]              # [B, k, d_a]
 
-        # 2-3. Carry through shared space into B's hidden space.
-        z = exp_a.to_shared_space(h_a_last)   # [B, shared_dim]
-        h_b0 = exp_b.from_shared_space(z)      # [B, d_b]
+        # 2-3. Carry the k boundary states through the shared bottleneck into
+        #      B's hidden space.
+        z = exp_a.to_shared_space(seed_src)       # [B, k, shared_dim]
+        seed_b = exp_b.from_shared_space(z)       # [B, k, d_b]
 
-        # 4. Run B on ids_b, prepending the carried state as a virtual token.
-        #    We do this by embedding ids_b, then concatenating h_b0 as the
-        #    first position and running the transformer blocks over the
-        #    combined sequence.
-        x_b = exp_b._embed(ids_b)             # [B, Tb, d_b]
-        x_b = torch.cat([h_b0.unsqueeze(1), x_b], dim=1)  # [B, Tb+1, d_b]
-        h_b = exp_b._blocks(x_b)             # [B, Tb+1, d_b]
+        # 4. Run B on ids_b, seeded by the k carried states (virtual positions
+        #    0..k-1). See Expert.encode_with_seed for the layout.
+        h_b = exp_b.encode_with_seed(ids_b, seed_b)  # [B, k + Tb, d_b]
 
-        # 5. LM loss on B's tokens. The prediction at position i (of the
-        #    Tb+1 sequence) predicts ids_b[i]. So we use h_b[:, :-1, :] to
-        #    predict ids_b (shifted by one because of the prepended state).
-        logits_b = exp_b.logits_from_hidden(h_b[:, :-1, :])  # [B, Tb, V_b]
-        targets_b = ids_b  # [B, Tb]
+        # 5. LM loss on B's tokens. Output index k-1 (the last seed) predicts
+        #    ids_b[0], index k predicts ids_b[1], ... so the Tb logits that
+        #    predict ids_b are h_b[:, k-1 : k-1+Tb, :].
+        Tb = ids_b.size(1)
+        logits_b = exp_b.logits_from_hidden(h_b[:, k - 1:k - 1 + Tb, :])  # [B, Tb, V_b]
         pad_b = self.tokenizers[name_b].pad_id
         lm_loss = F.cross_entropy(
             logits_b.reshape(-1, logits_b.size(-1)),
-            targets_b.reshape(-1),
+            ids_b.reshape(-1),
             ignore_index=pad_b,
         )
 
-        # 6. Alignment regularizer (round-trip through A's own projections).
-        align_loss = F.mse_loss(
-            exp_a.from_shared_space(exp_a.to_shared_space(h_a_last)),
-            h_a_last,
+        # 6. Alignment regularizer: encourage each expert's own round-trip
+        #    (from_shared . to_shared) to be close to identity. We reuse hidden
+        #    states already computed (A's boundary states, and B's own hidden
+        #    over its real tokens taken from h_b) instead of running a second
+        #    forward pass through B. The references are detached so this term
+        #    only trains the projection weights, not the (here frozen) blocks.
+        ref_a = seed_src.detach()
+        align_a = F.mse_loss(
+            exp_a.from_shared_space(exp_a.to_shared_space(ref_a)), ref_a
         )
-        # Same for B — FIX: no no_grad() so B's projection weights
-        # actually receive gradients from align_loss_b.
-        h_b_ref = exp_b.encode(ids_b)[:, -1, :]
-        align_loss_b = F.mse_loss(
-            exp_b.from_shared_space(exp_b.to_shared_space(h_b_ref)),
-            h_b_ref,
+        ref_b = h_b[:, k:, :].detach()            # [B, Tb, d_b] = B's own hidden
+        align_b = F.mse_loss(
+            exp_b.from_shared_space(exp_b.to_shared_space(ref_b)), ref_b
         )
-        align = align_loss + align_loss_b
+        align = align_a + align_b
 
         total = lm_loss + align_weight * align
         info = {
@@ -189,7 +191,8 @@ class CooperatingExperts(nn.Module):
         # and then reassigning via `+` produced a spurious graph node and
         # fragile gradient flow.)
         seg_losses: List[torch.Tensor] = []
-        carried_h: Optional[torch.Tensor] = None  # [B, d] carried hidden
+        carried: Optional[torch.Tensor] = None  # [B, K, d] carried seed states
+        K = self.config.shared.bridge_len
 
         for seg_idx, (name, ids) in enumerate(segments):
             exp = self.expert(name)
@@ -200,23 +203,22 @@ class CooperatingExperts(nn.Module):
             B, T = ids.shape
             if T > exp.cfg.max_seq_len:
                 ids = ids[:, -exp.cfg.max_seq_len:]
+                T = ids.size(1)
 
-            # Embed; if we carry a hidden state from the previous expert,
-            # prepend it as a virtual first position (same as generation).
-            # FIX: unified carried-state path — zeros for first segment
-            # so ALL segments use the same T-token prediction offset.
-            if carried_h is None:
-                carried_h = torch.zeros(B, exp.cfg.d_model, device=device)
+            # Seed the segment with the carried states from the previous
+            # expert. For the FIRST segment we seed with K zero vectors so
+            # every segment uses the same "index k-1 predicts ids[0]" offset.
+            if carried is None:
+                carried = torch.zeros(B, K, exp.cfg.d_model, device=device)
+            k = carried.size(1)
 
-            x = exp._embed(ids)
-            x = torch.cat([carried_h.unsqueeze(1), x], dim=1)  # [B, T+1, d]
-            h = exp._blocks(x)
-            logits  = exp.logits_from_hidden(h[:, :T, :])  # [B, T, V]
-            targets = ids                                    # [B, T]
+            h = exp.encode_with_seed(ids, carried)  # [B, k + T, d]
+            logits = exp.logits_from_hidden(h[:, k - 1:k - 1 + T, :])  # [B, T, V]
+            targets = ids                                              # [B, T]
 
             pad = self.tokenizers[name].pad_id
 
-            # FIX: down-weight switch tokens to prevent over-switching.
+            # Down-weight switch tokens to prevent over-switching.
             sw_weight = torch.ones(exp.vocab_size, device=device)
             sw_w = self.config.train.switch_loss_weight
             for _n in self.expert_names:
@@ -230,25 +232,19 @@ class CooperatingExperts(nn.Module):
             )
             seg_losses.append(seg_loss)
 
-            # Carry the LAST hidden state through the shared space to the next
-            # expert (if any). Use the last real position (ignore the prepended
-            # virtual one by taking index -1 of h). We DETACH the carried
-            # state so gradients do not flow back through the previous expert's
-            # entire transformer via from_shared — this (a) bounds memory for
-            # long batch=1 sessions, and (b) matches generation, where the
-            # carried state is produced under torch.no_grad().
-            h_last = h[:, -1, :]  # [B, d]
-            z = exp.to_shared_space(h_last)
-            # The next segment's expert is unknown here; we store z and let the
-            # next iteration project it back. To do that we need the next
-            # expert's from_shared. We peek at the next segment's name.
+            # Carry the LAST k hidden states of this segment through the shared
+            # space to the next expert. We DETACH the carried states so
+            # gradients do not flow back through the previous expert's whole
+            # transformer via from_shared -- this (a) bounds memory for long
+            # batch=1 sessions, and (b) matches generation, where the carried
+            # state is produced under torch.no_grad().
             next_name = segments[seg_idx + 1][0] if seg_idx + 1 < len(segments) else None
             if next_name is not None:
-                # Detach so the next segment's forward does not backprop
-                # through this segment's graph (see comment above).
-                carried_h = self.expert(next_name).from_shared_space(z).detach()
+                k_next = min(K, h.size(1))
+                z = exp.to_shared_space(h[:, -k_next:, :])   # [B, k_next, shared]
+                carried = self.expert(next_name).from_shared_space(z).detach()
             else:
-                carried_h = None
+                carried = None
 
         if not seg_losses:
             # Degenerate session with no computable segments.
@@ -295,12 +291,12 @@ class CooperatingExperts(nn.Module):
             ids = [tok_a.pad_id]
         ids = torch.tensor([ids], dtype=torch.long, device=device)
 
-        # Carried hidden state (None until a switch happens).
-        carried_h: Optional[torch.Tensor] = None
+        # Carried seed states (None until a switch happens): [B, K, d].
+        carried: Optional[torch.Tensor] = None
         switch_count: int = 0
+        K = self.config.shared.bridge_len
 
         out_tokens: List[Tuple[str, int]] = []  # (expert, token_id)
-        eos_set = {tok.eos_id for tok in self.tokenizers.values()}
 
         for _ in range(max_new_tokens):
             exp = self.expert(active)
@@ -309,19 +305,16 @@ class CooperatingExperts(nn.Module):
             if T > exp.cfg.max_seq_len:
                 ids = ids[:, -exp.cfg.max_seq_len:]
 
-            # Encode current sequence ONCE, optionally prepending a carried
-            # state. We keep the full last-layer hidden `h` so that, on a
-            # switch, we can reuse h[:, -1, :] instead of re-encoding.
-            x = exp._embed(ids)
-            if carried_h is not None:
-                x = torch.cat([carried_h.unsqueeze(1), x], dim=1)
-            h = exp._blocks(x)  # [B, T(+1), d]
+            # Encode the current sequence ONCE, seeded by the carried states
+            # (if any). We keep the full last-layer hidden `h` so that, on a
+            # switch, we can reuse its tail instead of re-encoding.
+            h = exp.encode_with_seed(ids, carried)  # [B, (K or 0) + T, d]
             logits = exp.logits_from_hidden(h[:, -1, :])
 
             # Mask out switch-to-self (no-op) to avoid trivial loops.
             self_switch = tok.switch_id(active)
             logits[:, self_switch] = float("-inf")
-            # FIX: enforce switch budget.
+            # Enforce the switch budget.
             if switch_count >= max_switches:
                 for _n in self.expert_names:
                     logits[:, tok.switch_id(_n)] = float("-inf")
@@ -348,18 +341,17 @@ class CooperatingExperts(nn.Module):
                 if target is None or target == active:
                     # Shouldn't happen, but guard anyway.
                     continue
-                # Carry the last hidden state through the shared space.
+                # Carry the last k hidden states through the shared space.
                 # Reuse the h we already computed this step (no re-encode).
-                h_last = h[:, -1, :]  # [B, d]
-                z = exp.to_shared_space(h_last)
-                carried_h = self.expert(target).from_shared_space(z)
+                k_next = min(K, h.size(1))
+                z = exp.to_shared_space(h[:, -k_next:, :])       # [B, k_next, shared]
+                carried = self.expert(target).from_shared_space(z)  # [B, k_next, d]
                 switch_count += 1
                 active = target
-                # Start the new expert from a minimal context: just the
-                # carried state seeds its first hidden position. We do NOT
-                # re-encode the old history in the new tokenizer (that was
-                # lossy and O(T) per switch); the carried state is the
-                # hand-off signal, by design.
+                # Start the new expert from a minimal context: the carried
+                # states seed its first positions. We do NOT re-encode the old
+                # history in the new tokenizer (that was lossy and O(T) per
+                # switch); the carried states are the hand-off signal.
                 ids = torch.empty((1, 0), dtype=torch.long, device=device)
                 continue
 

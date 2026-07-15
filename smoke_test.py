@@ -59,7 +59,8 @@ def _tiny_config() -> Config:
         "english": ExpertConfig(name="english", vocab_size=2000, d_model=64,
                                 n_heads=2, n_layers=2, d_ff=256, max_seq_len=64),
     }
-    cfg.shared = SharedSpaceConfig(dim=64)
+    # bridge_len=2 exercises the multi-vector hand-off path (K>1).
+    cfg.shared = SharedSpaceConfig(dim=64, bridge_len=2)
     cfg.train = TrainConfig(
         pretrain_batch_size=16, pretrain_lr=3e-4,
         pretrain_steps_max=60,
@@ -117,7 +118,7 @@ def main() -> None:
             "python": PYTHON_SNIPPETS,
             "english": ENGLISH_SNIPPETS,
         }
-        joint_finetune(model, texts, tokenizers, cfg)
+        joint_finetune(model, tokenizers, cfg, texts=texts)
 
         # 4b. Interleaved mixed_loss on a synthetic switch-token session.
         print("\n[4b] Interleaved mixed_loss (synthetic switch session)...")
