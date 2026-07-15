@@ -61,6 +61,59 @@ class CooperatingExperts(nn.Module):
         return self.experts[name]  # type: ignore[return-value]
 
     # ------------------------------------------------------------------ #
+    def _cross_attn_enabled(self) -> bool:
+        """Whether the CALM-style cross-attention bridge is turned on."""
+        return bool(self.config.shared.cross_attn)
+
+    def _carry_through_shared(
+        self,
+        src_expert: Expert,
+        h_src: torch.Tensor,
+        dst_expert: Expert,
+        detach: bool = False,
+    ) -> torch.Tensor:
+        """Project carried hidden states from one expert into another's space.
+
+        h_src: [B, k, d_src] hidden states of the sending expert (its own
+        d_model). Returns [B, k, d_dst] -- the carried states in the
+        receiving expert's d_model, ready to be used either as a seed
+        (encode_with_seed) or as cross-attention memory (encode_with_cross_attn).
+        """
+        z = src_expert.to_shared_space(h_src)        # [B, k, shared_dim]
+        out = dst_expert.from_shared_space(z)        # [B, k, d_dst]
+        return out.detach() if detach else out
+
+    def _encode_segment(
+        self,
+        expert: Expert,
+        ids: torch.Tensor,
+        carried: Optional[torch.Tensor],
+    ) -> torch.Tensor:
+        """Encode a segment, choosing the CALM cross-attn path or the
+        seed-prepend path based on config.
+
+        `carried` is the receiving expert's own-d_model representation of the
+        sender's last K hidden states (already produced by
+        _carry_through_shared). It is [B, K, d_model] or None.
+
+        Returns the last-layer hidden states of the receiving expert over the
+        real tokens of `ids` -- shape [B, T, d_model] (no seed prefix), so
+        the caller can index logits with a uniform h[:, -1, :] / h[:, -k:, :]
+        regardless of which path was taken.
+        """
+        if carried is None:
+            return expert.encode_with_cross_attn(ids, None) \
+                if self._cross_attn_enabled() else expert.encode(ids)
+
+        if self._cross_attn_enabled():
+            # CALM path: cross-attend to the carried memory. No seed prefix,
+            # so the output is [B, T, d] directly.
+            return expert.encode_with_cross_attn(ids, carried)
+        # Legacy path: prepend carried states as virtual seed positions.
+        # Output is [B, K + T, d]; callers offset by k-1 to get the T logits.
+        return expert.encode_with_seed(ids, carried)
+
+    # ------------------------------------------------------------------ #
     # Pre-training loss for a single expert (standard next-token LM).
     # ------------------------------------------------------------------ #
     def pretrain_loss(
@@ -127,19 +180,36 @@ class CooperatingExperts(nn.Module):
         z = exp_a.to_shared_space(seed_src)       # [B, k, shared_dim]
         seed_b = exp_b.from_shared_space(z)       # [B, k, d_b]
 
-        # 4. Run B on ids_b, seeded by the k carried states (virtual positions
-        #    0..k-1). See Expert.encode_with_seed for the layout.
-        h_b = exp_b.encode_with_seed(ids_b, seed_b)  # [B, k + Tb, d_b]
+        # 4. Run B on ids_b. Two paths:
+        #    - CALM cross-attn: B's own hidden states cross-attend to seed_b
+        #      as memory; output is [B, Tb, d_b] (no seed prefix), so the
+        #      logits that predict ids_b are h_b[:, :Tb, :] shifted by one.
+        #    - Legacy seed-prepend: seed_b is prepended as virtual positions
+        #      0..k-1; output is [B, k+Tb, d_b] and the Tb predicting logits
+        #      are h_b[:, k-1:k-1+Tb, :].
+        if self._cross_attn_enabled():
+            h_b = exp_b.encode_with_cross_attn(ids_b, seed_b)  # [B, Tb, d_b]
+            Tb = ids_b.size(1)
+            logits_b = exp_b.logits_from_hidden(h_b[:, :-1, :])  # [B, Tb-1, V_b]
+            targets_b = ids_b[:, 1:]                              # [B, Tb-1]
+            # For the alignment regularizer we need B's own hidden over its
+            # real tokens (without the cross-attn residual). Re-derive from
+            # the pre-cross-attn representation would require a second pass;
+            # instead use h_b (post cross-attn) detached -- the round-trip
+            # regularizer only constrains the projection matrices, and using
+            # the refined states is a valid (if slightly stronger) target.
+            ref_b_hidden = h_b.detach()
+        else:
+            h_b = exp_b.encode_with_seed(ids_b, seed_b)  # [B, k + Tb, d_b]
+            Tb = ids_b.size(1)
+            logits_b = exp_b.logits_from_hidden(h_b[:, k - 1:k - 1 + Tb, :])
+            targets_b = ids_b
+            ref_b_hidden = h_b[:, k:, :].detach()       # [B, Tb, d_b] = B's own hidden
 
-        # 5. LM loss on B's tokens. Output index k-1 (the last seed) predicts
-        #    ids_b[0], index k predicts ids_b[1], ... so the Tb logits that
-        #    predict ids_b are h_b[:, k-1 : k-1+Tb, :].
-        Tb = ids_b.size(1)
-        logits_b = exp_b.logits_from_hidden(h_b[:, k - 1:k - 1 + Tb, :])  # [B, Tb, V_b]
         pad_b = self.tokenizers[name_b].pad_id
         lm_loss = F.cross_entropy(
             logits_b.reshape(-1, logits_b.size(-1)),
-            ids_b.reshape(-1),
+            targets_b.reshape(-1),
             ignore_index=pad_b,
         )
 
@@ -153,9 +223,8 @@ class CooperatingExperts(nn.Module):
         align_a = F.mse_loss(
             exp_a.from_shared_space(exp_a.to_shared_space(ref_a)), ref_a
         )
-        ref_b = h_b[:, k:, :].detach()            # [B, Tb, d_b] = B's own hidden
         align_b = F.mse_loss(
-            exp_b.from_shared_space(exp_b.to_shared_space(ref_b)), ref_b
+            exp_b.from_shared_space(exp_b.to_shared_space(ref_b_hidden)), ref_b_hidden
         )
         align = align_a + align_b
 
@@ -207,14 +276,24 @@ class CooperatingExperts(nn.Module):
 
             # Seed the segment with the carried states from the previous
             # expert. For the FIRST segment we seed with K zero vectors so
-            # every segment uses the same "index k-1 predicts ids[0]" offset.
+            # every segment uses the same "index k-1 predicts ids[0]" offset
+            # (legacy path) or, with cross-attn, a zero memory bank.
             if carried is None:
                 carried = torch.zeros(B, K, exp.cfg.d_model, device=device)
             k = carried.size(1)
 
-            h = exp.encode_with_seed(ids, carried)  # [B, k + T, d]
-            logits = exp.logits_from_hidden(h[:, k - 1:k - 1 + T, :])  # [B, T, V]
-            targets = ids                                              # [B, T]
+            if self._cross_attn_enabled():
+                # CALM path: cross-attend to carried memory; output is
+                # [B, T, d] with no seed prefix, so logits predicting ids
+                # are h[:, :-1, :] vs targets ids[:, 1:].
+                h = exp.encode_with_cross_attn(ids, carried)  # [B, T, d]
+                logits = exp.logits_from_hidden(h[:, :-1, :])  # [B, T-1, V]
+                targets = ids[:, 1:]                            # [B, T-1]
+            else:
+                # Legacy seed-prepend path.
+                h = exp.encode_with_seed(ids, carried)  # [B, k + T, d]
+                logits = exp.logits_from_hidden(h[:, k - 1:k - 1 + T, :])  # [B, T, V]
+                targets = ids                              # [B, T]
 
             pad = self.tokenizers[name].pad_id
 
@@ -241,8 +320,9 @@ class CooperatingExperts(nn.Module):
             next_name = segments[seg_idx + 1][0] if seg_idx + 1 < len(segments) else None
             if next_name is not None:
                 k_next = min(K, h.size(1))
-                z = exp.to_shared_space(h[:, -k_next:, :])   # [B, k_next, shared]
-                carried = self.expert(next_name).from_shared_space(z).detach()
+                carried = self._carry_through_shared(
+                    exp, h[:, -k_next:, :], self.expert(next_name), detach=True,
+                )
             else:
                 carried = None
 
@@ -308,7 +388,19 @@ class CooperatingExperts(nn.Module):
             # Encode the current sequence ONCE, seeded by the carried states
             # (if any). We keep the full last-layer hidden `h` so that, on a
             # switch, we can reuse its tail instead of re-encoding.
-            h = exp.encode_with_seed(ids, carried)  # [B, (K or 0) + T, d]
+            if self._cross_attn_enabled():
+                # CALM path: cross-attend to carried memory (if any). When
+                # ids is empty (just switched, no tokens yet) we cannot
+                # cross-attend -- fall back to a single pad token so the
+                # expert produces a query position to predict from.
+                if T == 0:
+                    ids = torch.tensor([[tok.pad_id]], dtype=torch.long,
+                                       device=device)
+                    T = 1
+                h = exp.encode_with_cross_attn(ids, carried)  # [B, T, d]
+            else:
+                # Legacy seed-prepend path.
+                h = exp.encode_with_seed(ids, carried)  # [B, (K or 0) + T, d]
             logits = exp.logits_from_hidden(h[:, -1, :])
 
             # Mask out switch-to-self (no-op) to avoid trivial loops.
@@ -344,8 +436,9 @@ class CooperatingExperts(nn.Module):
                 # Carry the last k hidden states through the shared space.
                 # Reuse the h we already computed this step (no re-encode).
                 k_next = min(K, h.size(1))
-                z = exp.to_shared_space(h[:, -k_next:, :])       # [B, k_next, shared]
-                carried = self.expert(target).from_shared_space(z)  # [B, k_next, d]
+                carried = self._carry_through_shared(
+                    exp, h[:, -k_next:, :], self.expert(target),
+                )
                 switch_count += 1
                 active = target
                 # Start the new expert from a minimal context: the carried

@@ -67,6 +67,71 @@ class FeedForward(nn.Module):
         return self.drop(self.fc2(F.gelu(self.fc1(x))))
 
 
+class CrossAttention(nn.Module):
+    """CALM-style cross-attention block (Schuster et al. 2022).
+
+    Queries come from the receiving expert's own hidden states (x), while
+    keys and values come from an external memory -- here, the *other*
+    expert's carried hidden states projected through the shared space.
+
+    This is the inter-expert analogue of CALM's cross-attention between an
+    early-exit decoder and a deeper one: every position of the receiving
+    segment can attend to all K carried sender states in a content-
+    addressable way, instead of only seeing them as fixed seed positions.
+
+    Layout:
+        x:   [B, T, d_model]            (receiving expert's hidden states)
+        mem: [B, S, d_model]            (carried states, already projected
+                                         back into this expert's d_model via
+                                         from_shared_space)
+    Returns: [B, T, d_model] (same shape as x), with a residual + LayerNorm
+    applied so it can be composed with the expert's own blocks.
+    """
+
+    def __init__(self, d_model: int, n_heads: int, dropout: float):
+        super().__init__()
+        assert d_model % n_heads == 0, (
+            f"cross-attn: d_model ({d_model}) must be divisible by n_heads ({n_heads})"
+        )
+        self.n_heads = n_heads
+        self.head_dim = d_model // n_heads
+        # Separate projections for query (from own hidden) and key/value
+        # (from external memory). Both live in d_model so the receiving
+        # expert's from_shared_space output feeds straight in.
+        self.q_proj = nn.Linear(d_model, d_model, bias=False)
+        self.k_proj = nn.Linear(d_model, d_model, bias=False)
+        self.v_proj = nn.Linear(d_model, d_model, bias=False)
+        self.out_proj = nn.Linear(d_model, d_model, bias=False)
+        self.norm_q = nn.LayerNorm(d_model, bias=False)
+        self.norm_kv = nn.LayerNorm(d_model, bias=False)
+        self.norm_out = nn.LayerNorm(d_model, bias=False)
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, x: torch.Tensor, mem: torch.Tensor) -> torch.Tensor:
+        B, T, C = x.shape
+        S = mem.size(1)
+        q = self.q_proj(self.norm_q(x))   # [B, T, C]
+        k = self.k_proj(self.norm_kv(mem))  # [B, S, C]
+        v = self.v_proj(self.norm_kv(mem))  # [B, S, C]
+        # Reshape to heads: [B, h, *, head_dim]
+        q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, S, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, S, self.n_heads, self.head_dim).transpose(1, 2)
+        # Scaled dot-product attention. No causal mask: the carried memory is
+        # a fixed set of sender states that every query position may attend
+        # to fully (it is "past" context from the other expert).
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
+        att = F.softmax(att, dim=-1)
+        att = self.drop(att)
+        y = att @ v  # [B, h, T, head_dim]
+        y = y.transpose(1, 2).reshape(B, T, C)
+        y = self.out_proj(y)
+        y = self.drop(y)
+        # Residual + final LayerNorm (CALM-style: cross-attn refines, not
+        # replaces, the expert's own representation).
+        return self.norm_out(x + y)
+
+
 class Block(nn.Module):
     def __init__(self, cfg: ExpertConfig):
         super().__init__()
@@ -105,6 +170,17 @@ class Expert(nn.Module):
         # Lightweight projections to/from the shared space.
         self.to_shared = nn.Linear(cfg.d_model, shared_cfg.dim, bias=False)
         self.from_shared = nn.Linear(shared_cfg.dim, cfg.d_model, bias=False)
+
+        # Optional CALM-style cross-attention bridge. When enabled, the
+        # expert gets a CrossAttention block that attends over the *other*
+        # expert's carried states (already projected back into this expert's
+        # d_model via from_shared_space). See SharedSpaceConfig.cross_attn.
+        self.cross_attn: nn.Module = None
+        if shared_cfg.cross_attn:
+            self.cross_attn = CrossAttention(
+                cfg.d_model, shared_cfg.cross_attn_n_heads,
+                shared_cfg.cross_attn_dropout,
+            )
 
         # Causal mask is built dynamically in _blocks (see above).
 
@@ -174,6 +250,38 @@ class Expert(nn.Module):
                 seed = seed.unsqueeze(1)  # [B, d] -> [B, 1, d]
             x = torch.cat([seed, x], dim=1)  # [B, K + T, d]
         return self._blocks(x)
+
+    def encode_with_cross_attn(
+        self, ids: torch.Tensor, memory: torch.Tensor = None
+    ) -> torch.Tensor:
+        """Encode ids, optionally cross-attending to external carried memory.
+
+        CALM-style bridge: instead of (or in addition to) prepending the
+        carried states as virtual seed positions, the expert's own hidden
+        states are used as queries that attend to the *other* expert's
+        carried states (keys/values). This gives every position a learned,
+        content-addressable channel to all K carried sender states.
+
+        `memory` is [B, S, d_model] -- the carried states ALREADY projected
+        back into this expert's d_model via `from_shared_space`. When None,
+        this falls back to a plain encode(ids).
+
+        The cross-attention is applied AFTER the transformer blocks (so the
+        expert first forms its own representation, then refines it by
+        attending to the sender's memory -- mirroring CALM, where a deeper
+        layer's state informs an earlier/auxiliary prediction).
+
+        When `shared.cross_attn_residual` is True AND a seed is also being
+        used, callers may combine both mechanisms; this method only handles
+        the cross-attention path. Returns [B, T, d_model] (no seed prefix).
+        """
+        x = self._embed(ids)  # [B, T, d]
+        h = self._blocks(x)   # [B, T, d]  (own representation)
+        if memory is not None and self.cross_attn is not None:
+            if memory.dim() == 2:
+                memory = memory.unsqueeze(1)  # [B, d] -> [B, 1, d]
+            h = self.cross_attn(h, memory)    # [B, T, d]
+        return h
 
     def logits_from_hidden(self, h: torch.Tensor) -> torch.Tensor:
         """Map a hidden state (this expert's space) to its vocab logits."""

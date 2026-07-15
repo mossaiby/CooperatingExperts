@@ -51,7 +51,7 @@ ENGLISH_SNIPPETS: List[str] = [
 ] * 50
 
 
-def _tiny_config() -> Config:
+def _tiny_config(cross_attn: bool = False) -> Config:
     cfg = Config()
     cfg.experts = {
         "python": ExpertConfig(name="python", vocab_size=2000, d_model=64,
@@ -60,7 +60,11 @@ def _tiny_config() -> Config:
                                 n_heads=2, n_layers=2, d_ff=256, max_seq_len=64),
     }
     # bridge_len=2 exercises the multi-vector hand-off path (K>1).
-    cfg.shared = SharedSpaceConfig(dim=64, bridge_len=2)
+    # cross_attn=True exercises the CALM-style cross-attention bridge.
+    cfg.shared = SharedSpaceConfig(
+        dim=64, bridge_len=2,
+        cross_attn=cross_attn, cross_attn_n_heads=2,
+    )
     cfg.train = TrainConfig(
         pretrain_batch_size=16, pretrain_lr=3e-4,
         pretrain_steps_max=60,
@@ -79,12 +83,13 @@ def _write_corpus(tmp: Path, name: str, texts: List[str]) -> List[Path]:
     return [path]
 
 
-def main() -> None:
+def _run_pipeline(cfg: Config, label: str) -> None:
+    """Run the full pipeline once for a given config."""
+    print(f"\n{'='*70}\n{label}\n{'='*70}")
     torch.manual_seed(42)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    cfg = _tiny_config()
     names = list(cfg.experts.keys())
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -153,7 +158,13 @@ def main() -> None:
                                  temperature=0.7, top_k=20)
             print("  " + out.replace("\n", "\n  "))
 
-    print("\n[OK] Smoke test passed!")
+
+def main() -> None:
+    # Run the pipeline twice: once with the legacy seed-prepend bridge, once
+    # with the CALM-style cross-attention bridge, to exercise both code paths.
+    _run_pipeline(_tiny_config(cross_attn=False), "LEGACY seed-prepend bridge")
+    _run_pipeline(_tiny_config(cross_attn=True),  "CALM cross-attention bridge")
+    print("\n[OK] Smoke test passed (both bridge modes)!")
 
 
 if __name__ == "__main__":

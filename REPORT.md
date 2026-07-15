@@ -168,6 +168,68 @@ The causal mask is built **dynamically** in `_blocks` so it works for any
 sequence length — including the `+1` position prepended when a carried hidden
 state seeds a segment (in joint and mixed loss).
 
+### 4.4 CALM-style cross-attention bridge (optional)
+
+When `SharedSpaceConfig.cross_attn = True`, each `Expert` additionally owns a
+**`CrossAttention`** block — a CALM (Confident Adaptive Language Modeling,
+Schuster et al. 2022) cross-attention layer that gives the receiving expert a
+richer inter-expert channel than the linear `from_shared` seed.
+
+**Motivation.** The default bridge carries the sender's last `K` hidden states
+through the shared bottleneck and *prepends* them as virtual seed positions
+(§4.3, `encode_with_seed`). That works, but every real token only sees the
+carried states as fixed prefix context. CALM's idea — let an auxiliary head
+*query* a deeper/other computation's states — maps naturally here: the
+receiving expert's own hidden states become **queries**, and the *other*
+expert's carried states become **keys/values**. Every position in the
+receiving segment can then attend to all `K` carried sender states in a
+content-addressable way, instead of only as a static prefix.
+
+**Block layout** (`CrossAttention` in `model.py`):
+
+```
+q = q_proj(LayerNorm(x))          # x: [B, T, d_model]  (receiving expert's own hidden)
+k = k_proj(LayerNorm(mem))        # mem: [B, S, d_model] (carried states, already in this expert's d_model)
+v = v_proj(LayerNorm(mem))
+att = softmax(q kᵀ / √head_dim) v
+out = LayerNorm(x + out_proj(att))   # residual + final LayerNorm (CALM-style)
+```
+
+- `q_proj` / `k_proj` / `v_proj` / `out_proj` are independent `Linear(d_model,
+  d_model, bias=False)`; `n_heads = shared.cross_attn_n_heads` (must divide
+  `d_model`), `dropout = shared.cross_attn_dropout`.
+- **No causal mask** inside cross-attention: the carried memory is a fixed set
+  of sender states that every query position may attend to fully (it is
+  "past" context from the other expert).
+- The block is applied **after** the expert's own transformer blocks (so the
+  expert first forms its own representation, then refines it by attending to
+  the sender's memory — mirroring CALM, where a deeper layer's state informs an
+  earlier/auxiliary prediction). When `cross_attn_residual = True` (default)
+  the output is added residually; the carried states are **never** prepended as
+  seed positions in this mode.
+
+**Entry point**: `Expert.encode_with_cross_attn(ids, memory)` — `memory` is the
+carried states already projected back into this expert's `d_model` via
+`from_shared_space` (`[B, S, d_model]`). When `memory is None` it falls back to
+a plain `encode(ids)`. The output is `[B, T, d_model]` with **no seed prefix**,
+so the caller indexes logits uniformly (`h[:, :-1, :]` vs `ids[:, 1:]`).
+
+**Config knobs** (all in `SharedSpaceConfig`):
+
+| knob | default | meaning |
+|---|---|---|
+| `cross_attn` | `False` | master switch for the CALM bridge |
+| `cross_attn_n_heads` | `8` | heads in the cross-attn block (must divide `d_model`) |
+| `cross_attn_dropout` | `0.1` | dropout inside the cross-attn block |
+| `cross_attn_residual` | `True` | residual-add the cross-attn output (CALM-style) |
+
+**Routing.** `CooperatingExperts` exposes `_cross_attn_enabled()`,
+`_carry_through_shared()`, and `_encode_segment()` helpers that route
+`joint_loss`, `mixed_loss`, and `generate` to the cross-attn path when enabled
+and to the legacy seed-prepend path otherwise. The two modes are mutually
+exclusive per run (set by `shared.cross_attn`). The smoke test (`smoke_test.py`)
+exercises **both** modes.
+
 ---
 
 ## 5. The CooperatingExperts wrapper (`cooperating.py`)
@@ -197,9 +259,14 @@ continuation `ids_b` (expert B), with bridge width `K = shared.bridge_len`:
 2. **Project to shared space**: `z = A.to_shared_space(seed_src)`  →  `[B, k, 256]`.
 3. **Project into B's space**: `seed_b = B.from_shared_space(z)`  →  `[B, k, d_b]`.
 4. **Run B on `ids_b`**, seeded by the `k` carried states as virtual positions
-   `0..k-1` (`B.encode_with_seed(ids_b, seed_b)` → `[B, k+Tb, d_b]`).
+   `0..k-1` (`B.encode_with_seed(ids_b, seed_b)` → `[B, k+Tb, d_b]`). **If the
+   CALM cross-attention bridge is enabled** (`shared.cross_attn=True`), step 4
+   instead calls `B.encode_with_cross_attn(ids_b, seed_b)` → `[B, Tb, d_b]`
+   (no seed prefix; B's own hidden states cross-attend to `seed_b` as memory).
 5. **LM loss**: output index `k-1` (the last seed) predicts `ids_b[0]`, so the
-   `Tb` logits that predict `ids_b` are `h_b[:, k-1 : k-1+Tb, :]`.
+   `Tb` logits that predict `ids_b` are `h_b[:, k-1 : k-1+Tb, :]`. **In the
+   cross-attention mode** the output has no seed prefix, so the `Tb-1` logits
+   that predict `ids_b` are `h_b[:, :-1, :]` vs targets `ids_b[:, 1:]`.
 6. **Alignment regularizer**: encourages each expert's own round-trip
    (`from_shared∘to_shared`) to be close to identity:
    `||A.from_shared(A.to_shared(ref_a)) - ref_a||²` (and same for B). The
@@ -227,12 +294,17 @@ generation exactly:
 1. For each segment, embed the ids and **prepend the `K = bridge_len` carried
    hidden states** as virtual positions `0..K-1` (`K` zero vectors for the first
    segment, so every segment uses the same "index `K-1` predicts `ids[0]`"
-   offset). See `Expert.encode_with_seed`.
+   offset). See `Expert.encode_with_seed`. **If the CALM cross-attention bridge
+   is enabled**, step 1 instead calls `Expert.encode_with_cross_attn(ids,
+   carried)` → `[B, T, d]` (no seed prefix; the carried states are consumed as
+   cross-attention memory, with a zero memory bank for the first segment).
 2. Run the expert's transformer blocks over the `[B, K+T, d]` sequence.
 3. Compute LM loss over the T real tokens: `logits = head(h[:, K-1:K-1+T, :])`,
-   `targets = ids`. **Switch tokens are real targets** but down-weighted by
-   `switch_loss_weight` (0.1) via a per-class cross-entropy weight vector, so
-   the model isn't equally rewarded for switching as for generating content.
+   `targets = ids`. **In cross-attention mode** the logits/targets are
+   `head(h[:, :-1, :])` vs `ids[:, 1:]`. **Switch tokens are real targets** but
+   down-weighted by `switch_loss_weight` (0.1) via a per-class cross-entropy
+   weight vector, so the model isn't equally rewarded for switching as for
+   generating content.
 4. **Carry the last `K` hidden states** through the shared space to the next
    expert: `z = exp.to_shared_space(h[:, -K:, :])`, then
    `carried = next_expert.from_shared_space(z)`. The carried states are
@@ -254,7 +326,11 @@ Autoregressive sampling with live expert switching:
 
 1. Encode the prompt in the starting expert's vocab.
 2. At each step, encode the current sequence (prepending the carried state if
-   any), take the last-position logits.
+   any), take the last-position logits. **If the CALM cross-attention bridge is
+   enabled**, the encode step calls `Expert.encode_with_cross_attn(ids, carried)`
+   instead of `encode_with_seed`; when `ids` is empty (just after a switch) a
+   single `<pad>` token is used as a query position so the expert can still
+   predict the next token from the carried memory.
 3. **Mask out the self-switch** `<switch:<active>>` (no-op loops) and, once the
    switch budget is exhausted, mask out all switch tokens (`max_switches = 4`).
 4. Apply temperature + top-k sampling.
@@ -439,8 +515,13 @@ key dataclasses:
 
 - **`ExpertConfig`**: per-expert transformer dimensions (`d_model`, `n_heads`,
   `n_layers`, `d_ff`, `max_seq_len`, `dropout`) and tokenizer size.
-- **`SharedSpaceConfig`**: `dim=256` (the bottleneck) and `bridge_len` (how many
-  hidden states are carried across a hand-off; default 1).
+- **`SharedSpaceConfig`**: `dim=256` (the bottleneck), `bridge_len` (how many
+  hidden states are carried across a hand-off; default 1), and the optional
+  CALM cross-attention bridge knobs — `cross_attn` (master switch, default
+  `False`), `cross_attn_n_heads` (heads in the cross-attn block, default 8),
+  `cross_attn_dropout` (default 0.1), `cross_attn_residual` (default `True`).
+  When `cross_attn=True` the carried states are consumed via cross-attention
+  instead of being prepended as seed positions (see §4.4).
 - **`Config.large()`**: a bigger preset (`d_model=768`, 8 layers, 12 heads,
   dim 384, `max_seq_len=1024` → ~63-67 M/expert) for 11 GB GPUs.
 - **`PretrainOverride`**: per-expert overrides for pre-training knobs; any

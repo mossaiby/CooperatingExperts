@@ -41,6 +41,21 @@ Expert B (vocab_B) ◄── [hidden h_B] ◄── from_shared ◄────�
   `bridge_len` hidden states of the sending expert (not just one). The default
   is `1` (the original design); set it to `K > 1` to widen the inter-expert
   channel — the receiving expert then gets `K` seed positions to attend to.
+
+- **CALM-style cross-attention bridge (`shared.cross_attn`).** When enabled,
+  each expert gets a dedicated `CrossAttention` block (Schuster et al. 2022,
+  *Confident Adaptive Language Modeling*) that lets the receiving expert's own
+  hidden states **query** the *other* expert's carried states (used as
+  keys/values). This is a richer inter-expert channel than the linear
+  `from_shared` seed: every position in the receiving segment can attend to
+  all `K` carried sender states in a content-addressable way, instead of only
+  seeing them as fixed virtual seed positions. Config knobs:
+  `cross_attn_n_heads` (heads in the cross-attn block, must divide `d_model`),
+  `cross_attn_dropout`, and `cross_attn_residual` (whether the cross-attn
+  output is added residually to the expert's own representation, CALM-style).
+  When `cross_attn=True`, the carried states are consumed **only** via
+  cross-attention (the seed-prepend path is bypassed). The smoke test
+  (`python smoke_test.py`) exercises both modes.
 - The LM head is **tied** to the input embedding table (standard for small
   models, saves parameters).
 

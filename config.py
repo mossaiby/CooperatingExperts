@@ -104,9 +104,32 @@ class SharedSpaceConfig:
     through the shared space, giving the receiving expert a short sequence of
     seed positions to attend to instead of one. K=1 reproduces the original
     behaviour exactly.
+
+    `cross_attn` enables a CALM-style (Confident Adaptive Language Modeling,
+    Schuster et al. 2022) cross-attention layer on each expert. Instead of
+    (or in addition to) prepending the carried states as virtual seed
+    positions, the receiving expert gets a dedicated cross-attention block
+    whose queries are its own hidden states and whose keys/values come from
+    the *other* expert's carried states (projected through the shared space).
+    This gives every position in the receiving segment a learned, content-
+    addressable channel to all K carried sender states -- a much richer
+    inter-expert bridge than a single linear `from_shared` seed.
+
+    `cross_attn_n_heads` is the number of attention heads in the cross-attn
+    block (independent of the expert's own `n_heads`). Must divide `d_model`.
+    `cross_attn_dropout` is the dropout applied inside the cross-attn block.
+    `cross_attn_residual` controls whether the cross-attn output is added
+    residually to the expert's hidden states (True, CALM-style) or replaces
+    the seed-prepend mechanism entirely (False -> the carried states are
+    only consumed via cross-attention, never prepended).
     """
     dim: int = 256
     bridge_len: int = 1
+    # CALM-style cross-attention bridge between experts.
+    cross_attn: bool = False
+    cross_attn_n_heads: int = 8
+    cross_attn_dropout: float = 0.1
+    cross_attn_residual: bool = True
 
 
 @dataclass
