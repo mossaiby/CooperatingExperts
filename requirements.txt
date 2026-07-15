@@ -1,3 +1,8 @@
+# Install GPU-enabled PyTorch wheels from the CUDA 12.1 index.
+# This forces pip to resolve torch (and torchvision/torchaudio if added)
+# from the CUDA build rather than the default CPU-only PyPI wheel.
+--extra-index-url https://download.pytorch.org/whl/cu121
+
 torch>=2.0
 datasets>=2.0
 tokenizers>=0.15
