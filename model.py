@@ -15,6 +15,13 @@ The expert exposes:
 
 The projection layers (Linear d_model -> shared_dim and back) live on the
 expert so that joint fine-tuning only needs to touch these small matrices.
+
+Positional information is provided by **rotary position embeddings (RoPE)**
+applied inside the attention block, so there is no absolute position-embedding
+table. This matters for the inter-expert hand-off: carried "seed" states can
+be prepended as virtual positions without colliding with a real token's
+absolute position, and long segments can never index a position table out of
+range.
 """
 from __future__ import annotations
 
@@ -28,10 +35,38 @@ import torch.nn.functional as F
 from config import ExpertConfig, SharedSpaceConfig
 
 
+def _rope_cos_sin(seq_len: int, head_dim: int, device, dtype) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Precompute the RoPE cos/sin tables for a given length and head dim.
+
+    Returns two tensors of shape [seq_len, head_dim] (the half-dim angles are
+    duplicated so they align with the interleaved rotate_half layout).
+    """
+    half = head_dim // 2
+    inv_freq = 1.0 / (10000.0 ** (torch.arange(0, half, device=device).float() / half))
+    t = torch.arange(seq_len, device=device).float()
+    freqs = torch.outer(t, inv_freq)          # [seq_len, half]
+    emb = torch.cat([freqs, freqs], dim=-1)   # [seq_len, head_dim]
+    return emb.cos().to(dtype), emb.sin().to(dtype)
+
+
+def _rotate_half(x: torch.Tensor) -> torch.Tensor:
+    half = x.size(-1) // 2
+    x1, x2 = x[..., :half], x[..., half:]
+    return torch.cat([-x2, x1], dim=-1)
+
+
+def _apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
+    """Apply RoPE to x [B, h, T, head_dim] using cos/sin [T, head_dim]."""
+    cos = cos[None, None, :, :]
+    sin = sin[None, None, :, :]
+    return x * cos + _rotate_half(x) * sin
+
+
 class CausalSelfAttention(nn.Module):
     def __init__(self, d_model: int, n_heads: int, dropout: float):
         super().__init__()
         assert d_model % n_heads == 0
+        assert (d_model // n_heads) % 2 == 0, "RoPE needs an even head_dim"
         self.n_heads = n_heads
         self.head_dim = d_model // n_heads
         self.qkv = nn.Linear(d_model, 3 * d_model, bias=False)
@@ -46,6 +81,12 @@ class CausalSelfAttention(nn.Module):
         q = q.transpose(1, 2)  # [B, h, T, hd]
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
+        # Rotary position embeddings: encode position by rotating q/k. Because
+        # position is relative, prepended seed states and real tokens never
+        # collide on an absolute index (unlike an absolute pos-emb table).
+        cos, sin = _rope_cos_sin(T, self.head_dim, x.device, q.dtype)
+        q = _apply_rope(q, cos, sin)
+        k = _apply_rope(k, cos, sin)
         # Scaled dot-product attention with causal mask.
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
         att = att + attn_mask  # [B,1,T,T] broadcast
@@ -157,9 +198,9 @@ class Expert(nn.Module):
         self.shared_cfg = shared_cfg
         self.vocab_size = vocab_size
 
-        # Token + position embeddings (per-expert vocab).
+        # Token embeddings (per-expert vocab). Position is handled by RoPE
+        # inside attention, so there is no absolute position-embedding table.
         self.tok_emb = nn.Embedding(vocab_size, cfg.d_model)
-        self.pos_emb = nn.Embedding(cfg.max_seq_len, cfg.d_model)
         self.drop = nn.Dropout(cfg.dropout)
 
         self.blocks = nn.ModuleList([Block(cfg) for _ in range(cfg.n_layers)])
@@ -188,6 +229,12 @@ class Expert(nn.Module):
         # Causal mask is built dynamically in _blocks (see above).
 
         self.apply(self._init_weights)
+        # Depth-aware (GPT-2 style) scaling of residual output projections:
+        # scale by 1/sqrt(2 * n_layers) so the residual stream variance does
+        # not grow with depth. Applied AFTER the base init so it overrides the
+        # std=0.02 default for exactly the projections that write back into
+        # the residual stream (attn.proj and ff.fc2).
+        self._scale_residual_projections()
 
     # ------------------------------------------------------------------ #
     def _init_weights(self, module: nn.Module) -> None:
@@ -196,17 +243,22 @@ class Expert(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
+    def _scale_residual_projections(self) -> None:
+        scale = 1.0 / math.sqrt(2 * self.cfg.n_layers)
+        for blk in self.blocks:
+            with torch.no_grad():
+                blk.attn.proj.weight.mul_(scale)
+                blk.ff.fc2.weight.mul_(scale)
+
     # ------------------------------------------------------------------ #
     def _embed(self, ids: torch.Tensor) -> torch.Tensor:
-        B, T = ids.shape
-        pos = torch.arange(T, device=ids.device)
-        x = self.tok_emb(ids) + self.pos_emb(pos)[None, :, :]
+        x = self.tok_emb(ids)
         return self.drop(x)
 
     def _blocks(self, x: torch.Tensor) -> torch.Tensor:
         T = x.size(1)
         # Build the causal mask dynamically so it works for any sequence
-        # length (including the +1 prepended carried-state in joint_loss).
+        # length (including the +K prepended carried-state seed positions).
         mask = torch.triu(
             torch.full((T, T), float("-inf"), device=x.device), diagonal=1
         ).unsqueeze(0).unsqueeze(0)  # [1, 1, T, T]
@@ -234,20 +286,17 @@ class Expert(nn.Module):
 
         `seed` is [B, K, d_model] (or None). When provided, the K seed vectors
         are prepended as virtual positions 0..K-1 that every real token can
-        attend to (causally). The real tokens keep their own positional
-        embeddings (arange(T)); the seed vectors carry no token-position
-        embedding -- they are hand-off signals from another expert, not tokens.
+        attend to (causally). With RoPE, position is relative, so the seed
+        vectors simply occupy the first K positions and the real tokens follow
+        at K..K+T-1; there is no absolute-index collision and no position
+        table to overflow.
 
         Returns the full last-layer hidden states:
           - shape [B, K + T, d_model] when a seed is given (index 0..K-1 are
             the seed outputs; K.. are the real-token outputs), or
           - shape [B, T, d_model] when seed is None.
-
-        Keeping the real tokens' positions at arange(T) (rather than shifting
-        them by K) means the positional-embedding table is never indexed past
-        max_seq_len - 1, so long segments cannot cause an out-of-range lookup.
         """
-        x = self._embed(ids)  # [B, T, d]; real tokens keep positions arange(T)
+        x = self._embed(ids)  # [B, T, d]
         if seed is not None:
             if seed.dim() == 2:
                 seed = seed.unsqueeze(1)  # [B, d] -> [B, 1, d]
@@ -274,9 +323,7 @@ class Expert(nn.Module):
         attending to the sender's memory -- mirroring CALM, where a deeper
         layer's state informs an earlier/auxiliary prediction).
 
-        When `shared.cross_attn_residual` is True AND a seed is also being
-        used, callers may combine both mechanisms; this method only handles
-        the cross-attention path. Returns [B, T, d_model] (no seed prefix).
+        Returns [B, T, d_model] (no seed prefix).
         """
         x = self._embed(ids)  # [B, T, d]
         h = self._blocks(x)   # [B, T, d]  (own representation)

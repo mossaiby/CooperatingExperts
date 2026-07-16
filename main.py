@@ -269,6 +269,34 @@ def cmd_status(cfg: Config) -> None:
         print(f"  {p.name:40s} {p.stat().st_size/1024:.1f} KB")
 
 
+def cmd_eval(cfg: Config) -> None:
+    """Report held-out per-segment perplexity of the cooperating model.
+
+    This is the metric that tests the core hypothesis: does routing between
+    two specialised experts model interleaved code/prose well? Compare the
+    reported python/english/overall perplexity against the monolithic
+    baseline in eval.py (pretrain_monolith / monolith_perplexity).
+    """
+    from eval import segment_perplexity
+
+    tokenizers = _load_or_build_tokenizers(cfg)
+    model = _build_model(cfg, tokenizers)
+    final = CKPT_DIR / "model_final.pt"
+    if final.exists():
+        load_checkpoint(model, tokenizers, tag="final")
+    else:
+        pre = CKPT_DIR / "model_pretrained.pt"
+        if pre.exists():
+            load_checkpoint(model, tokenizers, tag="pretrained")
+        else:
+            print("No checkpoint found. Run `pretrain` and `joint` first.")
+            return
+    ppl = segment_perplexity(model, tokenizers, cfg)
+    print("\n== Cooperating model perplexity (held-out sessions) ==")
+    for k in ("python", "english", "overall"):
+        print(f"  {k:8s}: {ppl[k]:.3f}")
+
+
 def cmd_all(cfg: Config) -> None:
     prepare(cfg)
     cmd_pretrain(cfg)
@@ -283,6 +311,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Cooperating Experts test framework")
     parser.add_argument("command", choices=[
         "extract", "prepare", "pretrain", "joint", "generate", "all", "status",
+        "eval",
         "download", "gen-data", "prepare-hybrid", "all-hybrid",
     ])
     parser.add_argument("prompt", nargs="?", default=None)
@@ -336,6 +365,8 @@ def main() -> None:
         cmd_generate(cfg, args.prompt, args.expert, args.max_tokens)
     elif args.command == "status":
         cmd_status(cfg)
+    elif args.command == "eval":
+        cmd_eval(cfg)
     elif args.command == "all":
         cmd_all(cfg)
     elif args.command == "download":

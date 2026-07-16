@@ -83,35 +83,58 @@ class CooperatingExperts(nn.Module):
         out = dst_expert.from_shared_space(z)        # [B, k, d_dst]
         return out.detach() if detach else out
 
-    def _encode_segment(
+    def _handoff_query_ids(self, name: str, ids: torch.Tensor) -> torch.Tensor:
+        """Prepend a single pad "hand-off query" position to `ids`.
+
+        This is the unified hand-off convention used by joint_loss,
+        mixed_loss and generate: after a switch, a leading pad position acts
+        as the query that predicts the FIRST destination token, then each
+        real token predicts its successor. Using the same convention in every
+        path guarantees training matches inference.
+        """
+        handoff = torch.full(
+            (ids.size(0), 1), self.tokenizers[name].pad_id,
+            dtype=ids.dtype, device=ids.device,
+        )
+        return torch.cat([handoff, ids], dim=1)
+
+    def _encode_receiver(
         self,
+        name: str,
         expert: Expert,
         ids: torch.Tensor,
         carried: Optional[torch.Tensor],
-    ) -> torch.Tensor:
-        """Encode a segment, choosing the CALM cross-attn path or the
-        seed-prepend path based on config.
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Encode a segment that RECEIVES a hand-off (carried != None) or not.
 
-        `carried` is the receiving expert's own-d_model representation of the
-        sender's last K hidden states (already produced by
-        _carry_through_shared). It is [B, K, d_model] or None.
+        Returns (logits, targets) where logits predict `targets` position-for-
+        position, under the SAME convention for both bridge modes:
 
-        Returns the last-layer hidden states of the receiving expert over the
-        real tokens of `ids` -- shape [B, T, d_model] (no seed prefix), so
-        the caller can index logits with a uniform h[:, -1, :] / h[:, -k:, :]
-        regardless of which path was taken.
+          - no carry: standard causal LM (logits[:, :-1] predict ids[:, 1:]).
+          - with carry: a leading pad hand-off query predicts the first token,
+            so logits predict all of `ids`.
+
+        For the seed-prepend path the carried states are prepended as virtual
+        positions; the hand-off query then sits right after them and its
+        output is the first prediction, exactly mirroring generation.
         """
         if carried is None:
-            return expert.encode_with_cross_attn(ids, None) \
-                if self._cross_attn_enabled() else expert.encode(ids)
+            h = (expert.encode_with_cross_attn(ids, None)
+                 if self._cross_attn_enabled() else expert.encode(ids))
+            logits = expert.logits_from_hidden(h[:, :-1, :])
+            return logits, ids[:, 1:], h
 
+        query_ids = self._handoff_query_ids(name, ids)
         if self._cross_attn_enabled():
-            # CALM path: cross-attend to the carried memory. No seed prefix,
-            # so the output is [B, T, d] directly.
-            return expert.encode_with_cross_attn(ids, carried)
-        # Legacy path: prepend carried states as virtual seed positions.
-        # Output is [B, K + T, d]; callers offset by k-1 to get the T logits.
-        return expert.encode_with_seed(ids, carried)
+            h = expert.encode_with_cross_attn(query_ids, carried)  # [B, 1+T, d]
+            logits = expert.logits_from_hidden(h[:, :-1, :])       # predict ids
+            return logits, ids, h
+        # Seed-prepend path: [B, K + (1+T), d]. The K seed outputs are
+        # discarded; the hand-off-query output predicts the first token.
+        k = carried.size(1)
+        h = expert.encode_with_seed(query_ids, carried)
+        logits = expert.logits_from_hidden(h[:, k:k + query_ids.size(1) - 1, :])
+        return logits, ids, h
 
     # ------------------------------------------------------------------ #
     # Pre-training loss for a single expert (standard next-token LM).
@@ -177,35 +200,15 @@ class CooperatingExperts(nn.Module):
 
         # 2-3. Carry the k boundary states through the shared bottleneck into
         #      B's hidden space.
-        z = exp_a.to_shared_space(seed_src)       # [B, k, shared_dim]
-        seed_b = exp_b.from_shared_space(z)       # [B, k, d_b]
+        z_a = exp_a.to_shared_space(seed_src)     # [B, k, shared_dim]
+        seed_b = exp_b.from_shared_space(z_a)     # [B, k, d_b]
 
-        # 4. Run B on ids_b. Two paths:
-        #    - CALM cross-attn: B's own hidden states cross-attend to seed_b
-        #      as memory; output is [B, Tb, d_b] (no seed prefix), so the
-        #      logits that predict ids_b are h_b[:, :Tb, :] shifted by one.
-        #    - Legacy seed-prepend: seed_b is prepended as virtual positions
-        #      0..k-1; output is [B, k+Tb, d_b] and the Tb predicting logits
-        #      are h_b[:, k-1:k-1+Tb, :].
-        if self._cross_attn_enabled():
-            # Match generation: a hand-off query predicts the first token,
-            # then each real token predicts its successor.
-            handoff = torch.full(
-                (ids_b.size(0), 1), self.tokenizers[name_b].pad_id,
-                dtype=ids_b.dtype, device=ids_b.device,
-            )
-            query_ids = torch.cat([handoff, ids_b], dim=1)
-            h_b = exp_b.encode_with_cross_attn(query_ids, seed_b)
-            logits_b = exp_b.logits_from_hidden(h_b[:, :-1, :])
-            targets_b = ids_b
-            ref_b_hidden = h_b[:, 1:, :].detach()
-        else:
-            h_b = exp_b.encode_with_seed(ids_b, seed_b)  # [B, k + Tb, d_b]
-            Tb = ids_b.size(1)
-            logits_b = exp_b.logits_from_hidden(h_b[:, k - 1:k - 1 + Tb, :])
-            targets_b = ids_b
-            ref_b_hidden = h_b[:, k:, :].detach()       # [B, Tb, d_b] = B's own hidden
-
+        # 4-5. Run B under the UNIFIED hand-off convention (a leading pad
+        #      query predicts the first token). _encode_receiver handles both
+        #      bridge modes identically to generation.
+        logits_b, targets_b, h_b = self._encode_receiver(
+            name_b, exp_b, ids_b, seed_b,
+        )
         pad_b = self.tokenizers[name_b].pad_id
         lm_loss = F.cross_entropy(
             logits_b.reshape(-1, logits_b.size(-1)),
@@ -213,20 +216,33 @@ class CooperatingExperts(nn.Module):
             ignore_index=pad_b,
         )
 
-        # 6. Alignment regularizer: encourage each expert's own round-trip
-        #    (from_shared . to_shared) to be close to identity. We reuse hidden
-        #    states already computed (A's boundary states, and B's own hidden
-        #    over its real tokens taken from h_b) instead of running a second
-        #    forward pass through B. The references are detached so this term
-        #    only trains the projection weights, not the (here frozen) blocks.
+        # 6a. Round-trip alignment: encourage each expert's own
+        #     (from_shared . to_shared) to be close to identity, so the
+        #     projections are (approximately) invertible.
         ref_a = seed_src.detach()
-        align_a = F.mse_loss(
-            exp_a.from_shared_space(exp_a.to_shared_space(ref_a)), ref_a
+        # B's own hidden over its first k real tokens (a stable reference that
+        # does not depend on the hand-off path indexing).
+        ref_b_hidden = exp_b.encode(ids_b)[:, :k, :].detach()
+        align_rt = (
+            F.mse_loss(exp_a.from_shared_space(exp_a.to_shared_space(ref_a)), ref_a)
+            + F.mse_loss(
+                exp_b.from_shared_space(exp_b.to_shared_space(ref_b_hidden)),
+                ref_b_hidden,
+            )
         )
-        align_b = F.mse_loss(
-            exp_b.from_shared_space(exp_b.to_shared_space(ref_b_hidden)), ref_b_hidden
-        )
-        align = align_a + align_b
+
+        # 6b. Cross-expert alignment: the whole point of a SHARED space is that
+        #     A's boundary states and B's continuation states land in the same
+        #     region of the bottleneck. Round-trip identity alone allows each
+        #     expert to occupy a disjoint subspace. We therefore pull A's
+        #     boundary shared code toward B's continuation shared code (both
+        #     L2-normalized so this aligns direction, not magnitude).
+        z_b = exp_b.to_shared_space(ref_b_hidden)          # [B, k, shared_dim]
+        z_a_n = F.normalize(z_a.mean(dim=1), dim=-1)       # [B, shared_dim]
+        z_b_n = F.normalize(z_b.mean(dim=1), dim=-1)       # [B, shared_dim]
+        align_cross = (1.0 - (z_a_n * z_b_n).sum(dim=-1)).mean()
+
+        align = align_rt + align_cross
 
         total = lm_loss + align_weight * align
         info = {
@@ -274,46 +290,35 @@ class CooperatingExperts(nn.Module):
                 ids = ids[:, -exp.cfg.max_seq_len:]
                 T = ids.size(1)
 
-            if self._cross_attn_enabled():
-                if carried is None:
-                    # No external memory on the first segment: preserve normal
-                    # causal-LM behavior without an extra normalization pass.
-                    h = exp.encode(ids)
-                    logits = exp.logits_from_hidden(h[:, :-1, :])
-                    targets = ids[:, 1:]
-                else:
-                    # Match generation and train the first destination token.
-                    handoff = torch.full(
-                        (B, 1), self.tokenizers[name].pad_id,
-                        dtype=ids.dtype, device=device,
-                    )
-                    query_ids = torch.cat([handoff, ids], dim=1)
-                    h = exp.encode_with_cross_attn(query_ids, carried)
-                    logits = exp.logits_from_hidden(h[:, :-1, :])
-                    targets = ids
-            else:
-                if carried is None:
-                    carried = torch.zeros(B, K, exp.cfg.d_model, device=device)
-                k = carried.size(1)
-                # Legacy seed-prepend path.
-                h = exp.encode_with_seed(ids, carried)  # [B, k + T, d]
-                logits = exp.logits_from_hidden(h[:, k - 1:k - 1 + T, :])  # [B, T, V]
-                targets = ids                              # [B, T]
+            # Unified hand-off convention for BOTH bridge modes (see
+            # _encode_receiver): a leading pad query predicts the first token
+            # after a switch, exactly like generation.
+            logits, targets, h = self._encode_receiver(name, exp, ids, carried)
 
             pad = self.tokenizers[name].pad_id
 
-            # Down-weight switch tokens to prevent over-switching.
-            sw_weight = torch.ones(exp.vocab_size, device=device)
+            # Down-weight switch tokens per-TOKEN (not per-vocab-class). A
+            # per-class `weight=` also rescales the overall loss magnitude,
+            # making it non-comparable to the pretrain/joint LM loss. Instead
+            # we compute an unreduced CE and scale only the positions whose
+            # target is a switch token.
             sw_w = self.config.train.switch_loss_weight
-            for _n in self.expert_names:
-                sw_weight[self.tokenizers[name].switch_id(_n)] = sw_w
-
-            seg_loss = F.cross_entropy(
-                logits.reshape(-1, logits.size(-1)),
-                targets.reshape(-1),
-                ignore_index=pad,
-                weight=sw_weight,
+            switch_ids = {self.tokenizers[name].switch_id(_n)
+                          for _n in self.expert_names}
+            flat_logits = logits.reshape(-1, logits.size(-1))
+            flat_targets = targets.reshape(-1)
+            per_tok = F.cross_entropy(
+                flat_logits, flat_targets, ignore_index=pad, reduction="none",
             )
+            valid = flat_targets != pad
+            weights = torch.ones_like(per_tok)
+            is_switch = torch.zeros_like(flat_targets, dtype=torch.bool)
+            for sid in switch_ids:
+                is_switch |= flat_targets == sid
+            weights[is_switch] = sw_w
+            weights = weights * valid.float()
+            denom = weights.sum().clamp_min(1.0)
+            seg_loss = (per_tok * weights).sum() / denom
             seg_losses.append(seg_loss)
 
             # Carry the LAST k hidden states of this segment through the shared
@@ -390,21 +395,22 @@ class CooperatingExperts(nn.Module):
             if T > exp.cfg.max_seq_len:
                 ids = ids[:, -exp.cfg.max_seq_len:]
 
+            # Just after a switch the sequence is empty: seed it with a single
+            # pad "hand-off query" position, matching the training convention
+            # in _encode_receiver (the query predicts the first destination
+            # token). This is done for BOTH bridge modes.
+            if ids.size(1) == 0:
+                ids = torch.tensor([[tok.pad_id]], dtype=torch.long,
+                                   device=device)
+
             # Encode the current sequence ONCE, seeded by the carried states
             # (if any). We keep the full last-layer hidden `h` so that, on a
             # switch, we can reuse its tail instead of re-encoding.
             if self._cross_attn_enabled():
-                # CALM path: cross-attend to carried memory (if any). When
-                # ids is empty (just switched, no tokens yet) we cannot
-                # cross-attend -- fall back to a single pad token so the
-                # expert produces a query position to predict from.
-                if T == 0:
-                    ids = torch.tensor([[tok.pad_id]], dtype=torch.long,
-                                       device=device)
-                    T = 1
+                # CALM path: cross-attend to carried memory (if any).
                 h = exp.encode_with_cross_attn(ids, carried)  # [B, T, d]
             else:
-                # Legacy seed-prepend path.
+                # Seed-prepend path.
                 h = exp.encode_with_seed(ids, carried)  # [B, (K or 0) + T, d]
             logits = exp.logits_from_hidden(h[:, -1, :])
 

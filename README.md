@@ -18,20 +18,23 @@ Expert A (vocab_A) ──► [hidden h_A] ──► to_shared ──► [z ∈ s
 Expert B (vocab_B) ◄── [hidden h_B] ◄── from_shared ◄─────┘
 ```
 
-- Each expert is a small decoder-only transformer. **Default (this repo):**
+- Each expert is a small decoder-only transformer with **rotary position
+  embeddings (RoPE)** (no absolute position table). **Default (this repo):**
   `d_model=512`, 6 layers, 8 heads, `d_ff=2048`, `max_seq_len=512`. With the
   per-expert BPE vocab (~5.6k–5.7k real merges on the synthetic corpus) this is
   **~22.3 M params/expert → ~44.6 M total**; fp16 weights ≈ 90 MB. All sizes
   live in `config.py` (`ExpertConfig`). `Config.large()` provides a bigger
   preset (`d_model=768`, 8 layers, 12 heads, dim 384 → ~63-67 M/expert) for 11 GB
-  GPUs.
+  GPUs. RoPE makes the hand-off seed positions collision-free and removes the
+  `max_seq_len` index fragility of an absolute position table.
 - Each expert has its **own byte-level BPE tokenizer** trained on its own
   corpus, so the vocabularies are genuinely different.
 - Every expert's vocab is augmented with special tokens:
-  `<unk>`, `<pad>`, `<eos>`, and one `<switch:NAME>` token per expert
-  (5 special tokens per expert for the 2-expert default). A "self" hand-off is
+  `<pad>`, `<eos>`, and one `<switch:NAME>` token per expert
+  (4 special tokens per expert for the 2-expert default). A "self" hand-off is
   just `<switch:<own-name>>` and is masked out during generation — there is no
-  separate `<switch:self>` token.
+  separate `<switch:self>` token. There is intentionally **no `<unk>`** token:
+  byte-level BPE has no out-of-vocabulary tokens.
 - Lightweight `Linear` layers (`to_shared` / `from_shared`) map between an
   expert's hidden space (`d_model=512`) and a **bottleneck** shared space
   (`dim=256 < d_model`). The bottleneck forces the projections to learn a
@@ -77,9 +80,13 @@ Expert B (vocab_B) ◄── [hidden h_B] ◄── from_shared ◄────�
    real code↔text boundaries *within the same session*** (see
    `build_boundary_handoff_pairs`), so the continuation is semantically related
    to the prefix. The loss is B's LM loss on the continuation *plus* an
-   alignment regularizer that keeps each expert's `from_shared∘to_shared`
-   round-trip close to identity. (The legacy random-pairing `HandoffDataset` is
-   kept only as a fallback for the offline smoke test.)
+   alignment regularizer with two parts: a per-expert round-trip term keeping
+   `from_shared∘to_shared` close to identity, **and a cross-expert term that
+   pulls A's boundary code and B's continuation code together in the shared
+   space** so the space is genuinely shared, not just per-expert invertible.
+   The receiver is run under the same unified pad-query hand-off convention as
+   generation. (The legacy random-pairing `HandoffDataset` is kept only as a
+   fallback for the offline smoke test.)
 
 3. **Mixed end-to-end training** (`train_mixed`): **both experts are unfrozen**
    and trained on the *whole* synthetic sessions, with `<switch:NAME>` tokens
@@ -119,6 +126,7 @@ python main.py prepare      # generate + extract synthetic corpora, train tokeni
 python main.py pretrain     # pre-train each expert independently
 python main.py joint        # stitching (projections) + mixed end-to-end phase
 python main.py generate "def quicksort" --expert python
+python main.py eval         # held-out per-segment (python/english/overall) perplexity
 python main.py all          # everything end-to-end
 ```
 
@@ -150,6 +158,7 @@ python main.py joint
 | `dataset.py`      | Segmentation + window / boundary-handoff / mixed datasets |
 | `train.py`        | Pre-training + joint + mixed training loops (AMP)    |
 | `synthetic_data.py`| Templated synthetic corpus generator (Option A)     |
+| `eval.py`         | Per-segment perplexity + monolithic baseline         |
 | `download_code_corpus.py` | Fetch real Python code (CodeSearchNet) |
 | `generate_llm_data.py` | Wrap real code in LLM-generated prose → sessions (Option B) |
 | `main.py`         | CLI entrypoint                                       |

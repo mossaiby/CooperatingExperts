@@ -283,8 +283,9 @@ class Config:
 
 
 # Special tokens appended to every expert's vocabulary:
-#   <unk>, <pad>, <eos>, and one <switch:NAME> per expert.
-# For the default 2-expert config: 3 + 2 = 5 special tokens per expert.
+#   <pad>, <eos>, and one <switch:NAME> per expert.
+# For the default 2-expert config: 2 + 2 = 4 special tokens per expert.
+# Byte-level BPE has no OOV, so there is no <unk> token.
 # (A "self" switch is <switch:NAME> where NAME is the expert's own name; it is
 # masked out during generation, so there is no separate <switch:self> token.)
-NUM_SPECIAL_TOKENS_PER_EXPERT = 5
+NUM_SPECIAL_TOKENS_PER_EXPERT = 4

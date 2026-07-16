@@ -40,8 +40,16 @@ narrow channel, so `bridge_len` is exposed for experimentation.
 | `english` | English prose  | problem descriptions, discussion |
 
 Each expert is a 6-layer, 8-head, `d_model=512` decoder-only transformer with
-tied input/output embeddings, giving **~22.3 M params per expert (~44.6 M
-total)** in the default config.
+**rotary position embeddings (RoPE)** and tied input/output embeddings, giving
+**~22.3 M params per expert (~44.6 M total)** in the default config. RoPE (no
+absolute position table) makes the hand-off seed positions collision-free and
+removes the `max_seq_len` index-overflow fragility of an absolute table.
+
+All three cooperation paths (`joint_loss`, `mixed_loss`, `generate`) use a
+**single unified hand-off convention**: after a switch, a leading `<pad>`
+"hand-off query" position predicts the first token of the receiving expert,
+for both the seed-prepend and cross-attention bridges. This guarantees
+training matches inference exactly (locked in by a smoke-test assertion).
 
 ---
 
@@ -106,13 +114,15 @@ Each expert gets its **own byte-level BPE tokenizer** trained on its own
 corpus via the HuggingFace `tokenizers` library:
 
 - `ByteLevel` pre-tokenizer + `ByteLevelDecoder` + `ByteLevelPostProcessor`.
-- BPE vocab capped at `ExpertConfig.vocab_size = 8000` merges; the trainer
+- BPE vocab capped at `ExpertConfig.vocab_size = 12000` merges; the trainer
   stops at the actual number of unique merge pairs found (~5.6k for python,
   ~5.7k for english on 5000 sessions).
 - Special tokens are appended **on top of** the BPE vocab:
-  `<unk>`, `<pad>`, `<eos>`, and one `<switch:NAME>` per expert (including a
-  `<switch:self>` token). For the 2-expert default this is 5 special tokens
-  per expert (`NUM_SPECIAL_TOKENS_PER_EXPERT = 5`).
+  `<pad>`, `<eos>`, and one `<switch:NAME>` per expert (including a
+  `<switch:self>` token). For the 2-expert default this is 4 special tokens
+  per expert (`NUM_SPECIAL_TOKENS_PER_EXPERT = 4`). There is intentionally
+  **no `<unk>`** token: byte-level BPE has no out-of-vocabulary tokens (every
+  byte is in the base alphabet), so an `<unk>` would be unreachable.
 
 Because each tokenizer is trained on a different corpus, the vocabularies are
 genuinely different — the python expert's token for `def` is unrelated to any
@@ -124,23 +134,33 @@ experts, and even their *ids* differ per expert (each expert has its own
 
 ## 4. The Expert model (`model.py`)
 
-Each expert is a standard decoder-only transformer:
+Each expert is a standard decoder-only transformer with rotary positions:
 
 ```
-tok_emb + pos_emb  →  [Block × n_layers]  →  ln_f  →  head (tied to tok_emb)
+tok_emb  →  [Block × n_layers]  →  ln_f  →  head (tied to tok_emb)
+            (RoPE applied to q/k inside attention; no absolute pos_emb table)
 ```
 
 ### 4.1 Components
 
 - **`CausalSelfAttention`**: fused QKV projection (`Linear → 3*d_model`),
   multi-head scaled-dot-product attention with a causal mask, output
-  projection. `n_heads=8`, `head_dim=64`.
+  projection. `n_heads=8`, `head_dim=64`. **Rotary position embeddings (RoPE)**
+  are applied to the query and key vectors before the attention scores are
+  computed (`_rope_cos_sin` / `_apply_rope`), so position is encoded
+  *relatively*. `head_dim` must be even (asserted). Because position is
+  relative, prepended seed states and real tokens never collide on an absolute
+  index, and no position table can be indexed out of range.
 - **`FeedForward`**: two linear layers (`d_model → d_ff → d_model`) with GELU
   and dropout. `d_ff=2048`.
 - **`Block`**: pre-LayerNorm residual blocks
   (`x = x + attn(ln1(x))`, `x = x + ff(ln2(x))`).
-- **`Expert`**: token + position embeddings, `n_layers=6` blocks, final
-  LayerNorm, and a **tied** LM head (`head.weight = tok_emb.weight`).
+- **`Expert`**: token embeddings (position via RoPE, no `pos_emb` table),
+  `n_layers=6` blocks, final LayerNorm, and a **tied** LM head
+  (`head.weight = tok_emb.weight`). At init, the residual output projections
+  (`attn.proj`, `ff.fc2`) are scaled by `1/sqrt(2*n_layers)` (GPT-2 style) so
+  the residual-stream variance does not grow with depth — this matters for the
+  deeper `Config.large()` preset.
 
 ### 4.2 Shared-space projections
 
@@ -165,8 +185,8 @@ These are the *only* parameters trained during the joint stitching phase.
 | `next_token_logits(ids)` | logits for the last position only (generation) |
 
 The causal mask is built **dynamically** in `_blocks` so it works for any
-sequence length — including the `+1` position prepended when a carried hidden
-state seeds a segment (in joint and mixed loss).
+sequence length — including the `+K` seed positions prepended when carried
+hidden states seed a segment, and the `+1` `<pad>` hand-off query position.
 
 ### 4.4 CALM-style cross-attention bridge (optional)
 
@@ -224,11 +244,14 @@ so the caller indexes logits uniformly (`h[:, :-1, :]` vs `ids[:, 1:]`).
 | `cross_attn_residual` | `True` | residual-add the cross-attn output (CALM-style) |
 
 **Routing.** `CooperatingExperts` exposes `_cross_attn_enabled()`,
-`_carry_through_shared()`, and `_encode_segment()` helpers that route
-`joint_loss`, `mixed_loss`, and `generate` to the cross-attn path when enabled
-and to the legacy seed-prepend path otherwise. The two modes are mutually
-exclusive per run (set by `shared.cross_attn`). The smoke test (`smoke_test.py`)
-exercises **both** modes.
+`_carry_through_shared()`, `_handoff_query_ids()`, and `_encode_receiver()`
+helpers that route `joint_loss`, `mixed_loss`, and `generate` through the
+**same** unified hand-off convention (a leading `<pad>` query predicts the
+first destination token) for both the cross-attn and seed-prepend paths. The
+two bridge modes are mutually exclusive per run (set by `shared.cross_attn`).
+The smoke test (`smoke_test.py`) exercises **both** modes and asserts the
+training path and a manual replay of generation produce identical first-token
+logits.
 
 ---
 
@@ -256,27 +279,33 @@ continuation `ids_b` (expert B), with bridge width `K = shared.bridge_len`:
 
 1. **Encode the prefix with A**, take the last `k = min(K, Ta)` hidden states
    (the tokens right at the hand-off boundary): `seed_src = A.encode(ids_a)[:, -k:, :]`.
-2. **Project to shared space**: `z = A.to_shared_space(seed_src)`  →  `[B, k, 256]`.
-3. **Project into B's space**: `seed_b = B.from_shared_space(z)`  →  `[B, k, d_b]`.
-4. **Run B on `ids_b`**, seeded by the `k` carried states as virtual positions
-   `0..k-1` (`B.encode_with_seed(ids_b, seed_b)` → `[B, k+Tb, d_b]`). **If the
-   CALM cross-attention bridge is enabled** (`shared.cross_attn=True`), step 4
-   instead calls `B.encode_with_cross_attn(ids_b, seed_b)` → `[B, Tb, d_b]`
-   (no seed prefix; B's own hidden states cross-attend to `seed_b` as memory).
-5. **LM loss**: output index `k-1` (the last seed) predicts `ids_b[0]`, so the
-   `Tb` logits that predict `ids_b` are `h_b[:, k-1 : k-1+Tb, :]`. **In the
-   cross-attention mode** the output has no seed prefix, so the `Tb-1` logits
-   that predict `ids_b` are `h_b[:, :-1, :]` vs targets `ids_b[:, 1:]`.
-6. **Alignment regularizer**: encourages each expert's own round-trip
-   (`from_shared∘to_shared`) to be close to identity:
-   `||A.from_shared(A.to_shared(ref_a)) - ref_a||²` (and same for B). The
-   references are **hidden states already computed** — A's boundary states and
-   B's own hidden taken from `h_b[:, k:, :]` — so no second forward pass through
-   B is needed; they are detached so this term only trains the projection
-   weights. This is the representation-alignment assumption from the
-   model-stitching literature.
+2. **Project to shared space**: `z_a = A.to_shared_space(seed_src)`  →  `[B, k, 256]`.
+3. **Project into B's space**: `seed_b = B.from_shared_space(z_a)`  →  `[B, k, d_b]`.
+4. **Run B under the unified hand-off convention** via `_encode_receiver`: a
+   leading `<pad>` "hand-off query" position predicts B's first token, then each
+   real token predicts its successor. This is identical for both bridge modes
+   — in the seed-prepend path the carried states occupy virtual positions
+   `0..k-1` and the query sits right after them; in the cross-attention path
+   (`shared.cross_attn=True`) B's own hidden states cross-attend to `seed_b` as
+   memory. In both cases the returned logits predict all of `ids_b`.
+5. **LM loss**: `F.cross_entropy(logits_b, ids_b, ignore_index=pad_b)`. Because
+   the convention matches generation exactly, there is no path-specific index
+   offset to get wrong.
+6. **Alignment regularizer** — two complementary terms:
+   - **Round-trip identity** (per expert): encourages each expert's own
+     `from_shared∘to_shared` to be near identity,
+     `||A.from_shared(A.to_shared(ref_a)) - ref_a||²` (and same for B), using
+     detached hidden states already computed (A's boundary states and B's own
+     hidden over its first `k` tokens). This is the invertibility assumption
+     from the model-stitching literature.
+   - **Cross-expert alignment** (the space is genuinely *shared*): A's boundary
+     shared code `z_a` and B's continuation shared code
+     `z_b = B.to_shared_space(ref_b_hidden)` are L2-normalized and pulled
+     together via `1 - cos(z_a, z_b)`. Round-trip identity alone allows each
+     expert to occupy a disjoint subspace; this term forces paired boundary
+     states into the *same* region of the bottleneck.
 
-`total = lm_loss + align_weight * (align_a + align_b)`, with
+`total = lm_loss + align_weight * (align_roundtrip + align_cross)`, with
 `align_weight = 0.1` by default.
 
 > **Hand-off pairs come from real boundaries.** The prefix/continuation pairs
@@ -289,36 +318,35 @@ continuation `ids_b` (expert B), with bridge width `K = shared.bridge_len`:
 
 This is the **end-to-end** loss over whole switch-token-annotated sessions.
 Each example is a list of `(expert_name, ids)` segments. The loss mirrors
-generation exactly:
+generation exactly, using the same `_encode_receiver` hand-off convention:
 
-1. For each segment, embed the ids and **prepend the `K = bridge_len` carried
-   hidden states** as virtual positions `0..K-1` (`K` zero vectors for the first
-   segment, so every segment uses the same "index `K-1` predicts `ids[0]`"
-   offset). See `Expert.encode_with_seed`. **If the CALM cross-attention bridge
-   is enabled**, step 1 instead calls `Expert.encode_with_cross_attn(ids,
-   carried)` → `[B, T, d]` (no seed prefix; the carried states are consumed as
-   cross-attention memory, with a zero memory bank for the first segment).
-2. Run the expert's transformer blocks over the `[B, K+T, d]` sequence.
-3. Compute LM loss over the T real tokens: `logits = head(h[:, K-1:K-1+T, :])`,
-   `targets = ids`. **In cross-attention mode** the logits/targets are
-   `head(h[:, :-1, :])` vs `ids[:, 1:]`. **Switch tokens are real targets** but
-   down-weighted by `switch_loss_weight` (0.1) via a per-class cross-entropy
-   weight vector, so the model isn't equally rewarded for switching as for
-   generating content.
-4. **Carry the last `K` hidden states** through the shared space to the next
+1. For each segment, run it through `_encode_receiver(name, exp, ids, carried)`.
+   The first segment has `carried=None` and is a plain causal LM
+   (`logits[:, :-1]` predict `ids[:, 1:]`). Every subsequent segment prepends a
+   `<pad>` "hand-off query" whose output predicts the segment's first token, so
+   all of `ids` is a target. In the seed-prepend bridge the `K` carried states
+   sit as virtual positions before the query; in the cross-attention bridge the
+   carried states are consumed as cross-attention memory (no seed prefix). RoPE
+   means no absolute position table is ever indexed out of range regardless of
+   `K`.
+2. Compute LM loss over the segment's real-token targets. **Switch tokens are
+   real targets** but down-weighted by `switch_loss_weight` (0.1) using a
+   **per-token** mask: an unreduced cross-entropy is computed and each position
+   whose *target* is a switch token is scaled by `switch_loss_weight`, then the
+   result is renormalized over the (weighted) valid positions. This is a change
+   from the earlier per-vocab-class `weight=` vector, which also rescaled the
+   overall loss magnitude and made the reported `mixed` loss non-comparable to
+   the pretrain/joint LM loss. The per-token mask affects only the switch
+   positions' contribution, so the number stays comparable across phases.
+3. **Carry the last `K` hidden states** through the shared space to the next
    expert: `z = exp.to_shared_space(h[:, -K:, :])`, then
    `carried = next_expert.from_shared_space(z)`. The carried states are
    **detached** so gradients don't flow back through the previous expert's
    entire transformer via `from_shared` — this bounds memory for long
    batch=1 sessions and matches generation (where the carried state is
    produced under `no_grad`).
-5. The total loss is the **mean of per-segment losses**
+4. The total loss is the **mean of per-segment losses**
    (`torch.stack(seg_losses).mean()`), so gradients flow to both experts.
-
-> Real-token positions are kept at `arange(T)` (the seed positions carry no
-> token-position embedding), so the positional table is never indexed past
-> `max_seq_len - 1` regardless of `K` — long segments cannot trigger an
-> out-of-range lookup.
 
 ### 5.4 Generation (`generate`)
 
@@ -326,11 +354,11 @@ Autoregressive sampling with live expert switching:
 
 1. Encode the prompt in the starting expert's vocab.
 2. At each step, encode the current sequence (prepending the carried state if
-   any), take the last-position logits. **If the CALM cross-attention bridge is
-   enabled**, the encode step calls `Expert.encode_with_cross_attn(ids, carried)`
-   instead of `encode_with_seed`; when `ids` is empty (just after a switch) a
-   single `<pad>` token is used as a query position so the expert can still
-   predict the next token from the carried memory.
+   any), take the last-position logits. Just after a switch the sequence is
+   empty, so it is seeded with a single `<pad>` "hand-off query" position
+   — the **same convention used in `_encode_receiver`** during training — for
+   both bridge modes (seed-prepend and cross-attention). This is what makes
+   training and inference produce identical first-token logits.
 3. **Mask out the self-switch** `<switch:<active>>` (no-op loops) and, once the
    switch budget is exhausted, mask out all switch tokens (`max_switches = 4`).
 4. Apply temperature + top-k sampling.
@@ -544,6 +572,7 @@ key dataclasses:
 | `pretrain` | load tokenizers + pre-train each expert (per-expert steps) |
 | `joint` | load pre-trained weights + joint stitching + mixed end-to-end |
 | `generate "prompt" --expert NAME` | generate with live switching |
+| `eval` | held-out per-segment (python/english/overall) perplexity |
 | `all` | prepare → pretrain → joint → sample |
 | `status` | show which checkpoints exist |
 
@@ -576,7 +605,37 @@ train_mixed()     (all params, end-to-end)
    └─► checkpoints/model_final.pt
 
 generate()        (live switching via shared space)
+
+segment_perplexity() / monolith baseline (eval.py)
+   └─► python/english/overall perplexity vs. a single-model control
 ```
+
+---
+
+## 10a. Evaluation (`eval.py`)
+
+The core hypothesis is that routing between two small, specialised experts is
+at least as good as a single monolithic model of comparable size on
+interleaved code/prose. `eval.py` makes that claim testable:
+
+- **`segment_perplexity(model, tokenizers, cfg)`** — runs held-out sessions
+  through the cooperating model exactly as `mixed_loss` does (carried hidden
+  states across switches, the unified `_encode_receiver` hand-off), but
+  accumulates token NLL **separately for python and english segments** and
+  excludes switch tokens. Returns `{python, english, overall}` perplexity
+  (`exp(mean token NLL)` over non-pad, non-switch targets). Exposed as
+  `python main.py eval`.
+- **`Monolith` + `pretrain_monolith` + `monolith_perplexity`** — a single
+  decoder-only transformer over **one shared tokenizer**, trained on the
+  concatenated corpus and sized (via `d_model`/`n_layers`) to roughly the
+  cooperating model's total parameter count. This is the apples-to-apples
+  "no routing" control. Its held-out perplexity is directly comparable to the
+  cooperating model's `overall` number because both are `exp(mean token NLL)`
+  over the same kind of held-out split.
+
+Comparing the two answers the question the earlier prototype could not: does
+the shared-space routing actually help, or would a single model of the same
+size do as well or better?
 
 ---
 
@@ -600,7 +659,10 @@ generate()        (live switching via shared space)
   memory for long batch=1 sessions and matches generation semantics.
 - **Switch-token down-weighting**: `switch_loss_weight=0.1` prevents the
   model from being equally rewarded for switching as for generating content,
-  which suppresses the over-switching failure mode.
+  which suppresses the over-switching failure mode. The down-weight is applied
+  **per-token** (only positions whose target is a switch token), not via a
+  per-vocab-class cross-entropy weight; the latter also rescaled the overall
+  loss magnitude and made the reported loss non-comparable across phases.
 - **Mixed-phase stabilization**: the full 44.6 M model is pre-trained and
   fragile. A low LR (1e-5), long warmup (300 steps), tight grad-clip (0.5),
   and low switch weight (0.1) are all needed to avoid monotonic divergence.
@@ -644,11 +706,29 @@ limitations of the original prototype:
   more reliable.
 - **Honest caveats.** Losses on the templated Option-A corpus mostly reflect
   memorisation; the hybrid Option-B pipeline is preferred for any real signal.
+- **Rotary positions (RoPE).** Absolute position embeddings were replaced with
+  RoPE, so position is relative. The hand-off seed positions no longer collide
+  with a real token's absolute index, and long segments can never index a
+  position table out of range. Residual output projections are additionally
+  scaled by `1/sqrt(2*n_layers)` at init for depth stability.
+- **Unified hand-off convention.** `joint_loss`, `mixed_loss`, and `generate`
+  now share one convention (a leading `<pad>` hand-off query predicts the first
+  destination token) for both bridge modes, so training matches inference. A
+  smoke-test assertion checks the training and generation paths yield identical
+  first-token logits.
+- **Cross-expert alignment.** `joint_loss` adds a term pulling A's boundary
+  shared code and B's continuation shared code together, so the space is
+  genuinely shared rather than merely per-expert invertible.
+- **No `<unk>` token.** Byte-level BPE has no OOV, so the unreachable `<unk>`
+  token was removed (`NUM_SPECIAL_TOKENS_PER_EXPERT` 5 → 4).
+- **Evaluation of the hypothesis.** `eval.py` adds held-out per-segment
+  perplexity and a monolithic single-model baseline so routing can be measured
+  against a no-routing control (`python main.py eval`).
 
-> **A note on positional embeddings.** Seed states are prepended as virtual
-> positions while the real tokens keep their own `arange(T)` position
-> embeddings. Because attention localises tokens purely via those absolute
-> position embeddings (there is no relative-position bias), a token is treated
-> as the same position in pre-training and in the seeded phases; the seed is
-> simply an extra attendable context vector at the front. This is intentional
-> and also keeps the positional table from ever being indexed out of range.
+> **A note on positional embeddings.** The model uses **rotary position
+> embeddings (RoPE)**, applied to the query/key vectors inside attention, so
+> there is no absolute position-embedding table. Position is encoded
+> relatively, which means carried seed states can be prepended as virtual
+> positions (or supplied as cross-attention memory) without colliding with a
+> real token's absolute index, and no lookup can go out of range regardless of
+> sequence length or bridge width `K`.

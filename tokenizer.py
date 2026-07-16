@@ -5,13 +5,16 @@ vocabularies are genuinely different (code tokens vs. prose tokens). We then
 append a *fixed* set of special tokens to every expert so that the switching
 mechanism is uniform:
 
-    <unk>  <pad>  <eos>  <switch:python>  <switch:english>
+    <pad>  <eos>  <switch:python>  <switch:english>
 
 The wrapper rewrites the switch-token ids to absolute positions at runtime, so
 the per-expert tokenizer only needs to expose:
     - encode / decode
     - vocab_size (including special tokens)
     - id_of(name)  -> int   (for special tokens)
+
+Note: byte-level BPE has no out-of-vocabulary tokens (every byte is in the
+base alphabet), so there is intentionally NO `<unk>` token.
 """
 from __future__ import annotations
 
@@ -32,8 +35,9 @@ def _special_tokens_for(expert_name: str, all_names: List[str]) -> List[str]:
     """Special tokens appended to *this* expert's vocab.
 
     Order is fixed: pad, eos, then one switch token per expert (self included).
+    Byte-level BPE cannot produce out-of-vocabulary tokens, so no <unk>.
     """
-    tokens = ["<unk>", "<pad>", "<eos>"]
+    tokens = ["<pad>", "<eos>"]
     tokens += [f"<switch:{n}>" for n in all_names]
     return tokens
 
@@ -122,7 +126,7 @@ def build_tokenizer(
     """Train a byte-level BPE tokenizer on the given corpus files."""
     special = _special_tokens_for(expert_cfg.name, all_expert_names)
 
-    tokenizer = Tokenizer(BPE(unk_token="<unk>"))
+    tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = ByteLevel(add_prefix_space=False)
     tokenizer.decoder = ByteLevelDecoder()
     tokenizer.post_processor = ByteLevelPostProcessor(trim_offsets=True)

@@ -163,6 +163,37 @@ def _run_pipeline(cfg: Config, label: str) -> None:
         assert torch.isfinite(loss), "mixed_loss produced non-finite value"
         print(f"  mixed_loss = {loss.item():.4f} over {info['n_segs']} segments")
 
+        # 4c. Invariant checks: joint_loss shapes + train/inference hand-off
+        #     consistency (the unified pad-query convention must make the
+        #     receiver's first-token logits identical between the training
+        #     path and a manual replay of generation's encode).
+        print("\n[4c] Hand-off convention invariants...")
+        model.eval()
+        ids_a = torch.tensor([py_ids[:16]], dtype=torch.long, device=device)
+        ids_b = torch.tensor([en_ids[:16]], dtype=torch.long, device=device)
+        total, jinfo = model.joint_loss("python", ids_a, "english", ids_b)
+        assert torch.isfinite(total), "joint_loss non-finite"
+        assert set(jinfo) >= {"lm", "align", "total"}, "joint_loss info keys"
+        with torch.no_grad():
+            exp_a, exp_b = model.expert("python"), model.expert("english")
+            k = min(cfg.shared.bridge_len, ids_a.size(1))
+            seed_src = exp_a.encode(ids_a)[:, -k:, :]
+            seed_b = exp_b.from_shared_space(exp_a.to_shared_space(seed_src))
+            # Training path first-token logits.
+            tr_logits, _, _ = model._encode_receiver("english", exp_b, ids_b, seed_b)
+            train_first = tr_logits[:, 0, :]
+            # Generation path: empty ids -> pad hand-off query, same seed.
+            pad = tokenizers["english"].pad_id
+            q = torch.tensor([[pad]], dtype=torch.long, device=device)
+            if cfg.shared.cross_attn:
+                hg = exp_b.encode_with_cross_attn(q, seed_b)
+            else:
+                hg = exp_b.encode_with_seed(q, seed_b)
+            gen_first = exp_b.logits_from_hidden(hg[:, -1, :])
+            assert torch.allclose(train_first, gen_first, atol=1e-4), \
+                "train/inference hand-off first-token logits diverge"
+        print("  OK: joint_loss shapes + train==inference first-token logits")
+
         # 5. Generate with switching.
         print("\n[5/5] Generation samples...")
         model.eval()
