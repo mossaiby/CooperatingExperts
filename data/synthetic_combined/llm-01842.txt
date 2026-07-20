@@ -1,0 +1,12 @@
+[english] How do I dynamically calculate the end position of a token like a comma within my custom lexer?
+[english] This function is designed to augment an existing token object by determining its precise location in the source text during processing. It assumes the current starting position (`t.lexpos`) and uses the length of the token's value to set the ending position.
+<switch:python>
+[python] def t_COMMA(self, t):
+        r','
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+<switch:english>
+[english] By assigning `t.endlexpos`, we allow subsequent parsing stages to easily reference where this specific token ends, which is useful for error handling or offset calculations.
+[english] What if a token has no defined 'value' attribute, like an implicit delimiter?
+[english] If `t` lacks a `value` attribute, calling it would raise an AttributeError. You should defensively check the existence of this property before performing the addition.
+[english] That makes much more sense for my implementation.

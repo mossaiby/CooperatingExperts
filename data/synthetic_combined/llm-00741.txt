@@ -1,0 +1,101 @@
+[english] I need a function that takes case data and related objects to prepare a comprehensive dictionary suitable for display in our detailed case view.
+[english] This function preprocesses the raw case object by transforming various attributes into human-readable formats, such as mapping sex values or fetching associated institute details.
+It heavily relies on provided adapters (`store`) to hydrate relationships like variants and gene panels before structuring the final data payload for presentation.
+<switch:python>
+[python] def case(store, institute_obj, case_obj):
+    """Preprocess a single case.
+
+    Prepare the case to be displayed in the case view.
+
+    Args:
+        store(adapter.MongoAdapter)
+        institute_obj(models.Institute)
+        case_obj(models.Case)
+
+    Returns:
+        data(dict): includes the cases, how many there are and the limit.
+
+    """
+    # Convert individual information to more readable format
+    case_obj['individual_ids'] = []
+    for individual in case_obj['individuals']:
+        try:
+            sex = int(individual.get('sex', 0))
+        except ValueError as err:
+            sex = 0
+        individual['sex_human'] = SEX_MAP[sex]
+
+        pheno_map = PHENOTYPE_MAP
+        if case_obj.get('track', 'rare') == 'cancer':
+            pheno_map = CANCER_PHENOTYPE_MAP
+
+        individual['phenotype_human'] = pheno_map.get(individual['phenotype'])
+        case_obj['individual_ids'].append(individual['individual_id'])
+
+    case_obj['assignees'] = [store.user(user_email) for user_email in
+                             case_obj.get('assignees', [])]
+
+    # Fetch the variant objects for suspects and causatives
+    suspects = [store.variant(variant_id) or variant_id for variant_id in
+                case_obj.get('suspects', [])]
+    causatives = [store.variant(variant_id) or variant_id for variant_id in
+                  case_obj.get('causatives', [])]
+
+    # Set of all unique genes in the default gene panels
+    distinct_genes = set()
+    case_obj['panel_names'] = []
+    for panel_info in case_obj.get('panels', []):
+        if not panel_info.get('is_default'):
+            continue
+        panel_obj = store.gene_panel(panel_info['panel_name'], version=panel_info.get('version'))
+        distinct_genes.update([gene['hgnc_id'] for gene in panel_obj.get('genes', [])])
+        full_name = "{} ({})".format(panel_obj['display_name'], panel_obj['version'])
+        case_obj['panel_names'].append(full_name)
+    case_obj['default_genes'] = list(distinct_genes)
+    for hpo_term in itertools.chain(case_obj.get('phenotype_groups', []),
+                                    case_obj.get('phenotype_terms', [])):
+        hpo_term['hpo_link'] = ("http://compbio.charite.de/hpoweb/showterm?id={}"
+                                .format(hpo_term['phenotype_id']))
+
+    # other collaborators than the owner of the case
+    o_collaborators = []
+    for collab_id in case_obj['collaborators']:
+        if collab_id != case_obj['owner'] and store.institute(collab_id):
+            o_collaborators.append(store.institute(collab_id))
+
+    case_obj['o_collaborators'] = [(collab_obj['_id'], collab_obj['display_name']) for
+                                   collab_obj in o_collaborators]
+
+    irrelevant_ids = ('cust000', institute_obj['_id'])
+    collab_ids = [(collab['_id'], collab['display_name']) for collab in store.institutes() if
+                  (collab['_id'] not in irrelevant_ids) and
+                  (collab['_id'] not in case_obj['collaborators'])]
+
+    events = list(store.events(institute_obj, case=case_obj))
+    for event in events:
+        event['verb'] = VERBS_MAP[event['verb']]
+
+    case_obj['clinvar_variants'] = store.case_to_clinVars(case_obj['_id'])
+
+    # Phenotype groups can be specific for an institute, there are some default groups
+    pheno_groups = institute_obj.get('phenotype_groups') or PHENOTYPE_GROUPS
+
+    data = {
+        'status_class': STATUS_MAP.get(case_obj['status']),
+        'other_causatives': store.check_causatives(case_obj=case_obj),
+        'comments': store.events(institute_obj, case=case_obj, comments=True),
+        'hpo_groups': pheno_groups,
+        'events': events,
+        'suspects': suspects,
+        'causatives': causatives,
+        'collaborators': collab_ids,
+        'cohort_tags': COHORT_TAGS,
+        'mme_nodes': current_app.mme_nodes, # Get available MatchMaker nodes for matching case
+    }
+
+    return data
+<switch:english>
+[english] The function is highly dependent on global constants (like `PHENOTYPE_MAP` or `SEX_MAP`), making it tightly coupled to its surrounding environment. This coupling ensures that all necessary cross-references are resolved during preprocessing.
+[english] How does the function handle potential errors when converting individual sex values?
+[english] The code includes a try/except block within the loop iterating over individuals. If conversion fails, `sex` defaults to 0, preventing a crash and ensuring the system has a baseline value.
+[english] That makes sense; I'll use this approach for all data displays.

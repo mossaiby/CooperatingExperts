@@ -1,0 +1,18 @@
+[english] How can I programmatically mark specific gene entries as exhibiting incomplete penetrance based on external input files?
+[english] This function iterates through a set of genetic symbols associated with incomplete penetrance and looks up their correct IDs. It then updates the provided genes data structure to flag those identified.
+<switch:python>
+[python] def add_incomplete_penetrance(genes, alias_genes, hpo_lines):
+    """Add information of incomplete penetrance"""
+    LOG.info("Add incomplete penetrance info")
+    for hgnc_symbol in get_incomplete_penetrance_genes(hpo_lines):
+        for hgnc_id in get_correct_ids(hgnc_symbol, alias_genes):
+            genes[hgnc_id]['incomplete_penetrance'] = True
+<switch:english>
+[english] The function successfully flags every corresponding gene ID in your list by setting the 'incomplete_penetrance' key to True. Keep in mind this relies on correctly matching aliases via helper functions.
+[english] If a symbol has multiple valid IDs, does the current structure ensure all of them get marked?
+[english] Yes, the nested loops guarantee that every single valid ID resolved from an incomplete penetrance symbol is updated simultaneously.
+<switch:python>
+[python] for hgnc_id in get_correct_ids(hgnc_symbol, alias_genes):
+    genes[hgnc_id]['incomplete_penetrance'] = True
+<switch:english>
+[english] This looks like a solid way to handle complex genetic data.

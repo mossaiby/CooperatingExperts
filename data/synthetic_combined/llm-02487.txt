@@ -1,0 +1,40 @@
+[english] How do I determine the largest message size that won't exceed a maximum wrapped token output limit?
+[english] This function uses the underlying C library to calculate wrapping limits based on your desired `output_size` and configuration requirements like confidentiality (`conf_req`). It calls GSS functions, casting parameters appropriately before passing them in.
+<switch:python>
+[python] def get_wrap_size_limit(self, output_size, conf_req=True, qop_req=C.GSS_C_QOP_DEFAULT):
+        """
+        Calculates the maximum size of message that can be fed to :meth:`wrap` so that the size of
+        the resulting wrapped token (message plus wrapping overhead) is no more than a given
+        maximum output size.
+
+        :param output_size: The maximum output size (in bytes) of a wrapped token
+        :type output_size: int
+        :param conf_req: Whether to calculate the wrapping overhead for confidentiality protection
+            (if True) or just integrity protection (if False).
+        :type conf_req: bool
+        :returns: The maximum input size (in bytes) of message that can be passed to :meth:`wrap`
+        :rtype: int
+        """
+
+        minor_status = ffi.new('OM_uint32[1]')
+        max_input_size = ffi.new('OM_uint32[1]')
+        retval = C.gss_wrap_size_limit(
+            minor_status,
+            self._ctx[0],
+            ffi.cast('int', conf_req),
+            ffi.cast('gss_qop_t', qop_req),
+            ffi.cast('OM_uint32', output_size),
+            max_input_size
+        )
+        if GSS_ERROR(retval):
+            if minor_status[0] and self.mech_type:
+                raise _exception_for_status(retval, minor_status[0], self.mech_type)
+            else:
+                raise _exception_for_status(retval, minor_status[0])
+
+        return max_input_size[0]
+<switch:english>
+[english] The function returns the calculated maximum input size from `max_input_size[0]`, while rigorously checking for and raising exceptions based on C library errors (`GSS_ERROR(retval)`).
+[english] What happens specifically if GSS_ERROR is triggered and we don't have a defined mechanism type (`self.mech_type`)?
+[english] If an error occurs, and `minor_status[0]` is true but there's no `self.mech_type`, the function raises a standard status exception using only `minor_status[0]`, as seen in the final else block.
+[english] That makes sense.

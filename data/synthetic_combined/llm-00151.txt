@@ -1,0 +1,37 @@
+[english] How do I safely unwrap and decrypt a wrapped cryptographic key using PKCS#11 standards?
+[english] This function uses low-level calls to the PyKCS11 library to handle secure key operations.
+<switch:python>
+[python] def unwrapKey(self, unwrappingKey, wrappedKey, template,
+                  mecha=MechanismRSAPKCS1):
+        """
+        C_UnwrapKey
+
+        :param unwrappingKey: the unwrapping key handle
+        :type unwrappingKey: integer
+        :param wrappedKey: the bytes of the wrapped key
+        :type wrappedKey:  (binary) string or list/tuple of bytes
+        :param template: template for the unwrapped key
+        :param mecha: the decrypt mechanism to be used (use
+          `MechanismRSAPKCS1` for `CKM_RSA_PKCS`)
+        :type mecha: :class:`Mechanism`
+        :return: the unwrapped key object
+        :rtype: integer
+
+        """
+        m = mecha.to_native()
+        data1 = ckbytelist(wrappedKey)
+        handle = PyKCS11.LowLevel.CK_OBJECT_HANDLE()
+        attrs = self._template2ckattrlist(template)
+        rv = self.lib.C_UnwrapKey(self.session, m, unwrappingKey,
+                                  data1, attrs, handle)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+        return handle
+<switch:english>
+[english] The function successfully performs the operation and returns a key handle; however, proper error checking via `PyKCS11.LowLevel` is critical.
+[english] What exactly does it return if the unwrap process succeeds?
+[english] It returns an integer, which is a session handle referencing the newly created unwrapped key object in the cryptographic module:
+<switch:python>
+[python] return handle
+<switch:english>
+[english] That clarifies how the low-level handle mechanism works; thank you!

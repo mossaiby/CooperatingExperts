@@ -1,0 +1,31 @@
+[english] How can I retrieve a human-readable list of all cryptographic mechanisms supported by a given hardware slot?
+[english] This function interacts with the low-level KCS11 library to fetch raw mechanism IDs for a specific device slot. It first calls the native API and then performs necessary error checking.
+<switch:python>
+[python] def getMechanismList(self, slot):
+        """
+        C_GetMechanismList
+
+        :param slot: slot number returned by :func:`getSlotList`
+        :type slot: integer
+        :return: the list of available mechanisms for a slot
+        :rtype: list
+        """
+        mechanismList = PyKCS11.LowLevel.ckintlist()
+        rv = self.lib.C_GetMechanismList(slot, mechanismList)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+
+        m = []
+        for x in range(len(mechanismList)):
+            mechanism = mechanismList[x]
+            if mechanism >= CKM_VENDOR_DEFINED:
+                k = 'CKR_VENDOR_DEFINED_%X' % (mechanism - CKM_VENDOR_DEFINED)
+                CKM[k] = mechanism
+                CKM[mechanism] = k
+            m.append(CKM[mechanism])
+        return m
+<switch:english>
+[english] The core logic iterates through the returned list, converting raw integer constants into readable string names, especially handling vendor-specific definitions by creating custom keys.
+[english] If `C_GetMechanismList` returns an unexpected status (not CKR_OK), how does this function respond to prevent library crashes?
+[english] The function immediately raises a `PyKCS11Error` using the return value (`rv`) if it doesn't match `CKR_OK`, ensuring that external code handles operational failures.
+[english] This makes error handling very clean.

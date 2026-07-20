@@ -1,0 +1,17 @@
+[english] How can I write a function that extracts the current branch name and its associated commit hash from a local Git repository?
+[english] To achieve this, we read the contents of the `.git/HEAD` file in the provided `repo_path`. This file indicates whether HEAD is pointing to a specific branch or a direct commit.
+<switch:python>
+[python] def get_head(repo_path):
+    """Get (branch, commit) from HEAD of a git repo."""
+    try:
+        ref = open(os.path.join(repo_path, '.git', 'HEAD'), 'r').read().strip()[5:].split('/')
+        branch = ref[-1]
+        commit = open(os.path.join(repo_path, '.git', *ref), 'r').read().strip()[:7]
+        return branch, commit
+    except:
+        return None
+<switch:english>
+[english] The function assumes that the HEAD reference is structured predictably to locate and retrieve the relevant commit hash for the given branch.
+[english] What happens if I run this function while in a 'detached HEAD' state?
+[english] If you are in detached HEAD, the `ref[-1]` will be a specific short commit SHA instead of a branch name. You would need to adjust the logic inside the function to handle SHAs differently than branch names.
+[english] Thanks, that clarification helps me with error handling!

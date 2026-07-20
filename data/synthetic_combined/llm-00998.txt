@@ -1,0 +1,16 @@
+[english] I need a method that calculates and returns a standard SHA512 hash fingerprint for an internal key.
+[english] To create this fingerprint, we first use `hashlib.sha512` on the decoded key data to get the raw binary digest. Then, we encode that binary digest using base64, remove any excess padding characters, and prefix it with 'SHA512:' for a clean string output.
+<switch:python>
+[python] def hash_sha512(self):
+        """Calculates sha512 fingerprint."""
+        fp_plain = hashlib.sha512(self._decoded_key).digest()
+        return (b"SHA512:" + base64.b64encode(fp_plain).replace(b"=", b"")).decode("utf-8")
+<switch:english>
+[english] This implementation ensures the resulting hash is URL-safe by stripping the base64 padding before returning the final UTF-8 string representation.
+[english] What happens if self._decoded_key is not guaranteed to be bytes?
+[english] If `self._decoded_key` isn't bytes, the hashing operation will fail. You would need to convert it first, for example:
+<switch:python>
+[python] sp_key = str(self._decoded_key).encode('utf-8') 
+fp_plain = hashlib.sha512(sp_key).digest()
+<switch:english>
+[english] That makes sense, thanks for clarifying!

@@ -1,0 +1,44 @@
+[english] How can I run an external command while continuously streaming its output back to my main application without waiting for the process to finish?
+[english] To handle subprocess I/O asynchronously, this function wraps the standard `subprocess.Popen`. It creates background threads that monitor the stdout and stderr streams, pushing each incoming line into a dedicated queue.
+<switch:python>
+[python] def Popen_nonblocking(*args, **kwargs):
+	"""
+	Open a subprocess without blocking. Return a process handle with any
+	output streams replaced by queues of lines from that stream.
+
+	Usage::
+
+		proc = Popen_nonblocking(..., stdout=subprocess.PIPE)
+		try:
+			out_line = proc.stdout.get_nowait()
+		except queue.Empty:
+			"no output available"
+		else:
+			handle_output(out_line)
+	"""
+	kwargs.setdefault('close_fds', 'posix' in sys.builtin_module_names)
+	kwargs.setdefault('bufsize', 1)
+	proc = subprocess.Popen(*args, **kwargs)
+	if proc.stdout:
+		q = queue.Queue()
+		t = threading.Thread(
+			target=enqueue_lines,
+			args=(proc.stdout, q))
+		proc.stdout = q
+		# thread dies with the parent
+		t.daemon = True
+		t.start()
+	if proc.stderr:
+		q = queue.Queue()
+		t = threading.Thread(
+			target=enqueue_lines,
+			args=(proc.stderr, q))
+		proc.stderr = q
+		t.daemon = True
+		t.start()
+	return proc
+<switch:english>
+[english] The result is an object where accessing `.stdout` or `.stderr` now returns a thread-safe `queue.Queue`, allowing non-blocking retrieval of data.
+[english] What happens if the subprocess terminates unexpectedly while the queues are still being monitored by these daemon threads?
+[english] Since the internal target function (`enqueue_lines`) is not shown, it's assumed to handle pipe closure gracefully. If the process dies, Python will typically raise an exception or return EOF upon next read.
+[english] Thanks for explaining how this works!

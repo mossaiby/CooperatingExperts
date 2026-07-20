@@ -1,0 +1,12 @@
+[english] How can I create a lookup table for all the data types of my DataFrame columns at once?
+[english] To get a mapping of column names to their underlying NumPy dtypes, we use a dictionary comprehension. This allows us to iterate over every visible column and call a helper method `self.dtype(column_name)` on each one.
+<switch:python>
+[python] def dtypes(self):
+        """Gives a Pandas series object containing all numpy dtypes of all columns (except hidden)."""
+        from pandas import Series
+        return Series({column_name:self.dtype(column_name) for column_name in self.get_column_names()})
+<switch:english>
+[english] The function efficiently collects the required types and wraps them into a Pandas Series object before returning it.
+[english] What happens if a DataFrame has no columns?
+[english] If there are no columns, `self.get_column_names()` returns an empty list, resulting in an empty dictionary which is then converted to an empty Series.
+[english] That makes sense, thanks for the clarification.

@@ -1,0 +1,75 @@
+[english] I need a function that takes token fragments from source code and converts them into higher-level, structured Python objects like imports, classes, and expressions.
+[english] This function transforms raw token fragments by iterating through them and classifying their type. It intelligently handles context, ensuring related elements such as decorators or preceding comments are correctly grouped with the primary object they pertain to.
+<switch:python>
+[python] def _parse2(self, fragments):
+        """
+        Second stage of parsing: convert ``fragments`` into the list of code objects.
+
+        This method in fact does more than simple conversion of fragments into objects. It also attempts to group
+        certain fragments into one, if they in fact seem like a single piece. For example, decorators are grouped
+        together with the objects they decorate, comments that explain certain objects or statements are attached to
+        those as well.
+        """
+        out = []
+        tokens = self._tokens
+        i = 0
+        saved_start = None
+        while i < len(fragments):
+            ftype, start, end = fragments[i]
+            assert start == (0 if i == 0 else fragments[i - 1][2]), "Discontinuity in `fragments` at i = %d" % i
+            if ftype == "whitespace" or ftype == "end":
+                assert saved_start is None
+                obj = Whitespace(tokens[start:end])
+            elif ftype == "docstring":
+                assert saved_start is None
+                obj = Docstring(tokens[start:end])
+            elif ftype == "comment":
+                assert saved_start is None
+                next_frag = fragments[i + 1][0] if i + 1 < len(fragments) else "end"
+                if next_frag in {"docstring", "end", "whitespace", "comment", "banner-comment"}:
+                    # Possibly merge with the previous Comment instance
+                    # if (len(out) >= 2 and isinstance(out[-1], Whitespace) and isinstance(out[-2], Comment) and
+                    #         out[-2].type != "banner"):
+                    #     obj = Comment(out[-2].tokens + out[-1].tokens + tokens[start:end])
+                    #     del out[-2:]
+                    # else:
+                    obj = Comment(tokens[start:end])
+                elif next_frag in {"decorator", "import", "def", "class", "code"}:
+                    # save this comment for later
+                    saved_start = start
+                    i += 1
+                    continue
+                else:
+                    raise RuntimeError("Unknown token type %s" % next_frag)
+            elif ftype == "banner-comment":
+                assert saved_start is None
+                obj = Comment(tokens[start:end])
+                obj.type = "banner"
+            elif ftype == "decorator":
+                if saved_start is None:
+                    saved_start = start
+                i += 1
+                continue
+            elif ftype == "import":
+                real_start = start if saved_start is None else saved_start
+                saved_start = None
+                obj = ImportBlock(tokens[real_start:end])
+            elif ftype in {"class", "def"}:
+                real_start = start if saved_start is None else saved_start
+                saved_start = None
+                obj = Callable(tokens[real_start:end])
+                obj.type = ftype
+            elif ftype == "code":
+                real_start = start if saved_start is None else saved_start
+                saved_start = None
+                obj = Expression(tokens[real_start:end])
+            else:
+                assert False, "Unknown fragment type %s" % ftype
+            out.append(obj)
+            i += 1
+        return out
+<switch:english>
+[english] The parsing logic utilizes state management via `saved_start` to maintain context for grouping sequential tokens into logical objects like function definitions. This approach allows complex structures like decorated functions to be represented by a single, cohesive code object.
+[english] If multiple unrelated comments appear sequentially before two different class definitions, how does the parser distinguish which comment belongs to which class?
+[english] The logic processes each fragment independently unless explicit grouping rules apply. Since there is no mechanism defined to associate independent comments with future structures, they will likely be parsed as separate `Comment` objects.
+[english] That makes sense; it clarifies how context is managed during the object construction phase.

@@ -1,0 +1,19 @@
+[english] I need a thread-safe way to pause an execution flow for a specific duration while also allowing another thread to forcefully interrupt that wait.
+[english] This implementation uses the `Event` object to handle complex timing and inter-thread signaling logic. By setting up a new event before waiting, the function effectively manages how long it pauses and what its exit condition is.
+<switch:python>
+[python] def wait(self, time):
+        """Pauses the thread for a specified time.
+
+        Returns False if interrupted by another thread and True if the
+        time runs out normally.
+        """
+        self._wait = Event()
+        return not self._wait.wait(time)
+<switch:english>
+[english] The method returns True if the wait timed out normally, but False if the internal thread was signaled or interrupted by an external call to set the associated event.
+[english] How would another thread actually signal this function to interrupt the waiting process?
+[english] Another thread can stop the wait by accessing and setting the same event instance used internally. If `self._wait` were accessible, code like this would interrupt it:
+<switch:python>
+[python] self._wait.set()
+<switch:english>
+[english] That makes sense; using an Event for signaling is much cleaner than busy-looping.

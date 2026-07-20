@@ -1,0 +1,41 @@
+[english] How can I stack several H2O DataFrames or constants together along the column axis into a single, wider DataFrame?
+[english] This method allows you to combine multiple frames by appending their columns sequentially. It first validates that all dataframes have matching row counts before merging them into a new expression.
+<switch:python>
+[python] def cbind(self, data):
+        """
+        Append data to this frame column-wise.
+
+        :param H2OFrame data: append columns of frame ``data`` to the current frame. You can also cbind a number,
+            in which case it will get converted into a constant column.
+
+        :returns: new H2OFrame with all frames in ``data`` appended column-wise.
+        """
+        assert_is_type(data, H2OFrame, numeric, [H2OFrame, numeric])
+        frames = [data] if not isinstance(data, list) else data
+        new_cols = list(self.columns)
+        new_types = dict(self.types)
+        for frame in frames:
+            if isinstance(frame, H2OFrame):
+                if frame.nrow != self.nrow:
+                    raise H2OValueError("Cannot bind a dataframe with %d rows to a data frame with %d rows: "
+                                        "the number of rows should match" % (frame.nrow, self.nrow))
+                new_cols += frame.columns
+                new_types.update(frame.types)
+            else:
+                new_cols += [None]
+        unique_cols = set(new_cols)
+        fr = H2OFrame._expr(expr=ExprNode("cbind", self, *frames), cache=self._ex._cache)
+        fr._ex._cache.ncols = len(new_cols)
+        if len(new_cols) == len(unique_cols) and None not in unique_cols:
+            fr._ex._cache.names = new_cols
+            fr._ex._cache.types = new_types
+        else:
+            # Invalidate names and types since they contain duplicate / unknown names, and the server will choose those.
+            fr._ex._cache.names = None
+            fr._ex._cache.types = None
+        return fr
+<switch:english>
+[english] The function dynamically builds a new expression list for columns and updates metadata accordingly. If inputs result in duplicate or ambiguous column names, the resulting dataframe names are explicitly invalidated.
+[english] If I pass a numeric value instead of an H2OFrame, how is that constant value actually integrated into the final frame?
+[english] When non-frame data is passed, it appends `None` to the column list. The internal expression system then interprets this as a constant column for all rows.
+[english] Thanks, I think that clarifies how the binding works.

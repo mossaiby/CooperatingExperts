@@ -1,0 +1,42 @@
+[english] How can I check if the parameters for an algorithm are valid before trying to train it on my h2o cluster?
+[english] This function validates model builder parameters by first retrieving available builders, then ensuring necessary components like training frames exist, and finally making a POST request to check parameter validity.
+<switch:python>
+[python] def validate_model_parameters(self, algo, training_frame, parameters, timeoutSecs=60, **kwargs):
+    '''
+    Check a dictionary of model builder parameters on the h2o cluster 
+    using the given algorithm and model parameters.
+    '''
+    assert algo is not None, '"algo" parameter is null'
+    # Allow this now: assert training_frame is not None, '"training_frame" parameter is null'
+    assert parameters is not None, '"parameters" parameter is null'
+
+    model_builders = self.model_builders(timeoutSecs=timeoutSecs)
+    assert model_builders is not None, "/ModelBuilders REST call failed"
+    assert algo in model_builders['model_builders']
+    builder = model_builders['model_builders'][algo]
+    
+    # TODO: test this assert, I don't think this is working. . .
+    if training_frame is not None:
+        frames = self.frames(key=training_frame)
+        assert frames is not None, "/Frames/{0} REST call failed".format(training_frame)
+
+        key_name = frames['frames'][0]['key']['name']
+        assert key_name==training_frame, \
+            "/Frames/{0} returned Frame {1} rather than Frame {2}".format(training_frame, key_name, training_frame)
+
+        parameters['training_frame'] = training_frame
+
+    # TODO: add parameter existence checks
+    # TODO: add parameter value validation
+
+    # FIX! why ignoreH2oError here?
+    result = self.do_json_request('/3/ModelBuilders.json/' + algo + "/parameters", cmd='post', 
+        timeout=timeoutSecs, postData=parameters, ignoreH2oError=True, noExtraErrorCheck=True)
+
+    verboseprint("model parameters validation: " + repr(result))
+    return result
+<switch:english>
+[english] The logic handles configuration checks but relies heavily on the external REST API response for true validation of the provided parameters. Note that `ignoreH2oError` is enabled during the final step.
+[english] What exactly does it mean when there's a TODO note about adding parameter value validation?
+[english] The existing function currently only checks existence and structure via asserts; you would need to implement custom logic within the TODO placeholders for type or range constraints. For example, checking if `parameters['learning_rate']` is between 0 and 1.
+[english] Does this handle cases where no training frame is provided?

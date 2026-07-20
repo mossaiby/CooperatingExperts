@@ -1,0 +1,34 @@
+[english] How can I efficiently select specific study IDs and a custom list of features from my internal dataset?
+[english] This function manages data subsetting by first checking if row filtering is needed via ids, then if column filtering is required using features. It also handles the final output structure to ensure density.
+<switch:python>
+[python] def get_feature_data(self, ids=None, features=None, dense=True):
+        """ Slices and returns a subset of feature data.
+
+        Args:
+            ids (list, array): A list or 1D numpy array of study ids to
+                return rows for. If None, returns data for all studies
+                (i.e., all rows in array).
+            features (list, array): A list or 1D numpy array of named features
+                to return. If None, returns data for all features (i.e., all
+                columns in array).
+            dense (bool): Optional boolean. When True (default), convert the
+                result to a dense array before returning. When False, keep as
+                sparse matrix. Note that if ids is not None, the returned array
+                will always be dense.
+        Returns:
+          A pandas DataFrame with study IDs in rows and features incolumns.
+        """
+        result = self.data
+
+        if ids is not None:
+            result = result.ix[ids]
+
+        if features is not None:
+            result = result.ix[:, features]
+
+        return result.to_dense() if dense else result
+<switch:english>
+[english] It’s important to note that specifying study IDs automatically overrides the dense parameter and forces a dense return format.
+[english] If both 'ids' and 'features' are passed as empty lists, what will be the resulting DataFrame shape?
+[english] The function uses pandas indexing which means an empty list for ids results in zero rows, while an empty list for features results in zero columns. The final structure will have dimensions (0, N) or (N, 0).
+[english] I appreciate the clarification on how pandas handles those edge cases!

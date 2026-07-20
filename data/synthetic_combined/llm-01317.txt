@@ -1,0 +1,48 @@
+[english] I need a helper function that programmatically sets up and initializes an LDAP 3 connection based on my application's configuration.
+[english] This method constructs an ldap3.Connection object by evaluating bind credentials or falling back to anonymous access configured in your system settings.
+<switch:python>
+[python] def _make_connection(self, bind_user=None, bind_password=None,
+                         contextualise=True, **kwargs):
+        """
+        Make a connection.
+
+        Args:
+            bind_user (str): User to bind with. If `None`, AUTH_ANONYMOUS is
+                used, otherwise authentication specified with
+                config['LDAP_BIND_AUTHENTICATION_TYPE'] is used.
+            bind_password (str): Password to bind to the directory with
+            contextualise (bool): If true (default), will add this connection to the
+                appcontext so it can be unbound upon app_teardown.
+
+        Returns:
+            ldap3.Connection: An unbound ldap3.Connection. You should handle exceptions
+                upon bind if you use this internal method.
+        """
+
+        authentication = ldap3.ANONYMOUS
+        if bind_user:
+            authentication = getattr(ldap3, self.config.get(
+                'LDAP_BIND_AUTHENTICATION_TYPE'))
+
+        log.debug("Opening connection with bind user '{0}'".format(
+            bind_user or 'Anonymous'))
+        connection = ldap3.Connection(
+            server=self._server_pool,
+            read_only=self.config.get('LDAP_READONLY'),
+            user=bind_user,
+            password=bind_password,
+            client_strategy=ldap3.SYNC,
+            authentication=authentication,
+            check_names=self.config['LDAP_CHECK_NAMES'],
+            raise_exceptions=True,
+            **kwargs
+        )
+
+        if contextualise:
+            self._contextualise_connection(connection)
+        return connection
+<switch:english>
+[english] Note that this function returns a raw, unbound `ldap3.Connection` object, meaning you should handle any necessary explicit authentication operations before attempting queries.
+[english] What mechanism does the code use if I don't provide a bind user? Does it safely assume anonymous access?
+[english] If no `bind_user` is provided, the function defaults to setting the authentication type as `ldap3.ANONYMOUS`, allowing basic connectivity via the `authentication = ldap3.ANONYMOUS` line.
+[english] That makes sense for handling credential fallbacks.

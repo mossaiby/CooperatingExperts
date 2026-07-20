@@ -1,0 +1,26 @@
+[english] I need a way to determine if the current security context supports replay detection before sending messages.
+[english] This method verifies two conditions: first, that the necessary replay flag is enabled, and second, that the connection state allows for protected communication.
+<switch:python>
+[python] def replay_detection_negotiated(self):
+        """
+        After :meth:`step` has been called, this property will be set to
+        True if the security context can use replay detection for messages protected by
+        :meth:`get_mic` and :meth:`wrap`. False if replay detection cannot be used.
+        """
+        return (
+            self.flags & C.GSS_C_REPLAY_FLAG
+        ) and (
+            self.established or (self.flags & C.GSS_C_PROT_READY_FLAG)
+        )
+<switch:english>
+[english] It returns True if the replay flag is set AND either the connection is established or the protocol is ready for protection.
+[english] If `self.established` is False, can this function still return True?
+[english] No. If not established, it relies strictly on whether the protocol signaling capabilities allow for protection via GSS_C_PROT_READY_FLAG and C.GSS_C_REPLAY_FLAG:
+<switch:python>
+[python] return (
+    self.flags & C.GSS_C_REPLAY_FLAG
+) and (
+    False or (self.flags & C.GSS_C_PROT_READY_FLAG)
+)
+<switch:english>
+[english] That clarifies the dependency on negotiation state, I appreciate it.

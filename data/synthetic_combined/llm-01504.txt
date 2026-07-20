@@ -1,0 +1,46 @@
+[english] I need a function to generate a structured resources string for Nextflow based on process and resource dictionaries.
+[english] This function iterates through your input dictionary using nested loops to access every resource directive available for each defined process.
+<switch:python>
+[python] def _get_resources_string(res_dict, pid):
+        """ Returns the nextflow resources string from a dictionary object
+
+        If the dictionary has at least on of the resource directives, these
+        will be compiled for each process in the dictionary and returned
+        as a string read for injection in the nextflow config file template.
+
+        This dictionary should be::
+
+            dict = {"processA": {"cpus": 1, "memory": "4GB"},
+                    "processB": {"cpus": 2}}
+
+        Parameters
+        ----------
+        res_dict : dict
+            Dictionary with the resources for processes.
+        pid : int
+            Unique identified of the process
+
+        Returns
+        -------
+        str
+            nextflow config string
+        """
+
+        config_str = ""
+        ignore_directives = ["container", "version"]
+
+        for p, directives in res_dict.items():
+
+            for d, val in directives.items():
+
+                if d in ignore_directives:
+                    continue
+
+                config_str += '\n\t${}_{}.{} = {}'.format(p, pid, d, val)
+
+        return config_str
+<switch:english>
+[english] The function successfully skips directives listed in `ignore_directives`, ensuring only relevant resource mappings are included in the final output string.
+[english] What if one of the process entries doesn't have any valid resource keys? Does it cause an error?
+[english] If a process entry has no valid resource keys (i.e., all directives are ignored or the inner dictionary is empty), the nested loops simply do not execute for that process, and no output is added to `config_str`, avoiding errors.
+[english] That makes sense; I appreciate the clear explanation.

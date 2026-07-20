@@ -1,0 +1,33 @@
+[english] I'm receiving messages from enaml.js, but I need a handler that can interpret these incoming events or updates based on a unique node reference.
+[english] This approach first decodes the message body using JSON and identifies a target element in your UI view by matching its unique reference ID. It then logic branching handles different message types for event triggers or state mutations.
+<switch:python>
+[python] def on_message(self, message):
+        """ When enaml.js sends a message """
+        #: Decode message
+        change = tornado.escape.json_decode(message)
+        #print change
+        #: Get the owner ID
+        ref = change.get('ref')
+        if not ref:
+            return
+        
+        #: Get the server side representation of the node
+        #: If found will return the View declaration node
+        node = self.view.xpath('//*[@ref="{}"]'.format(ref), first=True)
+        if node is None:
+            return
+        
+        #: Handle the event
+        if change.get('type') and change.get('name'):
+            if change['type'] == 'event':
+                #: Trigger the event
+                trigger = getattr(node, change['name'])
+                trigger()
+            if change['type'] == 'update':
+                #: Trigger the update
+                setattr(node, change['name'], change['value'])
+<switch:english>
+[english] The code dynamically interacts with the Python object (the 'node') to trigger methods or set attributes based on runtime data from the incoming `change` dictionary.
+[english] If I send a message where both 'type' and 'name' are present, but not 'value', would it still attempt to call an event or would it fail gracefully?
+[english] The current implementation checks for 'name' before calling attributes. If 'type' is 'event', it will proceed to use the `getattr` function even if a 'value' key is absent.
+[english] That clarifies how the message handling works!

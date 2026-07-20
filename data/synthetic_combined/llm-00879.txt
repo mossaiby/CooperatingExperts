@@ -1,0 +1,49 @@
+[english] How do I add an 'sa' binary annotation to a span to record the remote destination host and port details for logging?
+[english] This function adds a specific 'sa' binary annotation to a current span. It first checks if the span is of kind `CLIENT` before proceeding with setting the remote endpoint metadata.
+<switch:python>
+[python] def add_sa_binary_annotation(
+        self,
+        port=0,
+        service_name='unknown',
+        host='127.0.0.1',
+    ):
+        """Adds a 'sa' binary annotation to the current span.
+
+        'sa' binary annotations are useful for situations where you need to log
+        where a request is going but the destination doesn't support zipkin.
+
+        Note that the span must have 'cs'/'cr' annotations.
+
+        :param port: The port number of the destination
+        :type port: int
+        :param service_name: The name of the destination service
+        :type service_name: str
+        :param host: Host address of the destination
+        :type host: str
+        """
+        if self.kind != Kind.CLIENT:
+            # TODO: trying to set a sa binary annotation for a non-client span
+            # should result in a logged error
+            return
+
+        remote_endpoint = create_endpoint(
+            port=port,
+            service_name=service_name,
+            host=host,
+        )
+        if not self.logging_context:
+            if self.remote_endpoint is not None:
+                raise ValueError('SA annotation already set.')
+            self.remote_endpoint = remote_endpoint
+        else:
+            if self.logging_context.remote_endpoint is not None:
+                raise ValueError('SA annotation already set.')
+            self.logging_context.remote_endpoint = remote_endpoint
+<switch:english>
+[english] The code handles setting the remote endpoint, whether on `self` or within `logging_context`. Crucially, it includes logic to raise an error if the annotation has already been set, preventing accidental overwrites.
+[english] What happens internally if I attempt to call this function multiple times for the same span context?
+[english] The code explicitly checks whether the SA binary annotation is already present on either `self` or `self.logging_context`. If it detects a prior setting, it immediately raises a ValueError:
+<switch:python>
+[python] raise ValueError('SA annotation already set.')
+<switch:english>
+[english] That makes sense, thank you!

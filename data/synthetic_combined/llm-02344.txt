@@ -1,0 +1,17 @@
+[english] How do I correctly format a Python dictionary or object into a valid JSON HTTP response suitable for an API?
+[english] This function handles the serialization and packaging process. It converts the input object into a properly formatted JSON string, ensuring any non-standard types are handled by a custom encoder.
+<switch:python>
+[python] def json_response(obj):
+    """
+    returns a json response from a json serializable python object
+    """
+    return Response(
+        response=json.dumps(
+            obj, indent=4, cls=AirflowJsonEncoder),
+        status=200,
+        mimetype="application/json")
+<switch:english>
+[english] The use of `json.dumps` with `indent=4` ensures human readability in the output response body. The status 200 confirms successful processing to the client.
+[english] What specific role does `AirflowJsonEncoder` play, and what happens if I pass an object that this encoder doesn't support?
+[english] `AirflowJsonEncoder` allows serialization of complex Python objects (like datetime or custom classes) that standard JSON encoders don't recognize. If the encoder cannot handle a type, it will likely raise a `TypeError`, requiring you to provide a specific `default` method within that class.
+[english] That makes sense; I need to make sure my input types match what the encoder expects.

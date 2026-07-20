@@ -1,0 +1,22 @@
+[english] How can I access the actual underlying object instead of interacting with its proxy representation?
+[english] This function aims to retrieve the real Python object hidden behind this class's internal proxy structure. It starts by accessing a locale internally stored as `self._Proxy__local` and then checks how that object should be retrieved.
+<switch:python>
+[python] def _get_current_object(self):
+        """Get current object.
+        This is useful if you want the real
+        object behind the proxy at a time for performance reasons or because
+        you want to pass the object into a different context.
+        """
+        loc = object.__getattribute__(self, '_Proxy__local')
+        if not hasattr(loc, '__release_local__'):
+            return loc(*self.__args, **self.__kwargs)
+        try:  # pragma: no cover
+            # not sure what this is about
+            return getattr(loc, self.__name__)
+        except AttributeError:  # pragma: no cover
+            raise RuntimeError('no object bound to {0.__name__}'.format(self))
+<switch:english>
+[english] The method successfully provides direct access to the managed object, which can improve performance when passing data outside the proxied context. However, relying on attributes like `__args` makes this highly dependent on internal class structure.
+[english] What happens if I call this method and the required attribute doesn't exist on the local object?
+[english] If the attribute is missing from the locally stored object, the function will raise a RuntimeError because it cannot find the concrete instance bound to `self.__name__` in that context.
+[english] Got it, thanks for clarifying!

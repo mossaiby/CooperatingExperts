@@ -1,0 +1,27 @@
+[english] How do I add literal text content while ensuring it is correctly appended to an existing line rather than starting a new one?
+[english] This function handles adding string data by checking if there is an active buffer element. If the buffer has content, it appends the object; otherwise, it writes directly to output.
+<switch:python>
+[python] def text(self, obj):
+        """Add literal text to the output."""
+        width = len(obj)
+        if self.buffer:
+            text = self.buffer[-1]
+            if not isinstance(text, Text):
+                text = Text()
+                self.buffer.append(text)
+            text.add(obj, width)
+            self.buffer_width += width
+            self._break_outer_groups()
+        else:
+            self.output.write(obj)
+            self.output_width += width
+<switch:english>
+[english] When using the buffer functionality, it ensures that text is grouped with previous entries before advancing.
+[english] What happens if `len(obj)` is zero when adding an empty string?
+[english] If `len(obj)` is 0, `add` will still be called; however, no content is added to the current buffer element.
+<switch:python>
+[python] def text(self, obj):
+    width = len(obj)
+    # ... rest of function logic
+<switch:english>
+[english] This clarifies how batch writing and single-entry appending work together.

@@ -1,0 +1,16 @@
+[english] How can I read cached stepper configuration and convert it into a functional StepperInfo object?
+[english] This function is designed to retrieve stored settings from disk, aiming for fast access by reading a pre-serialized JSON file.
+<switch:python>
+[python] def __read_cached_options(self):
+        '''
+        Read stepper info from json
+        '''
+        self.log.debug("Reading cached stepper info: %s", self.__si_filename())
+        with open(self.__si_filename(), 'r') as si_file:
+            si = info.StepperInfo(**json.load(si_file))
+        return si
+<switch:english>
+[english] The code uses `info.StepperInfo(**json.load(si_file))` to dynamically map dictionary keys from the JSON into constructor arguments for a new StepperInfo instance.
+[english] What error handling is in place if the file specified by self.__si_filename() does not exist?
+[english] Currently, there is no specific check; opening a non-existent file would raise a FileNotFoundError. You should wrap the `with open...` block in a try/except structure to handle this gracefully.
+[english] That's very helpful.

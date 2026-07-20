@@ -1,0 +1,21 @@
+[english] How can I retrieve a list of event descriptions from the object's events, potentially filtering by a specific event name?
+[english] To solve this, we use a conditional approach within `get_event_descriptions`. The function utilizes list comprehensions to iterate over all items in `self.events` and apply the appropriate transformation or filtering.
+<switch:python>
+[python] def get_event_descriptions(self, event_name=None):
+        """
+        Get the thing's events as an array.
+
+        event_name -- Optional event name to get descriptions for
+
+        Returns the event descriptions.
+        """
+        if event_name is None:
+            return [e.as_event_description() for e in self.events]
+        else:
+            return [e.as_event_description()
+                    for e in self.events if e.get_name() == event_name]
+<switch:english>
+[english] The code efficiently handles both cases: when an event name is provided, it filters events using `e.get_name() == event_name` before converting them to descriptions. If no matches are found, this will correctly return an empty list.
+[english] If I pass a `event_name` that doesn't exist in the collection, what exactly does the function do?
+[english] The method returns an empty list (`[]`) because the filtering condition `e.get_name() == event_name` fails for every element in the loop.
+[english] Perfect, thanks for clarifying that logic.

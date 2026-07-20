@@ -1,0 +1,37 @@
+[english] How do I print every element from an arbitrary collection to a specified file or with custom line endings?
+[english] This function achieves bulk printing by iterating through the provided iterable, then delegates the actual output to a helper like `pfprint` for each individual item.
+<switch:python>
+[python] def pfprint_all(iterable, end='\n', file=None):
+    """Prints each item from an iterable.
+
+    :param iterable: An iterable yielding values to print
+    :param end: String to append to the end of printed output
+    :param file: File to which output is printed
+    :rtype: None
+
+    Example::
+
+        >>> @pointfree
+        ... def prefix_all(prefix, iterable):
+        ...     for item in iterable:
+        ...         yield "%s%s" % (prefix, item)
+
+        >>> fn = prefix_all("An item: ") >> pfprint_all
+
+        >>> fn(["foo", "bar", "baz"])
+        An item: foo
+        An item: bar
+        An item: baz
+
+    """
+
+    for item in iterable:
+        pfprint(item, end=end, file=file)
+<switch:english>
+[english] The function relies entirely on the existence and functionality of a separate `pfprint` utility to handle the actual I/O operations.
+[english] If no file is specified for output, where does the items actually go?
+[english] When `file=None`, Python's standard output mechanism (like `sys.stdout`) is usually used automatically by functions that respect this convention.
+<switch:python>
+[python] pfprint(item) # Implicitly uses stdout
+<switch:english>
+[english] That makes much better sense, thank you!

@@ -1,0 +1,44 @@
+[english] I need to write a function that iteratively fetches all question data from a paginated API endpoint.
+[english] This function uses a `while` loop and generator pattern (`yield`) to handle multiple requests sequentially until every page is retrieved or an error stops the process. It constructs the full URL using `urijoin` before starting.
+<switch:python>
+[python] def get_api_questions(self, path):
+        """Retrieve a question page using the API.
+
+        :param page: page to retrieve
+        """
+        npages = 1
+        next_request = True
+
+        path = urijoin(self.base_url, path)
+        while next_request:
+
+            try:
+                params = {
+                    'page': npages,
+                    'sort': self.ORDER_API
+                }
+
+                response = self.fetch(path, payload=params)
+
+                whole_page = response.text
+
+                raw_questions = json.loads(whole_page)
+                tpages = raw_questions['pages']
+
+                logger.debug("Fetching questions from '%s': page %s/%s",
+                             self.base_url, npages, tpages)
+
+                if npages == tpages:
+                    next_request = False
+
+                npages = npages + 1
+                yield raw_questions
+
+            except requests.exceptions.TooManyRedirects as e:
+                logger.warning("%s, data not retrieved for resource %s", e, path)
+                next_request = False
+<switch:english>
+[english] The logic handles API pagination by comparing the current page number, `npages`, against the total available pages defined in the response data (`tpages`).
+[english] If the API endpoint returns an error other than TooManyRedirect, how will this function handle graceful failure?
+[english] Currently, it only catches `requests.exceptions.TooManyRedirect` and exits. To handle other errors gracefully, you could add a more general `except Exception as e:` block inside the loop.
+[english] Thank you for checking my code logic!

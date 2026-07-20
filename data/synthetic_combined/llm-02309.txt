@@ -1,0 +1,35 @@
+[english] How can I map unique process identifiers in my pipeline list back to their original human-readable names?
+[english] This function iterates through every link in the `pipeline_links` list. It checks both the input and output processes, replacing symbolic IDs using the provided mapping dictionary.
+<switch:python>
+[python] def remove_unique_identifiers(identifiers_to_tags, pipeline_links):
+    """Removes unique identifiers and add the original process names to the
+    already parsed pipelines
+
+    Parameters
+    ----------
+    identifiers_to_tags : dict
+        Match between unique process identifiers and process names
+    pipeline_links: list
+        Parsed pipeline list with unique identifiers
+
+    Returns
+    -------
+    list
+        Pipeline list with original identifiers
+    """
+
+    # Replaces the unique identifiers by the original process names
+    for index, val in enumerate(pipeline_links):
+        if val["input"]["process"] != "__init__":
+            val["input"]["process"] = identifiers_to_tags[
+                val["input"]["process"]]
+        if val["output"]["process"] != "__init__":
+            val["output"]["process"] = identifiers_to_tags[
+                val["output"]["process"]]
+
+    return pipeline_links
+<switch:english>
+[english] The logic modifies the `pipeline_links` list directly (in place), so ensure you don't require the original unique identifiers after this operation.
+[english] What happens if a process identifier in the pipelines is not present as a key in the mapping dictionary?
+[english] If an identifier is missing from `identifiers_to_tags`, the function will raise a KeyError. You can safely handle this using .get() to provide a default or omit replacement.
+[english] That explanation makes perfect sense, thanks for clarifying how the lookup works!

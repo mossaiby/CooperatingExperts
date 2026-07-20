@@ -1,0 +1,41 @@
+[english] How can I reliably execute an asynchronous response function while ensuring success responses are consistently identified and specific command failures are properly serialized?
+[english] This wrapper executes a request handler asynchronously using `maybeDeferred`. It then attaches callbacks to intercept both successful resolutions and anticipated failures. The callbacks ensure the output format is consistent, adding or standardizing error metadata based on the execution outcome.
+<switch:python>
+[python] def _runResponder(self, responder, request, command, identifier):
+        """Run the responser function. If it succeeds, add the _answer key.
+        If it fails with an error known to the command, serialize the
+        error.
+
+        """
+        d = defer.maybeDeferred(responder, **request)
+
+        def _addIdentifier(response):
+            """Return the response with an ``_answer`` key.
+
+            """
+            response["_answer"] = identifier
+            return response
+
+        def _serializeFailure(failure):
+            """
+            If the failure is serializable by this AMP command, serialize it.
+            """
+            key = failure.trap(*command.allErrors)
+            response = {
+                "_error_code": command.allErrors[key],
+                "_error_description": str(failure.value),
+                "_error": identifier
+            }
+            return response
+
+        d.addCallbacks(_addIdentifier, _serializeFailure)
+        return d
+<switch:english>
+[english] The function successfully wraps deferred results with custom identification and detailed serialization logic for known errors in the command structure.
+[english] What happens if `responder` fails with an exception that isn't listed in `command.allErrors`?
+[english] If an unexpected failure occurs (one not caught by `failure.trap`), the error is serialized as a standard Python exception since it doesn't match any defined command errors:
+<switch:python>
+[python] # The failure would be handled implicitly or logged, not specifically formatted.
+pass
+<switch:english>
+[english] That makes sense for centralized response handling.

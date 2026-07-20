@@ -1,0 +1,17 @@
+[english] How do I create a greeting message that also logs specific content if extra arguments are provided?
+[english] This function generates a personalized 'Danke schön' (Thank you) message. It uses the optional 'rest' parameter to conditionally update an external state and determine who receives the thanks.
+<switch:python>
+[python] def danke(client, event, channel, nick, rest):
+    'Danke schön!'
+    if rest:
+        rest = rest.strip()
+        Karma.store.change(rest, 1)
+        rcpt = rest
+    else:
+        rcpt = channel
+    return f'Danke schön, {rcpt}! Danke schön!'
+<switch:english>
+[english] The function ensures that regardless of whether 'rest' is used or if the default channel name is selected, it always produces a thank-you string.
+[english] What happens with the arguments like `client` and `event`? Are they actually used?
+[english] Currently, the parameters passed as `client`, `event`, `channel`, and `nick` are unused by this function. They appear to be placeholders for a larger event handler context.
+[english] Got it, thanks!

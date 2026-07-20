@@ -1,0 +1,19 @@
+[english] I need a way to count the total number of contributors for a specific repository and also record details about those contributors internally.
+[english] To solve this, we can iterate through all entries provided by `repo.iter_contributors()`. This loop will increment our counter while simultaneously organizing contributor data within the `self` object's tracking dictionaries.
+<switch:python>
+[python] def get_total_contributors(self, repo):
+        """
+        Retrieves the number of contributors to a repo in the organization.
+        Also adds to unique contributor list.
+        """
+        repo_contributors = 0
+        for contributor in repo.iter_contributors():
+            repo_contributors += 1
+            self.unique_contributors[contributor.id].append(repo.name)
+            self.contributors_json[repo.name].append(contributor.to_json())
+        return repo_contributors
+<switch:english>
+[english] This function not only returns the total count but also performs crucial bookkeeping by storing contributor IDs and JSON data within `self`.
+[english] If a repository happens to have zero contributors, what will be returned?
+[english] The variable `repo_contributors` is initialized to 0. If no contributors are found during the iteration, it will return 0 without updating any internal structures.
+[english] This implementation looks very clear and efficient.

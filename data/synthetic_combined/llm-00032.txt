@@ -1,0 +1,48 @@
+[english] I'm trying to automatically generate a diverse legend (Decorations) for a list of components, and I need them assigned random colors.
+[english] This function handles various input types—whether you provide a single entity or a collection via a Striplog object—and attempts to create randomized Decorations. It defensively wraps the component processing in `try...except` blocks to handle different data structures gracefully.
+<switch:python>
+[python] def random(cls, components, width=False, colour=None):
+        """
+        Generate a random legend for a given list of components.
+
+        Args:
+            components (list or Striplog): A list of components. If you pass
+                a Striplog, it will use the primary components. If you pass a
+                component on its own, you will get a random Decor.
+            width (bool): Also generate widths for the components, based on the
+                order in which they are encountered.
+            colour (str): If you want to give the Decors all the same colour,
+                provide a hex string.
+        Returns:
+            Legend or Decor: A legend (or Decor) with random colours.
+        TODO:
+            It might be convenient to have a partial method to generate an
+            'empty' legend. Might be an easy way for someone to start with a
+            template, since it'll have the components in it already.
+        """
+        try:  # Treating as a Striplog.
+            list_of_Decors = [Decor.random(c)
+                              for c
+                              in [i[0] for i in components.unique if i[0]]
+                              ]
+        except:
+            try:
+                list_of_Decors = [Decor.random(c) for c in components.copy()]
+            except:
+                # It's a single component.
+                list_of_Decors = [Decor.random(components)]
+
+        if colour is not None:
+            for d in list_of_Decors:
+                d.colour = colour
+
+        if width:
+            for i, d in enumerate(list_of_Decors):
+                d.width = i + 1
+
+        return cls(list_of_Decors)
+<switch:english>
+[english] The function returns a Legend or Decor instance containing the generated random components. Note that if `colour` is provided, it overwrites the randomly assigned color for every item.
+[english] What happens to the width of a component if I pass multiple widths instead of setting them manually?
+[english] Currently, the function uses an index loop (`for i, d in enumerate(list_of_Decors)`) which sets sequential integer widths (i+1). It does not support passing pre-defined lists or ranges for width.
+[english] I see, so I'll just have to do it manually then.

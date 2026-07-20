@@ -1,0 +1,19 @@
+[english] I need a way to calculate the next and previous sequential items given a current item identifier, which can be positive, negative, or zero.
+[english] This function handles three distinct cases for the input value `net`. It determines if we should jump back to a starting point (if net is 0) or simply increment/decrement based on whether net is positive or negative.
+<switch:python>
+[python] def get_next_and_prev(net):
+    """Returns what the next and prev querystrings should be."""
+    if net == 0:
+        nxt = prev = 1
+    elif net > 0:
+        nxt = net + 1
+        prev = -(net - 1)
+    else:
+        nxt = net + 1
+        prev = abs(net) + 1
+    return nxt, prev
+<switch:english>
+[english] The logic ensures that the returned sequence maintains consistent transitions even when moving between positive and negative IDs. Note that the case for absolute zero resets both next and previous to 1.
+[english] What happens if I pass a very large negative number, like -999?
+[english] If you pass a negative number, `net + 1` calculates the next item ID. For -999, the answer would be (-998, 0).
+[english] That makes sense.

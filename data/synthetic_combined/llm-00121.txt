@@ -1,0 +1,16 @@
+[english] How can I ensure that a specific cleanup function runs during the request teardown phase for my Flask blueprint, regardless of where it is defined?
+[english] This method registers your provided cleanup function (`f`) into Flask's internal list of functions to be executed after every request completes. By leveraging an existing mechanism like `record_once`, we ensure this registration happens safely across the application context.
+<switch:python>
+[python] def teardown_app_request(self, f):
+        """Like :meth:`Flask.teardown_request` but for a blueprint.  Such a
+        function is executed when tearing down each request, even if outside of
+        the blueprint.
+        """
+        self.record_once(lambda s: s.app.teardown_request_funcs
+            .setdefault(None, []).append(f))
+        return f
+<switch:english>
+[english] This process effectively hooks into the main application's teardown lifecycle through the blueprint object. The use of `self.record_once` prevents redundant registration attempts within the same context.
+[english] Since this function modifies class state (`teardown_request_funcs`), how does it handle potential race conditions if multiple requests try to register a cleanup simultaneously?
+[english] The surrounding framework context likely ensures that `record_once` serializes or gates access to the registration process. In practice, you rely on Flask's internal application threading mechanisms to manage concurrent modifications safely.
+[english] That makes much more sense now!

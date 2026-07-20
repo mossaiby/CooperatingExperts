@@ -1,0 +1,32 @@
+[english] How can I create a serialization function that dynamically handles various defined data types like integers, enums, and arrays?
+[english] This function acts as a dispatcher. It inspect's the input `typ` to determine its specific structure (like Bits or Integer) and then finds the corresponding serialization method on the calling class.
+<switch:python>
+[python] def HdlType(cls, typ: HdlType, ctx: SerializerCtx, declaration=False):
+        """
+        Serialize HdlType instance
+        """
+        if isinstance(typ, Bits):
+            sFn = cls.HdlType_bits
+        elif isinstance(typ, HEnum):
+            sFn = cls.HdlType_enum
+        elif isinstance(typ, HArray):
+            sFn = cls.HdlType_array
+        elif isinstance(typ, Integer):
+            sFn = cls.HdlType_int
+        elif isinstance(typ, HBool):
+            sFn = cls.HdlType_bool
+        else:
+            raise NotImplementedError("type declaration is not implemented"
+                                      " for type %s"
+                                      % (typ.name))
+
+        return sFn(typ, ctx, declaration=declaration)
+<switch:english>
+[english] It relies heavily on dynamic dispatch, using the instance type (`isinstance`) to route execution to dedicated methods like `HdlType_int`. This ensures that each data primitive is serialized correctly based on its definition.
+[english] If I introduce a new custom class for serialization, say `MyCustomType`, how would I ensure it gets handled?
+[english] You must add an explicit case to the structure. For example:
+<switch:python>
+[python] elif isinstance(typ, MyCustomType):
+            sFn = cls.HdlType_custom
+<switch:english>
+[english] Does this ever get slow if I have a very large number of type definitions?

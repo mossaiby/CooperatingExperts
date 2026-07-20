@@ -1,0 +1,51 @@
+[english] How can I build an HTTP request dictionary to translate a given phrase from English ('en') to Spanish ('es') using Google's translation endpoint?
+[english] This function constructs the necessary data structures for a web request. It defines the URL, sets standard headers like User-Agent and Content-Type, and compiles all language codes and parameters into a dictionary structure.
+<switch:python>
+[python] def translator(source, target, phrase, version='0.0 test', charset='utf-8'):
+    """
+    Returns the url encoded string that will be pushed to the translation
+    server for parsing.
+
+    List of acceptable language codes for source and target languages
+    can be found as a JSON file in the etc directory.
+
+    Some source languages are limited in scope of the possible target languages
+    that are available.
+
+    .. code-block:: python
+
+        >>> from translate import translator
+        >>> translator('en', 'zh-TW', 'Hello World!')
+            '你好世界！'
+
+    :param source: Language code for translation source
+    :type source: String
+
+    :param target: Language code that source will be translate into
+    :type target: String
+
+    :param phrase: Text body string that will be url encoded and translated
+    :type phrase: String
+
+    :return: Request Interface
+    :rtype: Dictionary
+    """
+
+    url     = 'https://translate.google.com/translate_a/single'
+    agent   = 'User-Agent',   'py-translate v{}'.format(version)
+    content = 'Content-Type', 'application/json; charset={}'.format(charset)
+
+    params  = {'client': 'a', 'ie': charset, 'oe': charset,
+                   'dt': 't', 'sl':  source, 'tl':  target,  'q': phrase}
+
+    request = {'method': 'GET',
+                  'url': url,
+               'params': params,
+              'headers': dict([agent, content])}
+
+    return request
+<switch:english>
+[english] The final output is a dictionary formatted for an HTTP GET request. Remember that this function only prepares the request; an external library like `requests` must be used to actually send it.
+[english] What would happen if I pass invalid or non-standard language codes, such as 'eng' instead of 'en', into the source parameter?
+[english] If you use an unsupported code, this function will still successfully create the request dictionary. However, when the server processes the call later, it will likely return a 400 Bad Request error or no translation.
+[english] This was very clear; thanks for helping me understand how to structure these API calls!

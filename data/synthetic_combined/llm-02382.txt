@@ -1,0 +1,29 @@
+[english] How can I retrieve the repository URL, username, and password for a specified project from my configuration file?
+[english] This function first gathers all available server indexes by calling `self._read_index_servers()`. It then uses this index to locate and extract the specific details needed using `self._find_repo_config(servers, repository)`.
+<switch:python>
+[python] def get_repository_config(self, repository):
+        """Get config dictionary for the given repository.
+
+        If the repository section is not found in the config file,
+        return ``None``.  If the file is invalid, raise
+        :exc:`configparser.Error`.
+
+        Otherwise return a dictionary with:
+
+        * ``'repository'`` -- the repository URL
+        * ``'username'`` -- username for authentication
+        * ``'password'`` -- password for authentication
+
+        :param repository:
+            Name or URL of the repository to find in the ``.pypirc`` file.
+            The repository section must be defined in the config file.
+
+        """
+        servers = self._read_index_servers()
+        repo_config = self._find_repo_config(servers, repository)
+        return repo_config
+<switch:english>
+[english] The returned dictionary contains 'repository', 'username', and 'password'. Be aware that if a requested repository doesn't exist in your config, it will return `None`.
+[english] If the configuration file is broken or invalid, what specific exception does this function raise?
+[english] According to the docstring, if the underlying config file itself is improperly formatted, the method `self._find_repo_config` is responsible for raising a `configparser.Error`.
+[english] Thanks for explaining how error handling works!

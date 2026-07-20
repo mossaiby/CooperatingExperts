@@ -1,0 +1,14 @@
+[english] How do I correctly implement a method to signal that all box receiving has stopped because of a particular connection failure?
+[english] This function handles the termination sequence when communication is lost. It first delegates the stop command to the specific receiver component and then triggers a generalized notification about the loss.
+<switch:python>
+[python] def connectionLost(self, reason):
+        """
+        Tells the box receiver to stop receiving boxes.
+        """
+        self._remote.boxReceiver.stopReceivingBoxes(reason)
+        return basic.NetstringReceiver.connectionLost(self, reason)
+<switch:english>
+[english] The function ensures both the specific component and the base networking class are notified about the failure.
+[english] What happens if there is already an exception occurring inside `stopReceivingBoxes(reason)`?
+[english] If an exception occurs, it will halt execution before reaching the parent class method. You might want to add a `try...except` block around the specific receiver call for better error handling.
+[english] Should I also check if `self._remote` is initialized first?

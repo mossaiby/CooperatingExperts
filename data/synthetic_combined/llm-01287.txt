@@ -1,0 +1,19 @@
+[english] I need a function that simulates raw sensor data for an accelerometer and magnetometer since I don't have physical hardware.
+[english] To simulate the required 6-axis input, we initialize a list of six placeholder values. Then, we iterate through those positions to replace them with random floating-point numbers within the expected -2048 to 2048 range, simulating environmental fluctuations.
+<switch:python>
+[python] def read(self):
+		"""
+		Since there isn't a real sensor connected, read() creates random
+		data.
+		"""
+		data = [0]*6
+		for i in range(6):
+			data[i] = random.uniform(-2048, 2048)
+		accel = data[:3]
+		mag = data[3:]
+		return (accel, mag)
+<switch:english>
+[english] This function successfully generates structured sensor tuples but uses fixed limits (-2048 to 2048) since it is purely synthetic data. Remember that `random` must be imported for this logic to execute correctly.
+[english] If I wanted the simulation to focus on smaller, more localized readings instead of a wide range, how would I adjust the code?
+[english] You only need to modify the arguments passed into `random.uniform(min, max)` within the loop to scale your simulated data.
+[english] Got it! That makes perfect sense.

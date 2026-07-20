@@ -1,0 +1,15 @@
+[english] How do I determine if a specific data entry has been marked as deleted based on its collections?
+[english] To check the deletion status of a record, we first ensure we have a target record—either provided or defaulting to the latest revision. Then, we iterate through its listed collections to see if 'deleted' is present.
+<switch:python>
+[python] def is_deleted(self, record=None):
+        """Check if record is deleted."""
+        record = record or self.revisions[-1][1]
+        return any(
+            col == 'deleted'
+            for col in record.get('collections', [])
+        )
+<switch:english>
+[english] The function efficiently checks for deletions by using the `any()` generator construct on the list of collections attribute.
+[english] What happens if a record has 10 collections, and only one of them says 'deleted'?
+[english] Because the code uses `any()`, the function will immediately return True as soon as it finds the 'deleted' string in the collection list. The full logic is:
+[english] That makes perfect sense.

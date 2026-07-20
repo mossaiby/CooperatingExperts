@@ -1,0 +1,42 @@
+[english] How can I programmatically concatenate a list of individual video files into one master file using a specific set of codecs?
+[english] The function first generates a temporary text file (`tmp_filename`) and populates it with the absolute paths of all input videos. It then calculates default options, ensuring that `vcodec` and `acodec` are set to 'copy' if they aren't explicitly provided.
+<switch:python>
+[python] def concat_video(video_list,
+                 out_file,
+                 vcodec=None,
+                 acodec=None,
+                 log_level='info',
+                 print_cmd=False,
+                 **kwargs):
+    """Concatenate multiple videos into a single one.
+
+    Args:
+        video_list (list): A list of video filenames
+        out_file (str): Output video filename
+        vcodec (None or str): Output video codec, None for unchanged
+        acodec (None or str): Output audio codec, None for unchanged
+        log_level (str): Logging level of ffmpeg.
+        print_cmd (bool): Whether to print the final ffmpeg command.
+    """
+    _, tmp_filename = tempfile.mkstemp(suffix='.txt', text=True)
+    with open(tmp_filename, 'w') as f:
+        for filename in video_list:
+            f.write('file {}\n'.format(osp.abspath(filename)))
+    options = {'log_level': log_level}
+    if vcodec is None:
+        options['vcodec'] = 'copy'
+    if acodec is None:
+        options['acodec'] = 'copy'
+    convert_video(
+        tmp_filename,
+        out_file,
+        print_cmd,
+        pre_options='-f concat -safe 0',
+        **options)
+    os.remove(tmp_filename)
+<switch:english>
+[english] The script calls `convert_video` using the temporary file's contents, allowing it to merge everything into `out_file`. It properly cleans up by removing the auxiliary text file via `os.remove(tmp_filename)` afterwards.
+[english] If I pass a list of videos that all have different resolutions, what impact does this have on the final output video?
+[english] Varying resolutions will typically cause scaling or stretching during concatenation unless you instruct the conversion utility otherwise. You may need to add a specific resolution option like this in your call: 
+	{'resolution': '1920x1080'}
+[english] I appreciate the advice on handling video resolution differences.

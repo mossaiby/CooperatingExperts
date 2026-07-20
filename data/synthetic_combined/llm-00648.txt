@@ -1,0 +1,30 @@
+[english] I need a utility method that automatically parses command line arguments to configure essential operational settings like API endpoints, user credentials, and email addresses.
+[english] This function begins by setting up system logging to capture operational status early on. It then systematically checks the parsed command-line arguments (`self.args`) and stores any provided values into designated internal attributes.
+<switch:python>
+[python] def get_arguments(self):
+        """
+        CLIs get called back so that they can process any command line arguments
+        that are given. This method handles the standard command line arguments for:
+        API Host, user, password, etc.
+        """
+
+        # We call this first so that logging is enabled as soon as possible
+        self._configure_logging()
+
+        # Extract the common command line arguments
+        if self.args.api_host is not None:
+            self._api_host = self.args.api_host
+        if self.args.email is not None:
+            self._email = self.args.email
+        if self.args.api_token is not None:
+            self._api_token = self.args.api_token
+        self._curl = self.args.curl
+
+        logging.debug("apihost: {0}".format(self._api_host))
+        logging.debug("email: {0}".format(self._email))
+        logging.debug("apitoken: {0}".format(self._api_token))
+<switch:english>
+[english] By assigning these arguments to private instance variables (prefixed with an underscore), the function makes them available throughout the class while ensuring they are logged for debugging.
+[english] What is the default behavior if a critical argument, like `api_host`, isn't provided on the command line?
+[english] In its current form, the function allows arguments to be None if they aren't present in `self.args`. If you needed mandatory fields, you would add an 'else' block or use assertion checks.
+[english] Got it, thanks for clarifying how this configuration works!

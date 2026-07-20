@@ -1,0 +1,42 @@
+[english] How can I apply a custom transformation function to every row of my DataFrame using this 'turntable' framework?
+[english] This function orchestrates a complex process by first converting your pandas DataFrame into an internal data structure called a collection. It then leverages the turntable library to sequentially apply your defined method across all records.
+<switch:python>
+[python] def spin_frame(df, method):
+    ''' 
+    Runs the full turntable process on a pandas DataFrame
+
+    parameters
+    ----------
+    df : pandas.DataFrame
+        each row represents a record
+    method : def method(record)
+        function used to process each row
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        DataFrame processed by method
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> import turntable
+    >>>
+    >>> df = pd.DataFrame({'Artist':"""Michael Jackson, Pink Floyd, Whitney Houston, Meat Loaf, Eagles, Fleetwood Mac, Bee Gees, AC/DC""".split(', '), 'Album':"""Thriller, The Dark Side of the Moon, The Bodyguard, Bat Out of Hell, Their Greatest Hits (1971–1975), Rumours, Saturday Night Fever, Back in Black""".split(', ')})
+    >>>
+    >>> def method(record):
+    >>>    record.cost = 40
+    >>>    return record
+    >>>
+    >>> turntable.press.spin_frame(df, method)
+    
+
+    '''
+    collection = build_collection(df)
+    collection = turntable.spin.batch(collection, method)
+    return collection_to_df(collection)
+<switch:english>
+[english] The process relies on helper functions like `build_collection` and `collection_to_df`. Note that using this pattern might be less efficient than standard vectorized pandas operations for simple tasks.
+[english] If my custom method modifies the record object in place (e.g., adds a new column), will the subsequent records also see those changes?
+[english] The framework expects your `method` function to return the fully modified record object, which ensures that each step of the batch process starts with the correct state.
+[english] This helps explain how my data is being processed and transformed.

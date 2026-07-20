@@ -1,0 +1,21 @@
+[english] I want a function that reliably pulls the specific over/under betting line for a sports game from its data source.
+[english] This method works by fetching the game details and then parsing a structured info table to pinpoint the 'over_under' market information.
+<switch:python>
+[python] def over_under(self):
+        """
+        Returns the over/under for the game as a float, or np.nan if not
+        available.
+        """
+        doc = self.get_doc()
+        table = doc('table#game_info')
+        giTable = sportsref.utils.parse_info_table(table)
+        if 'over_under' in giTable:
+            ou = giTable['over_under']
+            return float(ou.split()[0])
+        else:
+            return None
+<switch:english>
+[english] The function returns the first item of the split string, assuming it represents the numeric over/under value needed for calculation.
+[english] If the source data provides missing game information or is not in a structured table, how does this function handle those unexpected scenarios?
+[english] If the 'over_under' key cannot be found within the parsed info table, the function will return `None` to signify that the specific line is currently unavailable.
+[english] Got it, so it fails gracefully when data is missing.

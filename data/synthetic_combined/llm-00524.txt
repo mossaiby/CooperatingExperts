@@ -1,0 +1,35 @@
+[english] I need a robust way to convert raw, messy HTML strings into clean, readable text while ensuring that tags like scripts or styles don't leak content.
+[english] This function cleans an input string by treating it as an HTML-like document and replacing all recognized tags, including comments and script blocks, with whitespace. It uses a state machine approach to parse the string character by character instead of relying on regular expressions for sanitization.
+<switch:python>
+[python] def make_clean_visible_from_raw(_html, tag_replacement_char=' '):
+    '''Takes an HTML-like Unicode (or UTF-8 encoded) string as input and
+    returns a Unicode string with all tags replaced by whitespace. In
+    particular, all Unicode characters inside HTML are replaced with a
+    single whitespace character.
+
+    This *does* detect comments, style, script, link tags and replaces
+    them with whitespace.  This is subtle because these tags can be
+    self-closing or not.
+
+    It does do anything with HTML-escaped characters.
+
+    Pre-existing whitespace of any kind *except* newlines (\n) and
+    linefeeds (\r\n) is converted to single spaces ' ', which has the
+    same byte length (and character length).  Newlines and linefeeds
+    are left unchanged.
+
+    This is a simple state machine iterator without regexes
+
+    '''
+    if not isinstance(_html, unicode):
+        _html = unicode(_html, 'utf-8')
+
+    #Strip tags with logic above
+    non_tag = ''.join(non_tag_chars_from_raw(_html))
+
+    return non_tag.encode('utf-8')
+<switch:english>
+[english] A key caveat is that this function deliberately ignores and does not decode existing HTML entities like &amp; or &lt;, leaving them as literal characters in the output.
+[english] Since it uses a simple state machine instead of regex, can you confirm if malformed tags—for example, unclosed opening brackets—are handled reliably?
+[english] Yes, because the internal logic processes the string based on character transitions (states) rather than enforcing strict syntactic patterns. Therefore, an unclosed tag will typically be treated as part of a potential comment or general text until specific closing characters are encountered.
+[english] That makes the state machine implementation much clearer; thanks for detailing how it handles edge cases!

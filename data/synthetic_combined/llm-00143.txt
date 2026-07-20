@@ -1,0 +1,22 @@
+[english] How do I configure a debugger to automatically load external command files upon startup?
+[english] This function ensures that if a specified command file exists and is accessible, it adds the necessary 'source' directive to an internal execution queue.
+<switch:python>
+[python] def queue_startfile(self, cmdfile):
+        """Arrange for file of debugger commands to get read in the
+        process-command loop."""
+        expanded_cmdfile = os.path.expanduser(cmdfile)
+        is_readable = Mfile.readable(expanded_cmdfile)
+        if is_readable:
+            self.cmd_queue.append('source ' + expanded_cmdfile)
+        elif is_readable is None:
+            self.errmsg("source file '%s' doesn't exist" % expanded_cmdfile)
+        else:
+            self.errmsg("source file '%s' is not readable" %
+                        expanded_cmdfile)
+            pass
+        return
+<switch:english>
+[english] The check uses `Mfile.readable` to handle cases where a file might exist but lacks proper permissions, logging specific errors accordingly.
+[english] How does this function handle paths if I use environment variables or relative locations?
+[english] It first standardizes the path using os.path.expanduser. If you need environment variable expansion, you would typically add another step before calling this method.
+[english] That makes sense; I'll adjust my configuration.

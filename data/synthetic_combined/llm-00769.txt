@@ -1,0 +1,19 @@
+[english] I need a way to retrieve metric definitions from an API while optionally filtering for enabled or custom metrics.
+[english] This method first constructs a specific API endpoint path using query parameters passed as `enabled` and `custom`. It then calls internal helper methods to execute the API request and process the response.
+<switch:python>
+[python] def metric_get(self, enabled=False, custom=False):
+        """
+        Returns a metric definition identified by name
+        :param enabled: Return only enabled metrics
+        :param custom: Return only custom metrics
+        :return Metrics:
+        """
+        self.path = 'v1/metrics?enabled={0}&{1}'.format(enabled, custom)
+        self._call_api()
+        self._handle_results()
+        return self.metrics
+<switch:english>
+[english] The function returns whatever data was formatted by `self._handle_results()`, making that resulting list available through the instance attribute `self.metrics`.
+[english] If I call this with both parameters set (e.g., enabled=True and custom=False), does it return a metric that is *enabled* AND *not* custom?
+[english] Yes, since these flags are inserted into the URL using string formatting in `self.path`, they function as simultaneous filters applied to the API request.
+[english] Thanks for clarifying how those parameters interact.

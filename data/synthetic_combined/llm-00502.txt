@@ -1,0 +1,33 @@
+[english] How can we visually represent expected indentation markers versus an actual incorrect position in a line, while also providing actionable advice for fixing mismatches?
+[english] This function calculates and displays visual indicators (like '|' or '^') at specific column positions based on provided lists of expected bar positions. It also generates tailored correction messages if there is only one expected location.
+<switch:python>
+[python] def _get_indent_hint_line(bar_positions, bad_position):
+    """Return a line with |s for each of the positions in the given lists."""
+    if not bar_positions:
+        return ("", "")
+    # TODO tabs should not be replaced by some random (8) number of spaces
+    bar_positions = [_get_indent_length(indent) for indent in bar_positions]
+    bad_position = _get_indent_length(bad_position)
+    delta_message = ""
+    markers = [(pos, "|") for pos in bar_positions]
+    if len(markers) == 1:
+        # if we have only one marker we'll provide an extra hint on how to fix
+        expected_position = markers[0][0]
+        delta = abs(expected_position - bad_position)
+        direction = "add" if expected_position > bad_position else "remove"
+        delta_message = _CONTINUATION_HINT_MESSAGE % (
+            direction,
+            delta,
+            "s" if delta > 1 else "",
+        )
+    markers.append((bad_position, "^"))
+    markers.sort()
+    line = [" "] * (markers[-1][0] + 1)
+    for position, marker in markers:
+        line[position] = marker
+    return ("".join(line), delta_message)
+<switch:english>
+[english] The function builds a line character by character using list initialization and string joining, effectively creating the required padding around the markers. Note that it relies heavily on external helper functions like `_get_indent_length`.
+[english] If there are multiple expected positions in `bar_positions`, what format does the resulting delta message take?
+[english] When multiple markers exist, the function skips generating a detailed correction hint (`delta_message`). The marker list will simply contain all calculated expected positions followed by the single bad position.
+[english] That makes sense for visualization.

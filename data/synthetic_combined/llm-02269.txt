@@ -1,0 +1,31 @@
+[english] How do I serialize an ActivateRequestPayload object into a stream while maintaining specific metadata like length and versioning?
+[english] This method serializes an `ActivateRequestPayload` by first writing its unique identifier—if present—to an internal temporary stream (`tstream`). It then calculates the total payload length and writes both that value and the serialized data to the final output stream.
+<switch:python>
+[python] def write(self, ostream, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the ActivateRequestPayload object to a stream.
+        Args:
+            ostream (Stream): A data stream in which to encode object data,
+                supporting a write method; usually a BytearrayStream object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        tstream = BytearrayStream()
+
+        # Write the contents of the request payload
+        if self.unique_identifier is not None:
+            self.unique_identifier.write(tstream, kmip_version=kmip_version)
+
+        # Write the length and value of the request payload
+        self.length = tstream.length()
+        super(ActivateRequestPayload, self).write(
+            ostream,
+            kmip_version=kmip_version
+        )
+        ostream.write(tstream.buffer)
+<switch:english>
+[english] The code uses a temporary `BytearrayStream` to capture the internal payload data before calculating and writing its final length header to the output stream (`ostream`).
+[english] If `self.unique_identifier` is None, what information gets written for an object that lacks one?
+[english] When no identifier exists, only the standard structure defined by the parent class's write method will be serialized into the final stream after the length has been determined.
+[english] That makes sense, thanks for clarifying.

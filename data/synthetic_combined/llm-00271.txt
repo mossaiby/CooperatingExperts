@@ -1,0 +1,28 @@
+[english] How can I instantiate the correct Azure Resource Skus API operation client based on the required API version?
+[english] This method dynamically selects and imports the appropriate Resource Skus operations implementation based on the requested API version.
+<switch:python>
+[python] def resource_skus(self):
+        """Instance depends on the API version:
+
+           * 2017-03-30: :class:`ResourceSkusOperations<azure.mgmt.compute.v2017_03_30.operations.ResourceSkusOperations>`
+           * 2017-09-01: :class:`ResourceSkusOperations<azure.mgmt.compute.v2017_09_01.operations.ResourceSkusOperations>`
+           * 2019-04-01: :class:`ResourceSkusOperations<azure.mgmt.compute.v2019_04_01.operations.ResourceSkusOperations>`
+        """
+        api_version = self._get_api_version('resource_skus')
+        if api_version == '2017-03-30':
+            from .v2017_03_30.operations import ResourceSkusOperations as OperationClass
+        elif api_version == '2017-09-01':
+            from .v2017_09_01.operations import ResourceSkusOperations as OperationClass
+        elif api_version == '2019-04-01':
+            from .v2019_04_01.operations import ResourceSkusOperations as OperationClass
+        else:
+            raise NotImplementedError("APIVersion {} is not available".format(api_version))
+        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+<switch:english>
+[english] By using version-specific imports, it ensures compatibility while centralizing dependency management for different Azure SDK releases.
+[english] If a version not listed here is requested but doesn't exist downstream, what exactly does this function do?
+[english] It explicitly handles unknown versions by raising an error rather than failing silently, which enforces usage of supported API versions.
+<switch:python>
+[python] raise NotImplementedError("APIVersion {} is not available".format(api_version))
+<switch:english>
+[english] That clarifies how the function manages version compatibility between different Azure features.

@@ -1,0 +1,15 @@
+[english] How do I generate a new specialized batch client that automatically inherits all the networking and prefix settings from my existing client?
+[english] This function initializes a dedicated BatchClient by pulling necessary details like host, port, and prefix directly from the current instance. It allows you to specify the batch size (defaulting to 512) during creation.
+<switch:python>
+[python] def batch_client(self, size=512):
+        # type: (int) -> BatchClient
+        """Return a batch client with same settings of the client"""
+
+        batch_client = BatchClient(self.host, self.port, self.prefix, size)
+        self._configure_client(batch_client)
+        return batch_client
+<switch:english>
+[english] After instantiation, it uses an internal method to apply specific configurations required for batch operations before returning the ready-to-use client object.
+[english] If I tried to call this function on an instance where `self.prefix` hadn't been set yet, what kind of error would occur?
+[english] Accessing a non-existent attribute like `self.prefix` will result in an AttributeError being raised during the initialization of BatchClient.
+[english] I understand how configuration failure would halt execution.

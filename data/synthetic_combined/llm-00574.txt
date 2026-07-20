@@ -1,0 +1,18 @@
+[english] How do I write a function that converts an Abstract Syntax Tree terminal node into its corresponding Python source code?
+[english] The approach is to first extract the underlying value from the AST object, and then use a boolean flag to determine if the value should be wrapped in a specific formatting method.
+<switch:python>
+[python] def _ast_terminal_to_code(self, terminal, **kwargs):
+    """Convert an AST terminal to python source code."""
+    value = _replace(terminal.value)
+    if self.use_terminal_shorthand:
+      return [value]
+    else:
+      return ["terminal({})".format(value)]
+<switch:english>
+[english] The function elegantly handles output variation by branching based on the internal `self.use_terminal_shorthand` configuration.
+[english] If terminal.value held a complex object like a dictionary, would it serialize correctly in both branches?
+[english] Currently, if `terminal.value` is complex, it will stringify it inside `terminal(...)`. To handle nested structures explicitly, you might need:
+<switch:python>
+[python] return [f"terminal({repr(value)})"]
+<switch:english>
+[english] I appreciate the detailed breakdown of how the shorthands are implemented.

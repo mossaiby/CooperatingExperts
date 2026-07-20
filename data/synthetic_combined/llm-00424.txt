@@ -1,0 +1,73 @@
+[english] How do I ensure a distribution object used in my TensorFlow model is scalar-based, has the correct dtype, and uses full reparameterization?
+[english] This helper function checks static properties like `dtype` and ensures that if validation is requested, it confirms the distribution is fully reparameterized. It then systematically verifies that both batch and event shapes are scalar.
+<switch:python>
+[python] def maybe_check_scalar_distribution(distribution, expected_base_dtype,
+                                    validate_args):
+  """Helper which checks validity of a scalar `distribution` init arg.
+
+  Valid here means:
+
+  * `distribution` has scalar batch and event shapes.
+  * `distribution` is `FULLY_REPARAMETERIZED`
+  * `distribution` has expected dtype.
+
+  Args:
+    distribution:  `Distribution`-like object.
+    expected_base_dtype:  `TensorFlow` `dtype`.
+    validate_args:  Python `bool`.  Whether to do additional checks: (i)  check
+      that reparameterization_type is `FULLY_REPARAMETERIZED`. (ii) add
+      `tf.Assert` ops to the graph to enforce that distribution is scalar in the
+      event that this cannot be determined statically.
+
+  Returns:
+    List of `tf.Assert` ops to run to enforce validity checks that could not
+      be statically determined.  Empty if `not validate_args`.
+
+  Raises:
+    ValueError:  If validate_args and distribution is not FULLY_REPARAMETERIZED
+    ValueError:  If distribution is statically determined to not have both
+      scalar batch and scalar event shapes.
+  """
+  if distribution.dtype != expected_base_dtype:
+    raise TypeError("dtype mismatch; "
+                    "distribution.dtype=\"{}\" is not \"{}\"".format(
+                        dtype_util.name(distribution.dtype),
+                        dtype_util.name(expected_base_dtype)))
+
+  # Although `reparameterization_type` is a static property, we guard it by
+  # `validate_args`. This allows users to use a `distribution` which is not
+  # reparameterized itself. However, we tacitly assume that although the
+  # distribution is not reparameterized, it only depends on non-trainable
+  # variables.
+  if validate_args and (distribution.reparameterization_type !=
+                        reparameterization.FULLY_REPARAMETERIZED):
+    raise ValueError("Base distribution should be reparameterized or be "
+                     "a function of non-trainable variables; "
+                     "distribution.reparameterization_type = \"{}\" "
+                     "!= \"FULLY_REPARAMETERIZED\".".format(
+                         distribution.reparameterization_type))
+  with tf.name_scope("check_distribution"):
+    assertions = []
+
+    def check_is_scalar(is_scalar, name):
+      is_scalar_ = tf.get_static_value(is_scalar)
+      if is_scalar_ is not None:
+        if not is_scalar_:
+          raise ValueError("distribution must be scalar; "
+                           "distribution.{}=False is not True".format(name))
+      elif validate_args:
+        assertions.append(
+            assert_util.assert_equal(
+                is_scalar,
+                True,
+                message=("distribution must be scalar; "
+                         "distribution.{}=False is not True".format(name))))
+
+    check_is_scalar(distribution.is_scalar_event(), "is_scalar_event")
+    check_is_scalar(distribution.is_scalar_batch(), "is_scalar_batch")
+    return assertions
+<switch:english>
+[english] The function either raises Errors for immediate feedback or gathers a list of TensorFlow assertions to enforce these rules dynamically during graph execution.
+[english] If `validate_args` is set to False, what happens if the distribution has non-scalar batch shapes?
+[english] If `validate_args` is false and the shape cannot be determined statically, the function skips adding runtime assertions. This allows the code to run without explicit graph checks for scalar adherence.
+[english] Thanks, that clarifies how static vs dynamic validation is handled.

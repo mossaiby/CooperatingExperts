@@ -1,0 +1,27 @@
+[english] I need a function to reliably move a file or directory from one location (`old_path`) to another (`path`), ensuring that necessary existence checks and specific renaming errors are handled correctly.
+[english] This method ensures atomic operations by using a database transaction (`self.engine.begin()`). It first checks whether the source path points to an existing file or a directory before calling the appropriate underlying move function like `rename_file` or `rename_directory`.
+<switch:python>
+[python] def rename_file(self, old_path, path):
+        """
+        Rename object from old_path to path.
+
+        NOTE: This method is unfortunately named on the base class.  It
+        actually moves a file or a directory.
+        """
+        with self.engine.begin() as db:
+            try:
+                if self.file_exists(old_path):
+                    rename_file(db, self.user_id, old_path, path)
+                elif self.dir_exists(old_path):
+                    rename_directory(db, self.user_id, old_path, path)
+                else:
+                    self.no_such_entity(path)
+            except (FileExists, DirectoryExists):
+                self.already_exists(path)
+            except RenameRoot as e:
+                self.do_409(str(e))
+<switch:english>
+[english] Note that this method is designed to handle complex entity moves, not just simple renames, and relies on specialized helper methods like `self.file_exists`. Any unexpected state during the move results in specific exception handling.
+[english] What happens if a file exists at old_path but it's actually inside a directory that I am trying to treat as the source?
+[english] The current logic prioritizes determining if `old_path` is a file or directory first using the specific helper methods (`self.file_exists` or `self.dir_exists`). If `self.dir_exists(old_path)` returns true, it executes `rename_directory`, even if that directory contains files.
+[english] Got it, thanks for clarifying how this movement works.

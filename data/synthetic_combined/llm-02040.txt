@@ -1,0 +1,33 @@
+[english] I need a way to consistently convert data that might be bytes or unicode into the standard string format used by my application.
+[english] This function acts as a type normalizer. It checks if the input is either binary data (bytes) or text (unicode), and then performs an encoding or decoding step using UTF-8 to ensure compatibility with the target system.
+<switch:python>
+[python] def native(s):
+    """
+    Convert :py:class:`bytes` or :py:class:`unicode` to the native
+    :py:class:`str` type, using UTF-8 encoding if conversion is necessary.
+
+    :raise UnicodeError: The input string is not UTF-8 decodeable.
+
+    :raise TypeError: The input is neither :py:class:`bytes` nor
+        :py:class:`unicode`.
+    """
+    if not isinstance(s, (binary_type, text_type)):
+        raise TypeError("%r is neither bytes nor unicode" % s)
+    if PY3:
+        if isinstance(s, binary_type):
+            return s.decode("utf-8")
+    else:
+        if isinstance(s, text_type):
+            return s.encode("utf-8")
+    return s
+<switch:english>
+[english] The logic relies heavily on the `PY3` flag to handle different encoding mechanisms between Python 2 and Python 3 versions.
+[english] What happens if I pass bytes that are not actually UTF-8 encoded?
+[english] If you provide non-UTF-8 data, the decoding step will raise a UnicodeError:
+<switch:python>
+[python] try:
+native(b'invalid\utf8') # Assuming PY3 is true
+except UnicodeDecodeError as e:
+    print(f'Decoding failed: {e}') # This error occurs.
+<switch:english>
+[english] That makes perfect sense, thank you for the breakdown!

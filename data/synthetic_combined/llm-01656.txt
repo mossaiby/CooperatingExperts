@@ -1,0 +1,29 @@
+[english] How can I programmatically discover all authentication algorithms supported by my system's GSSAPI implementation?
+[english] This function uses C Foreign Function Interface (FFI) bindings to interface directly with the underlying `gss` library. It allocates memory for status and mechanism sets, calling the native indicator function.
+<switch:python>
+[python] def get_all_mechs():
+    """
+    Return an :class:`OIDSet` of all the mechanisms supported by the underlying GSSAPI
+    implementation.
+    """
+    minor_status = ffi.new('OM_uint32[1]')
+    mech_set = ffi.new('gss_OID_set[1]')
+    try:
+        retval = C.gss_indicate_mechs(minor_status, mech_set)
+        if GSS_ERROR(retval):
+            raise _exception_for_status(retval, minor_status[0])
+    except:
+        _release_OID_set(mech_set)
+        raise
+    return OIDSet(oid_set=mech_set)
+<switch:english>
+[english] Finally, it wraps the returned pointer into a friendly Python object. Note that proper cleanup of transient C structures is handled via try-except blocks to prevent leaks.
+[english] What happens if `gss_indicate_mechs` fails or returns an error?
+[english] The function raises a custom exception, utilizing the returned status code (`minor_status`) for detailed debugging instead of failing silently.
+<switch:python>
+[python] try:
+    retval = C.gss_indicate_mechs(minor_status, mech_set)
+except:
+    ...
+<switch:english>
+[english] That clarifies how errors are handled; thank you!

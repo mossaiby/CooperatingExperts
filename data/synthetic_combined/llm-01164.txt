@@ -1,0 +1,22 @@
+[english] How can I validate a PIN dictionary against a predefined schema and raise an error if it fails?
+[english] This function validates a pin object by leveraging a dedicated validator instance derived from your specific PIN schema. It checks the object's structure and data types before proceeding.
+<switch:python>
+[python] def validate_pin(pin):
+    """ Validate the given pin against the schema.
+
+    :param dict pin: The pin to validate:
+    :raises pypebbleapi.schemas.DocumentError: If the pin is not valid.
+    """
+    v = _Validator(schemas.pin)
+    if v.validate(pin):
+        return
+    else:
+        raise schemas.DocumentError(errors=v.errors)
+<switch:english>
+[english] If validation passes, the function quietly returns; otherwise, it raises a DocumentError containing detailed information about all failed validations.
+[english] What details are contained within the errors attribute of the raised DocumentError?
+[english] The `v.errors` object contains structured data detailing which fields failed validation and why. For example:
+<switch:python>
+[python] [{"field": "pin_length", "message": "must be 6 digits"}]
+<switch:english>
+[english] That makes sense, how do I handle the DocumentError outside of this function?

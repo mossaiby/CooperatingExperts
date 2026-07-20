@@ -1,0 +1,18 @@
+[english] I need a way to append a structured label to my internal dataset using an index and several optional labels.
+[english] This method constructs a descriptive string by joining all provided arguments with pipe delimiters. It then cleans the string, removing any 'None' placeholders, before saving it to the data attributes.
+<switch:python>
+[python] def label(self, index, *args):
+        """
+        Label each axes one at a time
+        args are of the form <label 1>,...,<label n>
+        APIPARAM: chxl
+        """
+        self.data['labels'].append(
+            str('%s:|%s'%(index, '|'.join(map(str,args)) )).replace('None','')
+        )
+        return self.parent
+<switch:english>
+[english] The use of `|` ensures multiple arguments can be grouped together in a single label string before being stored in the list.
+[english] What happens if I call this method and provide an empty tuple for *args?
+[english] If no labels are provided, the function will still append the index, followed by ':', as there are no pipe-separated arguments to join or replace.
+[english] That makes perfect sense; thanks for helping me understand!

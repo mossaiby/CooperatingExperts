@@ -1,0 +1,25 @@
+[english] I have raw sensor data and need a function that can apply a bandpass filter to isolate specific frequency ranges while removing low-frequency drift and high-frequency noise.
+[english] To create this filter, we first normalize your target cutoff frequencies relative to the Nyquist frequency. We then use the Butterworth design method to calculate the necessary coefficients for a digital bandpass filter.
+<switch:python>
+[python] def bandpass_filter(data, low, high, fs, order=5):
+    """
+    Does a bandpass filter over the given data.
+
+    :param data: The data (numpy array) to be filtered.
+    :param low: The low cutoff in Hz.
+    :param high: The high cutoff in Hz.
+    :param fs: The sample rate (in Hz) of the data.
+    :param order: The order of the filter. The higher the order, the tighter the roll-off.
+    :returns: Filtered data (numpy array).
+    """
+    nyq = 0.5 * fs
+    low = low / nyq
+    high = high / nyq
+    b, a = signal.butter(order, [low, high], btype='band')
+    y = signal.lfilter(b, a, data)
+    return y
+<switch:english>
+[english] The function applies the calculated filter coefficients using `signal.lfilter`. Be aware that `lfilter` is a causal filter, meaning it introduces phase delay into your resulting data.
+[english] If my original signal was non-stationary, would applying this filter modify its inherent time characteristics significantly?
+[english] Because the Butterworth design is a linear time-invariant (LTI) system and `lfilter` is causal, it alters phase relationships. For analyzing transient features where timing is critical, you might consider using `signal.filt` in combination with zero padding.
+[english] Okay, I understand the difference between filtering methods; I'll adjust my approach accordingly.

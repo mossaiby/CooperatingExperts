@@ -1,0 +1,31 @@
+[english] How do I check the current operational status (volume, power state, mute status, and audio source) of a connected device?
+[english] This method fetches raw data from the device using multiple commands combined into a single request. It then parses this hexadecimal string to extract individual statuses.
+<switch:python>
+[python] def status(self):
+        """
+        Return the status of the device.
+
+        Returns a dictionary with keys 'volume' (int 0-200) , 'power' (bool),
+         'muted' (bool) and 'source' (str).
+        """
+        nad_reply = self._send(self.POLL_VOLUME +
+                               self.POLL_POWER +
+                               self.POLL_MUTED +
+                               self.POLL_SOURCE, read_reply=True)
+        if nad_reply is None:
+            return
+
+        # split reply into parts of 10 characters
+        num_chars = 10
+        nad_status = [nad_reply[i:i + num_chars]
+                      for i in range(0, len(nad_reply), num_chars)]
+
+        return {'volume': int(nad_status[0][-2:], 16),
+                'power': nad_status[1][-2:] == '01',
+                'muted': nad_status[2][-2:] == '01',
+                'source': self.SOURCES_REVERSED[nad_status[3][-2:]]}
+<switch:english>
+[english] The function relies heavily on fixed-length chunk sizes (10 characters) for accurate parsing; any variation could lead to incorrect status readings.
+[english] What happens if `self._send` fails or returns an unexpected format?
+[english] If `nad_reply` is None, the function immediately exits by returning Nothing. Since it expects specific hexadecimal formatting to run its logic, an unexpected string might cause indexing errors when slicing near chunk boundaries.
+[english] Thanks for clarifying how error handling and parsing work here!

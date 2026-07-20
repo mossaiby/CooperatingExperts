@@ -1,0 +1,20 @@
+[english] I need a way to retrieve the argument specification of a function while automatically stripping out special instance (`self`) or class (`cls`) arguments if the input is a bound method.
+[english] This approach first unwraps any decorators so you are looking at the original function definition. It then uses an argument specification utility and conditionally slices off the initial argument if the object being inspected is identified as a method.
+<switch:python>
+[python] def get_arg_spec(function):
+    """
+    Returns argument specification for given function.  Omits special
+    arguments of instance methods (`self`) and static methods (usually `cls`
+    or something like this).
+    """
+    while hasattr(function, '__wrapped__'):
+        function = function.__wrapped__
+    spec = compat.getargspec(function)
+    if inspect.ismethod(function):
+        spec = spec._replace(args=spec.args[1:])
+    return spec
+<switch:english>
+[english] The function effectively isolates user-defined parameters from instance management, making it useful for standardized API introspection. Note that its success depends on external compatibility helper functions like `compat`.
+[english] How does this specifically handle static methods or class methods (`@classmethod`) versus standard instance methods?
+[english] Because the code relies solely on `inspect.ismethod`, it will only slice off a single leading argument for actual bound instance methods. Handling `@classmethod` would require checking the descriptor type rather than just using `ismethod`.
+[english] That makes perfect sense—I'll adjust my logic to account for decorators.

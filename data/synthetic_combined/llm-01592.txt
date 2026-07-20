@@ -1,0 +1,33 @@
+[english] How can I retrieve a sorted list of file paths for data archives that match specific criteria like origin and date?
+[english] This function first calls `self._search_archives` to get all matching archive records, including their creation dates. It then uses two subsequent list comprehensions to ensure the records are correctly filtered and finally sorted by date before returning only the file paths.
+<switch:python>
+[python] def search(self, origin, backend_name, category, archived_after):
+        """Search archives.
+
+        Get the archives which store data based on the given parameters.
+        These parameters define which the origin was (`origin`), how data
+        was fetched (`backend_name`) and data type ('category').
+        Only those archives created on or after `archived_after` will be
+        returned.
+
+        The method returns a list with the file paths to those archives.
+        The list is sorted by the date of creation of each archive.
+
+        :param origin: data origin
+        :param backend_name: backed used to fetch data
+        :param category: type of the items fetched by the backend
+        :param archived_after: get archives created on or after this date
+
+        :returns: a list with archive names which match the search criteria
+        """
+        archives = self._search_archives(origin, backend_name,
+                                         category, archived_after)
+        archives = [(fp, date) for fp, date in archives]
+        archives = [fp for fp, _ in sorted(archives, key=lambda x: x[1])]
+
+        return archives
+<switch:english>
+[english] The final result is a list of strings containing only the file paths, which are always ordered chronologically based on when the archives were created.
+[english] If no matching archives are found that satisfy all parameters, what kind of output will this `search` method produce?
+[english] Since it relies heavily on list comprehensions after the initial search, if `_search_archives` returns nothing, the function will return an empty list ([]).
+[english] Perfect! That clears up how those edge cases are handled.

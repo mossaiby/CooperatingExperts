@@ -1,0 +1,15 @@
+[english] I need a way for my script to know the current width and height of the terminal window it's running inside.
+[english] To determine the exact size, this function uses system-specific calls to query the operating system about the current window dimensions.
+<switch:python>
+[python] def get_terminal_size():
+    """Get (width, height) of the current terminal."""
+    try:
+        import fcntl, termios, struct # fcntl module only available on Unix
+        return struct.unpack('hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234'))
+    except:
+        return (40, 80)
+<switch:english>
+[english] The function utilizes low-level Unix IOCTL commands for precise measurement, falling back to a default setting if those specific libraries aren't available.
+[english] If I run this on Windows, why does it still try to import modules like `termios` that don't usually exist there?
+[english] The function attempts the Unix-specific method first. If an exception occurs (like a missing module), it catches the error and gracefully returns the safe default size of 40x80.
+[english] Ah, so the fallback is its safeguard against non-Unix environments.

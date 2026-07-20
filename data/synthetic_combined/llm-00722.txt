@@ -1,0 +1,35 @@
+[english] How can I correctly initialize and structure the request context for an incoming webhook?
+[english] This function processes a request to determine the associated tenant and sender information. It attempts to identify the sender from both the request body and the JWT claims before building the final context object.
+<switch:python>
+[python] def for_request(request, body=None):
+        """Creates the context for a specific request."""
+        tenant, jwt_data = Tenant.objects.for_request(request, body)
+        webhook_sender_id = jwt_data.get('sub')
+        sender_data = None
+
+        if body and 'item' in body:
+            if 'sender' in body['item']:
+                sender_data = body['item']['sender']
+            elif 'message' in body['item'] and 'from' in body['item']['message']:
+                sender_data = body['item']['message']['from']
+
+        if sender_data is None:
+            if webhook_sender_id is None:
+                raise BadTenantError('Cannot identify sender in tenant')
+            sender_data = {'id': webhook_sender_id}
+
+        return Context(
+            tenant=tenant,
+            sender=HipchatUser(
+                id=sender_data.get('id'),
+                name=sender_data.get('name'),
+                mention_name=sender_data.get('mention_name'),
+            ),
+            signed_request=request.GET.get('signed_request'),
+            context=jwt_data.get('context') or {},
+        )
+<switch:english>
+[english] The function prioritizes body content to find sender details, falling back to the JWT subject (`sub`) if necessary.
+[english] What happens if `Tenant.objects.for_request` fails to find a tenant entirely?
+[english] If no tenant can be matched based on the request or body, an implicit error would occur when calling `Tenant.objects.for_request`, which should raise a dedicated authentication or permission error outside this function's scope.
+[english] Thanks, that clarifies the context flow!

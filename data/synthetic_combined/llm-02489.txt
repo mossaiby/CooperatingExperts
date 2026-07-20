@@ -1,0 +1,93 @@
+[english] I need a robust Python function that can reliably determine the country ISO code from an IP address, even if I don't have the MaxMind database locally.
+[english] This function is designed to be self-sufficient by first checking standard system paths for the GeoLite2 database file. If it cannot find a recent copy, it attempts to download and cache the necessary data before querying the IP address against the reader.
+<switch:python>
+[python] def get_ip_address_country(ip_address, parallel=False):
+    """
+    Uses the MaxMind Geolite2 Country database to return the ISO code for the
+    country associated with the given IPv4 or IPv6 address
+
+    Args:
+        ip_address (str): The IP address to query for
+        parallel (bool): Parallel processing
+
+    Returns:
+        str: And ISO country code associated with the given IP address
+    """
+    def download_country_database(location="GeoLite2-Country.mmdb"):
+        """Downloads the MaxMind Geolite2 Country database
+
+        Args:
+            location (str): Local location for the database file
+        """
+        if parallel:
+            logging.warning("Cannot download GeoIP database in parallel mode")
+            return
+        url = "https://geolite.maxmind.com/download/geoip/database/" \
+              "GeoLite2-Country.tar.gz"
+        # Use a browser-like user agent string to bypass some proxy blocks
+        headers = {"User-Agent": USER_AGENT}
+        original_filename = "GeoLite2-Country.mmdb"
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            tar_bytes = response.content
+            tar_file = tarfile.open(fileobj=BytesIO(tar_bytes), mode="r:gz")
+            tar_dir = tar_file.getnames()[0]
+            tar_path = "{0}/{1}".format(tar_dir, original_filename)
+            tar_file.extract(tar_path)
+            shutil.move(tar_path, location)
+            shutil.rmtree(tar_dir)
+        except Exception as e:
+            logger.warning("Error downloading {0}: {1}".format(url,
+                                                               e.__str__()))
+
+    system_paths = [
+        "GeoLite2-Country.mmdb",
+        "/usr/local/share/GeoIP/GeoLite2-Country.mmdb",
+        "/usr/share/GeoIP/GeoLite2-Country.mmdb",
+        "/var/lib/GeoIP/GeoLite2-Country.mmdb",
+        "/var/local/lib/GeoIP/GeoLite2-Country.mmdb",
+        "C:\\GeoIP\\GeoLite2-Country.mmdb"
+    ]
+
+    db_path = None
+
+    for system_path in system_paths:
+        if os.path.exists(system_path):
+            db_path = system_path
+            break
+
+    if db_path is None:
+        db_path = os.path.join(tempdir, "GeoLite2-Country.mmdb")
+        if not os.path.exists(db_path):
+            download_country_database(db_path)
+            if not os.path.exists(db_path):
+                return None
+        else:
+            db_age = datetime.now() - datetime.fromtimestamp(
+                os.stat(db_path).st_mtime)
+            if db_age > timedelta(days=7):
+                download_country_database()
+        db_path = db_path
+
+    db_reader = geoip2.database.Reader(db_path)
+
+    country = None
+
+    try:
+        country = db_reader.country(ip_address).country.iso_code
+    except geoip2.errors.AddressNotFoundError:
+        pass
+
+    return country
+<switch:english>
+[english] The dependency on external network requests for initial setup means there might be some latency during the very first run or if the local database expires after seven days.
+[english] What happens if I pass an invalid or malformed IP string to this function?
+[english] If an invalid address is provided, the function handles it gracefully by catching a `geoip2.errors.AddressNotFoundError` and returns None, which avoids crashing your application.
+```python
+try:
+    country = db_reader.country(ip_address).country.iso_code
+except geoip2.errors.AddressNotFoundError:
+    pass  # country remains None
+return country
+[english] That makes sense, thanks for the clarification on error handling.

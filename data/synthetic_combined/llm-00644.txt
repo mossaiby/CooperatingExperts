@@ -1,0 +1,65 @@
+[english] How can I implement a function that modifies a collection of spans, removing or shrinking them based on a defined exclusion range [rmstart, rmstop)?
+[english] This method iterates through all stored spans and applies complex logical checks. It determines if a span needs to be completely removed, its start/end points adjusted (trimmed), or if it simply needs its end point shifted due to the removal.
+<switch:python>
+[python] def _shrink_update(self, rmstart: int, rmstop: int) -> None:
+        """Update self._type_to_spans according to the removed span.
+
+        Warning: If an operation involves both _shrink_update and
+        _insert_update, you might wanna consider doing the
+        _insert_update before the _shrink_update as this function
+        can cause data loss in self._type_to_spans.
+        """
+        # Note: The following algorithm won't work correctly if spans
+        # are not sorted.
+        # Note: No span should be removed from _type_to_spans.
+        for spans in self._type_to_spans.values():
+            i = len(spans) - 1
+            while i >= 0:
+                s, e = span = spans[i]
+                if rmstop <= s:
+                    # rmstart <= rmstop <= s <= e
+                    rmlength = rmstop - rmstart
+                    span[:] = s - rmlength, e - rmlength
+                    i -= 1
+                    continue
+                break
+            else:
+                continue
+            while True:
+                if rmstart <= s:
+                    if rmstop < e:
+                        # rmstart < s <= rmstop < e
+                        span[:] = rmstart, e + rmstart - rmstop
+                        i -= 1
+                        if i < 0:
+                            break
+                        s, e = span = spans[i]
+                        continue
+                    # rmstart <= s <= e < rmstop
+                    spans.pop(i)[:] = -1, -1
+                    i -= 1
+                    if i < 0:
+                        break
+                    s, e = span = spans[i]
+                    continue
+                break
+            while i >= 0:
+                if e <= rmstart:
+                    # s <= e <= rmstart <= rmstop
+                    i -= 1
+                    if i < 0:
+                        break
+                    s, e = span = spans[i]
+                    continue
+                # s <= rmstart <= rmstop <= e
+                span[1] -= rmstop - rmstart
+                i -= 1
+                if i < 0:
+                    break
+                s, e = span = spans[i]
+                continue
+<switch:english>
+[english] Be cautious when mixing this update with `_insert_update`, as the function documentation warns that combining them can lead to data loss in the internal span mapping.
+[english] If a span starts exactly at the removal boundary (s = rmstart) but extends past it, how is its end point calculated?
+[english] The code handles this case within the `if rmstart <= s:` block when `rmstop < e`. It recalculates the start to remain at `rmstart` and adjusts the end point by subtracting the length of the removed segment: span[:] = rmstart, e + rmstart - rmstop.
+[english] Thanks for clarifying how that boundary condition is handled.

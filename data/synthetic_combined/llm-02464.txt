@@ -1,0 +1,23 @@
+[english] How can I safely remove a structured event object from a registered list, ensuring proper debugging on both removal attempts and failures?
+[english] This method uses nested `try...except` blocks to attempt the removal while meticulously logging details about the event being processed. It handles potential attribute errors gracefully during the logging process before attempting the actual unregistration.
+<switch:python>
+[python] def _unreg_event(self, event_list, event):
+        """ Tries to remove a registered event without triggering it """
+        try:
+            self.log.debug("Removing event {0}({1},{2})".format(event['function'].__name__, event['args'], event['kwargs']))
+        except AttributeError:
+            self.log.debug("Removing event {0}".format(str(event)))
+
+        try:
+            event_list.remove(event)
+        except ValueError:
+            try:
+                self.log.warn("Unable to remove event {0}({1},{2}) , not found in list: {3}".format(event['function'].__name__, event['args'], event['kwargs'], event_list))
+            except AttributeError:
+                self.log.debug("Unable to remove event {0}".format(str(event)))
+            raise KeyError('Unable to unregister the specified event from the signals specified')
+<switch:english>
+[english] The function ensures that if an item isn't found in the list (`ValueError`), it raises a specific `KeyError`. This provides granular feedback to the calling code regarding unregistration failure.
+[english] What happens if the input `event` object is missing expected keys like `'function'` or `'args'`?
+[english] If those keys are missing, the initial logging block will likely trigger its inner `AttributeError` handler because it tries to access nested properties. To handle this robustly, you should use dictionary `.get()` methods instead of direct bracket indexing.
+[english] That makes sense; I'll implement those robustness checks.

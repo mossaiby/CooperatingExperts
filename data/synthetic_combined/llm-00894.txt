@@ -1,0 +1,27 @@
+[english] I need a way to define the specific formatting behavior and return type metadata for several core functions in my application.
+[english] This function acts as a decorator factory, allowing you to configure how another function should handle its output metadata. It returns an inner wrapper that applies settings like description or custom rendering logic directly onto the target function using `func.custom_returnvalue`.
+<switch:python>
+[python] def returns(desc=None, printer=None, data=True):
+    """Specify how the return value of this function should be handled.
+
+    Args:
+        desc (str): A deprecated description of the return value
+        printer (callable): A callable function that can format this return value
+        data (bool): A deprecated parameter for specifying that this function
+            returns data.
+    """
+
+    if data is False:
+        raise ArgumentError("Specifying non data return type in returns is no longer supported")
+
+    def _returns(func):
+        annotated(func)
+        func.custom_returnvalue(printer, desc)
+        return func
+
+    return _returns
+<switch:english>
+[english] The returned decorator modifies the decorated function by calling two external helper functions: `annotated(func)` and `func.custom_returnvalue`. Be aware that this structure relies heavily on internal, non-standard library methods.
+[english] What is the default behavior if I don't supply a 'printer' callable argument?
+[english] If no printer is given, the function likely defaults to a basic representation of the return value, though you should check the implementation details of `custom_returnvalue` for the exact fallback mechanism.
+[english] That makes sense; I'll proceed with testing this structure out.

@@ -1,0 +1,54 @@
+[english] How can I transform a deeply nested dictionary structure using specific paths into a flatter list of objects while assigning custom keys to certain parent nodes?
+[english] This function iterates through a complex object, dynamically resolving paths like `?my_field` to identify and extract relevant data elements from sub-structures.
+It handles special key formats (using `>` or `#`) to manage grouping and extraction logic for the resulting dictionary entries.
+<switch:python>
+[python] def _flatten_dictionary(obj, path, key_name):
+    """
+    This method tries to use the path `?my_field` to convert:
+
+    a:
+        aa: 1
+        ab: 2
+    b:
+        ba: 3
+        ba: 4
+
+    into:
+
+    - my_field: a
+      aa: 1
+      ab: 2
+    - my_field: b
+      ba: 3
+      ba: 4
+    """
+    result = []
+    if ">" in key_name:
+        key_name, group_key = key_name.split(">")
+    else:
+        group_key = None
+
+    for k, v in obj.items():
+        if path:
+            if k == path[0]:
+                path.pop(0)
+        if k.startswith("#"):
+            continue
+        r = _resolve_path(v, list(path))
+
+        if isinstance(r, dict):
+            # You can either have a dict here, which means your path is like ?a.b
+            # or a list, which means you have a path like ?a.?b
+            r = [r]
+
+        for e in r:
+            if group_key:
+                e[group_key] = {kk: vv for kk, vv in v.items() if kk not in path}
+            e[key_name] = k
+            result.append(e)
+    return result
+<switch:english>
+[english] The function uses helper routines like `_resolve_path` (which is presumed defined elsewhere) to navigate the hierarchy based on the provided list of path elements. Be mindful that this implementation modifies the calling scope's definition for `path` during iteration.
+[english] If I pass a key name without a group key, like 'id', what value will be assigned inside the resulting dictionary?
+[english] When no `group_key` is provided, the function assigns the current top-level key (`k`) to the specified key within the result object. The code directly executes `e[key_name] = k`, populating the new entry with the required identifier.
+[english] That makes perfect sense, thanks for clarifying!

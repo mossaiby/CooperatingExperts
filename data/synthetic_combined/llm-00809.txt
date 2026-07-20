@@ -1,0 +1,51 @@
+[english] How can I automate RNA quantification using RSEM on a BAM file provided in global storage and an external reference URL?
+[english] The function starts by initializing temporary space using `job.fileStore.getLocalTempDir()` to ensure local operations are isolated. It downloads the necessary RSEM reference tarball from the specified URL and extracts it so that subsequent processing can access its internal structure.
+<switch:python>
+[python] def run_rsem(job, bam_id, rsem_ref_url, paired=True):
+    """
+    RNA quantification with RSEM
+
+    :param JobFunctionWrappingJob job: Passed automatically by Toil
+    :param str bam_id: FileStoreID of transcriptome bam for quantification
+    :param str rsem_ref_url: URL of RSEM reference (tarball)
+    :param bool paired: If True, uses parameters for paired end data
+    :return: FileStoreIDs for RSEM's gene and isoform output
+    :rtype: str
+    """
+    work_dir = job.fileStore.getLocalTempDir()
+    download_url(job, url=rsem_ref_url, name='rsem_ref.tar.gz', work_dir=work_dir)
+    subprocess.check_call(['tar', '-xvf', os.path.join(work_dir, 'rsem_ref.tar.gz'), '-C', work_dir])
+    os.remove(os.path.join(work_dir, 'rsem_ref.tar.gz'))
+    # Determine tarball structure - based on it, ascertain folder name and rsem reference prefix
+    rsem_files = []
+    for root, directories, files in os.walk(work_dir):
+        rsem_files.extend([os.path.join(root, x) for x in files])
+    # "grp" is a required RSEM extension that should exist in the RSEM reference
+    ref_prefix = [os.path.basename(os.path.splitext(x)[0]) for x in rsem_files if 'grp' in x][0]
+    ref_folder = os.path.join('/data', os.listdir(work_dir)[0]) if len(os.listdir(work_dir)) == 1 else '/data'
+    # I/O
+    job.fileStore.readGlobalFile(bam_id, os.path.join(work_dir, 'transcriptome.bam'))
+    output_prefix = 'rsem'
+    # Call: RSEM
+    parameters = ['--quiet',
+                  '--no-qualities',
+                  '-p', str(job.cores),
+                  '--forward-prob', '0.5',
+                  '--seed-length', '25',
+                  '--fragment-length-mean', '-1.0',
+                  '--bam', '/data/transcriptome.bam',
+                  os.path.join(ref_folder, ref_prefix),
+                  output_prefix]
+    if paired:
+        parameters = ['--paired-end'] + parameters
+    dockerCall(job=job, tool='quay.io/ucsc_cgl/rsem:1.2.25--d4275175cc8df36967db460b06337a14f40d2f21',
+               parameters=parameters, workDir=work_dir)
+    # Write to FileStore
+    gene_id = job.fileStore.writeGlobalFile(os.path.join(work_dir, output_prefix + '.genes.results'))
+    isoform_id = job.fileStore.writeGlobalFile(os.path.join(work_dir, output_prefix + '.isoforms.results'))
+    return gene_id, isoform_id
+<switch:english>
+[english] Once setup is complete, RSEM is called via `dockerCall`, leveraging job cores for parallelism. The output FileStoreIDs for gene and isoform counts are then returned to the calling pipeline.
+[english] If the downloaded reference files do not contain a 'grp' string as expected, how would that affect the script?
+[english] The logic relies on finding files with 'grp' to set `ref_prefix`; if none exist, accessing index [0] in this list will raise an IndexError.
+[english] That makes sense; thanks for the help!

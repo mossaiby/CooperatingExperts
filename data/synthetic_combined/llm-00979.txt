@@ -1,0 +1,23 @@
+[english] How can I create a getter for frame time data that dynamically computes values based on the configured feature type?
+[english] I see you're building a dispatcher to retrieve synchronized timing information. This function checks a class attribute (`self.feat_type`) and calls the appropriate internal method if computation is required before returning the results.
+<switch:python>
+[python] def frame_times(self):
+        """This getter returns the frame times, for the corresponding type of
+        features."""
+        frame_times = None
+        # Make sure we have already computed the features
+        self.features
+        if self.feat_type is FeatureTypes.framesync:
+            self._compute_framesync_times()
+            frame_times = self._framesync_times
+        elif self.feat_type is FeatureTypes.est_beatsync:
+            frame_times = self._est_beatsync_times
+        elif self.feat_type is FeatureTypes.ann_beatsync:
+            frame_times = self._ann_beatsync_times
+
+        return frame_times
+<switch:english>
+[english] This method acts as a centralized retrieval point, safely triggering necessary computations for 'framesync' features while serving pre-calculated results for others.
+[english] If none of the defined feature types match `self.feat_type`, what value does this function return?
+[english] If no condition is met in the conditional logic, the function returns the initial value assigned to frame_times, which is None.
+[english] Thanks for the detailed explanation!

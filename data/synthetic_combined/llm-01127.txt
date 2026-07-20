@@ -1,0 +1,80 @@
+[english] Write code to translate a symbolic quantum gate name into its corresponding Qiskit operation class and apply it to a Directed Acyclic Graph (DAG).
+[english] This function maps an input string, such as 'cx', to the appropriate gate class by checking the `name` argument against numerous possible operations. It then instantiates that specific gate using its parameters before applying it to the target DAG.
+<switch:python>
+[python] def _create_dag_op(self, name, params, qargs):
+        """
+        Create a DAG node out of a parsed AST op node.
+
+        Args:
+            name (str): operation name to apply to the dag.
+            params (list): op parameters
+            qargs (list(QuantumRegister, int)): qubits to attach to
+
+        Raises:
+            QiskitError: if encountering a non-basis opaque gate
+        """
+        if name == "u0":
+            op_class = U0Gate
+        elif name == "u1":
+            op_class = U1Gate
+        elif name == "u2":
+            op_class = U2Gate
+        elif name == "u3":
+            op_class = U3Gate
+        elif name == "x":
+            op_class = XGate
+        elif name == "y":
+            op_class = YGate
+        elif name == "z":
+            op_class = ZGate
+        elif name == "t":
+            op_class = TGate
+        elif name == "tdg":
+            op_class = TdgGate
+        elif name == "s":
+            op_class = SGate
+        elif name == "sdg":
+            op_class = SdgGate
+        elif name == "swap":
+            op_class = SwapGate
+        elif name == "rx":
+            op_class = RXGate
+        elif name == "ry":
+            op_class = RYGate
+        elif name == "rz":
+            op_class = RZGate
+        elif name == "rzz":
+            op_class = RZZGate
+        elif name == "id":
+            op_class = IdGate
+        elif name == "h":
+            op_class = HGate
+        elif name == "cx":
+            op_class = CnotGate
+        elif name == "cy":
+            op_class = CyGate
+        elif name == "cz":
+            op_class = CzGate
+        elif name == "ch":
+            op_class = CHGate
+        elif name == "crz":
+            op_class = CrzGate
+        elif name == "cu1":
+            op_class = Cu1Gate
+        elif name == "cu3":
+            op_class = Cu3Gate
+        elif name == "ccx":
+            op_class = ToffoliGate
+        elif name == "cswap":
+            op_class = FredkinGate
+        else:
+            raise QiskitError("unknown operation for ast node name %s" % name)
+
+        op = op_class(*params)
+
+        self.dag.apply_operation_back(op, qargs, [], condition=self.condition)
+<switch:english>
+[english] The logic relies on a detailed set of conditional checks (`if/elif`) for every single supported gate, which is comprehensive but makes adding new gates require manual updates. Any unrecognized operation will raise a `QiskitError` via the final `else` block.
+[english] What happens if we pass an unknown gate name like 'qert' to this function?
+[english] If the input string does not match any of the predefined quantum operations, the function executes the terminal `else` clause and raises a `QiskitError`, reporting that the operation is unknown.
+[english] I see! So it fails gracefully if the gate isn't supported.

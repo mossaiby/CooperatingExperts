@@ -1,0 +1,68 @@
+[english] I need a robust mechanism to automatically scan a directory, discover all DAG definitions from Python modules, and load them into the collection.
+[english] This function scans the specified folder to locate valid Python files that define DAG components. It respects various configurations like safe mode and uses special ignore rules before processing each file.
+<switch:python>
+[python] def collect_dags(
+            self,
+            dag_folder=None,
+            only_if_updated=True,
+            include_examples=configuration.conf.getboolean('core', 'LOAD_EXAMPLES'),
+            safe_mode=configuration.conf.getboolean('core', 'DAG_DISCOVERY_SAFE_MODE')):
+        """
+        Given a file path or a folder, this method looks for python modules,
+        imports them and adds them to the dagbag collection.
+
+        Note that if a ``.airflowignore`` file is found while processing
+        the directory, it will behave much like a ``.gitignore``,
+        ignoring files that match any of the regex patterns specified
+        in the file.
+
+        **Note**: The patterns in .airflowignore are treated as
+        un-anchored regexes, not shell-like glob patterns.
+        """
+        start_dttm = timezone.utcnow()
+        dag_folder = dag_folder or self.dag_folder
+
+        # Used to store stats around DagBag processing
+        stats = []
+        FileLoadStat = namedtuple(
+            'FileLoadStat', "file duration dag_num task_num dags")
+
+        dag_folder = correct_maybe_zipped(dag_folder)
+
+        for filepath in list_py_file_paths(dag_folder, safe_mode=safe_mode,
+                                           include_examples=include_examples):
+            try:
+                ts = timezone.utcnow()
+                found_dags = self.process_file(
+                    filepath, only_if_updated=only_if_updated,
+                    safe_mode=safe_mode)
+
+                td = timezone.utcnow() - ts
+                td = td.total_seconds() + (
+                    float(td.microseconds) / 1000000)
+                stats.append(FileLoadStat(
+                    filepath.replace(dag_folder, ''),
+                    td,
+                    len(found_dags),
+                    sum([len(dag.tasks) for dag in found_dags]),
+                    str([dag.dag_id for dag in found_dags]),
+                ))
+            except Exception as e:
+                self.log.exception(e)
+        Stats.gauge(
+            'collect_dags', (timezone.utcnow() - start_dttm).total_seconds(), 1)
+        Stats.gauge(
+            'dagbag_size', len(self.dags), 1)
+        Stats.gauge(
+            'dagbag_import_errors', len(self.import_errors), 1)
+        self.dagbag_stats = sorted(
+            stats, key=lambda x: x.duration, reverse=True)
+<switch:english>
+[english] Beyond simple loading, this method tracks performance statistics for every file it loads, capturing metrics like import duration and total task count within those dags.
+[english] How does the function manage the timing measurements, and what specifically is being tracked in the `FileLoadStat` tuple?
+[english] It captures timings before and after calling the core processing method (`self.process_file`) to calculate file load duration, alongside the number of DAG objects found and their total task count. The full structure can be viewed here:
+<switch:python>
+[python] FileLoadStat = namedtuple(
+    'FileLoadStat', "file duration dag_num task_num dags")
+<switch:english>
+[english] That clear explanation helps understand the internal tracking!

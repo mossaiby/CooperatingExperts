@@ -1,0 +1,22 @@
+[english] How can I write a function that fetches either detailed packages or general summaries from Crates.io based on a specified category?
+[english] This function acts as a dispatcher, routing the request to the correct internal method depending on whether you are fetching specific crates or just summary information. It isolates date-specific logic only for crate searches.
+<switch:python>
+[python] def fetch_items(self, category, **kwargs):
+        """Fetch packages and summary from Crates.io
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
+        from_date = kwargs['from_date']
+
+        if category == CATEGORY_CRATES:
+            return self.__fetch_crates(from_date)
+        else:
+            return self.__fetch_summary()
+<switch:english>
+[english] The method uses conditional logic to dispatch the call. Note that fetching crates requires a 'from_date' key in kwargs, while summary fetches do not use it.
+[english] If I pass an unrecognized category (something other than CATEGORY_CRATES), how does this function behave?
+[english] Currently, if an unknown category is passed, the `else` block executes and calls self.__fetch_summary(). It doesn't explicitly handle unexpected categories or raise a ValueError.
+[english] Got it. That covers the logic flow well.

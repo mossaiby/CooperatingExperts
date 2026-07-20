@@ -1,0 +1,16 @@
+[english] I need to parse an XML file using a custom parsing logic defined in my class.
+[english] To ensure that when we read the XML, any elements encountered are immediately processed by your specific parsing scheme, we first set up a dedicated parser instance. This instance is configured to direct target classes to process the data as it's streamed from the file.
+<switch:python>
+[python] def parse(cls, xml_path):
+        """
+        Parses an xml_path with the inherited xml parser
+        :param xml_path:
+        :return:
+        """
+        parser = etree.XMLParser(target=cls.xml_parse())
+        return etree.parse(xml_path, parser)
+<switch:english>
+[english] The function returns an ElementTree object representing the parsed XML structure. Keep in mind that this relies heavily on `lxml` for its efficient event-driven parsing.
+[english] What happens if the provided xml path doesn't exist?
+[english] If the file specified by `xml_path` cannot be found, the underlying `etree.parse()` call will raise a `FileNotFoundError`. You might want to wrap this in a try/except block.
+[english] Ah, that makes sense! Thanks for the clarification.

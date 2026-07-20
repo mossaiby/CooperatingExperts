@@ -1,0 +1,54 @@
+[english] How can I robustly process incoming data messages from a server, manage concurrent subscriptions, and gracefully handle slow consumers?
+[english] This function manages inbound server messages by tracking overall statistics and checking whether an active subscription exists for the message source. It prioritizes fulfilling immediate asynchronous requests before attempting to queue the message or dropping it if congestion limits are hit.
+<switch:python>
+[python] def _process_msg(self, sid, subject, reply, data):
+        """
+        Process MSG sent by server.
+        """
+        payload_size = len(data)
+        self.stats['in_msgs'] += 1
+        self.stats['in_bytes'] += payload_size
+
+        sub = self._subs.get(sid)
+        if sub is None:
+            # Skip in case no subscription present.
+            return
+
+        sub.received += 1
+        if sub.max_msgs > 0 and sub.received >= sub.max_msgs:
+            # Enough messages so can throwaway subscription now.
+            self._subs.pop(sid, None)
+        msg = self._build_message(subject, reply, data)
+
+        # Check if it is an old style request.
+        if sub.future is not None:
+            if sub.future.cancelled():
+                # Already gave up, nothing to do.
+                return
+            sub.future.set_result(msg)
+            return
+
+        # Let subscription wait_for_msgs coroutine process the messages,
+        # but in case sending to the subscription task would block,
+        # then consider it to be an slow consumer and drop the message.
+        try:
+            sub.pending_size += payload_size
+            if sub.pending_size >= sub.pending_bytes_limit:
+                # Substract again the bytes since throwing away
+                # the message so would not be pending data.
+                sub.pending_size -= payload_size
+
+                if self._error_cb is not None:
+                    yield from self._error_cb(
+                        ErrSlowConsumer(subject=subject, sid=sid))
+                return
+            sub.pending_queue.put_nowait(msg)
+        except asyncio.QueueFull:
+            if self._error_cb is not None:
+                yield from self._error_cb(
+                    ErrSlowConsumer(subject=subject, sid=sid))
+<switch:english>
+[english] The implementation uses strict size and capacity checks, meaning it aggressively drops messages when consumers fall behind, relying on specific error callbacks to handle slow consumer events.
+[english] If the internal error callback (`self._error_cb`) signals a failure but that signaling coroutine itself raises an exception, what happens next?
+[english] Since `yield from` is used, any exception raised within the error callback will propagate and halt this message processing path immediately after the consumer has been notified of the issue.
+[english] Got it, understanding those asynchronous propagation points helps a lot.

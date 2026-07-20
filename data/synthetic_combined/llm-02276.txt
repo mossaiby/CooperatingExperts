@@ -1,0 +1,52 @@
+[english] How can I reliably make an HTTP request using authentication and handle custom SSL verification based on configuration?
+[english] This function utilizes the `pycurl` library to perform robust HTTP requests. It sets up various options like user credentials, headers, and manages SSL certificate checks dynamically.
+<switch:python>
+[python] def http_request(url, post_data=None):
+    '''Make an HTTP request to a given URL with optional parameters.
+    '''
+    logger.debug('Requesting URL: %s' % url)
+    buf = bio()
+    curl = pycurl.Curl()
+    curl.setopt(curl.URL, url.encode('ascii', 'ignore'))
+
+    # Disable HTTPS verification methods if insecure is set
+    if config()['server']['insecure']:
+        curl.setopt(curl.SSL_VERIFYPEER, 0)
+        curl.setopt(curl.SSL_VERIFYHOST, 0)
+
+    if config()['server']['certificate']:
+        # Make sure verification methods are turned on
+        curl.setopt(curl.SSL_VERIFYPEER, 1)
+        curl.setopt(curl.SSL_VERIFYHOST, 2)
+        # Import your certificates
+        curl.setopt(pycurl.CAINFO, config()['server']['certificate'])
+
+    if post_data:
+        curl.setopt(curl.HTTPPOST, post_data)
+    curl.setopt(curl.WRITEFUNCTION, buf.write)
+    curl.setopt(pycurl.HTTPAUTH, pycurl.HTTPAUTH_DIGEST)
+    curl.setopt(pycurl.USERPWD, "%s:%s" % (config()['server']['username'],
+                                           config()['server']['password']))
+    curl.setopt(curl.HTTPHEADER, ['X-Requested-Auth: Digest'])
+    curl.setopt(curl.FAILONERROR, True)
+    curl.setopt(curl.FOLLOWLOCATION, True)
+    curl.perform()
+    curl.close()
+    result = buf.getvalue()
+    buf.close()
+    return result
+<switch:english>
+[english] The implementation heavily relies on external functions (`logger`, `bio`, `config`) to handle logging and configuration retrieval.
+[english] If the request encounters a network error or HTTP status code indicating failure (beyond what FAILONERROR handles), how can I determine the specific response content?
+[english] The current setup only captures successful responses. To capture detailed errors, you would typically check `curl.getinfo(curl)` after `perform()` for the HTTP status code.
+<switch:python>
+[python] # Example of adding error checking:
+curl.perform()
+response_code = curl.info().http_code
+if response_code >= 400:
+    # Handle specific client or server errors here
+    pass
+curl.close()
+result = buf.getvalue()
+<switch:english>
+[english] That makes the error handling much clearer.

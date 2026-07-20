@@ -1,0 +1,31 @@
+[english] How can I write a flexible function that initializes PyTorch optimizers using either an existing object or a configuration dictionary?
+[english] This function handles optimizer initialization by checking if the provided input is already a valid `torch.optim.Optimizer` instance. If it's a dictionary, it dynamically constructs the required optimizer.
+<switch:python>
+[python] def init_optimizer(self, optimizer):
+        """Init the optimizer.
+
+        Args:
+            optimizer (dict or :obj:`~torch.optim.Optimizer`): Either an
+                optimizer object or a dict used for constructing the optimizer.
+
+        Returns:
+            :obj:`~torch.optim.Optimizer`: An optimizer object.
+
+        Examples:
+            >>> optimizer = dict(type='SGD', lr=0.01, momentum=0.9)
+            >>> type(runner.init_optimizer(optimizer))
+            <class 'torch.optim.sgd.SGD'>
+        """
+        if isinstance(optimizer, dict):
+            optimizer = obj_from_dict(
+                optimizer, torch.optim, dict(params=self.model.parameters()))
+        elif not isinstance(optimizer, torch.optim.Optimizer):
+            raise TypeError(
+                'optimizer must be either an Optimizer object or a dict, '
+                'but got {}'.format(type(optimizer)))
+        return optimizer
+<switch:english>
+[english] It relies on `obj_from_dict` to map the string 'type' in the dictionary (e.g., 'SGD') to the actual PyTorch class implementation automatically.
+[english] If I pass a dict that specifies an incompatible parameter, like setting lr=0 for SGD but momentum=10, what happens?
+[english] The `obj_from_dict` helper typically passes the contents of the dictionary to the constructor, and PyTorch will raise a specific ValueError if the parameters provided are invalid for that optimizer.
+[english] That makes sense! I'll stick to using valid config dict structures.

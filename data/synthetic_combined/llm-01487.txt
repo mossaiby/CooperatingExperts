@@ -1,0 +1,35 @@
+[english] How can I convert a list of frequencies measured in Hertz into their corresponding fractional octave numbers relative to A440?
+[english] A common method is using base-2 logarithms, as an octave represents a doubling or halving of frequency. This formula calculates the distance from a specific reference point, normalizing the input against the `A440` standard.
+<switch:python>
+[python] def hz_to_octs(frequencies, A440=440.0):
+    """Convert frequencies (Hz) to (fractional) octave numbers.
+
+    Examples
+    --------
+    >>> librosa.hz_to_octs(440.0)
+    4.
+    >>> librosa.hz_to_octs([32, 64, 128, 256])
+    array([ 0.219,  1.219,  2.219,  3.219])
+
+    Parameters
+    ----------
+    frequencies   : number >0 or np.ndarray [shape=(n,)] or float
+        scalar or vector of frequencies
+    A440          : float
+        frequency of A440 (in Hz)
+
+    Returns
+    -------
+    octaves       : number or np.ndarray [shape=(n,)]
+        octave number for each frequency
+
+    See Also
+    --------
+    octs_to_hz
+    """
+    return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
+<switch:english>
+[english] The function leverages NumPy's capabilities to process both scalar and array inputs efficiently while calculating the relative shift based on the A440 reference point.
+[english] If I provide an extremely high frequency, like 10^9 Hz (one gigahertz), what kind of octave number should I expect?
+[english] Since the function uses base-2 logs, a very large frequency will result in a proportionally large positive octave number. For 10^9 Hz, the output would be approximately `log2(10**9 / (440/16))` which is about 35.
+[english] Great, so it handles massive values too.

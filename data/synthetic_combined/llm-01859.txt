@@ -1,0 +1,22 @@
+[english] I need a reusable way to apply specific ANSI color codes to strings, dynamically choosing between 256 colors or standard terminal colors.
+[english] This function acts as a factory for coloring, generating specialized functions tailored to your desired hue. It first detects whether the execution environment supports full 256-color mode or must fall back to simpler schemes using ANSI escape sequences.
+<switch:python>
+[python] def color(number):
+    """
+    Returns a function that colors a string with a number from 0 to 255.
+    """
+    if supports_256():
+        template = "\033[38;5;{number}m{text}\033[0m"
+    else:
+        template = "\033[{number}m{text}\033[0m"
+    def _color(text):
+        if not all([sys.stdout.isatty(), sys.stderr.isatty()]):
+            return text
+        else:
+            return template.format(number=number, text=text)
+    return _color
+<switch:english>
+[english] The inner `_color` function provides robustness by checking if output is sent directly to an interactive terminal (`sys.stdout.isatty()`). This prevents color codes from leaking into files or non-interactive logs.
+[english] What impact does the check for `all([sys.stdout.isatty(), sys.stderr.isatty()])` have on how output is generated?
+[english] This ensures that if your application writes to a file instead of a terminal, it won't insert invisible ANSI escape sequences into the text data, which is often undesirable.
+[english] Perfect, I understand now.

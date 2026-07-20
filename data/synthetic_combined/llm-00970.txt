@@ -1,0 +1,18 @@
+[english] How do I ensure that a specific cleanup or teardown function runs automatically after all requests handled by my blueprint have been processed?
+[english] The method registers your provided function `f` with an application-wide list of tear-down handlers. It scopes this registration to the blueprint's name and uses `record_once` to guarantee that the setup happens only once.
+<switch:python>
+[python] def teardown_request(self, f):
+        """Like :meth:`Flask.teardown_request` but for a blueprint.  This
+        function is only executed when tearing down requests handled by a
+        function of that blueprint.  Teardown request functions are executed
+        when the request context is popped, even when no actual request was
+        performed.
+        """
+        self.record_once(lambda s: s.app.teardown_request_funcs
+            .setdefault(self.name, []).append(f))
+        return f
+<switch:english>
+[english] This ensures that even if the request context is popped without any specific operations, your cleanup function will execute as intended whenever requests tied to this blueprint finish.
+[english] If another process modifies the application's tear-down list external to this method, can I still guarantee my function runs?
+[english] Since this function simply appends a callable `f` to `app.teardown_request_funcs`, its execution depends on when that global list is iterated over during the request teardown phase.
+[english] That makes sense; managing lifecycle events via registration sounds reliable.

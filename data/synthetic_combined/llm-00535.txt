@@ -1,0 +1,17 @@
+[english] I have a string with ANSI color codes attached from terminal output, and I need help stripping all that formatting to get pure, plain text content.
+[english] A reliable way to sanitize this kind of input is to iterate through a comprehensive list of known escape sequences and use the replace method on the input string. This ensures every style attribute mentioned is removed before returning the final result.
+<switch:python>
+[python] def clean_markup(self, orig_str):
+        ''' clean markup from string '''
+        for val in [
+            self.YELLOW, self.RED, self.RESET, self.CYAN, self.BG_MAGENTA,
+            self.WHITE, self.BG_GREEN, self.GREEN, self.BG_BROWN,
+            self.RED_DARK, self.MAGENTA, self.BG_CYAN
+        ]:
+            orig_str = orig_str.replace(val, '')
+        return orig_str
+<switch:english>
+[english] This method is effective for predefined ANSI codes, but it might not catch highly complex or non-standard escape sequences that haven't been explicitly added to the list.
+[english] What happens if one of these color codes appears twice in the original string?
+[english] The function will accurately remove both instances because Python's str.replace method replaces all occurrences by default when a pattern is provided without specific indices or counts.
+[english] Perfect, that solves my problem!

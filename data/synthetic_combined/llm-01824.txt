@@ -1,0 +1,29 @@
+[english] How can I automatically fill any missing intervals in my dataset with a specific material component?
+[english] This function first determines which parts of your current structure are missing or undefined by calling a helper method. It then iterates over those identified gaps, injecting the provided component into their metadata.
+<switch:python>
+[python] def fill(self, component=None):
+        """
+        Fill gaps with the component provided.
+
+        Example
+            t = s.fill(Component({'lithology': 'cheese'}))
+        """
+        c = [component] if component is not None else []
+
+        # Make the intervals to go in the gaps.
+        gaps = self.find_gaps()
+        if not gaps:
+            return self
+        for iv in gaps:
+            iv.components = c
+
+        return deepcopy(self) + gaps
+<switch:english>
+[english] Crucially, this method performs a deep copy before returning the results, ensuring the original object remains unmodified.
+[english] If `component` is not provided to the function, what exactly does it use to fill those gaps?
+[english] It uses an empty list (`[]`) by default if no component is supplied, allowing you to fill gaps without explicitly assigning a specific value.
+<switch:python>
+[python] c = [component] if component is not None else [] 
+# If component is None, c becomes []
+<switch:english>
+[english] That makes sense; I appreciate the detailed breakdown!

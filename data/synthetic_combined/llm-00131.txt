@@ -1,0 +1,29 @@
+[english] How should I properly save an oauth verifier associated with a specific token during the authentication flow?
+[english] This function is responsible for managing the storage of an OAuth verifier linked to a given token.
+<switch:python>
+[python] def save_verifier(self, token, verifier, request):
+        """Save verifier to database.
+
+        A verifiersetter is required. It would be better to combine request
+        token and verifier together::
+
+            def verifiersetter(token, verifier, request):
+                tok = Grant.query.filter_by(token=token).first()
+                tok.verifier = verifier['oauth_verifier']
+                tok.user = get_current_user()
+                return tok.save()
+
+        .. admonition:: Note:
+
+            A user is required on verifier, remember to attach current
+            user to verifier.
+        """
+        log.debug('Save verifier %r for %r', verifier, token)
+        self._verifiersetter(
+            token=token, verifier=verifier, request=request
+        )
+<switch:english>
+[english] It acts as a wrapper, logging the activity and delegating all database manipulation to the internal `._verifiersetter` method.
+[english] What happens if the token passed into this function doesn't actually exist in the database when _verifiersetter is called?
+[english] Based on typical implementation conventions for such grant flows, if the underlying verifier setter cannot find a matching token, it should raise an appropriate exception (like `DoesNotExist`) to halt the request.
+[english] That makes sense; I appreciate the detailed breakdown.

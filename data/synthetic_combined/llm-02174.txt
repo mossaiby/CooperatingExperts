@@ -1,0 +1,18 @@
+[english] How do I retrieve a MongoDB collection object for querying using an existing connection?
+[english] This function handles fetching the necessary database and then retrieving the specific data structure (the collection) using your current connection state.
+<switch:python>
+[python] def get_collection(self, mongo_collection, mongo_db=None):
+        """
+        Fetches a mongo collection object for querying.
+
+        Uses connection schema as DB unless specified.
+        """
+        mongo_db = mongo_db if mongo_db is not None else self.connection.schema
+        mongo_conn = self.get_conn()
+
+        return mongo_conn.get_database(mongo_db).get_collection(mongo_collection)
+<switch:english>
+[english] The function dynamically chooses the database, defaulting to `self.connection.schema` if no specific database name is supplied. This ensures you always have a valid collection handle.
+[english] If the specified `mongo_db` does not exist in MongoDB, what error would this code raise?
+[english] The code uses `get_database()`, which typically attempts to access the DB without error; however, subsequent operations on that non-existent database might fail or create it depending on your driver configuration.
+[english] That makes sense!

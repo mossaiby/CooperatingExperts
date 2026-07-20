@@ -1,0 +1,28 @@
+[english] How do I asynchronously send a list of activities or text messages, potentially as part of an ongoing conversation?
+[english] This function manages sending multiple messages by first creating activity objects and applying conversational context to them. It then sets up a callback mechanism to handle the asynchronous transmission via the adapter.
+<switch:python>
+[python] async def send_activity(self, *activity_or_text: Union[Activity, str]) -> ResourceResponse:
+        """
+        Sends a single activity or message to the user.
+        :param activity_or_text:
+        :return:
+        """
+        reference = TurnContext.get_conversation_reference(self.activity)
+
+        output = [TurnContext.apply_conversation_reference(
+            Activity(text=a, type='message') if isinstance(a, str) else a, reference)
+            for a in activity_or_text]
+        for activity in output:
+            activity.input_hint = 'acceptingInput'
+
+        async def callback(context: 'TurnContext', output):
+            responses = await context.adapter.send_activities(context, output)
+            context._responded = True
+            return responses
+
+        await self._emit(self._on_send_activities, output, callback(self, output))
+<switch:english>
+[english] The use of `async def callback` ensures that the actual network request (`context.adapter.send_activities`) is awaited properly within the event loop, making sure the sending process doesn't block other tasks.
+[english] What happens if one of the activities in `activity_or_text` fails to be converted (e.g., it's neither a string nor an Activity object)?
+[english] The current implementation relies on duck typing and dynamic conversion within the list comprehension; however, if `isinstance(a, str)` is false and `a` is not already an `Activity`, the instantiation of the message will fail with an error.
+[english] Understood! I'll adjust how inputs are validated.

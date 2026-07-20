@@ -1,0 +1,15 @@
+[english] How can I update a specific database field across all records in a Django model to match newly generated unique IDs?
+[english] This function targets every record within a specified application's model. It then iterates over all existing primary keys and updates the corresponding target field using an external helper.
+<switch:python>
+[python] def set_default_forwards(app_name, operation, apps, schema_editor):
+    """Set default value for AleaIdField."""
+    model = apps.get_model(app_name, operation.model_name)
+    for obj_pk in model.objects.values_list('pk', flat=True):
+        model.objects.filter(pk=obj_pk).update(**{
+            operation.name: get_meteor_id(model, obj_pk),
+        })
+<switch:english>
+[english] The function retrieves each record individually and updates it based on its primary key (PK), which ensures targeted modifications.
+[english] What happens if the model has thousands of records? Is this approach efficient?
+[english] Iterating through all PKs followed by individual `update` calls can be slow for large datasets. For better performance, you could use a single bulk update query targeting related fields instead.
+[english] That makes sense, I'll optimize the loop if necessary.

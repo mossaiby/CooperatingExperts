@@ -1,0 +1,51 @@
+[english] I need a way to neutralize the formal charge of an RDKit molecule by adjusting its hydrogen count.
+[english] This function works by iterating over all atoms in the molecule. It first neutralizes positive formal charges by stripping hydrogens, and then balances any outstanding positive remainder against existing negative charges through targeted adjustments.
+<switch:python>
+[python] def uncharge(self, mol):
+        """Neutralize molecule by adding/removing hydrogens.
+
+        :param mol: The molecule to uncharge.
+        :type mol: rdkit.Chem.rdchem.Mol
+        :return: The uncharged molecule.
+        :rtype: rdkit.Chem.rdchem.Mol
+        """
+        log.debug('Running Uncharger')
+        mol = copy.deepcopy(mol)
+
+        # Neutralize positive charges
+        pos_remainder = 0
+        neg_count = 0
+        for atom in mol.GetAtoms():
+            # Remove hydrogen from positive atoms and reduce formal change until neutral or no more hydrogens
+            while atom.GetFormalCharge() > 0 and atom.GetNumExplicitHs() > 0:
+                atom.SetNumExplicitHs(atom.GetNumExplicitHs() - 1)
+                atom.SetFormalCharge(atom.GetFormalCharge() - 1)
+                log.info('Removed positive charge')
+            chg = atom.GetFormalCharge()
+            if chg > 0:
+                # Record number of non-neutralizable positive charges
+                pos_remainder += chg
+            elif chg < 0:
+                # Record total number of negative charges
+                neg_count += -chg
+
+        # Choose negative charges to leave in order to balance non-neutralizable positive charges
+        neg_skip = self._get_neg_skip(mol, pos_remainder)
+
+        # Neutralize remaining negative charges
+        for atom in mol.GetAtoms():
+            log.info(atom.GetIdx())
+            if atom.GetIdx() in neg_skip:
+                continue
+            # Make sure to stop when neg_count <= pos_remainder, as it is possible that neg_skip is not large enough
+            while atom.GetFormalCharge() < 0 and neg_count > pos_remainder:
+                atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
+                atom.SetFormalCharge(atom.GetFormalCharge() + 1)
+                neg_count -= 1
+                log.info('Removed negative charge')
+        return mol
+<switch:english>
+[english] By using `neg_skip`, the function intelligently decides which negative charge sites must remain untouched to successfully balance non-neutralizable positive charges.
+[english] What happens if the input molecule is already perfectly neutral? Does it still perform unnecessary changes?
+[english] If the molecule is already neutral, no modifications (like changing hydrogen count or formal charge) will occur because the conditional loops checking for `chg > 0` or `chg < 0` are never triggered.
+[english] Perfect, this addresses my concern about side effects.

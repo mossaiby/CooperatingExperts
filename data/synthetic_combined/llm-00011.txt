@@ -1,0 +1,57 @@
+[english] How do I group a list of test objects into structured suites based on their shared ancestral contexts?
+[english] This function organizes tests by analyzing the context chain (ancestry) of the first item in the input list. It iteratively attempts to form cohesive groups or 'suites' as it moves up through each defined ancestor.
+<switch:python>
+[python] def mixedSuites(self, tests):
+        """The complex case where there are tests that don't all share
+        the same context. Groups tests into suites with common ancestors,
+        according to the following (essentially tail-recursive) procedure:
+
+        Starting with the context of the first test, if it is not
+        None, look for tests in the remaining tests that share that
+        ancestor. If any are found, group into a suite with that
+        ancestor as the context, and replace the current suite with
+        that suite. Continue this process for each ancestor of the
+        first test, until all ancestors have been processed. At this
+        point if any tests remain, recurse with those tests as the
+        input, returning a list of the common suite (which may be the
+        suite or test we started with, if no common tests were found)
+        plus the results of recursion.
+        """
+        if not tests:
+            return []
+        head = tests.pop(0)
+        if not tests:
+            return [head] # short circuit when none are left to combine
+        suite = head # the common ancestry suite, so far
+        tail = tests[:]
+        context = getattr(head, 'context', None)
+        if context is not None:
+            ancestors = [context] + [a for a in self.ancestry(context)]
+            for ancestor in ancestors:
+                common = [suite] # tests with ancestor in common, so far
+                remain = [] # tests that remain to be processed
+                for test in tail:
+                    found_common = False
+                    test_ctx = getattr(test, 'context', None)
+                    if test_ctx is None:
+                        remain.append(test)
+                        continue
+                    if test_ctx is ancestor:
+                        common.append(test)
+                        continue
+                    for test_ancestor in self.ancestry(test_ctx):
+                        if test_ancestor is ancestor:
+                            common.append(test)
+                            found_common = True
+                            break
+                    if not found_common:
+                        remain.append(test)
+                if common:
+                    suite = self.makeSuite(common, ancestor)
+                tail = self.mixedSuites(remain)
+        return [suite] + tail
+<switch:english>
+[english] It maintains two lists: 'common' for tests sharing an ancestor, and 'remain' for those that don't fit, ensuring no test is lost during processing. This approach can be complex due to its heavy reliance on recursion and attribute checking.
+[english] What happens if a specific test object in the input list does not have a 'context' or 'ancestry' defined?
+[english] If either 'context' or 'ancestry' is missing, the function treats that test as isolated. It appends it directly to the `remain` list (in cases where context doesn't exist), ensuring it proceeds with subsequent recursion without grouping.
+[english] Wow, this implementation looks quite intricate and handles edge cases very thoroughly.

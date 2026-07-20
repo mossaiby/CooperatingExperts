@@ -1,0 +1,13 @@
+[english] How do I dynamically add a new method to my existing Dataset class at runtime without modifying its original definition?
+[english] To implement this dynamic functionality, we directly access and modify the internal `__hidden__` attribute of the `Dataset` class. This allows us to attach the function using its string name as the key.
+<switch:python>
+[python] def patch(f):
+    '''Adds method f to the Dataset class'''
+    name = f.__name__
+    Dataset.__hidden__[name] = f
+    return f
+<switch:english>
+[english] This technique is known as monkey-patching. Be cautious as it permanently alters the target class's behavior for all instances after the call.
+[english] What happens if I try to patch a method with the same name that already exists in `Dataset.__hidden__`?
+[english] The new function will overwrite any previously defined method using the exact same name. Since it is a direct dictionary assignment, standard Python replacement rules apply.
+[english] Got it, I appreciate the clear explanation.

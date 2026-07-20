@@ -1,0 +1,30 @@
+[english] How can I execute and asynchronously monitor a Presto/Athena query job until it completes successfully?
+[english] This function is designed to run an Athena query using its established hook, then repeatedly monitors for the query's completion status.
+<switch:python>
+[python] def execute(self, context):
+        """
+        Run Presto Query on Athena
+        """
+        self.hook = self.get_hook()
+        self.hook.get_conn()
+
+        self.query_execution_context['Database'] = self.database
+        self.result_configuration['OutputLocation'] = self.output_location
+        self.query_execution_id = self.hook.run_query(self.query, self.query_execution_context,
+                                                      self.result_configuration, self.client_request_token)
+        query_status = self.hook.poll_query_status(self.query_execution_id, self.max_tries)
+
+        if query_status in AWSAthenaHook.FAILURE_STATES:
+            raise Exception(
+                'Final state of Athena job is {}, query_execution_id is {}.'
+                .format(query_status, self.query_execution_id))
+        elif not query_status or query_status in AWSAthenaHook.INTERMEDIATE_STATES:
+            raise Exception(
+                'Final state of Athena job is {}. '
+                'Max tries of poll status exceeded, query_execution_id is {}.'
+                .format(query_status, self.query_execution_id))
+<switch:english>
+[english] By checking the `query_status` against specific failure and intermediate states, this method ensures robust error handling for both Athena failures and polling timeouts.
+[english] Does this function have a mechanism to avoid infinite loops if a query status stalls in an intermediate state?
+[english] Yes, the code checks the result of `self.hook.poll_query_status` against `self.max_tries`. If no terminal status is reached within those attempts, it raises an exception indicating the max tries were exceeded.
+[english] Understood; I will ensure my configuration sets a reasonable value for max_tries.

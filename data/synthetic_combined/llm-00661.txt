@@ -1,0 +1,106 @@
+[english] How can I securely decrypt symmetric ciphertext given parameters like algorithm, key, mode, and IV?
+[english] This function starts by validating the decryption method and key against internal supports it has defined. It then ensures that the cipher is correctly initialized using either a specific block cipher mode or handles RC4 as an exception before proceeding.
+<switch:python>
+[python] def _decrypt_symmetric(
+            self,
+            decryption_algorithm,
+            decryption_key,
+            cipher_text,
+            cipher_mode=None,
+            padding_method=None,
+            iv_nonce=None):
+        """
+        Decrypt data using symmetric decryption.
+
+        Args:
+            decryption_algorithm (CryptographicAlgorithm): An enumeration
+                specifying the symmetric decryption algorithm to use for
+                decryption.
+            decryption_key (bytes): The bytes of the symmetric key to use for
+                decryption.
+            cipher_text (bytes): The bytes to be decrypted.
+            cipher_mode (BlockCipherMode): An enumeration specifying the
+                block cipher mode to use with the decryption algorithm.
+                Required in the general case. Optional if the decryption
+                algorithm is RC4 (aka ARC4). If optional, defaults to None.
+            padding_method (PaddingMethod): An enumeration specifying the
+                padding method to use on the data after decryption. Required
+                if the cipher mode is for block ciphers (e.g., CBC, ECB).
+                Optional otherwise, defaults to None.
+            iv_nonce (bytes): The IV/nonce value to use to initialize the mode
+                of the decryption algorithm. Optional, defaults to None.
+
+        Returns:
+            bytes: the bytes of the decrypted data
+
+        Raises:
+            InvalidField: Raised when the algorithm is unsupported or the
+                length is incompatible with the algorithm.
+            CryptographicFailure: Raised when the key generation process
+                fails.
+        """
+        # Set up the algorithm
+        algorithm = self._symmetric_key_algorithms.get(
+            decryption_algorithm,
+            None
+        )
+        if algorithm is None:
+            raise exceptions.InvalidField(
+                "Decryption algorithm '{0}' is not a supported symmetric "
+                "decryption algorithm.".format(decryption_algorithm)
+            )
+        try:
+            algorithm = algorithm(decryption_key)
+        except Exception as e:
+            self.logger.exception(e)
+            raise exceptions.CryptographicFailure(
+                "Invalid key bytes for the specified decryption algorithm."
+            )
+
+        # Set up the cipher mode if needed
+        if decryption_algorithm == enums.CryptographicAlgorithm.RC4:
+            mode = None
+        else:
+            if cipher_mode is None:
+                raise exceptions.InvalidField("Cipher mode is required.")
+            mode = self._modes.get(cipher_mode, None)
+            if mode is None:
+                raise exceptions.InvalidField(
+                    "Cipher mode '{0}' is not a supported mode.".format(
+                        cipher_mode
+                    )
+                )
+            if hasattr(mode, 'initialization_vector') or \
+                    hasattr(mode, 'nonce'):
+                if iv_nonce is None:
+                    raise exceptions.InvalidField(
+                        "IV/nonce is required."
+                    )
+                mode = mode(iv_nonce)
+            else:
+                mode = mode()
+
+        # Decrypt the plain text
+        cipher = ciphers.Cipher(algorithm, mode, backend=default_backend())
+        decryptor = cipher.decryptor()
+        plain_text = decryptor.update(cipher_text) + decryptor.finalize()
+
+        # Unpad the plain text if needed (separate methods for testing
+        # purposes)
+        if cipher_mode in [
+                enums.BlockCipherMode.CBC,
+                enums.BlockCipherMode.ECB
+        ]:
+            plain_text = self._handle_symmetric_padding(
+                self._symmetric_key_algorithms.get(decryption_algorithm),
+                plain_text,
+                padding_method,
+                undo_padding=True
+            )
+
+        return plain_text
+<switch:english>
+[english] The logic concludes by handling symmetric padding, which is only applied to modes like CBC or ECB after the initial decryption process is complete.
+[english] If the provided `decryption_key` is invalid for the specified algorithm, what happens within this function?
+[english] If the key initialization fails during setup, the code catches the exception and raises a CryptographicFailure indicating that the 'Invalid key bytes' were supplied.
+[english] That clarifies how input constraints are enforced.

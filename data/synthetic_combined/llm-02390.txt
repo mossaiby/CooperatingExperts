@@ -1,0 +1,47 @@
+[english] How can I create a main script that loads configurations for message exclusions and persists them using command-line arguments?
+[english] This function sets up the operational environment by parsing supplied arguments, loading existing state from disk, and applying user-defined changes to configuration lists.
+<switch:python>
+[python] def main(argv):
+    """
+    Main program.
+
+    @return: none
+    """
+    global g_script_name
+    global g_test_root_dir
+    global g_new_messages_to_exclude
+    global g_old_messages_to_remove
+    global g_load_java_message_filename
+    global g_save_java_message_filename
+    global g_print_java_messages
+    global g_java_messages_to_ignore_text_filename
+
+
+    g_script_name = os.path.basename(argv[0])   # get name of script being run.
+
+
+    # Override any defaults with the user's choices.
+    parse_args(argv)
+
+    g_load_java_message_filename = os.path.join(g_test_root_dir,g_load_java_message_filename)
+    load_dict() # load previously stored java messages to g_ok_java_messages
+
+    if len(g_new_messages_to_exclude) > 0:
+        g_new_messages_to_exclude = os.path.join(g_test_root_dir,g_new_messages_to_exclude)
+        add_new_message()   # add new java messages to exclude to dictionary
+
+    if len(g_old_messages_to_remove) > 0:
+        g_old_messages_to_remove = os.path.join(g_test_root_dir,g_old_messages_to_remove)
+        remove_old_message()    # remove java messages from ignored list if users desired it
+
+    g_save_java_message_filename = os.path.join(g_test_root_dir,g_save_java_message_filename)
+    save_dict()                 # save the updated dict g_ok_java_messages to pickle file
+
+    if g_print_java_messages:   # print java ignored messages to console and text file
+        g_java_messages_to_ignore_text_filename = os.path.join(g_test_root_dir,g_java_messages_to_ignore_text_filename)
+        print_dict()
+<switch:english>
+[english] The code manages persistent settings via `save_dict()` after ensuring all exclusion/removal lists are correctly updated based on user input before final execution.
+[english] What happens if the global variable g_test_root_dir is not initialized before being referenced in os.path.join?
+[english] If g_test_root_dir is undefined, calling os.path.join will raise a NameError. You should initialize it early using default paths or process environment variables.
+[english] That makes the flow much clearer for me.

@@ -1,0 +1,28 @@
+[english] How can I retrieve a specific AWS Route 53 hosted zone instance when I only have its unique short ID?
+[english] This method retrieves the hosted zone details by performing an API GET request, using the provided `id` to construct the necessary resource path. It then passes the raw response body through a dedicated parser for structured data.
+<switch:python>
+[python] def get_hosted_zone_by_id(self, id):
+        """
+        Retrieves a hosted zone, by hosted zone ID (not name).
+
+        :param str id: The hosted zone's ID (a short hash string).
+        :rtype: :py:class:`HostedZone <route53.hosted_zone.HostedZone>`
+        :returns: An :py:class:`HostedZone <route53.hosted_zone.HostedZone>`
+            instance representing the requested hosted zone.
+        """
+
+        root = self._send_request(
+            path='hostedzone/%s' % id,
+            data={},
+            method='GET',
+        )
+
+        return xml_parsers.get_hosted_zone_by_id_parser(
+            root=root,
+            connection=self,
+        )
+<switch:english>
+[english] The function relies heavily on the `xml_parsers` module to transform the raw API response (`root`) into a usable object.
+[english] Is there any input validation done to ensure the provided ID is not empty or malformed before making the network request?
+[english] No explicit ID validation is performed in this function. If an invalid ID is passed, `self._send_request` would likely raise an API error when attempting to fetch the resource.
+[english] That makes sense, thanks for clarifying.

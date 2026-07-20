@@ -1,0 +1,31 @@
+[english] How do I structure a Python dictionary to conform exactly to Amazon Alexa's response format for voice and card display?
+[english] This method constructs a complex, hierarchical Python dictionary designed to be consumed by an Alexa skill backend. It populates the necessary fields like `outputSpeech` and defines the visual appearance of the desired outcome using a simple 'Simple' card.
+<switch:python>
+[python] def alexa(self) -> dict:
+        """Returns Amazon Alexa compatible state of the PlainText instance.
+
+        Creating Amazon Alexa response blank with populated "outputSpeech" and
+        "card sections.
+
+        Returns:
+            response: Amazon Alexa representation of PlainText state.
+        """
+        response = {
+            'response': {
+                'shouldEndSession': False,
+                'outputSpeech': {
+                    'type': 'PlainText',
+                    'text': self.content},
+                'card': {
+                    'type': 'Simple',
+                    'content': self.content
+                }
+            }
+        }
+
+        return response
+<switch:english>
+[english] Currently, this implementation is hardcoded to use `'PlainText'` for both voice output and the response card content. For more advanced interaction, you would need to modify the speech type to include SSML tags.
+[english] What needs to be changed if I want Alexa to immediately end the current session after saying the message?
+[english] You must set the `shouldEndSession` key within the 'response' dictionary to `True`. This tells Amazon that there is no need for further interaction.
+[english] That makes much more sense now, thank you!

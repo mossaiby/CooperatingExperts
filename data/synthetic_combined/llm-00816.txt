@@ -1,0 +1,21 @@
+[english] How do I update the state of an entity during a substance transfer operation?
+[english] This function handles complex data restructuring for a substance transfer event by meticulously unpacking and validating various nested attributes before performing recursive transformations.
+<switch:python>
+[python] def _transfer_substance(s):
+    """
+    E:O:.-M:O:.-t.o.-' => E:.-O:.M:O:.-t.o.-‘
+    """
+    subst, attr, mode = s
+    attr0, attr1, attr2 = attr
+    assert isinstance(attr1, NullScript) and isinstance(attr2, NullScript)
+    subst, subst1, subst2 = subst
+    assert isinstance(subst1, NullScript) and isinstance(subst2, NullScript)
+
+    subst0, subst1, subst2 = subst
+    assert isinstance(subst2, NullScript)
+    return m(m(m(subst0)), m(m(subst1), attr0), mode)
+<switch:english>
+[english] It uses multiple calls to the function `m` (assumed to be a mutation or mapping utility) to build the new state structure based on the initial components of `s`.
+[english] What happens if any of the `NullScript` checks fail when calling this?
+[english] The function will raise an AssertionError because it relies heavily on these assertions (`assert isinstance(...)`) to guarantee structural integrity before proceeding with data manipulation.
+[english] Thanks for clarifying that.

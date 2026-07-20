@@ -1,0 +1,27 @@
+[english] I need a way to properly initialize and store a configuration object for Yandex Metrika analytics within my application.
+[english] To configure the Yandex counter, this function first ensures that any optional parameters are handled gracefully. It then constructs the base data structure required by the analytics system before appending it.
+<switch:python>
+[python] def configure_analytics_yandex(self, ident, params=None):
+        """Configure Yandex Metrika analytics counter.
+
+        :param str|unicode ident: Metrika counter ID.
+
+        :param dict params: Additional params.
+
+        """
+        params = params or {}
+
+        data = {
+            'type': 'Yandex',
+            'id': ident,
+        }
+
+        if params:
+            data['params'] = '%s' % params
+
+        self.analytics.append(data)
+<switch:english>
+[english] The setup successfully maps the provided identification and settings into a structured format for tracking. Keep in mind that custom parameters are converted directly to strings using the %s operator.
+[english] How will the function handle the `params` argument if I pass something other than a dictionary, like a list?
+[english] The code uses standard string formatting (`%s`), which means Python will convert any non-dictionary object (like a list) into its default string representation. While this works, passing a clean dictionary is safer for future logic.
+[english] Got it, thank you for the clarification!

@@ -1,0 +1,31 @@
+[english] I need a way to check if a specific file path currently exists within our storage service.
+[english] The function first ensures the input is valid using an internal validator, and then it attempts to fetch metadata for the given path from the API client.
+<switch:python>
+[python] def exists(self, path):
+        '''Check if a certain path exists in the storage service.
+
+        Args:
+            path (str): The path to be checked
+
+        Returns:
+            True if the path exists, False otherwise
+
+        Raises:
+            StorageArgumentException: Invalid arguments
+            StorageForbiddenException: Server response code 403
+            StorageNotFoundException: Server response code 404
+            StorageException: other 400-600 error codes
+        '''
+
+        self.__validate_storage_path(path)
+        try:
+            metadata = self.api_client.get_entity_by_query(path=path)
+        except StorageNotFoundException:
+            return False
+
+        return metadata and 'uuid' in metadata
+<switch:english>
+[english] This logic confirms existence by catching cases where the file isn't found (404) and verifies that the successful response contains a 'uuid'.
+[english] What happens if the storage returns metadata successfully, but that metadata object is missing the required 'uuid' key?
+[english] If the 'uuid' key is not present in the returned metadata, the expression `metadata and 'uuid' in metadata` evaluates to False. This means the function considers the entity non-existent or improperly defined for this check.
+[english] Got it; so I need both a successful retrieval and the presence of that specific identifier.

@@ -1,0 +1,23 @@
+[english] I need a function that starts the variant verification process for a specific case using known institute and user details.
+[english] This function first collects necessary related objects (institute, case, variant, and current user) from the store. It then attempts to execute the core verification logic in the controllers module while handling potential recipient errors.
+<switch:python>
+[python] def verify(institute_id, case_name, variant_id, variant_category, order):
+    """Start procedure to validate variant using other techniques."""
+    institute_obj, case_obj = institute_and_case(store, institute_id, case_name)
+    variant_obj = store.variant(variant_id)
+    user_obj = store.user(current_user.email)
+
+    comment = request.form.get('verification_comment')
+    
+    try:
+        controllers.variant_verification(store=store, mail=mail, institute_obj=institute_obj, case_obj=case_obj, user_obj=user_obj, comment=comment,
+                           variant_obj=variant_obj, sender=current_app.config['MAIL_USERNAME'], variant_url=request.referrer, order=order, url_builder=url_for)
+    except controllers.MissingVerificationRecipientError:
+        flash('No verification recipients added to institute.', 'danger')
+
+    return redirect(request.referrer)
+<switch:english>
+[english] If the verification process fails because there are no recipients configured for the institute, a flash message is displayed instead of crashing.
+[english] What happens if `store.variant(variant_id)` raises an error because the variant ID doesn't exist?
+[english] If the variant ID does not exist, the script will raise an unhandled exception during object retrieval, as there is no try/except block specifically targeting store lookups.
+[english] Thanks for clarifying the flow!

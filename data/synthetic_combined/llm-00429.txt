@@ -1,0 +1,61 @@
+[english] How do I determine which quantum circuit gates can actually run on a specific physical layout given their dependencies and required qubit proximity?
+[english] This function iterates through your provided list of gates to determine if they meet basic mapping criteria. It carefully checks for blocked qubits or necessary connectivity before attempting the transformation.
+<switch:python>
+[python] def _map_free_gates(layout, gates, coupling_map):
+    """Map all gates that can be executed with the current layout.
+
+    Args:
+        layout (Layout): Map from virtual qubit index to physical qubit index.
+        gates (list): Gates to be mapped.
+        coupling_map (CouplingMap): CouplingMap for target device topology.
+
+    Returns:
+        tuple:
+            mapped_gates (list): ops for gates that can be executed, mapped onto layout.
+            remaining_gates (list): gates that cannot be executed on the layout.
+
+    """
+
+    blocked_qubits = set()
+
+    mapped_gates = []
+    remaining_gates = []
+
+    for gate in gates:
+        # Gates without a partition (barrier, snapshot, save, load, noise) may
+        # still have associated qubits. Look for them in the qargs.
+        if not gate['partition']:
+            qubits = [n for n in gate['graph'].nodes() if n.type == 'op'][0].qargs
+
+            if not qubits:
+                continue
+
+            if blocked_qubits.intersection(qubits):
+                blocked_qubits.update(qubits)
+                remaining_gates.append(gate)
+            else:
+                mapped_gate = _transform_gate_for_layout(gate, layout)
+                mapped_gates.append(mapped_gate)
+            continue
+
+        qubits = gate['partition'][0]
+
+        if blocked_qubits.intersection(qubits):
+            blocked_qubits.update(qubits)
+            remaining_gates.append(gate)
+        elif len(qubits) == 1:
+            mapped_gate = _transform_gate_for_layout(gate, layout)
+            mapped_gates.append(mapped_gate)
+        elif coupling_map.distance(*[layout[q] for q in qubits]) == 1:
+            mapped_gate = _transform_gate_for_layout(gate, layout)
+            mapped_gates.append(mapped_gate)
+        else:
+            blocked_qubits.update(qubits)
+            remaining_gates.append(gate)
+
+    return mapped_gates, remaining_gates
+<switch:english>
+[english] The logic handles both operations with pre-defined qubit targets and dynamic operators within a graph, ensuring non-adjacent gates aren't accidentally mapped together on uncoupled physical wires.
+[english] What happens if an operation requires more qubits than are physically available to it in the layout?
+[english] If the required qubits cannot be successfully resolved or connected by `_transform_gate_for_layout`, the gate is implicitly blocked and added to `remaining_gates` because no suitable mapping exists in this function.
+[english] This seems like a very robust way to handle hardware constraints!

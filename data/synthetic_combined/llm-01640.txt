@@ -1,0 +1,32 @@
+[english] I need a way to safely parse and execute command strings that might contain leading comments or empty lines.
+[english] This function starts by ensuring the input is handled as a string. It then checks for and ignores common boilerplate like blank entries or lines starting with a comment marker before delegating the actual parsing and invocation.
+<switch:python>
+[python] def invoke_string(self, line):
+        """Parse and invoke a string line.
+
+        Args:
+            line (str): The line that we want to parse and invoke.
+
+        Returns:
+            bool: A boolean specifying if the last function created a new context
+                (False if a new context was created) and a list with the remainder of the
+                command line if this function did not consume all arguments.)
+        """
+
+        # Make sure line is a unicode string on all python versions
+        line = str(line)
+
+        # Ignore empty lines and comments
+        if len(line) == 0:
+            return True
+
+        if line[0] == u'#':
+            return True
+
+        args = self._split_line(line)
+        return self.invoke(args)
+<switch:english>
+[english] The return value requires careful attention, as it communicates both execution status and whether a new conversational context was established by the command.
+[english] If I pass an empty string repeatedly, how many times will that function execute?
+[english] When passed an empty string, the input length is zero, allowing the first `if len(line) == 0:` check to return `True` immediately without calling any complex logic. Thus, it handles repeated blanks efficiently.
+[english] Got it, thanks for clarifying that

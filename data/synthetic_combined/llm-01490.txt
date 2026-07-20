@@ -1,0 +1,48 @@
+[english] How do I generate a structured breadcrumb trail for my website navigation based on the current page's location in the site hierarchy?
+[english] This function constructs the breadcrumb path by first initializing the tree structure and then recursively climbing up from the current item. It uses helper methods to check visibility and access permissions along the way.
+<switch:python>
+[python] def breadcrumbs(self, tree_alias, context):
+        """Builds and returns breadcrumb trail structure for 'sitetree_breadcrumbs' tag.
+
+        :param str|unicode tree_alias:
+        :param Context context:
+        :rtype: list|str
+        """
+        tree_alias, sitetree_items = self.init_tree(tree_alias, context)
+
+        if not sitetree_items:
+            return ''
+
+        current_item = self.get_tree_current_item(tree_alias)
+
+        breadcrumbs = []
+
+        if current_item is not None:
+
+            context_ = self.current_page_context
+            check_access = self.check_access
+            get_item_by_id = self.get_item_by_id
+
+            def climb(base_item):
+                """Climbs up the site tree to build breadcrumb path.
+
+                :param TreeItemBase base_item:
+                """
+                if base_item.inbreadcrumbs and not base_item.hidden and check_access(base_item, context_):
+                    breadcrumbs.append(base_item)
+
+                if hasattr(base_item, 'parent') and base_item.parent is not None:
+                    climb(get_item_by_id(tree_alias, base_item.parent.id))
+
+            climb(current_item)
+            breadcrumbs.reverse()
+
+        items = self.apply_hook(breadcrumbs, 'breadcrumbs')
+        self.update_has_children(tree_alias, items, 'breadcrumbs')
+
+        return items
+<switch:english>
+[english] The recursion (`climb`) ensures only visible, accessible ancestors are included, but remember that `breadcrumbs.reverse()` is necessary because the traversal builds the list bottom-up.
+[english] What happens if a parent item in the tree doesn't have an ID or its retrieval fails during the recursive climb?
+[english] The current logic assumes `get_item_by_id` will always succeed for valid parents. If it fails, the recursion stops at that point, preventing further traversal up the tree.
+[english] Is there a way to optimize this?

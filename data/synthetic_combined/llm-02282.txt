@@ -1,0 +1,23 @@
+[english] How can I reverse the byte order of a signal or numerical buffer to convert between littleendian and bigendian formats?
+[english] This function reverses the byte sequence by iteratively slicing the input into chunks, handling up to eight bytes at a time based on the data type size.
+<switch:python>
+[python] def reverseByteOrder(signalOrVal):
+    """
+    Reverse byteorder (littleendian/bigendian) of signal or value
+    """
+    w = signalOrVal._dtype.bit_length()
+    i = w
+    items = []
+
+    while i > 0:
+        # take last 8 bytes or rest
+        lower = max(i - 8, 0)
+        items.append(signalOrVal[i:lower])
+        i -= 8
+
+    return Concat(*items)
+<switch:english>
+[english] The approach relies heavily on specific internal properties of the data structure; if `signalOrVal` is not an indexable buffer, this function may fail or produce unexpected results.
+[english] What happens if the input signal has more than 8 bytes but isn't perfectly divisible by 8?
+[english] If it isn't perfectly divisible, the loop handles the remaining bytes in the final iteration using `max(i - 8, 0)`, ensuring no data is lost.
+[english] This function seems useful for low-level serialization.

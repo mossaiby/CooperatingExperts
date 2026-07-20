@@ -1,0 +1,30 @@
+[english] I need to generate an array representing a continuous time axis for scientific data based on header parameters like start times and sampling rates.
+[english] This function determines the required start and end points and then calculates timestamps using the file's recorded sampling interval, converting seconds into equivalent units of days/hours as needed. The calculation differs slightly depending on whether we are generating a full sequence or just a starting point.
+<switch:python>
+[python] def populate_timestamps(self,update_header=False):
+        """  Populate time axis.
+            IF update_header then only return tstart
+        """
+
+        #Check to see how many integrations requested
+        ii_start, ii_stop = 0, self.n_ints_in_file
+        if self.t_start:
+            ii_start = self.t_start
+        if self.t_stop:
+            ii_stop = self.t_stop
+
+        ## Setup time axis
+        t0 = self.header[b'tstart']
+        t_delt = self.header[b'tsamp']
+
+        if update_header:
+            timestamps = ii_start * t_delt / 24./60./60. + t0
+        else:
+            timestamps = np.arange(ii_start, ii_stop) * t_delt / 24./60./60. + t0
+
+        return timestamps
+<switch:english>
+[english] The core logic relies on NumPy to create a linear sequence of time steps, which are then offset by the initial 'tstart' value from the header.
+[english] What happens if my data doesn't specify `self.t_start` and `self.t_stop`, and what is the default interval used?
+[english] If neither `self.t_start` nor `self.t_stop` are set, it defaults to using the entire dataset (from index 0 up to `self.n_ints_in_file`). The sampling frequency (`tsamp`) is used to calculate the time difference between integrations.
+[english] Got it, thanks for clarifying that logic.

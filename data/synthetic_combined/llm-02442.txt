@@ -1,0 +1,96 @@
+[english] I need a function that generates a complete ingest query configuration dictionary for loading static TSV data from HDFS into our time-series database.
+[english] This function dynamically constructs the ingestion payload by deriving metric names and identifying dimension columns, then building a detailed schema specification tailored for TSV parsing.
+<switch:python>
+[python] def construct_ingest_query(self, static_path, columns):
+        """
+        Builds an ingest query for an HDFS TSV load.
+
+        :param static_path: The path on hdfs where the data is
+        :type static_path: str
+        :param columns: List of all the columns that are available
+        :type columns: list
+        """
+
+        # backward compatibility for num_shards,
+        # but target_partition_size is the default setting
+        # and overwrites the num_shards
+        num_shards = self.num_shards
+        target_partition_size = self.target_partition_size
+        if self.target_partition_size == -1:
+            if self.num_shards == -1:
+                target_partition_size = DEFAULT_TARGET_PARTITION_SIZE
+        else:
+            num_shards = -1
+
+        metric_names = [m['fieldName'] for m in self.metric_spec if m['type'] != 'count']
+
+        # Take all the columns, which are not the time dimension
+        # or a metric, as the dimension columns
+        dimensions = [c for c in columns if c not in metric_names and c != self.ts_dim]
+
+        ingest_query_dict = {
+            "type": "index_hadoop",
+            "spec": {
+                "dataSchema": {
+                    "metricsSpec": self.metric_spec,
+                    "granularitySpec": {
+                        "queryGranularity": self.query_granularity,
+                        "intervals": self.intervals,
+                        "type": "uniform",
+                        "segmentGranularity": self.segment_granularity,
+                    },
+                    "parser": {
+                        "type": "string",
+                        "parseSpec": {
+                            "columns": columns,
+                            "dimensionsSpec": {
+                                "dimensionExclusions": [],
+                                "dimensions": dimensions,  # list of names
+                                "spatialDimensions": []
+                            },
+                            "timestampSpec": {
+                                "column": self.ts_dim,
+                                "format": "auto"
+                            },
+                            "format": "tsv"
+                        }
+                    },
+                    "dataSource": self.druid_datasource
+                },
+                "tuningConfig": {
+                    "type": "hadoop",
+                    "jobProperties": {
+                        "mapreduce.job.user.classpath.first": "false",
+                        "mapreduce.map.output.compress": "false",
+                        "mapreduce.output.fileoutputformat.compress": "false",
+                    },
+                    "partitionsSpec": {
+                        "type": "hashed",
+                        "targetPartitionSize": target_partition_size,
+                        "numShards": num_shards,
+                    },
+                },
+                "ioConfig": {
+                    "inputSpec": {
+                        "paths": static_path,
+                        "type": "static"
+                    },
+                    "type": "hadoop"
+                }
+            }
+        }
+
+        if self.job_properties:
+            ingest_query_dict['spec']['tuningConfig']['jobProperties'] \
+                .update(self.job_properties)
+
+        if self.hadoop_dependency_coordinates:
+            ingest_query_dict['hadoopDependencyCoordinates'] \
+                = self.hadoop_dependency_coordinates
+
+        return ingest_query_dict
+<switch:english>
+[english] The logic smartly prioritizes system tuning parameters; specifically, it uses `target_partition_size` to override standard shard counts when both are configured.
+[english] If I don't define any custom job properties on the object itself, will the final ingest query still be valid?
+[english] Yes. The function checks if `self.job_properties` exists before attempting an update, meaning it safely merges defaults or adds nothing if no extra properties were set.
+[english] Thanks for clarifying how the optional settings are handled.

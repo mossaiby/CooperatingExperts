@@ -1,0 +1,29 @@
+[english] How can I implement logic to handle connection establishment, differentiating between encrypted and unencrypted communication protocols?
+[english] This function acts as a callback when an outgoing node connection is made. It determines whether to initiate an encrypted session or proceed with a standard handshake based on the system configuration.
+<switch:python>
+[python] def _onOutgoingConnected(self, conn):
+        """
+        Callback for when a new connection from this to another node is established. Handles encryption and informs the other node which node this is.
+        If encryption is disabled, this triggers the onNodeConnected callback and messages are deferred to the onMessageReceived callback.
+        If encryption is enabled, the first message is handled by _onOutgoingMessageReceived.
+
+        :param conn: connection object
+        :type conn: TcpConnection
+        """
+
+        if self._syncObj.encryptor:
+            conn.setOnMessageReceivedCallback(functools.partial(self._onOutgoingMessageReceived, conn)) # So we can process the sendRandKey
+            conn.recvRandKey = os.urandom(32)
+            conn.send(conn.recvRandKey)
+        else:
+            # The onMessageReceived callback is configured in addNode already.
+            if not self._selfIsReadonlyNode:
+                conn.send(self._selfNode.address)
+            else:
+                conn.send('readonly')
+            self._onNodeConnected(self._connToNode(conn))
+<switch:english>
+[english] The core of this logic involves either sending a randomly generated key for encryption setup or immediately sending the local node's address to establish identity in non-encrypted mode.
+[english] If `self._syncObj.encryptor` is already present, does it handle cases where generating a random 32-byte key might fail due to resource constraints?
+[english] Currently, the function assumes successful key generation via `os.urandom(32)`. To prevent crashes, you should wrap the key creation and sending process in explicit exception handling blocks.
+[english] I see how conditional logic must be used here to handle those differing protocol requirements.

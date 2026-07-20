@@ -1,0 +1,32 @@
+[english] I need a function that generates random mock names and associated information like gender and titles based on specified language preferences.
+[english] This function creates random person data by selecting values from provided lists of languages and genders. If neither parameter is given, the function safely defaults to English and both male/female constants for selection.
+<switch:python>
+[python] def person(languages=None, genders=None):
+    """
+    returns a random tuple representing person information
+
+    .. code-block:: python
+
+        >>> d.person()
+        (u'Derren', u'Powell', 'm')
+        >>> d.person(genders=['f'])
+        (u'Marge', u'Rodriguez', u'Mrs.', 'f')
+        >>> d.person(['es'],['m'])
+        (u'Jacinto', u'Delgado', u'El Sr.', 'm')
+
+    :param language:
+    :param genders:
+    """
+    languages = languages or ['en']
+    genders = genders or (GENDER_FEMALE, GENDER_MALE)
+
+
+    lang = random.choice(languages)
+    g = random.choice(genders)
+    t = title([lang], [g])
+    return first_name([lang], [g]), last_name([lang]), t, g
+<switch:english>
+[english] The core functionality relies on external helper functions like `first_name`, `last_name`, and `title`. Be aware that passing invalid gender constants or unsupported languages will result in errors from those underlying routines.
+[english] What happens if I pass an empty list for the languages parameter?
+[english] If you provide an empty list, `random.choice([])` will raise an IndexError because it cannot select a random element from a non-empty sequence.
+[english] Okay, that makes sense.

@@ -1,0 +1,14 @@
+[english] How can I programmatically ensure my logger has a valid connection to ConnectorDB, recreating it if necessary?
+[english] This method implements a lazy-loading pattern for database connections. It checks if the private `__cdb` attribute is unset and only creates a new `ConnectorDB` object when first requested or after a prior session ends.
+<switch:python>
+[python] def connectordb(self):
+        """Returns the ConnectorDB object that the logger uses. Raises an error if Logger isn't able to connect"""
+        if self.__cdb is None:
+            logging.debug("Logger: Connecting to " + self.serverurl)
+            self.__cdb = ConnectorDB(self.apikey, url=self.serverurl)
+        return self.__cdb
+<switch:english>
+[english] The function successfully caches its result in `self.__cdb` to prevent unnecessary connection overhead on subsequent calls.
+[english] What happens if the API key provided by 'self.apikey' is invalid?
+[english] If the initial creation of `ConnectorDB(self.apikey, url=self.serverurl)` fails due to an invalid credential or URL format, it will raise a connection error as indicated in the docstring.
+[english] Got it, thanks for the help!

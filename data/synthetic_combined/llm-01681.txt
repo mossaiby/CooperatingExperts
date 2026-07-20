@@ -1,0 +1,22 @@
+[english] I have route data objects, and I need a function to generate a meaningful display name for each path so it's easy for users to understand.
+[english] This function starts by checking if the route has distinct 'from' and 'to' points in its tags. If not, it attempts to build a descriptive name using the available short or alternative names before falling back to the numeric ID.
+<switch:python>
+[python] def create_route_long_name(relation, short_name):
+    """Create a meaningful route name."""
+    if relation.tags.get('from') and relation.tags.get('to'):
+        return "{0}-to-{1}".format(relation.tags.get('from'),
+                                   relation.tags.get('to'))
+    name = relation.tags.get('name') or\
+        relation.tags.get('alt_name') or\
+        "OSM Route No. {}".format(relation.id)
+
+    # Drop route_short_name from this one if it contains it
+    if short_name and name.startswith(short_name):
+        # Drop it
+        return name[len(short_name):]
+    return name
+<switch:english>
+[english] It handles cases where an input prefix might match the resulting full name by stripping that prefix off. This is useful for cleaning up processed route data and ensuring uniqueness.
+[english] If a route has no 'name' or 'alt_name', but only a numerical ID, what will happen if that ID happens to start with an existing short name?
+[english] The function will first construct the default name using the ID (`OSM Route No. {ID}`). If that generated default name starts with `short_name`, it will strip the prefix from the beginning of the full string.
+[english] That clarifies how the naming convention works, thank you.

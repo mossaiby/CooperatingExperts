@@ -1,0 +1,23 @@
+[english] How can I properly initialize a static checker's internal state and configuration when it starts processing a new source code module?
+[english] This function acts as an entry point for checking a new file, ensuring all previous module state is cleared while setting up specific logging-related configurations.
+<switch:python>
+[python] def visit_module(self, node):  # pylint: disable=unused-argument
+        """Clears any state left in this checker from last module checked."""
+        # The code being checked can just as easily "import logging as foo",
+        # so it is necessary to process the imports and store in this field
+        # what name the logging module is actually given.
+        self._logging_names = set()
+        logging_mods = self.config.logging_modules
+
+        self._format_style = self.config.logging_format_style
+        self._logging_modules = set(logging_mods)
+        self._from_imports = {}
+        for logging_mod in logging_mods:
+            parts = logging_mod.rsplit(".", 1)
+            if len(parts) > 1:
+                self._from_imports[parts[0]] = parts[1]
+<switch:english>
+[english] It initializes necessary trackers and builds a specialized mapping of import paths to their base module name for later validation steps.
+[english] If the configuration includes a logging path like 'my_app.utils', does this function correctly map that prefix or only the full path?
+[english] The implementation uses `rsplit('.', 1)` on each entry in `logging_mods`. If a module is specified as 'a.b', it maps 'a' to 'b.', allowing you to determine the root requirement for that logging configuration.
+[english] Thanks, this makes sense for handling state cleanup.

@@ -1,0 +1,29 @@
+[english] I'm trying to read data asynchronously from a raw Unix file descriptor, making it behave like an asyncio network stream.
+[english] This function bridges low-level OS I/O with Python's async ecosystem. It sets up a `UnixFileDescriptorTransport` which uses a custom protocol reader and signals its readiness through an associated Future.
+<switch:python>
+[python] def stream_from_fd(fd, loop):
+    """Recieve a streamer for a given file descriptor."""
+    reader = asyncio.StreamReader(loop=loop)
+    protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
+    waiter = asyncio.futures.Future(loop=loop)
+
+    transport = UnixFileDescriptorTransport(
+        loop=loop,
+        fileno=fd,
+        protocol=protocol,
+        waiter=waiter,
+    )
+
+    try:
+        yield from waiter
+    except Exception:
+        transport.close()
+
+    if loop.get_debug():
+        logger.debug("Read fd %r connected: (%r, %r)", fd, transport, protocol)
+    return reader, transport
+<switch:english>
+[english] The function wraps the file descriptor into a stream that yields control until data is ready or an error occurs. Note that this relies on specific asyncio transport implementations designed for files.
+[english] What happens if the underlying file descriptor (`fd`) is closed by another process while `stream_from_fd` is waiting?
+[english] If the FD is closed externally, the operating system will typically raise an I/O error when the transport attempts to read. This usually results in the internal Future being canceled or raising an exception.
+[english] That clarification on cleanup helps me understand its reliability.

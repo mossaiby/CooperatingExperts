@@ -1,0 +1,27 @@
+[english] How can I programmatically locate all default configuration files needed for my application across various system locations?
+[english] This function aggregates potential config paths from three places: internal package resources, standard system directories (like /etc/), and the user's home directory.
+<switch:python>
+[python] def get_default_configs():
+    """ returns default configs list, from /etc and home dir """
+    # initialize basic defaults
+    configs = [resource_filename(__name__, 'config/00-base.ini')]
+    baseconfigs_location = '/etc/yandex-tank'
+    try:
+        conf_files = sorted(os.listdir(baseconfigs_location))
+        for filename in conf_files:
+            if fnmatch.fnmatch(filename, '*.ini'):
+                configs += [
+                    os.path.realpath(
+                        baseconfigs_location + os.sep + filename)
+                ]
+    except OSError:
+        logger.info(
+            baseconfigs_location + ' is not accessible to get configs list')
+
+    configs += [os.path.expanduser('~/.yandex-tank')]
+    return configs
+<switch:english>
+[english] It successfully gathers a list of applicable configuration file paths by attempting to crawl common installation locations. Note that it might contain duplicates if files exist in multiple scanned directories.
+[english] Should I be concerned about duplicate paths appearing in the returned list, or is this expected?
+[english] Duplicates are possible since configuration files can exist in both system and home directories. If you require a unique list, you should convert the output to a set: `list(set(get_default_configs()))`
+[english] That makes sense, thank you for clarifying.

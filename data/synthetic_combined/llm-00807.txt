@@ -1,0 +1,28 @@
+[english] How do I efficiently clear historical price data for every security symbol in our database while preserving only the most recent entry?
+[english] This function retrieves all unique symbols from the price repository first, ensuring we don't process duplicates. It then iterates through this list of symbols to apply a pruning operation on each one.
+<switch:python>
+[python] def prune_all(self) -> int:
+        """
+        Prune historical prices for all symbols, leaving only the latest.
+        Returns the number of items removed.
+        """
+        from .repositories import PriceRepository
+
+        # get all symbols that have prices
+        repo = PriceRepository()
+        items = repo.query.distinct(dal.Price.namespace, dal.Price.symbol).all()
+        # self.logger.debug(items)
+        count = 0
+
+        for item in items:
+            symbol = SecuritySymbol(item.namespace, item.symbol)
+            deleted = self.prune(symbol)
+            if deleted:
+                count += 1
+
+        return count
+<switch:english>
+[english] The loop updates `count` whenever `self.prune(symbol)` successfully deletes items, allowing us to track the total number of historical records removed across all assets.
+[english] What happens if the repository returns an empty list?
+[english] If `repo.query.distinct(...)` finds no matching symbols or prices, the `items` list is empty and the function will simply return a count of zero without performing any operations.
+[english] That makes sense; it seems safe to run on fresh data.

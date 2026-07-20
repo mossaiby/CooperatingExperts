@@ -1,0 +1,19 @@
+[english] How can I retrieve a list of available service bus regions from the API?
+[english] This function initiates an HTTP GET request to the specific URL for service bus regions using `self._perform_get`. It then handles the response by converting the raw XML data into a structured Python object.
+<switch:python>
+[python] def get_regions(self):
+        '''
+        Get list of available service bus regions.
+        '''
+        response = self._perform_get(
+            self._get_path('services/serviceBus/Regions/', None),
+            None)
+
+        return _MinidomXmlToObject.convert_response_to_feeds(
+            response,
+            _ServiceBusManagementXmlSerializer.xml_to_region)
+<switch:english>
+[english] The core logic relies on utilizing `_MinidomXmlToObject` to serialize the received response, specifically using the region mapping from the serializer.
+[english] What happens if the API call fails or returns an unexpected non-XML response?
+[english] If the request fails, it might raise a low-level exception from `self._perform_get`. If the format is invalid XML, the conversion utility will likely fail during deserialization, as seen in the return statement.
+[english] Thanks for clarifying how the data processing works.

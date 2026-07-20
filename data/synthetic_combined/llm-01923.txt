@@ -1,0 +1,32 @@
+[english] How can I retrieve the current status and full details of a specific job within a defined cloud service collection?
+[english] To fetch detailed information about a particular job, we first validate that all required identifiers—the service ID, collection ID, and unique job ID—are provided. The function then constructs the necessary endpoint path before executing an HTTP GET request.
+<switch:python>
+[python] def get_job(self, cloud_service_id, job_collection_id, job_id):
+        '''
+        The Get Job operation gets the details (including the current job status)
+        of the specified job from the specified job collection.
+
+        The return type is
+
+        cloud_service_id:
+            The cloud service id
+        job_collection_id:
+            Name of the hosted service.
+        job_id:
+            The job id you wish to create.
+        '''
+        _validate_not_none('cloud_service_id', cloud_service_id)
+        _validate_not_none('job_collection_id', job_collection_id)
+        _validate_not_none('job_id', job_id)
+
+        path = self._get_job_collection_path(
+            cloud_service_id, job_collection_id, job_id)
+
+        self.content_type = "application/json"
+        payload = self._perform_get(path).body.decode()
+        return json.loads(payload)
+<switch:english>
+[english] This method successfully converts the raw JSON response from the API into a usable Python dictionary. However, robust error handling needs to be added around `self._perform_get` to manage cases where the job may not exist or the service is unreachable.
+[english] If we pass a `job_id` that has already been deleted on the cloud service, what does the function return?
+[english] Since this function relies on an external API call, if the job doesn't exist, it will typically result in an HTTP 404 error response. You should wrap the call in a try-except block to catch and raise an appropriate NotFound exception.
+[english] That helps me understand potential failure points for retrieving job status.

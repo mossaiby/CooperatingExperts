@@ -1,0 +1,20 @@
+[english] I need a way to dynamically determine a standardized name for a method based on class properties, suitable for use in the Visitor pattern.
+[english] This function attempts to derive a specific visit name by transforming the `self.TYPE` attribute, replacing any hyphens with underscores. If this initial attempt fails due to missing attributes or an error, it falls back gracefully and uses the class's own lowercase name as a safe default.
+<switch:python>
+[python] def _get_visit_name(self):
+        """
+        return the visit name for the mixed class. When calling 'accept', the
+        method <'visit_' + name returned by this method> will be called on the
+        visitor
+        """
+        try:
+            # pylint: disable=no-member
+            return self.TYPE.replace("-", "_")
+        # pylint: disable=broad-except
+        except Exception:
+            return self.__class__.__name__.lower()
+<switch:english>
+[english] By using a try/except block, the function ensures that even without a well-defined `TYPE`, the visitor pattern registration can still proceed with a valid method name.
+[english] What happens if the `self.TYPE` attribute exists but is explicitly set to None?
+[english] If `self.TYPE` is `None`, calling `.replace()` will raise an error, which triggers the generic exception handler and causes the function to return the lowercase name of the class instead.
+[english] That clarifies how the fallback mechanism works!

@@ -1,0 +1,23 @@
+[english] How can I extract a list of starting timestamps from a complex JSON file structure into a numerical array?
+[english] This function reads the specified JSON file, loads its contents, and then iteratively accesses the 'start' key for every object within the 'beats' list. Finally, it converts this extracted list into a NumPy array.
+<switch:python>
+[python] def json_to_beats(beats_json_file):
+    """Extracts the beats from the beats_json_file and puts them into
+        an np array."""
+    f = open(beats_json_file, "r")
+    beats_json = json.load(f)
+    beats = []
+    for beat in beats_json["beats"]:
+        beats.append(beat["start"])
+    f.close()
+    return np.asarray(beats)
+<switch:english>
+[english] The function successfully extracts the 'start' values and converts them using `np.asarray`. It is important to ensure that both `json` and `numpy` modules have been imported before calling this function.
+[english] What happens if the JSON file exists but the key 'beats' isn't present in the root of the structure?
+[english] If the 'beats' key is missing, accessing `beats_json["beats"]` will raise a KeyError. You should use `.get()` for safer access:
+<switch:python>
+[python] beats_json = json.load(f)
+    beats_list = beats_json.get("beats", []) # Returns empty list if key is missing
+    # ... then iterate over beats_list
+<switch:english>
+[english] That makes much more sense, thanks for the help!

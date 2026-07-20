@@ -1,0 +1,20 @@
+[english] How can we reliably remove a specific symbol from a global namespace cache while ensuring that concurrent operations do not lead to data corruption?
+[english] This function uses an atomic Compare-And-Swap (CAS) loop to safely modify the shared `_NAMESPACES` mapping without requiring external locks.
+<switch:python>
+[python] def remove(cls, name: sym.Symbol) -> Optional["Namespace"]:
+        """Remove the namespace bound to the symbol `name` in the global
+        namespace cache and return that namespace.
+        Return None if the namespace did not exist in the cache."""
+        while True:
+            oldval: lmap.Map = cls._NAMESPACES.deref()
+            ns: Optional[Namespace] = oldval.entry(name, None)
+            newval = oldval
+            if ns is not None:
+                newval = oldval.dissoc(name)
+            if cls._NAMESPACES.compare_and_set(oldval, newval):
+                return ns
+<switch:english>
+[english] If the entry is found, it removes the namespace and returns it; otherwise, this retry logic ensures consistency across threads.
+[english] How does the function handle the scenario where multiple threads attempt to remove different namespaces simultaneously?
+[english] Because it uses `compare_and_set`, concurrent modifications are handled safely. One thread's successful CAS will prevent another from performing an incorrect modification based on a stale view of the data.
+[english] That clarifies how the atomicity is guaranteed.

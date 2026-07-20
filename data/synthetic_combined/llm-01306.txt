@@ -1,0 +1,14 @@
+[english] I need a function that retrieves all pull requests for a specific repository defined by a tag.
+[english] This solution uses a concise list comprehension to efficiently gather the results from the client, leveraging the input tag's structure for access.
+<switch:python>
+[python] def _reqs(self, tag):
+        """ Grab all the pull requests """
+        return [
+            (tag, i) for i in
+            self.client.get_pulls(*tag.split('/'))
+        ]
+<switch:english>
+[english] The function returns a list where each element is a tuple containing the full tag and an index derived from the client's response.
+[english] What happens if the 'tag' provided doesn't match any known repository?
+[english] If the tag is invalid, `self.client.get_pull_s` will likely return an empty list or raise an API error, resulting in an empty list being returned by this function.
+[english] That makes sense; thanks for clarifying how errors are handled here.

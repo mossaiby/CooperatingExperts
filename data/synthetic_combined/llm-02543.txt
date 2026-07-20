@@ -1,0 +1,31 @@
+[english] How can I safely retrieve connection configuration settings from this class?
+[english] This function retrieves connections, either by a specific DNS name or by defaulting to 'default'. It ensures the retrieved connection is decrypted and checks for any active locks before returning the usable connection settings.
+<switch:python>
+[python] def get_connection(self, dsn=None):
+        """
+        Retrieve a connection by the given :code:`dsn`, or the default connection.
+
+        :param str dsn: The name of the connection to retrieve. Defaults to :code:`None`,
+            which retrieves the default connection.
+        :return: A dict of connection settings
+        :raises `giraffez.errors.ConfigurationError`: if :code:`dsn` does not exist and a
+        :raises `giraffez.errors.ConnectionLock`: if the corresponding connection is currently locked
+            default is not set.
+        """
+        if dsn is None:
+            dsn = self.connections.get("default", None)
+            if dsn is None:
+                raise ConfigurationError("No default DSN set")
+        connection = self.connections.get(dsn, None)
+        if connection is None:
+            raise ConfigurationError("DSN '{}' does not exist".format(dsn))
+        connection = self.decrypt(connection.copy())
+        if connection.get('lock', 0) > 1:
+            raise ConnectionLock(dsn)
+        connection['name'] = dsn
+        return connection
+<switch:english>
+[english] The code handles several edge cases, including missing default DSNs and connections that are currently locked. Remember that passing invalid DSN names will raise a ConfigurationError.
+[english] If I call this function without any arguments, what happens if there is no 'default' key in self.connections?
+[english] Calling the function without arguments attempts to find the 'default' key. If it doesn't exist, it raises a `ConfigurationError` stating that no default DSN was set.
+[english] Thanks for clarifying how error handling works!

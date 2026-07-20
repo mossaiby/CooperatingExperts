@@ -1,0 +1,33 @@
+[english] How can I verify that several different elements matching various locators are present on a web page simultaneously?
+[english] This function acts as a convenience wrapper to assert that multiple requested selectors exist. It passes all provided arguments directly through to an internal assertion method.
+<switch:python>
+[python] def has_all_of_selectors(self, selector, *locators, **kwargs):
+        """
+        Checks if allof the provided selectors are present on the given page or descendants of the
+        current node. If options are provided, the assertion will check that each locator is present
+        with those options as well (other than ``wait``). ::
+
+            page.has_all_of_selectors("custom", "Tom", "Joe", visible="all")
+            page.has_all_of_selectors("css", "#my_dif", "a.not_clicked")
+
+        It accepts all options that :meth:`find_all` accepts, such as ``text`` and ``visible``.
+
+        The ``wait`` option applies to all of the selectors as a group, so all of the locators must
+        be present within ``wait`` (defaults to :data:`capybara.default_max_wait_time`) seconds.
+
+        If the given selector is not a valid selector, the first argument is assumed to be a locator
+        and the default selector will be used.
+
+        Args:
+            selector (str, optional): The name of the selector to use. Defaults to
+                :data:`capybara.default_selector`.
+            *locators (str): Variable length list of locators.
+            **kwargs: Arbitrary keyword arguments for :class:`SelectorQuery`.
+        """
+
+        return self.assert_all_of_selectors(selector, *locators, **kwargs)
+<switch:english>
+[english] By centralizing the check in `assert_all_of_selectors`, this helper simplifies complex multi-criteria presence checks while handling global options like 'wait'.
+[english] What is the programmatic behavior if I pass a non-string or invalid value as the initial `selector` argument?
+[english] If the provided selector string is not considered valid, the function gracefully falls back and uses Capybara's default selector for that check.
+[english] That explanation about the internal defaults makes sense. Thank you!

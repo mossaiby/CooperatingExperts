@@ -1,0 +1,72 @@
+[english] How can I modify my existing tags to ensure they conform to the ID3v2.4 standard, migrating older metadata fields like TYER or IPLS?
+[english] This function handles backwards compatibility by systematically migrating deprecated metadata (like TYER/TDAT) into modern v2.4 equivalents (TDRC). It first attempts to update any unknown 2.3 frames and then proceeds to convert several specific tag types, finally removing obsolete fields.
+<switch:python>
+[python] def update_to_v24(self):
+        """Convert older tags into an ID3v2.4 tag.
+
+        This updates old ID3v2 frames to ID3v2.4 ones (e.g. TYER to
+        TDRC). If you intend to save tags, you must call this function
+        at some point; it is called by default when loading the tag.
+        """
+
+        self.__update_common()
+
+        if self.__unknown_version == self._V23:
+            # convert unknown 2.3 frames (flags/size) to 2.4
+            converted = []
+            for frame in self.unknown_frames:
+                try:
+                    name, size, flags = unpack('>4sLH', frame[:10])
+                    frame = BinaryFrame.fromData(self, flags, frame[10:])
+                except (struct.error, error):
+                    continue
+                name = name.decode('ascii')
+                converted.append(self.__save_frame(frame, name=name))
+            self.unknown_frames[:] = converted
+            self.__unknown_version = self._V24
+
+        # TDAT, TYER, and TIME have been turned into TDRC.
+        try:
+            date = text_type(self.get("TYER", ""))
+            if date.strip(u"\x00"):
+                self.pop("TYER")
+                dat = text_type(self.get("TDAT", ""))
+                if dat.strip("\x00"):
+                    self.pop("TDAT")
+                    date = "%s-%s-%s" % (date, dat[2:], dat[:2])
+                    time = text_type(self.get("TIME", ""))
+                    if time.strip("\x00"):
+                        self.pop("TIME")
+                        date += "T%s:%s:00" % (time[:2], time[2:])
+                if "TDRC" not in self:
+                    self.add(TDRC(encoding=0, text=date))
+        except UnicodeDecodeError:
+            # Old ID3 tags have *lots* of Unicode problems, so if TYER
+            # is bad, just chuck the frames.
+            pass
+
+        # TORY can be the first part of a TDOR.
+        if "TORY" in self:
+            f = self.pop("TORY")
+            if "TDOR" not in self:
+                try:
+                    self.add(TDOR(encoding=0, text=str(f)))
+                except UnicodeDecodeError:
+                    pass
+
+        # IPLS is now TIPL.
+        if "IPLS" in self:
+            f = self.pop("IPLS")
+            if "TIPL" not in self:
+                self.add(TIPL(encoding=f.encoding, people=f.people))
+
+        # These can't be trivially translated to any ID3v2.4 tags, or
+        # should have been removed already.
+        for key in ["RVAD", "EQUA", "TRDA", "TSIZ", "TDAT", "TIME", "CRM"]:
+            if key in self:
+                del(self[key])
+<switch:english>
+[english] The conversion of date information is robust; if the Unicode decoding fails on older tags like TYER, the function silently discards those problematic frames instead of crashing due to corruption.
+[english] What happens specifically if a critical field like 'TYER' exists but its related data or structure within the frame is completely malformed?
+[english] If decoding fails (e.g., encountering a UnicodeDecodeError when processing TYER), the function reaches the `except` block and simply passes, effectively dropping those specific frames to prevent errors from corrupted metadata.
+[english] That's helpful; it’s good to know that bad data doesn't break the entire tag file.

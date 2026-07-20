@@ -1,0 +1,59 @@
+[english] How can I implement a reliable streaming reader that chunks data from an HDF5 file into a circular buffer while maintaining process synchronization?
+[english] This function implements a multi-process reading mechanism for large datasets stored in HDF5. It reads the data in specified chunks, managing traversal offsets and handling complex wraparound logic.
+<switch:python>
+[python] def _Streamer__read_process(self, path, read_size, cbuf, stop, barrier, cyclic, offset, read_skip, sync):
+    """
+    Main function for the processes that read from the HDF5 file.
+
+    :param self: A reference to the streamer object that created these processes.
+    :param path: The HDF5 path to the node to be read from.
+    :param read_size: The length of the block along the outer dimension to read.
+    :param cbuf: The circular buffer to place read elements into.
+    :param stop: The Event that signals the process to stop reading.
+    :param barrier: The Barrier that synchonises read cycles.
+    :param cyclic: True if the process should read cyclically.
+    :param offset: Offset into the dataset that this process should start reading at.
+    :param read_skip: How many element to skip on each iteration.
+    :param sync: GuardSynchonizer to order writes to the buffer.
+    :return: Nothing
+    """
+    # Multi-process access to HDF5 seems to behave better there are no top level imports of PyTables.
+    import tables as tb
+    h5_file = tb.open_file(self.filename, 'r', **self.h5_kw_args)
+    ary = h5_file.get_node(path)
+
+    i = offset
+    while not stop.is_set():
+        vals = ary[i:i + read_size]
+        # If the read goes off the end of the dataset, then wrap to the start.
+        if i + read_size > len(ary):
+            vals = np.concatenate([vals, ary[0:read_size - len(vals)]])
+
+        if sync is None:
+            # If no ordering is requested, then just write to the next available space in the buffer.
+            with cbuf.put_direct() as put_ary:
+                put_ary[:] = vals
+        else:
+            # Otherwise, use the sync object to ensure that writes occur in the order provided by i.
+            # So i = 0 will write first, then i = block_size, then i = 2*block_size, etc...
+            # The sync object has two ordered barriers so that acquisition and release of the buffer spaces
+            # are synchronized in order, but the actual writing to the buffer can happen simultaneously.
+            # If only one barrier were used, writing to the buffer would be linearised.
+            with sync.do(cbuf.put_direct(), i, (i+read_size) % len(ary)) as put_ary:
+                put_ary[:] = vals
+
+        i += read_skip
+        if cyclic:
+            # If the next iteration is past the end of the dataset, wrap it around.
+            if i >= len(ary):
+                i %= len(ary)
+                barrier.wait()
+        else:
+            # But if cyclic mode is disabled, break the loop as the work is now done.
+            if i + read_size > len(ary):
+                break
+<switch:english>
+[english] The code uses granular synchronization objects to ensure that even though multiple processes might be writing simultaneously, the output order within the circular buffer remains predictable.
+[english] What mechanism handles the wrap-around when `cyclic=True` versus a standard end-of-file stop?
+[english] When `cyclic` is true, the index `i` uses the modulo operator (`% len(ary)`) to loop back to the start of the dataset if it exceeds the total length. If `cyclic` is false, the reading simply terminates once the read operation attempts to go past the end.
+[english] This greatly simplifies how I need to think about these chunk boundaries!

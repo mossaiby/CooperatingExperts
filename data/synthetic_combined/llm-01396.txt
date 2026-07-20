@@ -1,0 +1,19 @@
+[english] How can I get a list of all conversations my bot has participated in for a specific service URL?
+[english] To fetch conversation data, this asynchronous function first initializes a specialized client using the provided `service_url`. It then calls a dedicated API method to retrieve conversations, optionally handling result pagination via the optional continuation token.
+<switch:python>
+[python] async def get_conversations(self, service_url: str, continuation_token: str=None):
+        """
+        Lists the Conversations in which this bot has participated for a given channel server. The channel server
+        returns results in pages and each page will include a `continuationToken` that can be used to fetch the next
+        page of results from the server.
+        :param service_url:
+        :param continuation_token:
+        :return:
+        """
+        client = self.create_connector_client(service_url)
+        return await client.conversations.get_conversations(continuation_token)
+<switch:english>
+[english] The function returns the conversation data as soon as it's retrieved, but remember that for full dataset retrieval across pages, you must process and pass along any returned continuation tokens.
+[english] If `create_connector_client` fails to establish a connection, how would this specific method notify the user?
+[english] This function doesn't explicitly wrap client creation in error handling. If `self.create_connector_client` throws an exception (e.g., network timeout or invalid URL), that exception will propagate up and be handled by the calling code.
+[english] Thanks for the detailed explanation!

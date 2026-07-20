@@ -1,0 +1,18 @@
+[english] I need a utility to guarantee my data is always iterable for processing functions, converting lone values into lists without mutating existing iterables.
+[english] To ensure an object behaves like a collection, we first check if it's a string or scalar type which needs wrapping. If the input doesn't meet specific criteria, we wrap it in a list to standardize the data flow for downstream consumers.
+<switch:python>
+[python] def ensure_iterable(inst):
+    """
+    Wraps scalars or string types as a list, or returns the iterable instance.
+    """
+    if isinstance(inst, str):
+        return [inst]
+    elif not isinstance(inst, collections.abc.Iterable):
+        return [inst]
+    else:
+        return inst
+<switch:english>
+[english] By explicitly checking for strings before general iterables, the function ensures that individual strings are treated as atomic units rather than collections of characters. Otherwise, existing iterable objects are returned unchanged to maintain efficiency.
+[english] Will this function wrap something like a NumPy array or a dictionary if they don't meet the specific `collections.abc.Iterable` check?
+[english] Dictionaries and NumPy arrays generally pass through untouched because they satisfy the iterator protocol but aren't caught by the initial string check.
+[english] That provides solid coverage for my data validation.

@@ -1,0 +1,43 @@
+[english] How can I write a function to dynamically determine and execute a specific subset of tests based on various configuration aliases or override settings?
+[english] This function gathers potential test cases from several sources, prioritizing general configurations like 'all' while allowing for granular control via aliases. It then executes the resulting list of functions and returns their status.
+<switch:python>
+[python] def quality(self, tests, alias=None):
+        """
+        Run a series of tests and return the corresponding results.
+
+        Based on curve testing for ``welly``.
+
+        Args:
+            tests (list): a list of functions.
+
+        Returns:
+            list. The results. Stick to booleans (True = pass) or ints.
+        """
+        # This is hacky... striplog should probably merge with welly...
+
+        # Ignore aliases
+        alias = alias or {}
+        alias = alias.get('striplog', alias.get('Striplog', []))
+
+        # Gather the tests.
+        # First, anything called 'all', 'All', or 'ALL'.
+        # Second, anything with the name of the curve we're in now.
+        # Third, anything that the alias list has for this curve.
+        # (This requires a reverse look-up so it's a bit messy.)
+        this_tests =\
+            tests.get('all', [])+tests.get('All', [])+tests.get('ALL', [])\
+            + tests.get('striplog', tests.get('Striplog', []))\
+            + utils.flatten_list([tests.get(a) for a in alias])
+        this_tests = filter(None, this_tests)
+
+        # If we explicitly set zero tests for a particular key, then this
+        # overrides the 'all' tests.
+        if not tests.get('striplog', tests.get('Striplog', 1)):
+            this_tests = []
+
+        return {test.__name__: test(self) for test in this_tests}
+<switch:english>
+[english] The logic ensures that if a specific run is explicitly marked to skip tests (e.g., setting Striplog/striplog to zero), all previously gathered tests are immediately discarded, providing a powerful override mechanism.
+[english] In what scenarios would setting 'Striplog' or 'striplog' to 0 prevent any other test from ever being run?
+[english] If you explicitly set one of these keys to an empty list or zero (which evaluates to False), the function executes this line: `if not tests.get('striplog', tests.get('Striplog', 1)):`. This immediately clears `this_tests` before any other gathering logic takes effect, disabling all testing for that run.
+[english] This explains how I structured the test selection for my CI pipeline.

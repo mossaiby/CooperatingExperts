@@ -1,0 +1,23 @@
+[english] Could you write a function that checks if a sequence of depth measurements, derived from 'top' and 'base' points, is strictly non-decreasing?
+[english] The approach involves first flattening all available z-depth coordinates (`i.top.z` and `i.base.z`) into a single list using reduction. It then uses NumPy to compare adjacent elements in this sequence.
+<switch:python>
+[python] def __strict(self):
+        """
+        Private method. Checks if striplog is monotonically increasing in
+        depth.
+
+        Returns:
+            Bool.
+        """
+        def conc(a, b):
+            return a + b
+
+        # Check boundaries, b
+        b = np.array(reduce(conc, [[i.top.z, i.base.z] for i in self]))
+
+        return all(np.diff(b) >= 0)
+<switch:english>
+[english] This check confirms that the accumulated depth never decreases across the structure's layers, relying on NumPy for efficient array operations.
+[english] What happens if 'self' is an empty collection?
+[english] If 'self' is empty, the reduction process will likely fail depending on NumPy settings or list initialization; it typically requires a specific initial value to handle empty inputs gracefully.
+[english] Thanks for clarifying how that edge case works.

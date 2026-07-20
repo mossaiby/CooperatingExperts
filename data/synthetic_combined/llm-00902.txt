@@ -1,0 +1,19 @@
+[english] How can I safely delete an Airflow pool using its name and ensure that proper HTTP status codes and error messages are returned if the deletion fails?
+[english] This function uses a try/except structure to call `pool_api.delete_pool`. It specifically catches the expected `AirflowException` to handle API-related failures gracefully, preventing server crashes.
+<switch:python>
+[python] def delete_pool(name):
+    """Delete pool."""
+    try:
+        pool = pool_api.delete_pool(name=name)
+    except AirflowException as err:
+        _log.error(err)
+        response = jsonify(error="{}".format(err))
+        response.status_code = err.status_code
+        return response
+    else:
+        return jsonify(pool.to_json())
+<switch:english>
+[english] If successful, it returns the pool object rendered as JSON. In case of an exception, it logs the error and crafts a comprehensive HTTP error response using `jsonify` and setting the correct status code.
+[english] If the underlying `pool_api` object were missing or improperly initialized, how would this function behave?
+[english] Because the logic only catches `AirflowException`, an unhandled error (like a `NameError` if `pool_api` is undefined) would cause the entire function to crash.
+[english] That makes sense; I should ensure all dependencies are checked before calling it.

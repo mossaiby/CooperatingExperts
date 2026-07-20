@@ -1,0 +1,12 @@
+[english] How can I safely read configuration files that are guaranteed to be packaged alongside my primary script, regardless of where the user executes the app?
+[english] To ensure reliable file access within a package, this function calculates the absolute path relative to the current module's location. It then uses joining utilities to construct the full link to the desired resource without hardcoding directory structures.
+<switch:python>
+[python] def read(*pathcomponents):
+    """Read the contents of a file located relative to setup.py"""
+    with open(join(abspath(dirname(__file__)), *pathcomponents)) as thefile:
+        return thefile.read()
+<switch:english>
+[english] Using `__file__` guarantees that you are referencing a stable location associated with the installed package. Be aware that file permissions or deployment method might override this intended relative pathing in rare containerized environments.
+[english] If one of the files passed into the function doesn't exist, what kind of error will occur?
+[english] Since it calls `open()` directly, Python will raise a standard `FileNotFoundError`. You should always wrap resource access logic in a try-except block for production code to handle missing assets gracefully.
+[english] That clarifies how to add necessary error handling.

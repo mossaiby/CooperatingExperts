@@ -1,0 +1,11 @@
+[english] I need a way to calculate and return the conjugate of my QuantumChannel object.
+[english] To find the conjugate, we will create a new Choi representation. The primary step involves applying complex conjugation to the internal data while ensuring the input and output dimensions remain identical to the original channel.
+<switch:python>
+[python] def conjugate(self):
+        """Return the conjugate of the QuantumChannel."""
+        return Choi(np.conj(self._data), self.input_dims(), self.output_dims())
+<switch:english>
+[english] This method generates a completely new `Choi` instance based on the conjugated state of the channel's core matrix, which is useful for certain quantum operations.
+[english] If the internal data (`self._data`) represents a purely real matrix, does using np.conj() actually change the resulting conjugate?
+[english] No, complex conjugation applied to a purely real number returns that same value. Therefore, if your channel is defined entirely by real parameters, the conjugate will be identical to the original channel.
+[english] Perfect, thank you for walking me through that.

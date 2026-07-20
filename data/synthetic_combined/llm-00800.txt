@@ -1,0 +1,27 @@
+[english] How do I safely inject a list of new text chunks into an existing document structure, ensuring proper formatting tags are used around balanced content?
+[english] This function handles merging new 'insert' data (`ins_chunks`) into a pre-existing document (`doc`), which is treated as a list of strings. It first separates the input chunk by chunk into unbalanced start, balanced middle sections, and unbalanced end parts.
+<switch:python>
+[python] def merge_insert(ins_chunks, doc):
+    """ doc is the already-handled document (as a list of text chunks);
+    here we add <ins>ins_chunks</ins> to the end of that.  """
+    # Though we don't throw away unbalanced_start or unbalanced_end
+    # (we assume there is accompanying markup later or earlier in the
+    # document), we only put <ins> around the balanced portion.
+    unbalanced_start, balanced, unbalanced_end = split_unbalanced(ins_chunks)
+    doc.extend(unbalanced_start)
+    if doc and not doc[-1].endswith(' '):
+        # Fix up the case where the word before the insert didn't end with 
+        # a space
+        doc[-1] += ' '
+    doc.append('<ins>')
+    if balanced and balanced[-1].endswith(' '):
+        # We move space outside of </ins>
+        balanced[-1] = balanced[-1][:-1]
+    doc.extend(balanced)
+    doc.append('</ins> ')
+    doc.extend(unbalanced_end)
+<switch:english>
+[english] The logic carefully manages surrounding whitespace to ensure that the `<ins>` tags are correctly placed while preserving readability around the inserted material.
+[english] What happens if there is no preceding text in `doc` before we attempt to add a space?
+[english] If `doc` is empty, the check `if doc and not doc[-1].endswith(' ')` evaluates to false. Therefore, no extra space will be added before `<ins>` because the function assumes it always follows previous content.
+[english] This makes sense; it prevents errors by only modifying the last element of the list if the list is non-empty.

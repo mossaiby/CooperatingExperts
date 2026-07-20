@@ -1,0 +1,19 @@
+[english] I have a list of field names that might contain duplicates; how can I automatically rename them to make every name unique by appending sequential numbers?
+[english] The function iterates through the input list and checks for existing entries in the result array. If a collision occurs, it enters a `while` loop to find the smallest available integer suffix (like _1, _2, etc.) until the proposed field name is truly unique.
+<switch:python>
+[python] def unduplicate_field_names(field_names):
+    """Append a number to duplicate field names to make them unique. """
+    res = []
+    for k in field_names:
+        if k in res:
+            i = 1
+            while k + '_' + str(i) in res:
+                i += 1
+            k += '_' + str(i)
+        res.append(k)
+    return res
+<switch:english>
+[english] This method guarantees uniqueness by systematically checking against all previously processed names. Note that this implementation involves repeated list lookups which can affect performance on very large inputs with many duplicates.
+[english] If I start with a long sequence of identical fields, say 20 instances of 'id', how will the numbering continue?
+[english] The function handles consecutive duplicates smoothly by incrementing the suffix for each collision. Passing twenty 'id's would result in IDs from 'id_1' up to 'id_19'.
+[english] That detailed explanation clarifies exactly how it manages the naming conflicts!

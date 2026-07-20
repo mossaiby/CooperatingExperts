@@ -1,0 +1,30 @@
+[english] How can we programmatically enforce and establish a relationship between two object instances within an automatically managed graph or schema?
+[english] This method handles adding a connection between `instance` and `another_instance`. It first ensures the target list exists, then checks for existing duplication before enforcing any cardinality rules set by the system.
+<switch:python>
+[python] def connect(self, instance, another_instance, check=True):
+        '''
+        Connect an *instance* to *another_instance*.
+        
+        Optionally, disable any cardinality *check* that would prevent the two
+        instances from being connected.
+        '''
+        if instance not in self:
+            self[instance] = xtuml.OrderedSet()
+        
+        if another_instance in self[instance]:
+            return True
+        
+        if self[instance] and not self.many and check:
+            return False  
+
+        self[instance].add(another_instance)
+        return True
+<switch:english>
+[english] The function successfully links `another_instance`, but note that if it enforces strict one-to-many constraints without having a dedicated 'many' field, subsequent calls will fail when the relationship is already populated.
+[english] What happens to internal state (like reference counting or data integrity) after this connection is successfully made?
+[english] The method adds `another_instance` to the underlying structure managed by `self[instance]`, effectively registering the link within the object's instance storage.
+<switch:python>
+[python] self[instance].add(another_instance)
+return True
+<switch:english>
+[english] Got it, this makes sense for managing relationships!

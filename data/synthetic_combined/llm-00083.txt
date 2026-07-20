@@ -1,0 +1,73 @@
+[english] How can I automatically inject structured configuration variables into an existing JMeter JMX file before running performance tests?
+[english] This function first reads your original JMX file to ensure all existing content is preserved. It then calculates where the XML must be closed and generates a set of unstructured data variables (`udv`) using provided inputs.
+<switch:python>
+[python] def __add_jmeter_components(self, jmx, jtl, variables):
+        """ Genius idea by Alexey Lavrenyuk """
+        logger.debug("Original JMX: %s", os.path.realpath(jmx))
+        with open(jmx, 'r') as src_jmx:
+            source_lines = src_jmx.readlines()
+
+        try:
+            # In new Jmeter version (3.2 as example) WorkBench's plugin checkbox enabled by default
+            # It totally crashes Yandex tank injection and raises XML Parse Exception
+            closing = source_lines.pop(-1)
+            if "WorkBenchGui" in source_lines[-5]:
+                logger.info("WorkBench checkbox enabled...bypassing")
+                last_string_count = 6
+            else:
+                last_string_count = 2
+            while last_string_count > 0:
+                closing = source_lines.pop(-1) + closing
+                last_string_count -= 1
+            logger.debug("Closing statement: %s", closing)
+        except Exception as exc:
+            raise RuntimeError("Failed to find the end of JMX XML: %s" % exc)
+
+        udv_tpl = resource_string(__name__, 'config/jmeter_var_template.xml')
+        udv_set = []
+        for var_name, var_value in variables.iteritems():
+            udv_set.append(udv_tpl % (var_name, var_name, var_value))
+        udv = "\n".join(udv_set)
+
+        if self.jmeter_ver >= 2.13:
+            save_connect = '<connectTime>true</connectTime>'
+        else:
+            save_connect = ''
+
+        if self.ext_log in ['errors', 'all']:
+            level_map = {'errors': 'true', 'all': 'false'}
+            tpl_resource = 'jmeter_writer_ext.xml'
+            tpl_args = {
+                'jtl': self.jtl_file,
+                'udv': udv,
+                'ext_log': self.ext_log_file,
+                'ext_level': level_map[self.ext_log],
+                'save_connect': save_connect
+            }
+        else:
+            tpl_resource = 'jmeter_writer.xml'
+            tpl_args = {
+                'jtl': self.jtl_file,
+                'udv': udv,
+                'save_connect': save_connect
+            }
+
+        tpl = resource_string(__name__, 'config/' + tpl_resource)
+
+        try:
+            new_jmx = self.core.mkstemp(
+                '.jmx', 'modified_', os.path.dirname(os.path.realpath(jmx)))
+        except OSError as exc:
+            logger.debug("Can't create modified jmx near original: %s", exc)
+            new_jmx = self.core.mkstemp('.jmx', 'modified_')
+        logger.debug("Modified JMX: %s", new_jmx)
+        with open(new_jmx, "wb") as fh:
+            fh.write(''.join(source_lines))
+            fh.write(tpl % tpl_args)
+            fh.write(closing)
+        return new_jmx
+<switch:english>
+[english] By manually finding the correct closing tags, the code ensures that appending new configuration data results in a valid, executable JMeter script. The function returns the file path to this newly created modified JMX.
+[english] What happens if the original JMX file is missing standard XML closing tags or has an unexpected structure?
+[english] If the code cannot reliably determine how many lines constitute the required closing sequence for the JMX XML, it raises a RuntimeError. For highly custom files, relying on simple string popping (like `source_lines.pop(-1)`) might fail.
+[english] Appreciated!

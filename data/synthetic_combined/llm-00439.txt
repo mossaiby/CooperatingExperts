@@ -1,0 +1,46 @@
+[english] How can I automatically gather status strings from various running processes and set them up in compilers?
+[english] This function aggregates all status channels defined across the system's processes while filtering out specific classes that should be ignored. After collection, it rigorously validates the list for duplicates before configuring two specialized compiler instances.
+<switch:python>
+[python] def _set_status_channels(self):
+        """Compiles all status channels for the status compiler process
+        """
+
+        status_inst = pc.StatusCompiler(template="status_compiler")
+        report_inst = pc.ReportCompiler(template="report_compiler")
+
+        # Compile status channels from pipeline process
+        status_channels = []
+        for p in [p for p in self.processes]:
+            if not any([isinstance(p, x) for x in self.skip_class]):
+
+                status_channels.extend(p.status_strs)
+
+        if not status_channels:
+            logger.debug("No status channels found. Skipping status compiler"
+                         "process")
+            return
+
+        logger.debug("Setting status channels: {}".format(status_channels))
+
+        # Check for duplicate channels. Raise exception if found.
+        if len(status_channels) != len(set(status_channels)):
+            raise eh.ProcessError(
+                "Duplicate status channels detected. Please ensure that "
+                "the 'status_channels' attributes of each process are "
+                "unique. Here are the status channels:\n\n{}".format(
+                    ", ".join(status_channels)
+                ))
+
+        status_inst.set_compiler_channels(status_channels)
+
+        report_channels = ["REPORT_{}".format(x.lstrip("STATUS_")) for x in
+                           status_channels]
+
+        report_inst.set_compiler_channels(report_channels)
+
+        self.processes.extend([status_inst, report_inst])
+<switch:english>
+[english] The implementation includes a strict check to raise an exception if duplicate statuses are found, ensuring data integrity across all processes. It then adds the new compiler objects back into self.processes for continued management.
+[english] What is the behavior of this function if no valid processes or status channels are available?
+[english] If `status_channels` remains empty after iteration, the function logs a debug message and returns immediately, gracefully skipping setup rather than raising an error.
+[english] Got it. Simple and robust.

@@ -1,0 +1,32 @@
+[english] How can I read multiple configuration files and unify all their settings under common sections, while also tracking which files failed to load or were empty?
+[english] This function processes a list of configuration file paths stored in `self.config_files_`. It initializes data structures to hold aggregated content and lists for errors, then iterates through each file to read and categorize its contents.
+<switch:python>
+[python] def read_configs_(self):
+        """Read config files and set config values accordingly.
+
+        Returns:
+            (dict, list, list): respectively content of files, list of
+            missing/empty files and list of files for which a parsing error
+            arised.
+        """
+        if not self.config_files_:
+            return {}, [], []
+        content = {section: {} for section in self}
+        empty_files = []
+        faulty_files = []
+        for cfile in self.config_files_:
+            conf_dict = self.read_config_(cfile)
+            if conf_dict is None:
+                faulty_files.append(cfile)
+                continue
+            elif not conf_dict:
+                empty_files.append(cfile)
+                continue
+            for section, secdict in conf_dict.items():
+                content[section].update(secdict)
+        return content, empty_files, faulty_files
+<switch:english>
+[english] The function successfully merges section dictionaries from various files into the main `content` dictionary, handling failures or empty inputs by appending them to respective tracking lists.
+[english] If a configuration section exists in multiple files (e.g., 'database'), how does the function handle potential key overrides?
+[english] It uses `.update()`, meaning that settings from later processed files will overwrite settings found in earlier ones for the same section within another file.
+[english] That makes sense, thank you for clarifying the merging behavior!

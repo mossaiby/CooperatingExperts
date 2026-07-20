@@ -1,0 +1,38 @@
+[english] I have a list of lines from text and I need to automatically partition those lines into logical paragraphs.
+[english] This function iterates through your line list, collecting continuous blocks of text until it encounters a separator or runs out of lines. It handles two modes: using explicit blank lines as breaks, or detecting paragraph boundaries via indentation.
+<switch:python>
+[python] def _join_paragraphs(cls, lines, use_indent=False, leading_blanks=False, trailing_blanks=False):
+        """Join adjacent lines together into paragraphs using either a blank line or indent as separator."""
+
+        curr_para = []
+        paragraphs = []
+
+        for line in lines:
+            if use_indent:
+                if line.startswith(' '):
+                    curr_para.append(line.lstrip())
+                    continue
+                elif line == '':
+                    continue
+                else:
+                    if len(curr_para) > 0:
+                        paragraphs.append(cls._join_paragraph(curr_para, leading_blanks, trailing_blanks))
+
+                    curr_para = [line.lstrip()]
+            else:
+                if len(line) != 0:
+                    curr_para.append(line)
+                else:
+                    paragraphs.append(cls._join_paragraph(curr_para, leading_blanks, trailing_blanks))
+                    curr_para = []
+
+        # Finish the last paragraph if there is one
+        if len(curr_para) > 0:
+            paragraphs.append(cls._join_paragraph(curr_para, leading_blanks, trailing_blanks))
+
+        return paragraphs
+<switch:english>
+[english] Note how the code uses flags like trailing_blanks and leading_blanks to control the final appearance of the resulting paragraphs based on spacing needs.
+[english] If I have several consecutive blank lines, will they all merge into a single paragraph break?
+[english] The function specifically checks for empty strings (`line == ''`) when `use_indent` is False. If you encounter multiple blanks, they are processed sequentially, resulting in separate paragraphs being added to the list.
+[english] Thanks, that makes sense.

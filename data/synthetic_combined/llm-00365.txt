@@ -1,0 +1,25 @@
+[english] How can I recursively traverse a nested Python data structure like dictionaries and lists while creating a node for every element?
+[english] This function performs a postorder traversal by first recursively visiting all elements within an object (like dictionary values or list items). It then yields the current node after its children have been fully processed.
+<switch:python>
+[python] def object_iter(obj, parent=None, parent_key=None, idx=None,
+                siblings=None):
+    """Yields each node of object graph in postorder."""
+
+    obj_node = Node(value=obj, parent=parent, parent_key=parent_key,
+                siblings=siblings, idx=idx)
+
+    if isinstance(obj, list):
+        _siblings = len(obj)
+        for i, elem in enumerate(obj):
+            for node in object_iter(elem, obj_node, None, i + 1, _siblings):
+                yield node
+    elif isinstance(obj, collections.Mapping):
+        for key in obj:
+            for node in object_iter(obj[key], obj_node, key):
+                yield node
+    yield obj_node
+<switch:english>
+[english] The function successfully models the graph structure, but it assumes the input data is acyclic; handling circular references would require additional checks.
+[english] What happens if one of the nested objects refers back to an ancestor in the hierarchy (e.g., a self-referential list)?
+[english] Currently, this function will enter infinite recursion and cause a RecursionError because it does not track visited objects or cycles within the graph.
+[english] That makes sense; I'll need to add cycle detection if my data might contain loops.

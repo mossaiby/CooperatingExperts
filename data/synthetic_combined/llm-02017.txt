@@ -1,0 +1,45 @@
+[english] How do I simulate a measurement process on specific qubits within my quantum statevector to generate classical memory samples?
+[english] This function first calculates the probability distribution for the measured qubits by summing the absolute squares of the state vector components. It then uses these probabilities to perform random sampling corresponding to actual measurement outcomes.
+<switch:python>
+[python] def _add_sample_measure(self, measure_params, num_samples):
+        """Generate memory samples from current statevector.
+
+        Args:
+            measure_params (list): List of (qubit, cmembit) values for
+                                   measure instructions to sample.
+            num_samples (int): The number of memory samples to generate.
+
+        Returns:
+            list: A list of memory values in hex format.
+        """
+        # Get unique qubits that are actually measured
+        measured_qubits = list({qubit for qubit, cmembit in measure_params})
+        num_measured = len(measured_qubits)
+        # Axis for numpy.sum to compute probabilities
+        axis = list(range(self._number_of_qubits))
+        for qubit in reversed(measured_qubits):
+            # Remove from largest qubit to smallest so list position is correct
+            # with respect to position from end of the list
+            axis.remove(self._number_of_qubits - 1 - qubit)
+        probabilities = np.reshape(np.sum(np.abs(self._statevector) ** 2,
+                                          axis=tuple(axis)),
+                                   2 ** num_measured)
+        # Generate samples on measured qubits
+        samples = self._local_random.choice(range(2 ** num_measured),
+                                            num_samples, p=probabilities)
+        # Convert to bit-strings
+        memory = []
+        for sample in samples:
+            classical_memory = self._classical_memory
+            for count, (qubit, cmembit) in enumerate(sorted(measure_params)):
+                qubit_outcome = int((sample & (1 << count)) >> count)
+                membit = 1 << cmembit
+                classical_memory = (classical_memory & (~membit)) | (qubit_outcome << cmembit)
+            value = bin(classical_memory)[2:]
+            memory.append(hex(int(value, 2)))
+        return memory
+<switch:english>
+[english] The sampled qubit states are iteratively mapped onto defined memory bit positions, and the final result is returned as a list of hexadecimal strings representing the updated classical memory.
+[english] What happens if I pass an empty list for `measure_params`?
+[english] If you pass an empty list for measure_params, `measured_qubits` will be empty. The code relies on iterating over these qubits later to update classical memory, so it would return a list of the original classical memory hex values (if initialized) or raise errors depending on how the subsequent loops handle zero iterations.
+[english] This makes perfect sense, thank you for clarifying.

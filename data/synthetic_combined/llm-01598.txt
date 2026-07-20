@@ -1,0 +1,31 @@
+[english] How can I reorder a specific track or group of tracks within an existing playlist to move it to a new location?
+[english] This asynchronous method handles the playlist modification by delegating the heavy lifting to an external HTTP service, passing all necessary indices and identifiers.
+<switch:python>
+[python] async def reorder_tracks(self, playlist, start, insert_before, length=1, *, snapshot_id=None):
+        """Reorder a track or a group of tracks in a playlist.
+
+        Parameters
+        ----------
+        playlist : Union[str, Playlist]
+            The playlist to modify
+        start : int
+            The position of the first track to be reordered.
+        insert_before : int
+            The position where the tracks should be inserted.
+        length : Optional[int]
+            The amount of tracks to be reordered. Defaults to 1 if not set.
+        snapshot_id : str
+            The playlist’s snapshot ID against which you want to make the changes.
+
+        Returns
+        -------
+        snapshot_id : str
+            The snapshot id of the playlist.
+        """
+        data = await self.http.reorder_playlists_tracks(self.id, str(playlist), start, length, insert_before, snapshot_id=snapshot_id)
+        return data['snapshot_id']
+<switch:english>
+[english] The function returns the snapshot ID after a successful operation, which is essential for tracking the state of the modified playlist.
+[english] If I use `length=1`, how does this specific call ensure that moving a single track doesn't mess up the indexing or shift surrounding tracks unintentionally?
+[english] The API handles the positional shifting automatically; when you select one track and provide an `insert_before` index, all subsequent tracks are correctly adjusted in their positions.
+[english] Great, so I don't need to worry about manually recalculating offset indices.

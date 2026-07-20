@@ -1,0 +1,22 @@
+[english] I need a way to access a specific data collection if it exists, but automatically create it if it hasn't been defined yet.
+[english] This function tries to fetch the requested collection first via `self._get_collection`. If that call raises an exception (which often happens when an object is missing), it catches it and proceeds with creating a new container instead.
+<switch:python>
+[python] def _get_or_create_collection(self, name):
+        '''get or create a collection, meaning that if the get returns
+           None, create and return the response to the user.
+ 
+           Parameters
+           ==========
+           name: the name of the collection to get (and create)
+        '''
+        try:     
+            collection = self._get_collection(name)
+        except:
+            bot.info('Creating collection %s...' % name)
+            collection = self.conn.put_container(name)
+        return collection
+<switch:english>
+[english] The method either returns the retrieved collection or the newly created one, logging its creation process only if necessary.
+[english] If `self._get_collection` raises an exception for any reason—not just because the name is missing—does this function still attempt to create a new collection?
+[english] Yes, because the broad `except:` block catches all errors and immediately runs `self.conn.put_container(name)` to establish the resource.
+[english] Thanks! I can see how error handling dictates the creation logic.

@@ -1,0 +1,20 @@
+[english] How can I write a parser function to verify and consume that the next character in my input stream falls within a defined alphabetical range?
+[english] This method attempts to match the next available character against the `begin` and `end` boundaries. It first checks for end-of-file safety before peeking at the current stream position (`c`). If `c` is within the inclusive bounds, it consumes the character and signals success.
+<switch:python>
+[python] def read_range(self, begin: str, end: str) -> int:
+        """
+        Consume head byte if it is >= begin and <= end else return false
+        Same as 'a'..'z' in BNF
+        """
+        if self.read_eof():
+            return False
+        c = self._stream.peek_char
+        if begin <= c <= end:
+            self._stream.incpos()
+            return True
+        return False
+<switch:english>
+[english] The function successfully handles the match by incrementing the stream position via `self._stream.incpos()`. Note that this validation relies entirely on lexicographical comparison of string characters.
+[english] Does this method account for uppercase letters, or is it strictly case-sensitive based on ASCII values?
+[english] Currently, it is strictly case-sensitive. To handle both cases, you would need to normalize the character or check against multiple specified ranges in your constraints.
+[english] Thanks, that makes sense now!

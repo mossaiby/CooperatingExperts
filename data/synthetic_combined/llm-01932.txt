@@ -1,0 +1,21 @@
+[english] How can I open a specific contact's vcard file using an external editor program?
+[english] To accomplish this, we use the subprocess module to execute an operating system command. We pass the specified editor and then retrieve the filename from your VCard object as arguments.
+<switch:python>
+[python] def source_subcommand(selected_vcard, editor):
+    """Open the vcard file for a contact in an external editor.
+
+    :param selected_vcard: the contact to edit
+    :type selected_vcard: carddav_object.CarddavObject
+    :param editor: the eitor command to use
+    :type editor: str
+    :returns: None
+    :rtype: None
+
+    """
+    child = subprocess.Popen([editor, selected_vcard.filename])
+    child.communicate()
+<switch:english>
+[english] The child.communicate() call is necessary because it forces the process to wait for you to close the external editor before your program continues.
+[english] What happens if the 'editor' command provided isn't executable or doesn't exist in the system path?
+[english] You should wrap the execution logic in a try-except block. If the operating system cannot find the binary, ProcessBuilder will raise a FileNotFoundError, allowing you to log an error instead of crashing.
+[english] That makes sense for better error handling.

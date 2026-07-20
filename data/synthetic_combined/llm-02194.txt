@@ -1,0 +1,44 @@
+[english] I need a list of node IDs that lack sufficient connectivity based on proximity within my network.
+[english] To find isolated nodes, we first assign a dedicated counter to every node. The function then leverages an aggregation tool parameterized by distance to count how many neighbors fall within the specified impedance radius for each node.
+<switch:python>
+[python] def low_connectivity_nodes(self, impedance, count, imp_name=None):
+        """
+        Identify nodes that are connected to fewer than some threshold
+        of other nodes within a given distance.
+
+        Parameters
+        ----------
+        impedance : float
+            Distance within which to search for other connected nodes. This
+            will usually be a distance unit in meters however if you have
+            customized the impedance this could be in other units such as
+            utility or time etc.
+        count : int
+            Threshold for connectivity. If a node is connected to fewer
+            than this many nodes within `impedance` it will be identified
+            as "low connectivity".
+        imp_name : string, optional
+            The impedance name to use for the aggregation on this network.
+            Must be one of the impedance names passed in the constructor of
+            this object.  If not specified, there must be only one impedance
+            passed in the constructor, which will be used.
+
+        Returns
+        -------
+        node_ids : array
+            List of "low connectivity" node IDs.
+
+        """
+        # set a counter variable on all nodes
+        self.set(self.node_ids.to_series(), name='counter')
+
+        # count nodes within impedance range
+        agg = self.aggregate(
+            impedance, type='count', imp_name=imp_name, name='counter')
+
+        return np.array(agg[agg < count].index)
+<switch:english>
+[english] The final step filters this aggregated list, returning only the indices (node IDs) whose neighbor count is strictly less than your defined connectivity threshold. This output is returned as a NumPy array.
+[english] Is there any difference if I use `imp_name` when multiple impedance metrics are available?
+[english] Yes, using `imp_name` ensures that the aggregation operates specifically on the intended metric within the object. The function must be configured with only one named impedance if you omit this argument.
+[english] Perfect, I understand how to apply this feature now.

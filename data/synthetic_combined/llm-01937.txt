@@ -1,0 +1,19 @@
+[english] How can I modify an earlier accepted and signed metadata statement using its URL?
+[english] To update a previously registered metadata statement, we send a PUT request to the provided location. The function packages the necessary changes into the `req` dictionary and sends it as JSON.
+<switch:python>
+[python] def update_metadata_statement(self, location, req):
+        """
+        Uses PUT to update an earlier accepted and signed metadata statement.
+
+        :param location: A URL to which the update request is sent
+        :param req: The diff between what is registereed with the signing
+            service and what it should be.
+        :return: returns a dictionary with 'sms' and 'loc' as keys.
+        """
+        response = requests.put(location, json=req, **self.req_args())
+        return self.parse_response(response)
+<switch:english>
+[english] This method uses `requests.put` to modify the resource in place and then calls `self.parse_response` to structure the final output with 'sms' and 'loc'.
+[english] Does this function handle cases where the update request parameters (`req`) are malicious or invalid?
+[english] The current code relies on the signing service to validate the input. To safely handle potential issues, you might want to add validation logic before calling `requests.put`.
+[english] I appreciate the detailed breakdown of this function's behavior!

@@ -1,0 +1,15 @@
+[english] I need to retrieve a specific configuration or characteristic from an external API for a given crate ID.
+[english] This method first constructs the full necessary API endpoint URL by incorporating constants, the `crate_id`, and the specific attribute name. It then uses an internal fetch mechanism to retrieve the requested raw data.
+<switch:python>
+[python] def crate_attribute(self, crate_id, attribute):
+        """Get crate attribute"""
+
+        path = urijoin(CRATES_API_URL, CATEGORY_CRATES, crate_id, attribute)
+        raw_attribute_data = self.fetch(path)
+
+        return raw_attribute_data
+<switch:english>
+[english] The function returns the data exactly as received from the API. Be aware that this is raw data, and you might need to deserialize or validate it further for use in your application.
+[english] What happens if `crate_id` is invalid or if the specified attribute does not exist on the crate?
+[english] If the resource or attribute is not found, the internal `self.fetch(path)` method would typically return an API error response (e.g., a 404 status code), which means you should handle potential exceptions around this function call.
+[english] Got it; I will implement robust error handling when calling this.

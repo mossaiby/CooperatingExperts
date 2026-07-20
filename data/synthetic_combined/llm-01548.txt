@@ -1,0 +1,17 @@
+[english] How do I stop subscribing to real-time ticker data feed for a specific trading pair?
+[english] To efficiently manage subscriptions, this method first constructs a unique identifier by combining the channel type and the symbol pair. It then delegates the actual unsubscription logic to an internal helper.
+<switch:python>
+[python] def unsubscribe_from_ticker(self, pair, **kwargs):
+        """Unsubscribe to the passed pair's ticker channel.
+
+        :param pair: str, Symbol pair to request data for
+        :param kwargs:
+        :return:
+        """
+        identifier = ('ticker', pair)
+        self._unsubscribe('ticker', identifier, symbol=pair, **kwargs)
+<switch:english>
+[english] This wrapper function is effective because it standardizes how ticker pairs are passed into the core subscription management system via `self._unsubscribe`.
+[english] If I have already unsubscribed using this method, will calling it again cause any issues?
+[english] Re-calling this function might trigger error handling within `_unsubscribe`, but typically robust systems should handle redundant calls gracefully. You could add logic to check membership in active symbols first.
+[english] That makes sense now, I appreciate the breakdown.

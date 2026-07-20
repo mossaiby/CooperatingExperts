@@ -1,0 +1,19 @@
+[english] I need a function that standardizes the starting point representation in a coordinate path list based on its length.
+[english] This function modifies the input list `p` to ensure the first element, `p[0]`, adheres to specific formats. It checks the overall length of the input and then restructures `p[0]` either as a single item or by concatenating two existing elements.
+<switch:python>
+[python] def p_ctx_coords(self, p):
+        """ ctx_coords : multiplicative_path
+                        | ctx_coords COLON multiplicative_path"""
+        if len(p) == 2:
+            p[0] = [p[1]]
+        else:
+            p[0] = p[1] + [p[3]]
+<switch:english>
+[english] The key thing to note here is that this function modifies the list in place, which might affect other parts of your program relying on the original structure.
+[english] What happens if I call this with a path `p` that has only two items?
+[english] If the input list `p` has exactly two items, the function sets `p[0]` to be a new list containing that second item. This is handled by the first conditional block, which executes the assignment:
+<switch:python>
+[python] if len(p) == 2:
+    p[0] = [p[1]]
+<switch:english>
+[english] That makes much more sense for my configuration.

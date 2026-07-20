@@ -1,0 +1,16 @@
+[english] How do I calculate the lexicographical index (rank) of a given binary string based on its composition and the specific positions of its '1' bits?
+[english] This function determines the index by first counting the total number of ones in the bit string. It then extracts all indices where a '1' occurs to pass this positional data to an external ranking logic.
+<switch:python>
+[python] def bit_string_index(s):
+    """Return the index of a string of 0s and 1s."""
+    n = len(s)
+    k = s.count("1")
+    if s.count("0") != n - k:
+        raise VisualizationError("s must be a string of 0 and 1")
+    ones = [pos for pos, char in enumerate(s) if char == "1"]
+    return lex_index(n, k, ones)
+<switch:english>
+[english] The core calculation happens within the `lex_index` helper function, and the initial validation ensures the input only contains characters '0' and '1'.
+[english] If the string consists of all zeros (e.g., '000'), what will the resulting index be?
+[english] Since there are no ones, $k=0$. Assuming standard indexing where strings containing fewer set bits come first, this configuration should return 0.
+[english] That makes sense; thanks for clarifying how it handles edge cases like all zeros.

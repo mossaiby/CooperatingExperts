@@ -1,0 +1,37 @@
+[english] How can I safely send an asynchronous request using Pub/Sub that waits for exactly one response within a specified timeout?
+[english] This function orchestrates a request-response pattern by first generating a unique inbox, subscribing to it as an ephemeral channel, and then publishing the request. It wraps the expected reply in an asyncio Future and enforces a timeout.
+<switch:python>
+[python] def timed_request(self, subject, payload, timeout=0.5):
+        """
+        Implements the request/response pattern via pub/sub
+        using an ephemeral subscription which will be published
+        with a limited interest of 1 reply returning the response
+        or raising a Timeout error.
+
+          ->> SUB _INBOX.2007314fe0fcb2cdc2a2914c1 90
+          ->> UNSUB 90 1
+          ->> PUB hello _INBOX.2007314fe0fcb2cdc2a2914c1 5
+          ->> MSG_PAYLOAD: world
+          <<- MSG hello 2 _INBOX.2007314fe0fcb2cdc2a2914c1 5
+
+        """
+        next_inbox = INBOX_PREFIX[:]
+        next_inbox.extend(self._nuid.next())
+        inbox = next_inbox.decode()
+
+        future = asyncio.Future(loop=self._loop)
+        sid = yield from self.subscribe(inbox, future=future, max_msgs=1)
+        yield from self.auto_unsubscribe(sid, 1)
+        yield from self.publish_request(subject, inbox, payload)
+
+        try:
+            msg = yield from asyncio.wait_for(future, timeout, loop=self._loop)
+            return msg
+        except asyncio.TimeoutError:
+            future.cancel()
+            raise ErrTimeout
+<switch:english>
+[english] The use of `auto_unsubscribe` ensures that cleanup occurs whether the message arrives promptly or if the function times out after waiting for the response.
+[english] What happens to the resources or subscriptions if an error occurs while publishing the request?
+[english] Currently, other exceptions would propagate immediately. To handle errors during setup or publication, you should wrap the entire generator's usage in a `try...finally` block to manually ensure cleanup.
+[english] That makes sense for robust handling.

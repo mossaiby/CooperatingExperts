@@ -1,0 +1,40 @@
+[english] How can I automate the building process for multiple Meteor projects within a Python framework?
+[english] This function orchestrates the build process by iterating through defined project configurations and executing external commands necessary to compile each component.
+<switch:python>
+[python] def run(self):
+        """Peform build."""
+        for (package, source, target, extra_args) in self.meteor_builds:
+            src_dir = self.get_package_dir(package)
+            # convert UNIX-style paths to directory names
+            project_dir = self.path_to_dir(src_dir, source)
+            target_dir = self.path_to_dir(src_dir, target)
+            output_dir = self.path_to_dir(
+                os.path.abspath(SETUP_DIR if self.inplace else self.build_lib),
+                target_dir,
+            )
+            # construct command line.
+            cmdline = [self.meteor, 'build', '--directory', output_dir]
+            no_prune_npm = self.no_prune_npm
+            if extra_args[:1] == ['--no-prune-npm']:
+                no_prune_npm = True
+                extra_args[:1] = []
+            if self.meteor_debug and '--debug' not in cmdline:
+                cmdline.append('--debug')
+            cmdline.extend(extra_args)
+            # execute command
+            log.info(
+                'building meteor app %r (%s)', project_dir, ' '.join(cmdline),
+            )
+            subprocess.check_call(cmdline, cwd=project_dir)
+            if not no_prune_npm:
+                # django-ddp doesn't use bundle/programs/server/npm cruft
+                npm_build_dir = os.path.join(
+                    output_dir, 'bundle', 'programs', 'server', 'npm',
+                )
+                log.info('pruning meteor npm build %r', npm_build_dir)
+                shutil.rmtree(npm_build_dir)
+<switch:english>
+[english] The function handles directory conversions and command construction before executing the `meteor build` subprocess, ensuring cleanup of specific npm folders afterward.
+[english] What exactly constitutes an 'extra_args' list in this context?
+[english] It is a tuple or list used to pass arbitrary flags directly to the Meteor build command via `cmdline.extend(extra_args)` if they aren't predefined.
+[english] That makes sense, thanks for clarifying.

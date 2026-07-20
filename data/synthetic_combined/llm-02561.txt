@@ -1,0 +1,50 @@
+[english] How can I programmatically fix tiny alignment errors or gaps along the borders where adjacent mesh patches meet?
+[english] This function acts as a utility to generate a custom MeshLab FilterScript XML definition. It constructs the necessary filter with parameters for error tolerance and vertex merging, which you then write directly into your given script object.
+<switch:python>
+[python] def snap_mismatched_borders(script, edge_dist_ratio=0.01, unify_vert=True):
+    """ Try to snap together adjacent borders that are slightly mismatched.
+
+    This situation can happen on badly triangulated adjacent patches defined by
+    high order surfaces. For each border vertex the filter snaps it onto the
+    closest boundary edge only if it is closest of edge_legth*threshold. When
+    vertex is snapped the corresponding face it split and a new vertex is
+    created.
+
+    Args:
+        script: the FilterScript object or script filename to write
+            the filter to.
+        edge_dist_ratio (float): Collapse edge when the edge / distance ratio
+            is greater than this value. E.g. for default value 1000 two
+            straight border edges are collapsed if the central vertex dist from
+            the straight line composed by the two edges less than a 1/1000 of
+            the sum of the edges length. Larger values enforce that only
+            vertexes very close to the line are removed.
+        unify_vert (bool): If true the snap vertices are welded together.
+
+    Layer stack:
+        No impacts
+
+    MeshLab versions:
+        2016.12
+        1.3.4BETA
+    """
+    filter_xml = ''.join([
+        '  <filter name="Snap Mismatched Borders">\n',
+        '    <Param name="EdgeDistRatio" ',
+        'value="{}" '.format(edge_dist_ratio),
+        'description="Edge Distance Ratio" ',
+        'type="RichFloat" ',
+        '/>\n',
+        '    <Param name="UnifyVertices" ',
+        'value="{}" '.format(str(unify_vert).lower()),
+        'description="UnifyVertices" ',
+        'type="RichBool" ',
+        '/>\n',
+        '  </filter>\n'])
+    util.write_filter(script, filter_xml)
+    return None
+<switch:english>
+[english] The resulting filter uses `EdgeDistRatio` to determine if vertices are close enough to be snapped onto boundary edges, fixing localized geometry issues automatically.
+[english] If I set the 'UnifyVertices' parameter to False, does the function still manage to correct positional errors?
+[english] Yes, setting it to false snaps the vertex position to the closest border edge without merging that newly positioned vertex with any existing vertices. This keeps the points distinct even after a positional correction is made.
+[english] Perfect! So I can fine-tune whether the mesh should merge or stay separate while correcting its borders.

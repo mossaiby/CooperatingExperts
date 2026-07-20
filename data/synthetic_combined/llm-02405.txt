@@ -1,0 +1,20 @@
+[english] How do I calculate the total length of a route (a sequence of cities)?
+[english] The function determines a route's total distance by iterating through the sequence.
+<switch:python>
+[python] def energy(self, state=None):
+        """Calculates the length of the route."""
+        state = self.state if state is None else state
+        route = state
+        e = 0
+        if self.distance_matrix:
+            for i in range(len(route)):
+                e += self.distance_matrix["{},{}".format(route[i-1], route[i])]
+        else:
+            for i in range(len(route)):
+                e += distance(self.cities[route[i-1]], self.cities[route[i]])
+        return e
+<switch:english>
+[english] It uses either a pre-computed distance matrix or calculates distances between city objects for each step in the route.
+[english] What happens if the initial state is an empty list?
+[english] If `state` (or `self.state`) is empty, the loop will not execute, and the function correctly returns 0 as no distance can be traveled.
+[english] That makes sense! Thanks for clarifying.

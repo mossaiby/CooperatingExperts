@@ -1,0 +1,11 @@
+[english] How can I take a variable list of items, potentially with associated metadata, and structure them into a managed set?
+[english] To handle an unknown number of elements while keeping the functionality generic, we use argument unpacking using *members.
+<switch:python>
+[python] def s(*members: T, meta=None) -> Set[T]:
+    """Creates a new set from members."""
+    return Set(pset(members), meta=meta)
+<switch:english>
+[english] This function leverages the `upsert` logic provided by `pset` to transform the input tuple of elements into a proper Set structure.
+[english] What happens if I pass duplicate items within *members?
+[english] Duplicates are automatically handled and removed when the initial set is constructed using pset, ensuring only unique members remain.
+[english] That makes sense! Thanks for the clarification.

@@ -1,0 +1,36 @@
+[english] I need a way to retrieve all validated variants linked to a specific institute ID, ensuring each variant is enriched with its associated case details.
+[english] This approach starts by querying the `self.event_collection` for validation events tied to the provided institute ID. The function then iterates through these found records to gather necessary data and fetch related objects like the case instance.
+<switch:python>
+[python] def verified(self, institute_id):
+        """Return all verified variants for a given institute
+
+        Args:
+            institute_id(str): institute id
+
+        Returns:
+            res(list): a list with validated variants
+        """
+        query = {
+            'verb' : 'validate',
+            'institute' : institute_id,
+        }
+        res = []
+        validate_events = self.event_collection.find(query)
+        for validated in list(validate_events):
+            case_id = validated['case']
+            var_obj = self.variant(case_id=case_id, document_id=validated['variant_id'])
+            case_obj = self.case(case_id=case_id)
+            if not case_obj or not var_obj:
+                continue # Take into account that stuff might have been removed from database
+            var_obj['case_obj'] = {
+                'display_name' : case_obj['display_name'],
+                'individuals' : case_obj['individuals']
+            }
+            res.append(var_obj)
+
+        return res
+<switch:english>
+[english] The logic includes a crucial check (`if not case_obj or not var_obj`) to gracefully handle scenarios where related data might have been deleted from the database, preventing runtime errors during processing.
+[english] If an institute has multiple validation entries for the exact same variant ID, will that variant appear more than once in the final list?
+[english] The function processes every record returned by `self.event_collection.find(query)`; therefore, if the underlying data contains duplicate validation events for a single variant, it will be included multiple times.
+[english] That clarification helps understand how duplicates are handled.

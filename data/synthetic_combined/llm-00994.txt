@@ -1,0 +1,17 @@
+[english] How can I set up a logging handler for my application, allowing me to toggle between standard console output or null logging based on environment settings?
+[english] This function configures a custom logging `Handler`. It first determines which type of handler should be used by checking an environment variable and then applies the desired format and severity level.
+<switch:python>
+[python] def get_handler(level: str, fmt: str) -> logging.Handler:
+    """Get the default logging handler for Basilisp."""
+    handler: logging.Handler = logging.NullHandler()
+    if os.getenv("BASILISP_USE_DEV_LOGGER") == "true":
+        handler = logging.StreamHandler()
+
+    handler.setFormatter(logging.Formatter(fmt))
+    handler.setLevel(level)
+    return handler
+<switch:english>
+[english] The function returns the configured handler object, making it easy to integrate into existing Python logging setups. Remember that calling this repeatedly might override previously set attributes if not handled carefully elsewhere in your code.
+[english] What happens to the formatting or levels if we call `get_handler` twice with different parameters?
+[english] The second call will overwrite all previous settings; it updates both the handler's formatter using a new logging.Formatter instance and its level using handler.setLevel().
+[english] That makes sense, thanks for clarifying!

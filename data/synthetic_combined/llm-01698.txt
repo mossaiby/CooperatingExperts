@@ -1,0 +1,18 @@
+[english] How should I safely delete a specific Azure SQL Database when I only have its server and database names?
+[english] This method first establishes the complete necessary path for the target database by utilizing both the server name and the database name. It then delegates the actual deletion logic to an internal helper function.
+<switch:python>
+[python] def delete_database(self, server_name, name):
+        '''
+        Deletes an Azure SQL Database.
+
+        server_name:
+            Name of the server where the database is located.
+        name:
+            Name of the database to delete.
+        '''
+        return self._perform_delete(self._get_databases_path(server_name, name))
+<switch:english>
+[english] Since 'delete' is a destructive action, keep in mind that this operation is permanent, and backups should be handled externally before execution.
+[english] If the function cannot find the specified path for any reason, does it throw a standard Python error or handle the failure silently?
+[english] The internal method `_get_databases_path` will likely raise an appropriate exception if the resource is not found, preventing silent failures and prompting proper error handling by the caller.
+[english] Thanks, that clarifies how the system handles missing resources during deletion.

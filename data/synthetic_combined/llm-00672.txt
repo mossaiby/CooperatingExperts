@@ -1,0 +1,38 @@
+[english] How can I automate logging into a Reddit API using OAuth2 to obtain long-term access tokens?
+[english] This method first checks if authentication is possible and then uses PRAW to generate an authorization URL tailored to your configured scopes. Depending on settings, it either starts a local web server or directs the user's browser to handle the login.
+<switch:python>
+[python] def _get_new_access_information(self):
+		"""
+		Request new access information from reddit using the built in webserver
+		"""
+		if not self.r.has_oauth_app_info:
+			self._log('Cannot obtain authorize url from PRAW. Please check your configuration.', logging.ERROR)
+			raise AttributeError('Reddit Session invalid, please check your designated config file.')
+		url = self.r.get_authorize_url('UsingOAuth2Util',
+						self._get_value(CONFIGKEY_SCOPE, set, split_val=','),
+						self._get_value(CONFIGKEY_REFRESHABLE, as_boolean=True))
+
+		self._start_webserver(url)
+		if not self._get_value(CONFIGKEY_SERVER_MODE, as_boolean=True):
+			webbrowser.open(url)
+		else:
+			print("Webserver is waiting for you :D. Please open {0}:{1}/{2} "
+					"in your browser"
+				.format(SERVER_URL, SERVER_PORT, SERVER_LINK_PATH))
+		self._wait_for_response()
+
+		try:
+			access_information = self.r.get_access_information(
+				self.server.response_code)
+		except praw.errors.OAuthException:
+			self._log("Can not authenticate, maybe the app infos (e.g. secret) are wrong.", logging.ERROR)
+			raise
+
+		self._change_value(CONFIGKEY_TOKEN, access_information["access_token"])
+		self._change_value(CONFIGKEY_REFRESH_TOKEN, access_information["refresh_token"])
+		self._change_value(CONFIGKEY_VALID_UNTIL, time.time() + TOKEN_VALID_DURATION)
+<switch:english>
+[english] After receiving the callback response from Reddit, the function catches potential OAuth errors and saves the resulting access and refresh tokens into the application configuration with an expiration timestamp.
+[english] What specifically happens if PRAW raises a `praw.errors.OAuthException` while getting the access information?
+[english] The code logs this error and re-raises it, signaling to any calling function that the authentication failed (e.g., invalid client secrets or tokens). This ensures your application doesn't proceed with an unauthenticated session.
+[english] That helps clarify how bad auth states are handled!

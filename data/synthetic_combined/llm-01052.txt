@@ -1,0 +1,35 @@
+[english] How can I retrieve all network parameters from a list of layers whose names match a specific glob pattern?
+[english] This function iterates through each layer and its parameters, then checks if the parameter's name matches any provided patterns using `fnmatch.fnmatch`.
+<switch:python>
+[python] def params_matching(layers, patterns):
+    '''Get the parameters from a network that match a pattern.
+
+    Parameters
+    ----------
+    layers : list of :class:`theanets.layers.Layer`
+        A list of network layers to retrieve parameters from.
+    patterns : sequence of str
+        A sequence of glob-style patterns to match against. Any parameter
+        matching any pattern in this sequence will be included in the match.
+
+    Yields
+    ------
+    matches : pair of str, theano expression
+        Generates a sequence of (name, expression) pairs. The name is the name
+        of the parameter that matched, and the expression represents the
+        parameter symbolically.
+    '''
+    if isinstance(patterns, basestring):
+        patterns = (patterns, )
+    for layer in layers:
+        for param in layer.params:
+            name = param.name
+            for pattern in patterns:
+                if fnmatch.fnmatch(name, pattern):
+                    yield name, param
+                    break
+<switch:english>
+[english] The function handles single string inputs for `patterns` by wrapping them and breaks the inner loop upon finding the first match to prevent duplicate yields.
+[english] What happens if a parameter matches multiple patterns in the input sequence?
+[english] Since you use `yield` and immediately follow it with `break`, once a parameter name matches a pattern, it is yielded once and stops checking against subsequent patterns in the list. This ensures no duplicates are generated.
+[english] That makes sense now!

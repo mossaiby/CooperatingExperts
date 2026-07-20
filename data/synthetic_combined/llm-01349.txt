@@ -1,0 +1,40 @@
+[english] How can I retrieve all course enrollment records for a specific user ID from the Canvas API?
+[english] This function first resolves your internal registration ID to a Canvas user ID before querying the enrollments endpoint. If you flag that you want full details, it fetches necessary courses individually and maps them to the enrollment objects.
+<switch:python>
+[python] def get_enrollments_for_regid(self, regid, params={},
+                                  include_courses=True):
+        """
+        Return a list of enrollments for the passed user regid.
+
+        https://canvas.instructure.com/doc/api/enrollments.html#method.enrollments_api.index
+        """
+        sis_user_id = self._sis_id(regid, sis_field="user")
+        url = USERS_API.format(sis_user_id) + "/enrollments"
+
+        courses = Courses() if include_courses else None
+
+        enrollments = []
+        for datum in self._get_paged_resource(url, params=params):
+            enrollment = CanvasEnrollment(data=datum)
+            if include_courses:
+                course_id = datum["course_id"]
+                course = courses.get_course(course_id)
+
+                if course.sis_course_id is not None:
+                    enrollment.course = course
+                    # the following 3 lines are not removed
+                    # to be backward compatible.
+                    enrollment.course_url = course.course_url
+                    enrollment.course_name = course.name
+                    enrollment.sis_course_id = course.sis_course_id
+            else:
+                enrollment.course_url = re.sub(
+                    r'/users/\d+$', '', enrollment.html_url)
+
+            enrollments.append(enrollment)
+        return enrollments
+<switch:english>
+[english] The logic maintains backward compatibility by allowing access to certain course attributes even if the detailed fetching is disabled. When courses are omitted, URLs are adjusted using a regular expression for cleaner output.
+[english] What happens if the function receives an enrollment record where the associated 'course_id' is missing?
+[english] If the data dictionary passed to the loop lacks a course_id, the conditional logic within the function will not proceed to retrieve or assign it, resulting in an entry without course attributes.
+[english] That clarifies how optional fields are handled. Thank you!

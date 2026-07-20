@@ -1,0 +1,12 @@
+[english] How can I ensure that a specific database connection is accessible within the current execution context using a unique alias?
+[english] This method is designed to initialize the database handling phase by attaching a proxy object to the provided context. It leverages the instance's configured alias as a key and maps it directly to a MongoEngineProxy built from the connection.
+<switch:python>
+[python] def prepare(self, context):
+		"""Attach this connection's default database to the context using our alias."""
+		
+		context.db[self.alias] = MongoEngineProxy(self.connection)
+<switch:english>
+[english] The function serves to register the connection handle, allowing other parts of the application to interact with the database using the defined alias rather than needing the raw connection object.
+[english] What happens if another part of the system already registered an entry using that specific self.alias?
+[english] If the alias is already present in context.db, it will simply be overwritten by this method because dictionary keys are unique and assignments replace existing values without conflict checks.
+[english] Thanks for clarifying how aliasing works!

@@ -1,0 +1,14 @@
+[english] I need a way to load data from an external file path only when it's strictly necessary and ensure that I don't reload it repeatedly.
+[english] This function implements lazy loading, which ensures the value is computed or loaded only upon first access. It checks if the object already holds a cached version of its value before executing any expensive operations like reading from disk.
+<switch:python>
+[python] def value(self):
+        """ Return the broadcasted value
+        """
+        if not hasattr(self, "_value") and self._path is not None:
+            self._value = self._load(self._path)
+        return self._value
+<switch:english>
+[english] By checking `hasattr(self, '_value')`, this approach optimizes performance by avoiding redundant file I/O and caching the result internally for future calls.
+[english] What happens if the function successfully loads a value but then encounters an error while trying to access that value later?
+[english] Since it returns immediately after loading, errors are usually caught when you use `self._value`. If robust handling is needed, you might add a property wrapper with explicit validation logic.
+[english] This makes sense for optimizing data retrieval!

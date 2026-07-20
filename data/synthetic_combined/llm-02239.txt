@@ -1,0 +1,21 @@
+[english] I need a way to fetch all of my stored data as a binary, readable stream instead of getting raw bytes.
+[english] By utilizing `io.BytesIO`, we can create an in-memory buffer that acts like a temporary file. The internal method `self._store` then writes all the package contents directly into this memory object before we reset it for reading.
+<switch:python>
+[python] def as_stream(self):
+		"""
+		Return a zipped package as a readable stream
+		"""
+		stream = io.BytesIO()
+		self._store(stream)
+		stream.seek(0)
+		return stream
+<switch:english>
+[english] The function returns a stream ready to be read, but keep in mind that any data passed to `self._store` must already be binary content.
+[english] If no data has been stored yet, what does the returned stream contain?
+[english] If nothing was written by `self._store`, the resulting stream will simply be an empty byte buffer. You can verify this using the following logic:
+<switch:python>
+[python] x = self.as_stream()
+if not x.read(1):
+    print("The stream is empty.")
+<switch:english>
+[english] That makes perfect sense, thanks for the guidance!

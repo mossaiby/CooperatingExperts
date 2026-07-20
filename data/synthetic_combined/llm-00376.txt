@@ -1,0 +1,57 @@
+[english] I need a way to map latent state distributions across multiple timesteps into observable mean and covariance values.
+[english] This function prepares tensor dimensions and uses an initial step calculation before applying a sequential scan over time. The `tf.scan` operation iteratively applies the pushforward step to calculate observation statistics at each timestep.
+<switch:python>
+[python] def latents_to_observations(self, latent_means, latent_covs):
+    """Push latent means and covariances forward through the observation model.
+
+    Args:
+      latent_means: float `Tensor` of shape `[..., num_timesteps, latent_size]`
+      latent_covs: float `Tensor` of shape
+        `[..., num_timesteps, latent_size, latent_size]`.
+
+    Returns:
+      observation_means: float `Tensor` of shape
+        `[..., num_timesteps, observation_size]`
+      observation_covs: float `Tensor` of shape
+        `[..., num_timesteps, observation_size, observation_size]`
+    """
+
+    with tf.name_scope("latents_to_observations"):
+
+      pushforward_latents_step = build_pushforward_latents_step(
+          self.get_observation_matrix_for_timestep,
+          self.get_observation_noise_for_timestep)
+
+      latent_means = distribution_util.move_dimension(
+          latent_means, source_idx=-2, dest_idx=0)
+      latent_means = latent_means[..., tf.newaxis]  # Make matmul happy.
+      latent_covs = distribution_util.move_dimension(
+          latent_covs, source_idx=-3, dest_idx=0)
+
+      (initial_observation_mean,
+       initial_observation_cov) = pushforward_latents_step(
+           _=None,  # Loop body ignores previous observations.
+           latent_t_mean_cov=(self.initial_step,
+                              latent_means[self.initial_step],
+                              latent_covs[self.initial_step]))
+
+      # TODO(davmre) this loop is embarassingly parallel; replace with `pfor`.
+      timesteps = tf.range(self.initial_step,
+                           self.initial_step + self.num_timesteps)
+      observation_means, observation_covs = tf.scan(
+          pushforward_latents_step,
+          elems=(timesteps, latent_means, latent_covs),
+          initializer=(initial_observation_mean, initial_observation_cov),
+          parallel_iterations=10000)
+
+      observation_means = distribution_util.move_dimension(
+          observation_means[..., 0], source_idx=0, dest_idx=-2)
+      observation_covs = distribution_util.move_dimension(
+          observation_covs, source_idx=0, dest_idx=-3)
+
+      return observation_means, observation_covs
+<switch:english>
+[english] The output is restructured to provide the final observation means and covariances, which represent how latent states project onto observable data for every included timestep. Note that this implementation relies on `tf.scan`, handling time sequences one by one.
+[english] You mentioned a TODO regarding parallel processing; if I had millions of independent trajectories instead of a single sequence, could the use of tf.scan be optimized?
+[english] While `tf.scan` is efficient for sequential dependency modeling, true parallelism would require replacing it with explicit vectorization or other optimizers like `pfor`, as hinted in the code's comments to handle many independent sequences at once.
+[english] Perfect, this makes sense for a sequence-based generative model.

@@ -1,0 +1,23 @@
+[english] How can I automatically convert wildcard IP addresses like '0.0.0.0' or '*' into a specific, connectable address based on my server's location?
+[english] This function attempts to resolve generic placeholder IPs by first checking if the input is a common wildcard and then inspecting the system's network configuration.
+<switch:python>
+[python] def disambiguate_ip_address(ip, location=None):
+    """turn multi-ip interfaces '0.0.0.0' and '*' into connectable
+    ones, based on the location (default interpretation of location is localhost)."""
+    if ip in ('0.0.0.0', '*'):
+        try:
+            external_ips = socket.gethostbyname_ex(socket.gethostname())[2]
+        except (socket.gaierror, IndexError):
+            # couldn't identify this machine, assume localhost
+            external_ips = []
+        if location is None or location in external_ips or not external_ips:
+            # If location is unspecified or cannot be determined, assume local
+            ip='127.0.0.1'
+        elif location:
+            return location
+    return ip
+<switch:english>
+[english] If the system successfully identifies external IPs, but a concrete `location` isn't provided, it defaults to localhost. If resolution fails entirely, it assumes local operation.
+[english] What exactly happens if the socket calls fail because the internet connection is down?
+[english] If either `socket.gethostbyname_ex` or accessing the external IPs raises an error (like gaierror), the function catches the exception and defaults to assuming localhost by setting `external_ips = []`.
+[english] That makes sense, thanks for explaining it.

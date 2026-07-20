@@ -1,0 +1,23 @@
+[english] How can I programmatically change the animation displayed by my actor's model while handling potential missing model errors?
+[english] This function first verifies that the actor has an associated visual model before proceeding. If no model is found, it raises a clear RuntimeError to prevent unexpected downstream failures.
+<switch:python>
+[python] def setAnimation(self,animation,transition=None,force=False):
+        """
+        Sets the animation the model of this actor should show.
+        
+        ``animation`` is the name of the animation to switch to.
+        
+        ``transition`` can be used to override the transition between the animations.
+        
+        ``force`` can be used to force reset the animation even if it is already running.
+        
+        If there is no model set for this actor, a :py:exc:`RuntimeError` will be raised.
+        """
+        if self.model is None:
+            raise RuntimeError("Can only set animation if a model is set")
+        self.model.setAnimation(self,animation,transition,force)
+<switch:english>
+[english] It relies on the underlying model object to handle the specifics of switching animations and applying optional transitions or forcing resets.
+[english] If I call this method with force=True, what visual effects can actually happen?
+[english] Setting `force` typically overrides ongoing animation states, ensuring an immediate switch regardless of current playback progress.
+[english] I understand the difference between a soft transition and a hard forced reset!

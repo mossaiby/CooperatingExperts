@@ -1,0 +1,19 @@
+[english] How can I implement a 'Redo' feature for user selections, allowing users to step back through their chosen states?
+[english] This function handles selection reversal by checking if a redo is possible and then retrieving the subsequent state from the stored history list.
+<switch:python>
+[python] def selection_redo(self, name="default", executor=None):
+        """Redo selection, for the name."""
+        logger.debug("redo")
+        executor = executor or self.executor
+        assert self.selection_can_redo(name=name)
+        selection_history = self.selection_histories[name]
+        index = self.selection_history_indices[name]
+        next = selection_history[index + 1]
+        self.selection_history_indices[name] += 1
+        self.signal_selection_changed.emit(self)
+        logger.debug("redo: selection history is %r, index is %r", selection_history, index)
+<switch:english>
+[english] The method updates `self.selection_history_indices[name]` after finding the next state, ensuring that future calls correctly resume from the new position.
+[english] What happens if there is no further action to 'redo' (e.g., we are at the end of history)?
+[english] The function relies on `self.selection_can_redo(name=name)` to prevent this state. If this check fails, an AssertionError will be raised before any history is accessed.
+[english] That makes sense; the assertion provides a clean guard.

@@ -1,0 +1,52 @@
+[english] I need a function that initializes local variable lookup and stack context before my debugger command loop begins.
+[english] This setup function handles the initial state of the debugging environment by inspecting the call stack and checking for active exceptions. It determines whether program execution is running normally or if an exception has interrupted it, setting up all necessary internal pointers like `self.stack` and frame references.
+<switch:python>
+[python] def setup(self):
+        """Initialization done before entering the debugger-command
+        loop. In particular we set up the call stack used for local
+        variable lookup and frame/up/down commands.
+
+        We return True if we should NOT enter the debugger-command
+        loop."""
+        self.forget()
+        if self.settings('dbg_trepan'):
+            self.frame = inspect.currentframe()
+            pass
+        if self.event in ['exception', 'c_exception']:
+            exc_type, exc_value, exc_traceback = self.event_arg
+        else:
+            _, _, exc_traceback = (None, None, None,)  # NOQA
+            pass
+        if self.frame or exc_traceback:
+            self.stack, self.curindex = \
+                get_stack(self.frame, exc_traceback, None, self)
+            self.curframe = self.stack[self.curindex][0]
+            self.thread_name = Mthread.current_thread_name()
+            if exc_traceback:
+                self.list_lineno = traceback.extract_tb(exc_traceback, 1)[0][1]
+                self.list_offset = self.curframe.f_lasti
+                self.list_object = self.curframe
+        else:
+            self.stack = self.curframe = \
+                self.botframe = None
+            pass
+        if self.curframe:
+            self.list_lineno = \
+                max(1, inspect.getlineno(self.curframe)
+                    - int(self.settings('listsize') / 2)) - 1
+            self.list_offset   = self.curframe.f_lasti
+            self.list_filename = self.curframe.f_code.co_filename
+            self.list_object   = self.curframe
+        else:
+            if not exc_traceback: self.list_lineno = None
+            pass
+        # if self.execRcLines()==1: return True
+
+        # FIXME:  do we want to save self.list_lineno a second place
+        # so that we can do 'list .' and go back to the first place we listed?
+        return False
+<switch:english>
+[english] The core logic prepares context for command handlers; however, its reliability depends heavily on ensuring that external functions like get_stack and the required modules are correctly accessible.
+[english] If no active stack trace or exception is detected by this function, what values are assigned to `self.stack` and `self.curframe`?
+[english] The code gracefully handles this edge case by setting several attributes to None: `self.stack = self.curframe = self.botframe = None`. This ensures the debugger does not attempt to operate on invalid frame data.
+[english] Thanks for clarifying how those null states are managed.

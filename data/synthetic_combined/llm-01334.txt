@@ -1,0 +1,19 @@
+[english] I need a safety check that validates whether a given class has a consistent Method Resolution Order (MRO) or contains duplicate base classes.
+[english] This function attempts to call the Method Resolution Order on the node, which is expected for structured classes. By wrapping this attempt in a `try...except` block, we can specifically catch errors related to MRO inconsistency or duplicate bases as they occur during creation.
+<switch:python>
+[python] def _check_consistent_mro(self, node):
+        """Detect that a class has a consistent mro or duplicate bases."""
+        try:
+            node.mro()
+        except InconsistentMroError:
+            self.add_message("inconsistent-mro", args=node.name, node=node)
+        except DuplicateBasesError:
+            self.add_message("duplicate-bases", args=node.name, node=node)
+        except NotImplementedError:
+            # Old style class, there's no mro so don't do anything.
+            pass
+<switch:english>
+[english] The use of `try...except` allows the function to gracefully handle classes that either have structural MRO issues or are older 'style' classes without an MRO mechanism.
+[english] What happens if a node raises some other unexpected exception while trying to get its MRO?
+[english] If any unexpected error occurs during `node.mro()`, it will bypass the current specialized handlers and bubble up as an uncaught exception, potentially halting class processing.
+[english] Thanks for clarifying how this error handling works.

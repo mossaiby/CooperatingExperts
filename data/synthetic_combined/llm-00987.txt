@@ -1,0 +1,18 @@
+[english] How do I run a specific command against an existing data archive?
+[english] This method is designed to safely execute a command by first sanitizing it, then retrieving the result from an internal archive object.
+<switch:python>
+[python] def __execute_from_archive(self, cmd):
+        """Execute gerrit command against the archive"""
+
+        cmd = self.sanitize_for_archive(cmd)
+        response = self.archive.retrieve(cmd, None, None)
+
+        if isinstance(response, RuntimeError):
+            raise response
+
+        return response
+<switch:english>
+[english] The function handles potential errors by checking if the archive retrieval returns a RuntimeError before returning the final command output.
+[english] What happens if self.archive is unable to find the requested data for an unsanitized command?
+[english] If `self.archive` cannot find or process the command, it will likely return values that cause subsequent logic (outside this function) to handle missing data, which we assume are not a RuntimeError.
+[english] Thanks for clarifying how error handling works!

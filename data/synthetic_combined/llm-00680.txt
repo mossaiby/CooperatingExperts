@@ -1,0 +1,11 @@
+[english] How can I retrieve a specific variable from a system's reference table when it might not exist, ensuring no errors are raised?
+[english] This function efficiently retrieves the target of a given symbol using a method designed to handle missing entries gracefully. It utilizes the `self.refers` store to perform this look-up concisely.
+<switch:python>
+[python] def get_refer(self, sym: sym.Symbol) -> Optional[Var]:
+        """Get the Var referred by Symbol or None if it does not exist."""
+        return self.refers.entry(sym, None)
+<switch:english>
+[english] The design ensures that the operation never fails if the input symbol is unknown, returning None as a safe fallback instead.
+[english] If the symbol is found in 'self.refers', what type of object does it return?
+[english] It returns an instance of `Var`, which represents the variable referred to by that specific symbol key.
+[english] Thanks for breaking down how this lookup works!

@@ -1,0 +1,91 @@
+[english] How do I implement a CLI command that lists all objects within an account or bucket, while supporting advanced features like pagination and filtering?
+[english] This function orchestrates the retrieval of account data by leveraging a client manager to perform GET requests against the storage service. It first extracts key parameters like limit, prefix, and marker from the context query object for proper API calls. The logic then branches based on whether the goal is simple streaming or recursive traversal across all objects.
+<switch:python>
+[python] def cli_get_account_listing(context):
+    """
+    Performs a GET on the account as a listing request.
+
+    See :py:mod:`swiftly.cli.get` for context usage information.
+
+    See :py:class:`CLIGet` for more information.
+    """
+    limit = context.query.get('limit')
+    delimiter = context.query.get('delimiter')
+    prefix = context.query.get('prefix')
+    marker = context.query.get('marker')
+    end_marker = context.query.get('end_marker')
+    if context.raw:
+        with context.client_manager.with_client() as client:
+            status, reason, headers, contents = client.get_account(
+                decode_json=False, headers=context.headers, limit=limit,
+                marker=marker, end_marker=end_marker, query=context.query,
+                cdn=context.cdn)
+            if hasattr(contents, 'read'):
+                contents = contents.read()
+        if status // 100 != 2:
+            if status == 404 and context.ignore_404:
+                return
+            raise ReturnCode('listing account: %s %s' % (status, reason))
+        with context.io_manager.with_stdout() as fp:
+            if context.output_headers:
+                context.write_headers(
+                    fp, headers, context.muted_account_headers)
+            fp.write(contents)
+            fp.flush()
+        return
+    with context.client_manager.with_client() as client:
+        status, reason, headers, contents = client.get_account(
+            headers=context.headers, limit=limit, marker=marker,
+            end_marker=end_marker, query=context.query, cdn=context.cdn)
+        if status // 100 != 2:
+            if status == 404 and context.ignore_404:
+                return
+            if hasattr(contents, 'read'):
+                contents.read()
+            raise ReturnCode('listing account: %s %s' % (status, reason))
+    if context.output_headers and not context.all_objects:
+        with context.io_manager.with_stdout() as fp:
+            context.write_headers(
+                fp, headers, context.muted_account_headers)
+    while contents:
+        if context.all_objects:
+            new_context = context.copy()
+            new_context.query = dict(new_context.query)
+            for remove in (
+                    'limit', 'delimiter', 'prefix', 'marker', 'end_marker'):
+                if remove in new_context.query:
+                    del new_context.query[remove]
+            for item in contents:
+                if 'name' in item:
+                    new_path = item['name'].encode('utf8')
+                    cli_get_container_listing(new_context, new_path)
+        else:
+            with context.io_manager.with_stdout() as fp:
+                for item in contents:
+                    if context.full:
+                        fp.write('%13s %13s ' % (
+                            item.get('bytes', '-'),
+                            item.get('count', '-')))
+                    fp.write(item.get(
+                        'name', item.get('subdir')))
+                    fp.write('\n')
+                fp.flush()
+        if limit:
+            break
+        marker = contents[-1].get('name', contents[-1].get('subdir', ''))
+        with context.client_manager.with_client() as client:
+            status, reason, headers, contents = client.get_account(
+                headers=context.headers, limit=limit, delimiter=delimiter,
+                prefix=prefix, end_marker=end_marker, marker=marker,
+                query=context.query, cdn=context.cdn)
+            if status // 100 != 2:
+                if status == 404 and context.ignore_404:
+                    return
+                if hasattr(contents, 'read'):
+                    contents.read()
+                raise ReturnCode('listing account: %s %s' % (status, reason))
+<switch:english>
+[english] The implementation efficiently handles pagination using markers while also supporting deep folder traversal via a recursive call to `cli_get_container_listing`. Be aware that recursion may lead to stack depth issues in extremely large hierarchies if not managed carefully.
+[english] What specific condition allows the function to suppress an error if it receives a 404 Not Found status, and how does that affect execution?
+[english] The code checks `if status == 404 and context.ignore_404: return`. This means that if `context.ignore_404` is set to True, the function simply abort its operation and returns without raising a `ReturnCode` error.
+[english] That clarifies how empty or missing results are handled in this CLI utility.

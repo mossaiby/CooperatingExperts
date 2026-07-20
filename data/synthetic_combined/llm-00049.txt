@@ -1,0 +1,22 @@
+[english] How do I identify missing semicolons at the end of statements while processing a program representation?
+[english] This function takes a list representing a statement and performs two main checks: it verifies that there is a semicolon after the second element, and then it modifies the input by replacing its first element with its second.
+<switch:python>
+[python] def p_statement(self, program):
+        """
+           statement : decl
+                     | quantum_op ';'
+                     | format ';'
+                     | ignore
+                     | quantum_op error
+                     | format error
+        """
+        if len(program) > 2:
+            if program[2] != ';':
+                raise QasmError("Missing ';' at end of statement; "
+                                + "received", str(program[2].value))
+        program[0] = program[1]
+<switch:english>
+[english] The primary logic relies on checking the length and content at index 2; however, it doesn't handle all possible valid state transitions defined in your docstring for declaration or format statements.
+[english] What happens if `program` has a length of exactly 2?
+[english] If the program has only two elements (length 2), the initial conditional check fails (`if len(program) > 2:`), so no error is raised and `program[0]` becomes equal to `program[1]`. This case seems appropriate for 'ignore' statements.
+[english] Thanks, that makes sense.

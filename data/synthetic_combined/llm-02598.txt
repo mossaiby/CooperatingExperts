@@ -1,0 +1,34 @@
+[english] How can I add metadata to functions, especially if they are async, without losing their original behavior?
+[english] To handle both regular and asynchronous functions while ensuring type safety, we check if a coroutine is present and then define an appropriate wrapper using @functools.wraps.
+<switch:python>
+[python] def _fn_with_meta(f, meta: Optional[lmap.Map]):
+    """Return a new function with the given meta. If the function f already
+    has a meta map, then merge the """
+
+    if not isinstance(meta, lmap.Map):
+        raise TypeError("meta must be a map")
+
+    if inspect.iscoroutinefunction(f):
+
+        @functools.wraps(f)
+        async def wrapped_f(*args, **kwargs):
+            return await f(*args, **kwargs)
+
+    else:
+
+        @functools.wraps(f)  # type: ignore
+        def wrapped_f(*args, **kwargs):
+            return f(*args, **kwargs)
+
+    wrapped_f.meta = (  # type: ignore
+        f.meta.update(meta)
+        if hasattr(f, "meta") and isinstance(f.meta, lmap.Map)
+        else meta
+    )
+    wrapped_f.with_meta = partial(_fn_with_meta, wrapped_f)  # type: ignore
+    return wrapped_f
+<switch:english>
+[english] The wrapper attaches the provided metadata to the new function object itself and also sets up a helper for recursive meta operations.
+[english] What happens if `meta` conflicts with an existing key in `f.meta`, since `dict.update()` usually overwrites?
+[english] When used this way, conflicting keys from `meta` will completely overwrite the original keys inside `f.meta`. If you wanted a deep merge instead of replacement, you would need to modify how `wrapped_f.meta` is assigned.
+[english] Got it, I'll adjust the merging logic then.

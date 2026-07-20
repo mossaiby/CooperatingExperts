@@ -1,0 +1,46 @@
+[english] I need a reliable way to safely extract, validate, and use authorization parameters from an incoming URI that was passed back by an OAuth provider.
+[english] The method begins by parsing the full URI string using external utilities to pull out all query string parameters. It then validates these parameters against required fields like client ID and response type before attempting to retrieve the code.
+<switch:python>
+[python] def get_authorization_code_from_uri(self, uri):
+        """Get authorization code response from a URI. This method will
+        ignore the domain and path of the request, instead
+        automatically parsing the query string parameters.
+
+        :param uri: URI to parse for authorization information.
+        :type uri: str
+        :rtype: requests.Response
+        """
+        params = utils.url_query_params(uri)
+        try:
+            if 'response_type' not in params:
+                raise TypeError('Missing parameter response_type in URL query')
+
+            if 'client_id' not in params:
+                raise TypeError('Missing parameter client_id in URL query')
+
+            if 'redirect_uri' not in params:
+                raise TypeError('Missing parameter redirect_uri in URL query')
+
+            return self.get_authorization_code(**params)
+        except TypeError as exc:
+            self._handle_exception(exc)
+
+            # Catch missing parameters in request
+            err = 'invalid_request'
+            if 'redirect_uri' in params:
+                u = params['redirect_uri']
+                return self._make_redirect_error_response(u, err)
+            else:
+                return self._invalid_redirect_uri_response()
+        except StandardError as exc:
+            self._handle_exception(exc)
+
+            # Catch all other server errors
+            err = 'server_error'
+            u = params['redirect_uri']
+            return self._make_redirect_error_response(u, err)
+<switch:english>
+[english] Error handling is crucial here; if validation fails due to missing keys or if a server error occurs during execution, the function intercepts the exception to provide a specific, structured error response.
+[english] If an unexpected generic error happens that isn't covered by explicit checks, how does the function behave?
+[english] Any exceptions inheriting from `StandardError` are caught at the end and treated as a server-side issue, resulting in a standardized 'server_error' response sent back to the caller.
+[english] That makes sense for ensuring consistent error reporting.

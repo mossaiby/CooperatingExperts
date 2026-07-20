@@ -1,0 +1,37 @@
+[english] I need to write a function that takes route relation data and converts the member IDs into a sequence of latitude and longitude pairs representing the shape.
+[english] This function extracts coordinates by iterating through the relation's members. For each member, it checks if the ID exists as a point in your `nodes` dictionary to build a coordinate sequence.
+<switch:python>
+[python] def build_shape(relation, nodes, ways):
+    """Extract shape of one route."""
+    sequence_index = 0
+
+    for member_type, member_id, member_role in relation.member_info:
+
+        if member_id in nodes:
+            yield Shape(
+                relation.id,
+                nodes[member_id].lat,
+                nodes[member_id].lon,
+                sequence_index)
+
+            sequence_index += 1
+
+        # Do we need to consider ways too? It dramatically increases the number of shapes.
+        elif member_id in ways:
+            continue
+        #     for point in ways[member_id].points:
+        #         shape = Shape(
+        #             relation.id,
+        #             point.lat,
+        #             point.lon,
+        #             sequence_index)
+        #         sequence_index += 1
+
+        else:
+            # Ignore excessive logging for now.
+            pass
+<switch:english>
+[english] Currently, this function only yields coordinates if the member ID is explicitly present in your `nodes` map. It ignores members that are defined only within ways.
+[english] If a member ID exists in both nodes and ways, how does this function handle it?
+[english] Because of the structure of the `if/elif` statements, the function prioritizes checking `nodes`. If an ID is found in `nodes`, it yields a shape and increments the index before considering if the same ID was also present in `ways`.
+[english] Thanks for clarifying how that coordinate lookup works!

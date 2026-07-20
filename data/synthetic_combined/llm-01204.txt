@@ -1,0 +1,25 @@
+[english] I want to create an image based on a specific LogGabor filter pattern defined by various spatial parameters.
+[english] This function calculates the characteristics of the LogGabor in the frequency domain using `self.loggabor`. It then adjusts this signal with a phase shift before performing an inverse operation to yield the final visual image representation.
+<switch:python>
+[python] def loggabor_image(self, x_pos, y_pos, theta, sf_0, phase, B_sf, B_theta):
+        """
+        Returns the image of a LogGabor
+
+        Note that the convention for coordinates follows that of matrices:
+        the origin is at the top left of the image, and coordinates are first
+        the rows (vertical axis, going down) then the columns (horizontal axis,
+        going right).
+
+        """
+
+        FT_lg = self.loggabor(x_pos, y_pos, sf_0=sf_0, B_sf=B_sf, theta=theta, B_theta=B_theta)
+        FT_lg = FT_lg * np.exp(1j * phase)
+        return self.invert(FT_lg, full=False)
+<switch:english>
+[english] The method relies heavily on `self.invert` to transform the calculated frequency data back into spatial coordinates, respecting matrix conventions where (0, 0) is at the top-left corner.
+[english] If I set the phase to zero in this function, what does it mean visually?
+[english] Setting the phase to zero means no additional phase shift is applied to the LogGabor signal before inversion. In code, you would pass `phase=0` during the function call:
+<switch:python>
+[python] loggabor_image(x_pos, y_pos, theta, sf_0, 0, B_sf, B_theta)
+<switch:english>
+[english] Thanks for clarifying how that phase parameter works.

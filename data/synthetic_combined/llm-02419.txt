@@ -1,0 +1,25 @@
+[english] How do I export an internal Certificate Revocation List object into the format used by the Python cryptography library?
+[english] This function acts as an adapter, converting your internal CRL data structure into a proper `cryptography` object that conforms to standard cryptographic requirements.
+<switch:python>
+[python] def to_cryptography(self):
+        """
+        Export as a ``cryptography`` CRL.
+
+        :rtype: ``cryptography.x509.CertificateRevocationList``
+
+        .. versionadded:: 17.1.0
+        """
+        from cryptography.hazmat.backends.openssl.x509 import (
+            _CertificateRevocationList
+        )
+        backend = _get_backend()
+        return _CertificateRevocationList(backend, self._crl)
+<switch:english>
+[english] It utilizes a specific low-level backend (`_get_backend`) to correctly instantiate the required class using the underlying raw components of your stored CRL.
+[english] What happens if `self._crl` is null or empty when this function is called?
+[english] The function will raise an error because it attempts to pass whatever data is in `self._crl` directly to a constructor that expects valid revocation list content. You should add validation before calling `to_cryptography()`.
+<switch:python>
+[python] if not self._crl:
+    raise ValueError("CRl cannot be empty when exporting.")
+<switch:english>
+[english] That makes sense; I needed to handle invalid states during export.

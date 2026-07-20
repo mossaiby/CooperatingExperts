@@ -1,0 +1,25 @@
+[english] I have a deeply nested dictionary for configuration data. How can I flatten it into a single level while keeping track of the original keys?
+[english] To handle arbitrary nesting, this function uses recursion. It iterates through the input dictionary, calling itself whenever a value is another dictionary to process deeper levels.
+<switch:python>
+[python] def flatten_dictionary(nested_dict, separator):
+    """Flattens a nested dictionary.
+
+    New keys are concatenations of nested keys with the `separator` in between.
+
+    """
+    flat_dict = {}
+    for key, val in nested_dict.items():
+        if isinstance(val, dict):
+            new_flat_dict = flatten_dictionary(val, separator)
+            for flat_key, inval in new_flat_dict.items():
+                new_key = key + separator + flat_key
+                flat_dict[new_key] = inval
+        else:
+            flat_dict[key] = val
+
+    return flat_dict
+<switch:english>
+[english] The function builds the final mapping by prepending parent keys to nested results. This ensures that all original structure is preserved in the new flattened key names.
+[english] What happens if one of the values in the dictionary is a list instead of a dict?
+[english] Currently, if a value is a list, it is treated as a non-dictionary leaf node and assigned directly to the flat dictionary under its original key. To handle lists specifically, you would need to add an extra check for `isinstance(val, list)` in the else block.
+[english] This looks like a robust solution! Thanks.

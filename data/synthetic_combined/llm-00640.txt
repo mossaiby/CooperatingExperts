@@ -1,0 +1,12 @@
+[english] How can I implement a method that efficiently updates an object using multiple positional or keyword arguments at once?
+[english] This update method uses argument unpacking to handle both positional and keyword inputs. It checks if any data is provided before delegating the heavy lifting to a private helper function.
+<switch:python>
+[python] def update(self, *args, **kw):
+        """Like :meth:`putall` with default duplication policies."""
+        if args or kw:
+            self._update(False, None, *args, **kw)
+<switch:english>
+[english] The core logic is a simple conditional check; if no arguments are passed to `update`, the method does nothing and completes silently.
+[english] What happens specifically if I call this function without passing any positional or keyword arguments?
+[english] If called with no arguments, the internal condition (`if args or kw:`) evaluates to false, so the function returns implicitly, doing no work.
+[english] Thanks for clarifying that!

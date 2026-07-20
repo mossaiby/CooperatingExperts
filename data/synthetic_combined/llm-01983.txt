@@ -1,0 +1,28 @@
+[english] I need a function to create a project configuration dictionary using parameters for name and token types.
+[english] This helper function constructs a project dictionary, establishing the main project name and then intelligently handling optional fields like token names and public visibility.
+<switch:python>
+[python] def project_dict(self, project_name, token_name, public):
+        """
+        Genarate the project dictionary.
+        """
+        project_dict = {}
+        project_dict['project_name'] = project_name
+        if token_name is not None:
+            if token_name == '':
+                project_dict['token_name'] = project_name
+            else:
+                project_dict['token_name'] = token_name
+        else:
+            project_dict['token_name'] = project_name
+
+        if public is not None:
+            project_dict['public'] = public
+        return project_dict
+<switch:english>
+[english] The logic ensures that if a specific token is not provided (or is an empty string), it defaults to using the primary `project_name` as the identifier instead.
+[english] If I pass None for both 'token_name' and 'public', what will the resulting dictionary look like?
+[english] The function will return a dictionary containing only the project name, with token_name set equal to the project_name since neither was explicitly provided.
+<switch:python>
+[python] {'project_name': 'example_name', 'token_name': 'example_name'}
+<switch:english>
+[english] That makes sense, thank you for clarifying!

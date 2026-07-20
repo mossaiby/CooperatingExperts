@@ -1,0 +1,24 @@
+[english] How can I format structured data according to a specific layout and write the results either to standard output or a custom file?
+[english] This method manages the entire process of taking a provided `layout` structure and rendering it into an output stream. It safely handles decoding and encoding by defaulting to standard output if no stream is specified, ensuring compatibility.
+<switch:python>
+[python] def format(self, layout, stream=None, encoding=None):
+        """format and write the given layout into the stream object
+
+        unicode policy: unicode strings may be found in the layout;
+        try to call stream.write with it, but give it back encoded using
+        the given encoding if it fails
+        """
+        if stream is None:
+            stream = sys.stdout
+        if not encoding:
+            encoding = getattr(stream, "encoding", "UTF-8")
+        self.encoding = encoding or "UTF-8"
+        self.out = stream
+        self.begin_format()
+        layout.accept(self)
+        self.end_format()
+<switch:english>
+[english] The function primarily acts as a dispatcher; its core responsibility is calling `layout.accept(self)`, which triggers the actual content generation based on the layout definition. The logic also tries to gracefully handle native unicode strings before attempting byte encoding.
+[english] What happens if the stream object provided does not have an `encoding` attribute?
+[english] The function uses `getattr(stream, "encoding", "UTF-8")`. If the attribute is missing or non-existent on the stream, it defaults to using "UTF-8" for output operations.
+[english] That clears up how encoding is handled, thank you!

@@ -1,0 +1,68 @@
+[english] How do I implement a system to load complex model configuration data from a specific JSON file?
+[english] This function is designed to parse and instantiate structured model components like materials, bones, regions, and animations from a given JSON file. It ensures data integrity by checking the file version before processing.
+<switch:python>
+[python] def loadModelData(self,name):
+        """
+        Loads the model data of the given name.
+        
+        The model file must always be a .json file.
+        """
+        path = self.resourceNameToPath(name,".json")
+        try:
+            data = json.load(open(path,"r"))
+        except Exception:
+            # Temporary
+            print("Exception during model load: ")
+            import traceback;traceback.print_exc()
+            return {}# will probably cause other exceptions later on, TODO
+        
+        out = {}
+        
+        if data.get("version",1)==1:
+            # Currently only one version, basic future-proofing
+            # This version should get incremented with breaking changes to the structure
+            
+            # Materials
+            out["materials"]={}
+            for name,matdata in data.get("materials",{}).items():
+                m = model.Material(self,name,matdata)
+                out["materials"][name]=m
+            out["default_material"]=out["materials"][data.get("default_material",list(out["materials"].keys())[0])]
+            
+            # Bones
+            out["bones"]={"__root__":model.RootBone(self,"__root__",{"start_rot":[0,0],"length":0})}
+            for name,bonedata in data.get("bones",{}).items():
+                b = model.Bone(self,name,bonedata)
+                out["bones"][name]=b
+            for name,bone in out["bones"].items():
+                if name == "__root__":
+                    continue
+                bone.setParent(out["bones"][bone.bonedata["parent"]])
+            
+            # Regions
+            out["regions"]={}
+            for name,regdata in data.get("regions",{}).items():
+                r = model.Region(self,name,regdata)
+                r.material = out["materials"][regdata.get("material",out["default_material"])]
+                r.bone = out["bones"][regdata.get("bone","__root__")]
+                out["bones"][regdata.get("bone","__root__")].addRegion(r)
+                out["regions"][name]=r
+            
+            # Animations
+            out["animations"]={}
+            out["animations"]["static"]=model.Animation(self,"static",{"type":"static","bones":{}})
+            for name,anidata in data.get("animations",{}).items():
+                a = model.Animation(self,name,anidata)
+                a.setBones(out["bones"])
+                out["animations"][name]=a
+            out["default_animation"]=out["animations"][data.get("default_animation",out["animations"]["static"])]
+        else:
+            raise ValueError("Unknown version %s of model '%s'"%(data.get("version",1),name))
+        
+        self.modelcache[name]=out
+        return out
+<switch:english>
+[english] The code diligently processes dependencies (like linking regions to bones), but be aware that error handling currently relies on catching broad exceptions.
+[english] If the input JSON is missing critical fields like 'materials' or 'bones', how does the function prevent runtime errors when trying to access them?
+[english] The function uses `.get(key, default)` extensively. For instance, it defaults materials and bones to empty dictionaries if they are absent in the JSON data.
+[english] That makes sense for handling incomplete model files.

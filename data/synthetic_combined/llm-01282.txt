@@ -1,0 +1,15 @@
+[english] I'm trying to create a method that runs a complex parsing task on some data and guarantees it successfully completed, throwing an error if anything went wrong.
+[english] This function delegates the actual processing to `self.parser` while passing necessary internal state like the lexer and debug flags. It then verifies that the intended output attribute has been set before returning it.
+<switch:python>
+[python] def parse(self, data):
+        """Parse some data."""
+        self.parser.parse(data, lexer=self.lexer, debug=self.parse_deb)
+        if self.qasm is None:
+            raise QasmError("Uncaught exception in parser; "
+                            + "see previous messages for details.")
+        return self.qasm
+<switch:english>
+[english] The primary role of this method is serving as a final safety check, ensuring that even if parsing technically finishes, the required output (`self.qasm`) was actually generated.
+[english] If `QasmError` is raised, does it happen because an exception occurred during the parser's execution or because the parser simply failed to find data?
+[english] The error message suggests that a parse failure occurred (i.e., `self.qasm` remained `None`), but the inclusion of 'see previous messages for details' strongly implies that underlying parsing exceptions are captured elsewhere.
+[english] Got it, so I should rely on logging to see what exactly failed during the parsing step.

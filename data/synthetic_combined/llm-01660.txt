@@ -1,0 +1,19 @@
+[english] I need a function that translates custom intermediate nodes representing 'with meta' operations into the correct Python AST structure for interoperability.
+[english] This utility serves as a dispatch mechanism within an AST generator. It verifies the operation type and then retrieves the appropriate handler based on the child expression to build the final Python code representation.
+<switch:python>
+[python] def _with_meta_to_py_ast(
+    ctx: GeneratorContext, node: WithMeta, **kwargs
+) -> GeneratedPyAST:
+    """Generate a Python AST node for Python interop method calls."""
+    assert node.op == NodeOp.WITH_META
+
+    handle_expr = _WITH_META_EXPR_HANDLER.get(node.expr.op)
+    assert (
+        handle_expr is not None
+    ), "No expression handler for with-meta child node type"
+    return handle_expr(ctx, node.expr, meta_node=node.meta, **kwargs)
+<switch:english>
+[english] The function relies entirely on pre-registered handlers in `_WITH_META_EXPR_HANDLER`. If an unfamiliar node type is encountered during compilation, it will fail with an assertion error.
+[english] What happens if we try to call this function with a 'WithMeta' node that doesn't have a corresponding entry in the handler map?
+[english] The code throws an AssertionError because this specific scenario indicates a missing implementation for handling that particular expression type, which is critical for correct AST generation.
+[english] That makes sense. Thanks for explaining how the handlers are initialized.

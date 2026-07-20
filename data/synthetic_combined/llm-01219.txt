@@ -1,0 +1,16 @@
+[english] I need to ensure that my connection object is correctly configured to listen for specific text patterns and execute associated functions.
+[english] This function handles the setup by iterating over command patterns defined in `self` and compiling them into regular expressions before registering them with the internal connection object. By doing this, it establishes a clear mapping between incoming message formats and their handler callbacks.
+<switch:python>
+[python] def register_callbacks(self):
+        """\
+        Hook for registering callbacks with connection -- handled by __init__()
+        """
+        self.conn.register_callbacks((
+            (re.compile(pattern), callback) \
+                for pattern, callback in self.command_patterns()
+        ))
+<switch:english>
+[english] The code uses a generator expression to pass compiled regex objects directly to `self.conn.register_callbacks`. Note that this relies entirely on the external `re` module being imported and available.
+[english] What happens if one of the patterns is not found in the incoming messages?
+[english] The connection object, assuming it handles unregistered messages gracefully, will simply ignore them. Since here we are only *registering* handlers, failure to match just means no specific action is triggered.
+[english] Got it, that makes sense.

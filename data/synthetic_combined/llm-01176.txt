@@ -1,0 +1,26 @@
+[english] How can I programmatically generate memory allocation declarations for arrays and flatten multi-dimensional structures?
+[english] This function processes an existing set of array declarations, handling the complexity of transforming nested or multi-dimensional arrays into linear (1D) representations before finalizing their declaration form.
+<switch:python>
+[python] def _build_array_declarations(self, with_init=True):
+        """
+        Generate declaration statements for arrays.
+
+        Also transforming multi-dim to 1d arrays and initializing with malloc.
+
+        :param with_init: ommit malloc initialization
+
+        :return: list of declarations nodes, dictionary of array names and original dimensions
+        """
+        # copy array declarations from from kernel ast
+        array_declarations = deepcopy(self.get_array_declarations())
+        array_dict = []
+        for d in array_declarations:
+            # We need to transform
+            array_dict.append(transform_multidim_to_1d_decl(d))
+            transform_array_decl_to_malloc(d, with_init=with_init)
+        return array_declarations, dict(array_dict)
+<switch:english>
+[english] The function iterates over declarations to flatten dimensions and applies memory management logic via helper methods like `transform_multidim_to_1d_decl`.
+[english] Does the function have a specific behavior if I pass 'with_init=False'?
+[english] When `with_init` is false, the associated calls to `transform_array_decl_to_malloc` will omit the necessary memory initialization logic (the actual `malloc` statements) for those arrays.
+[english] This makes sense; it gives me fine-grained control over resource setup.

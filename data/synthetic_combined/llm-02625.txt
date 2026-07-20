@@ -1,0 +1,21 @@
+[english] I need to set up an internal handler that automatically processes and routes incoming messages identified as device commands.
+[english] This function is designed to serve as a callback for message events. It first attempts to transform the raw `pahoMessage` into a structured Command object, handling any critical parsing errors encountered during this process.
+<switch:python>
+[python] def _onCommand(self, client, userdata, pahoMessage):
+        """
+        Internal callback for device command messages, parses source device from topic string and
+        passes the information on to the registered device command callback
+        """
+        try:
+            command = Command(pahoMessage, self._messageCodecs)
+        except InvalidEventException as e:
+            self.logger.critical(str(e))
+        else:
+            self.logger.debug("Received device command '%s'" % (command.command))
+            if self.commandCallback:
+                self.commandCallback(command)
+<switch:english>
+[english] The logic cleanly separates message parsing using a `try...except` block, ensuring that unexpected input failures are logged critically before execution.
+[english] If valid commands are successfully parsed but no specific handler has been registered for `self.commandCallback`, what happens?
+[english] The function checks the existence of the callback with `if self.commandCallback:`. If it is None or unset, the command will be logged at the debug level and then silently ignored without executing any further logic.
+[english] Thanks for clarifying how those edge cases are managed.

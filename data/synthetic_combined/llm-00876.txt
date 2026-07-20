@@ -1,0 +1,47 @@
+[english] I need a robust way to mirror an entire directory from a source path to a destination path, ensuring the process merges files if they already exist without failing.
+[english] This function recursively copies a source directory. It first ensures the target exists and then iterates through all source items, using specialized logic to handle symlinks, directories (by calling itself), or standard files that need copying.
+<switch:python>
+[python] def copytree(src, dst, symlinks=True):
+    """
+    Modified from shutil.copytree docs code sample, merges files rather than
+    requiring dst to not exist.
+    """
+    from shutil import copy2, Error, copystat
+
+    names = os.listdir(src)
+
+    if not Path(dst).exists():
+        os.makedirs(dst)
+
+    errors = []
+    for name in names:
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if symlinks and os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                os.symlink(linkto, dstname)
+            elif os.path.isdir(srcname):
+                copytree(srcname, dstname, symlinks)
+            else:
+                copy2(srcname, dstname)
+            # XXX What about devices, sockets etc.?
+        except OSError as why:
+            errors.append((srcname, dstname, str(why)))
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except Error as err:
+            errors.extend(err.args[0])
+    try:
+        copystat(src, dst)
+    except OSError as why:
+        # can't copy file access times on Windows
+        if why.winerror is None:
+            errors.extend((src, dst, str(why)))
+    if errors:
+        raise Error(errors)
+<switch:english>
+[english] The implementation successfully handles merging file trees but notes in its comments that complex objects like devices or sockets might not be fully supported by this current script.
+[english] If the source directory contains hard links instead of symbolic links, how does this function handle them during the copy process?
+[english] Since the code primarily checks for `os.path.islink`, which typically identifies symlinks rather than inode-level hard links, it would generally treat a hard link as a regular file and copy its content.
+[english] That clarifies some of my concerns about the function's behavior.

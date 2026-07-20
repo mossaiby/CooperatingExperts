@@ -1,0 +1,11 @@
+[english] How can I calculate a normalized PDF value relative to its peak given defined low, high, and peak points?
+[english] This method calculates the relative position of the peak within a defined range using linear interpolation, returning a scaled ratio.
+<switch:python>
+[python] def _pdf_at_peak(self):
+    """Pdf evaluated at the peak."""
+    return (self.peak - self.low) / (self.high - self.low)
+<switch:english>
+[english] It is crucial that self.peak lies between self.low and self.high for this value to represent an interior point correctly.
+[english] What happens if self.low equals self.high?
+[english] If self.low equals self.high, you will encounter a ZeroDivisionError because the denominator (self.high - self.low) becomes zero. You should add a check to handle this case.
+[english] That makes sense; I'll implement that error handling.

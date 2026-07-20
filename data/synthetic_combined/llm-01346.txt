@@ -1,0 +1,13 @@
+[english] How do I wait for a background grid computation job to finish?
+[english] This method ensures that any active computational task within the class has completed before allowing further operations. It bypasses ongoing processing and prepares the instance for its next state.
+<switch:python>
+[python] def join(self):
+        """Wait until grid finishes computing."""
+        self._future = False
+        self._job.poll()
+        self._job = None
+<switch:english>
+[english] The function nullifies the job reference after polling, which effectively cleans up the state once the computation is confirmed complete.
+[english] What if the job fails or takes too long to finish?
+[english] If you need stricter failure handling, you can add a timeout to `poll()`, though typically dedicated exception handlers are preferred:
+[english] That makes sense; I should handle those edge cases properly.

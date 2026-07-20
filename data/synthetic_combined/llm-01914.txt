@@ -1,0 +1,40 @@
+[english] I need a function that takes case data and groups every included panel by the genes they contain.
+[english] This function systematically scans all defined panels within a given case object to map every individual gene back to its originating panel name.
+<switch:python>
+[python] def gene_to_panels(self, case_obj):
+        """Fetch all gene panels and group them by gene
+
+            Args:
+                case_obj(scout.models.Case)
+            Returns:
+                gene_dict(dict): A dictionary with gene as keys and a set of
+                                 panel names as value
+        """
+        LOG.info("Building gene to panels")
+        gene_dict = {}
+
+        for panel_info in case_obj.get('panels', []):
+            panel_name = panel_info['panel_name']
+            panel_version = panel_info['version']
+            panel_obj = self.gene_panel(panel_name, version=panel_version)
+            if not panel_obj:
+                ## Raise exception here???
+                LOG.warning("Panel: {0}, version {1} does not exist in database".format(panel_name, panel_version))
+
+            for gene in panel_obj['genes']:
+                hgnc_id = gene['hgnc_id']
+
+                if hgnc_id not in gene_dict:
+                    gene_dict[hgnc_id] = set([panel_name])
+                    continue
+
+                gene_dict[hgnc_id].add(panel_name)
+
+        LOG.info("Gene to panels done")
+
+        return gene_dict
+<switch:english>
+[english] The code efficiently builds a dictionary where genes are keys and associated panel names are stored in sets, handling potential duplicates automatically while logging missing data.
+[english] If a single gene is somehow listed multiple times within the same panel definition (though unlikely), will it cause any issues with the final output?
+[english] No because of how line 24 works. By using `gene_dict[hgnc_id].add(panel_name)`, sets automatically handle uniqueness, ensuring each panel name is only listed once per gene.
+[english] That clears things up perfectly, thanks!

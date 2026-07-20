@@ -1,0 +1,20 @@
+[english] How can I ensure that my error handling works correctly when running on IronPython's CLI environment, specifically regarding exception types?
+[english] This function intercepts system-level `exc_info` data and makes adjustments if it detects the use of IronPython on a command-line interface. It ensures that specific non-standard exceptions are replaced with standard string formats for compatibility.
+<switch:python>
+[python] def _exc_info(self):
+        """Bottleneck to fix up IronPython string exceptions
+        """
+        e = self.exc_info()
+        if sys.platform == 'cli':
+            if isinstance(e[0], StringException):
+                # IronPython throws these StringExceptions, but
+                # traceback checks type(etype) == str. Make a real
+                # string here.
+                e = (str(e[0]), e[1], e[2])
+
+        return e
+<switch:english>
+[english] The logic specifically targets when the platform is classified as 'cli' by `sys.platform`, which is necessary for this correction to trigger.
+[english] What happens if a different non-standard exception, other than StringException, is encountered?
+[english] Currently, the function only attempts to fix `StringException` types when on CLI platforms. If another custom exception type appears here, it will pass through without modification and potentially break compatibility checks.
+[english] That makes sense! Thanks for clarifying the IronPython quirk.

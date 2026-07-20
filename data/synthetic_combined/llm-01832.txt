@@ -1,0 +1,38 @@
+[english] How can I create a boolean mask that indicates whether each value in an array falls within any of a list of predefined open intervals?
+[english] We approach this by initializing a boolean array of the same size as your input x. We then iterate through each interval tuple and set the corresponding positions in the output to True if the values from x fall strictly between the start and end points.
+<switch:python>
+[python] def tuples_2_bool(tuples, x):
+    """
+    Generate boolean array from list of limit tuples.
+
+    Parameters
+    ----------
+    tuples : array_like
+        [2, n] array of (start, end) values
+    x : array_like
+        x scale the tuples are mapped to
+
+    Returns
+    -------
+    array_like
+        boolean array, True where x is between each pair of tuples.
+    """
+    if np.ndim(tuples) == 1:
+        tuples = [tuples]
+
+    out = np.zeros(x.size, dtype=bool)
+    for l, u in tuples:
+        out[(x > l) & (x < u)] = True
+    return out
+<switch:english>
+[english] This implementation efficiently uses NumPy indexing to flag any value that falls within at least one of the specified open intervals, correctly handling overlapping ranges.
+[english] What happens if I want to include the endpoints in my range checks, meaning I need $l <= x < u$ instead of strictly between?
+[english] To make the ranges inclusive of the lower bound and exclusive of the upper bound (or fully inclusive), you simply adjust the comparison operators. For instance, for inclusion of both ends:
+<switch:python>
+[python] def tuples_2_bool_inclusive(tuples, x):
+    out = np.zeros(x.size, dtype=bool)
+    for l, u in tuples:
+        out[(x >= l) & (x <= u)] = True
+    return out
+<switch:english>
+[english] That makes sense, thanks for clarifying the operator changes!

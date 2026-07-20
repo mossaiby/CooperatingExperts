@@ -1,0 +1,26 @@
+[english] I need to read specific test counts that my testing tool sets as system environment variables so I know how many tests were found.
+[english] This function is designed to gather test metadata that was pre-configured by a testing runner using environment variables. It iterates through a list of expected keys and retrieves the corresponding count from your operating system's settings.
+<switch:python>
+[python] def get_counts():
+    """return test counts that are set via pyt environment variables when pyt 
+    runs the test
+
+    :returns: dict, 3 keys (classes, tests, modules) and how many tests of each
+        were found by pyt
+    """
+    counts = {}
+    ks = [
+        ('PYT_TEST_CLASS_COUNT', "classes"),
+        ('PYT_TEST_COUNT', "tests"),
+        ('PYT_TEST_MODULE_COUNT', "modules"),
+    ]
+
+    for ek, cn in ks:
+        counts[cn] = int(os.environ.get(ek, 0))
+
+    return counts
+<switch:english>
+[english] If any required environment variable is missing, it safely defaults to zero, and all retrieved values are explicitly cast as integers before being returned in the dictionary.
+[english] What happens if one of those environment variables contains a non-integer string value?
+[english] Since the code uses `int()` directly on the environment variable, passing text that cannot be parsed into an integer will raise a ValueError. To handle this gracefully, you might use a safer conversion method.
+[english] That makes perfect sense; thank you for clarifying how error handling works here.

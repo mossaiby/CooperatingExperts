@@ -1,0 +1,23 @@
+[english] How can I design a reusable registration mechanism that maps classes to unique string identifiers, allowing them to be instantiated from configuration data?
+[english] This setup uses a decorator factory pattern to provide a controlled way of register custom classes into a global registry using specific names or derived identifiers.
+<switch:python>
+[python] def register(name: str = None) -> type:
+    """
+    Register classes that could be initialized from JSON configuration file.
+    If name is not passed, the class name is converted to snake-case.
+    """
+    def decorate(model_cls: type, reg_name: str = None) -> type:
+        model_name = reg_name or short_name(model_cls)
+        global _REGISTRY
+        cls_name = model_cls.__module__ + ':' + model_cls.__name__
+        if model_name in _REGISTRY and _REGISTRY[model_name] != cls_name:
+            logger.warning('Registry name "{}" has been already registered and will be overwritten.'.format(model_name))
+        _REGISTRY[model_name] = cls_name
+        return model_cls
+
+    return lambda model_cls_name: decorate(model_cls_name, name)
+<switch:english>
+[english] The implementation ensures a unique registry key by utilizing the class module and name, while also providing logic to warn developers about potential identifier overwrites.
+[english] If I call '@register('my_key')', does that override whatever automatic snake-case naming would have occurred?
+[english] Yes. When you pass an explicit `name`, it dictates the final key used in the registry, regardless of what the class name or short name might be.
+[english] Thanks, this clarifies how I should handle overrides.

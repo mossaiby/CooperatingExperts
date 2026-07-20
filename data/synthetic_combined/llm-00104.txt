@@ -1,0 +1,26 @@
+[english] How can I write a function that attempts to create a directory but doesn't raise an error if the folder already exists?
+[english] This approach tries to execute os.mkdir() and specifically catches any OSError. By checking err.errno against errno.EEXIST, we only propagate errors that indicate something else went wrong.
+<switch:python>
+[python] def try_mkdir(directory):
+    '''Try to create a directory. Pass without error if it already exists.
+    '''
+    try:
+        os.mkdir(directory)
+    except OSError as err:
+        if err.errno != errno.EEXIST:
+            raise err
+<switch:english>
+[english] If a directory is successfully created or already present, the function completes silently. However, it won't handle complex failure modes like insufficient permissions on parent directories.
+[english] What if I need to ensure all parent directories in a path are also created before making the final one?
+[english] You can use os.makedirs() for this purpose, as it recursively creates any necessary intermediate folders:
+<switch:python>
+[python] import os
+
+def try_mkdir_recursive(directory):
+    try: 
+        os.makedirs(directory) # This handles all levels automatically
+    except OSError as e:
+        if e.errno != errno.EEXIST: # EEXIST still triggers if the target exists
+            raise e
+<switch:english>
+[english] That makes perfect sense, thanks for showing me how to handle recursion!

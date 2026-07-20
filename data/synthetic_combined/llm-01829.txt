@@ -1,0 +1,55 @@
+[english] How do I automatically generate separate Excel reports containing verified variant data for a list of institutes?
+[english] This function iterates through each institute ID, fetches its verified variants from the database, collects unique callers, and then constructs a structured Excel file with these records.
+<switch:python>
+[python] def verified_excel_file(store, institute_list, temp_excel_dir):
+    """Collect all verified variants in a list on institutes and save them to file
+
+    Args:
+        store(adapter.MongoAdapter)
+        institute_list(list): a list of institute ids
+        temp_excel_dir(os.Path): folder where the temp excel files are written to
+
+    Returns:
+        written_files(int): the number of files written to temp_excel_dir
+    """
+    document_lines = []
+    written_files = 0
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    LOG.info('Creating verified variant document..')
+
+    for cust in institute_list:
+        verif_vars = store.verified(institute_id=cust)
+        LOG.info('Found {} verified variants for customer {}'.format(len(verif_vars), cust))
+
+        if not verif_vars:
+            continue
+        unique_callers = set()
+        for var_type, var_callers in CALLERS.items():
+            for caller in var_callers:
+                unique_callers.add(caller.get('id'))
+        cust_verified = export_verified_variants(verif_vars, unique_callers)
+
+        document_name = '.'.join([cust, '_verified_variants', today]) + '.xlsx'
+        workbook = Workbook(os.path.join(temp_excel_dir,document_name))
+        Report_Sheet = workbook.add_worksheet()
+
+        # Write the column header
+        row = 0
+        for col,field in enumerate(VERIFIED_VARIANTS_HEADER + list(unique_callers)):
+            Report_Sheet.write(row,col,field)
+
+        # Write variant lines, after header (start at line 1)
+        for row, line in enumerate(cust_verified,1): # each line becomes a row in the document
+            for col, field in enumerate(line): # each field in line becomes a cell
+                Report_Sheet.write(row,col,field)
+        workbook.close()
+
+        if os.path.exists(os.path.join(temp_excel_dir,document_name)):
+            written_files += 1
+
+    return written_files
+<switch:english>
+[english] The function successfully writes the reports to the specified directory. Note that it relies on external dependencies like `store`, `CALLERS`, and `export_verified_variants` for its core logic.
+[english] What happens if a particular institute has no verified variants?
+[english] If an institute (`cust`) has no verified variants, the function uses 'continue' to skip all subsequent processing (data collection and file generation) for that entry. The code checks this with `if not verif_vars: continue`.
+[english] That makes sense! Thank you.

@@ -1,0 +1,30 @@
+[english] Write a function to fetch a specific API resource by constructing the URL and adding authentication parameters, including error handling.
+[english] This function provides a robust wrapper for making external API calls within a class. It first dynamically builds the endpoint URL based on provided resources. Then, it injectates necessary authentication tokens into the request parameters before executing the fetch call and validating the response status.
+<switch:python>
+[python] def _fetch(self, resource, params):
+        """Fetch a resource.
+
+        :param resource: resource to get
+        :param params: dict with the HTTP parameters needed to get
+            the given resource
+        """
+        url = self.URL % {'resource': resource}
+        params[self.PTOKEN] = self.api_token
+
+        logger.debug("Slack client requests: %s params: %s",
+                     resource, str(params))
+
+        r = self.fetch(url, payload=params)
+
+        # Check for possible API errors
+        result = r.json()
+
+        if not result['ok']:
+            raise SlackClientError(error=result['error'])
+
+        return r.text
+<switch:english>
+[english] The method delegates the actual network operation to an internal `self.fetch` method. Be aware that if the API returns a non-200 HTTP status code, this function might encounter issues unless handled by the underlying `self.fetch` implementation.
+[english] If the API successfully returns data but omits the 'ok' key in the JSON payload, how is that scenario handled?
+[english] The current logic assumes every response contains an 'ok' boolean field to determine success or failure. If this key were missing, accessing `result['ok']` would raise a KeyError prematurely.
+[english] Thanks for clarifying those error handling assumptions!

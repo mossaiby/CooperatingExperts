@@ -1,0 +1,35 @@
+[english] How can I automatically determine which specialized class should be responsible for managing a download's file output?
+[english] This function resolves the proper manager by iterating through a prioritized list of possible managers.
+<switch:python>
+[python] def _get_download_output_manager_cls(self, transfer_future, osutil):
+        """Retrieves a class for managing output for a download
+
+        :type transfer_future: s3transfer.futures.TransferFuture
+        :param transfer_future: The transfer future for the request
+
+        :type osutil: s3transfer.utils.OSUtils
+        :param osutil: The os utility associated to the transfer
+
+        :rtype: class of DownloadOutputManager
+        :returns: The appropriate class to use for managing a specific type of
+            input for downloads.
+        """
+        download_manager_resolver_chain = [
+            DownloadSpecialFilenameOutputManager,
+            DownloadFilenameOutputManager,
+            DownloadSeekableOutputManager,
+            DownloadNonSeekableOutputManager,
+        ]
+
+        fileobj = transfer_future.meta.call_args.fileobj
+        for download_manager_cls in download_manager_resolver_chain:
+            if download_manager_cls.is_compatible(fileobj, osutil):
+                return download_manager_cls
+        raise RuntimeError(
+            'Output %s of type: %s is not supported.' % (
+                fileobj, type(fileobj)))
+<switch:english>
+[english] Compatibility checking strictly relies on the order defined in `download_manager_resolver_chain`. If no class matches, it ensures safety by raising an error specifying the unsupported object type.
+[english] What if two different output manager classes both report that they are compatible with the same file object?
+[english] The function returns immediately upon finding the first match in the `download_manager_resolver_chain`, so precedence is determined by the order of definition.
+[english] That clarifies how the download managers are prioritized.

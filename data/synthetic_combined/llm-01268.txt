@@ -1,0 +1,33 @@
+[english] I need a way to retrieve layout details for different types of output (like inputs or tables) based on an operating system.
+[english] This function strictly validates the input category and uses it to look up configuration data within the global _layouts_matrix before resolving version-specific details.
+<switch:python>
+[python] def get_output_files_layout(output_category):
+    """
+    Parameters
+    ----------
+    output_category: str
+        inputs: epw, idf
+        table: summary table
+        other: other
+    """
+    # check  category
+    if output_category not in ("inputs", "table", "other"):
+        raise RuntimeError(f"unknown {output_category}")
+
+    # get version dict
+    layouts = _layouts_matrix[OS_NAME][output_category]
+
+    # get version
+    return get_value_by_version(layouts)
+<switch:english>
+[english] The function relies heavily on external constants like OS_NAME and functions like get_value_by_version, defining its operational scope in those dependencies.
+[english] If `OS_NAME` is not defined or doesn't exist in _layouts_matrix, would this function crash?
+[english] Yes. If either os_name or the specified category isn't found in the matrix structure, a KeyError will be raised when accessing layouts.
+<switch:python>
+[python] try:
+    layouts = _layouts_matrix[OS_NAME][output_category]
+except KeyError as e:
+    print(f"Error: Required key not found in layout matrix: {e}")
+    return None
+<switch:english>
+[english] That clarifies the dependency risk.

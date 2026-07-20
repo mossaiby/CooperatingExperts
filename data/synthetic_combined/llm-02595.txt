@@ -1,0 +1,88 @@
+[english] Create a method to retrieve hash values for files or provided data based on configured hashing parameters and algorithms.
+[english] This function first validates the requested algorithm against the allowed list. It then branches its logic based on whether input comes from a file path or raw data, handling both single-algorithm requests and iterating through all valid options.
+<switch:python>
+[python] def get(self):
+        """
+        Return the hash of the given file
+        """
+
+        # We initiate a variable which will save the result we are going
+        # to return.
+        result = {}
+
+        if self.algorithm in self.valid_algorithms:
+            # * The parsed path exist.
+            # and
+            # * The parsed algorithm is in the list of valid algorithms.
+
+            if self.algorithm == "all":
+                # The parsed algorithm is `all`.
+
+                # We remove `all` (the first element of the list) from
+                # the list of valid algorithms because we are going to
+                # loop through the list of valid algorithms.
+                del self.valid_algorithms[0]
+
+                for algo in self.valid_algorithms:
+                    # We loop through the list of valid algorithms.
+
+                    if self.path and path.isfile(self.path):
+                        # The file path exist.
+
+                        # We save the hash into the result variable.
+                        result[algo] = self._hash_file(algo)
+                    elif self.data:
+                        # * The path does not exist.
+                        # and
+                        # * The given data is not empty.
+
+                        # We save the hash into the result variable.
+                        result[algo] = self._hash_data(algo)
+                    else:  # pragma: no cover
+                        # All other case are met.
+
+                        # We return None.
+                        return None
+            else:
+                # The parsed algorithm is a specific one.
+
+                if self.path and path.isfile(self.path):
+                    # The file path exist.
+
+                    # We save the hash into the result variable.
+                    result[self.algorithm] = self._hash_file(self.algorithm)
+                elif self.data:
+                    # * The path does not exist.
+                    # and
+                    # * The given data is not empty.
+
+                    # We save the hash into the result variable.
+                    result[self.algorithm] = self._hash_data(self.algorithm)
+                else:
+                    # All the other case are met.
+
+                    # We return None.
+                    return None
+        else:  # pragma: no cover
+            # The parsed algorithm is not in the list of valid algorithms.
+            return None
+
+        if self.algorithm != "all" and self.only_hash:
+            # * The parsed algorithm is not equal to `all`.
+            # and
+            # * We only have to return the selected hash.
+
+            # We return the selected algorithm.
+            return result[self.algorithm]
+
+        # * The parsed algorithm is equal to `all`.
+        # or
+        # * We do not have to return the selected hash.
+
+        # We return all hashes.
+        return result
+<switch:english>
+[english] The internal dictionary `result` stores hashes keyed by the algorithm name; however, if `self.only_hash` is true for specific algorithms, it simplifies the return value to just the computed hash string.
+[english] What happens when the requested algorithm is valid but neither a file path nor data content has been provided?
+[english] If an algorithm is valid but both `self.path` and `self.data` are empty, the function enters the final else block within its logic and immediately returns None.
+[english] Thanks for clarifying how this function handles missing inputs!

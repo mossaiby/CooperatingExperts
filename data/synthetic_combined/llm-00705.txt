@@ -1,0 +1,55 @@
+[english] How do I save my collection of APE tags into a standardized binary file format?
+[english] This function manages saving tag data to a specified file path. It first determines if an existing file should be updated or newly created before preparing and writing the proprietary APETAGEX header, content, and footer.
+<switch:python>
+[python] def save(self, filename=None):
+        """Save changes to a file.
+
+        If no filename is given, the one most recently loaded is used.
+
+        Tags are always written at the end of the file, and include
+        a header and a footer.
+        """
+
+        filename = filename or self.filename
+        try:
+            fileobj = open(filename, "r+b")
+        except IOError:
+            fileobj = open(filename, "w+b")
+        data = _APEv2Data(fileobj)
+
+        if data.is_at_start:
+            delete_bytes(fileobj, data.end - data.start, data.start)
+        elif data.start is not None:
+            fileobj.seek(data.start)
+            # Delete an ID3v1 tag if present, too.
+            fileobj.truncate()
+        fileobj.seek(0, 2)
+
+        # "APE tags items should be sorted ascending by size... This is
+        # not a MUST, but STRONGLY recommended. Actually the items should
+        # be sorted by importance/byte, but this is not feasible."
+        tags = sorted((v._internal(k) for k, v in self.items()), key=len)
+        num_tags = len(tags)
+        tags = b"".join(tags)
+
+        header = bytearray(b"APETAGEX")
+        # version, tag size, item count, flags
+        header += struct.pack("<4I", 2000, len(tags) + 32, num_tags,
+                              HAS_HEADER | IS_HEADER)
+        header += b"\0" * 8
+        fileobj.write(header)
+
+        fileobj.write(tags)
+
+        footer = bytearray(b"APETAGEX")
+        footer += struct.pack("<4I", 2000, len(tags) + 32, num_tags,
+                              HAS_HEADER)
+        footer += b"\0" * 8
+
+        fileobj.write(footer)
+        fileobj.close()
+<switch:english>
+[english] The core logic ensures that old metadata is cleared by seeking and truncating the file contents before the new tags are written sequentially.
+[english] If I try to overwrite an existing tag entry with a different length, does it handle potential misalignment in the tag data?
+[english] Yes, if `data.is_at_start` is true, the function uses `delete_bytes` to clear old content based on the difference between the current and new sizes.
+[english] That makes sense; I'll test that file handling logic right away.

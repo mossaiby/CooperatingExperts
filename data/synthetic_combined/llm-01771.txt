@@ -1,0 +1,16 @@
+[english] How can I safely clear or selectively delete records from the hgnc_gene database collection?
+[english] This method provides a flexible way to manage gene data by allowing you to conditionally drop entries based on a specific build identifier.
+<switch:python>
+[python] def drop_genes(self, build=None):
+        """Delete the genes collection"""
+        if build:
+            LOG.info("Dropping the hgnc_gene collection, build %s", build)
+            self.hgnc_collection.delete_many({'build': build})
+        else:
+            LOG.info("Dropping the hgnc_gene collection")
+            self.hgnc_collection.drop()
+<switch:english>
+[english] The code achieves targeted cleanup using `delete_many` if a specific build is provided, or performs a total wipe via `drop()` otherwise.
+[english] How does the function handle cases where you pass a 'build' tag that doesn't actually exist in the collection?
+[english] If the specified build ID is not found, the `delete_many` operation will complete successfully but simply delete zero documents. No error is raised by the driver in this scenario.
+[english] Great explanation; I understand how selective deletion works now.

@@ -1,0 +1,29 @@
+[english] How do I define a valid identifier pattern that follows standard programming language rules, such as C++ or Java?
+[english] This function uses a grammar library to precisely define what constitutes an identifier. It ensures the sequence starts correctly and only contains allowed characters thereafter.
+<switch:python>
+[python] def identifier(self, text):
+    """identifier = alpha_character | "_" . {alpha_character | "_" | digit} ;"""
+    self._attempting(text)
+    return concatenation([
+      alternation([
+        self.alpha_character,
+        "_"
+      ]),
+      zero_or_more(
+        alternation([
+          self.alpha_character,
+          "_",
+          self.digit
+        ])
+      )
+    ], ignore_whitespace=False)(text).compressed(TokenType.identifier)
+<switch:english>
+[english] The use of `self.alpha_character` enforces the starting rule, while `zero_or_more` handles subsequent valid character sequences.
+[english] What happens if a string we are checking begins with a digit?
+[english] Since the initial alternation only accepts `alpha_character` or `"_", any identifier beginning with a digit will fail this validation. For reference, here is how you might use it in a test case:
+<switch:python>
+[python] test_text = "1variable"
+result = identifier(test_text)
+# result would indicate that the pattern does not match at the start.
+<switch:english>
+[english] That perfectly clarifies the starting character requirement.

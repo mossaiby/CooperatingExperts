@@ -1,0 +1,72 @@
+[english] I need a utility function that correctly finalizes an active tracing span, capturing its total duration, recording any exceptions encountered, and ensuring all associated resources are cleaned up.
+[english] The `stop` method is the core lifecycle hook for finishing a distributed trace. It first handles necessary context cleanup (popping attributes) and then checks if data logging should proceed based on transport configuration.
+<switch:python>
+[python] def stop(self, _exc_type=None, _exc_value=None, _exc_traceback=None):
+        """Exit the span context. Zipkin attrs are pushed onto the
+        threadlocal stack regardless of sampling, so they always need to be
+        popped off. The actual logging of spans depends on sampling and that
+        the logging was correctly set up.
+        """
+
+        if self.do_pop_attrs:
+            self.get_tracer().pop_zipkin_attrs()
+
+        # If no transport is configured, there's no reason to create a new Span.
+        # This also helps avoiding memory leaks since without a transport nothing
+        # would pull spans out of get_tracer().
+        if not self.get_tracer().is_transport_configured():
+            return
+
+        # Add the error annotation if an exception occurred
+        if any((_exc_type, _exc_value, _exc_traceback)):
+            error_msg = u'{0}: {1}'.format(_exc_type.__name__, _exc_value)
+            self.update_binary_annotations({
+                ERROR_KEY: error_msg,
+            })
+
+        # Logging context is only initialized for "root" spans of the local
+        # process (i.e. this zipkin_span not inside of any other local
+        # zipkin_spans)
+        if self.logging_context:
+            try:
+                self.logging_context.stop()
+            except Exception as ex:
+                err_msg = 'Error emitting zipkin trace. {}'.format(
+                    repr(ex),
+                )
+                log.error(err_msg)
+            finally:
+                self.logging_context = None
+                self.get_tracer().clear()
+                self.get_tracer().set_transport_configured(configured=False)
+                return
+
+        # If we've gotten here, that means that this span is a child span of
+        # this context's root span (i.e. it's a zipkin_span inside another
+        # zipkin_span).
+        end_timestamp = time.time()
+        # If self.duration is set, it means the user wants to override it
+        if self.duration:
+            duration = self.duration
+        else:
+            duration = end_timestamp - self.start_timestamp
+
+        endpoint = create_endpoint(self.port, self.service_name, self.host)
+        self.get_tracer().add_span(Span(
+            trace_id=self.zipkin_attrs.trace_id,
+            name=self.span_name,
+            parent_id=self.zipkin_attrs.parent_span_id,
+            span_id=self.zipkin_attrs.span_id,
+            kind=self.kind,
+            timestamp=self.timestamp if self.timestamp else self.start_timestamp,
+            duration=duration,
+            annotations=self.annotations,
+            local_endpoint=endpoint,
+            remote_endpoint=self.remote_endpoint,
+            tags=self.binary_annotations,
+        ))
+<switch:english>
+[english] After time metrics like duration are calculated, this function constructs a final `Span` object using all recorded metadata before passing it to the tracer for output processing.
+[english] If an error occurs during the span's lifecycle, how does this method guarantee that resource-intensive logging contexts or trackers don't remain active in memory?
+[english] The logic employs `try...finally` blocks when a logging context is initialized. Specifically, within the `logging_context` block, `self.get_tracer().clear()` and setting transport configuration to false ensures cleanup even if subsequent operations fail.
+[english] That clarifies how resource state is managed during tracing.

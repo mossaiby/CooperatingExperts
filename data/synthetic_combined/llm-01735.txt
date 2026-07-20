@@ -1,0 +1,31 @@
+[english] How can I register a custom callback (hook) that executes in a specific order relative to other registered hooks?
+[english] This function manages the registration of hook objects into an internal list while ensuring they remain sorted by their priority.
+It assigns the correct numerical priority and then inserts the hook into `self._hooks` at the position dictated by its relative priority.
+<switch:python>
+[python] def register_hook(self, hook, priority='NORMAL'):
+        """Register a hook into the hook list.
+
+        Args:
+            hook (:obj:`Hook`): The hook to be registered.
+            priority (int or str or :obj:`Priority`): Hook priority.
+                Lower value means higher priority.
+        """
+        assert isinstance(hook, Hook)
+        if hasattr(hook, 'priority'):
+            raise ValueError('"priority" is a reserved attribute for hooks')
+        priority = get_priority(priority)
+        hook.priority = priority
+        # insert the hook to a sorted list
+        inserted = False
+        for i in range(len(self._hooks) - 1, -1, -1):
+            if priority >= self._hooks[i].priority:
+                self._hooks.insert(i + 1, hook)
+                inserted = True
+                break
+        if not inserted:
+            self._hooks.insert(0, hook)
+<switch:english>
+[english] The implementation iterates backwards to find the insertion point, correctly placing lower-priority items after higher-priority ones. The logic dictates that a higher value for 'priority' means it is executed later in the sequence.
+[english] What happens if I pass a priority string that `get_priority` cannot convert? Does this function handle errors gracefully?
+[english] If `get_priority` fails, the error is propagated unless explicitly handled within its own definition. If you need specific input validation, you should wrap the call to it in a try-except block.
+[english] Thanks for clarifying how priority sorting works!

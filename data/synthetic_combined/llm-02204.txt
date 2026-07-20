@@ -1,0 +1,24 @@
+[english] How can I programmatically assign a new unique ID to an existing H2OFrame object?
+[english] This function modifies the frame's internal structure by directly manipulating its expression node and cache. It ensures that all necessary structural updates are performed before finalizing the ID change.
+<switch:python>
+[python] def assign(data, xid):
+    """
+    (internal) Assign new id to the frame.
+
+    :param data: an H2OFrame whose id should be changed
+    :param xid: new id for the frame.
+    :returns: the passed frame.
+    """
+    assert_is_type(data, H2OFrame)
+    assert_is_type(xid, str)
+    assert_satisfies(xid, xid != data.frame_id)
+    check_frame_id(xid)
+    data._ex = ExprNode("assign", xid, data)._eval_driver(False)
+    data._ex._cache._id = xid
+    data._ex._children = None
+    return data
+<switch:english>
+[english] Since this function relies on modifying private attributes like `._ex`, it is intended for internal use within the H2O library environment.
+[english] What happens if we try to call this function with an xid that is already in use elsewhere?
+[english] The function includes assertions, specifically `check_frame_id(xid)`, which will raise an error if the proposed new ID conflicts with existing ones.
+[english] That makes sense, thanks for clarifying the internal constraints!

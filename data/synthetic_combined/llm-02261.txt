@@ -1,0 +1,49 @@
+[english] How do I convert this complex XML representation of a service bus subscription element into a usable Python Subscription object?
+[english] This function is designed to map data from a specific XML structure, typically found in Atom feeds, onto a custom Subscription object. It first targets the 'SubscriptionDescription' node and then uses predefined mappings to extract and type-convert key fields.
+<switch:python>
+[python] def _convert_etree_element_to_subscription(entry_element):
+    '''Converts entry element to subscription
+
+    The xml format for subscription:
+<entry xmlns='http://www.w3.org/2005/Atom'>
+    <content type='application/xml'>
+    <SubscriptionDescription
+        xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect">
+        <LockDuration>PT5M</LockDuration>
+        <RequiresSession>false</RequiresSession>
+        <DefaultMessageTimeToLive>P10675199DT2H48M5.4775807S</DefaultMessageTimeToLive>
+        <DeadLetteringOnMessageExpiration>false</DeadLetteringOnMessageExpiration>
+        <DeadLetteringOnFilterEvaluationExceptions>true</DeadLetteringOnFilterEvaluationExceptions>
+    </SubscriptionDescription>
+    </content>
+</entry>
+    '''
+    subscription = Subscription()
+
+    subscription_element = entry_element.find('./atom:content/sb:SubscriptionDescription', _etree_sb_feed_namespaces)
+    if subscription_element is not None:
+        mappings = [
+            ('LockDuration', 'lock_duration', None),
+            ('RequiresSession', 'requires_session', _parse_bool),
+            ('DefaultMessageTimeToLive', 'default_message_time_to_live', None),
+            ('DeadLetteringOnFilterEvaluationExceptions', 'dead_lettering_on_filter_evaluation_exceptions', _parse_bool),  # pylint: disable=line-too-long
+            ('DeadLetteringOnMessageExpiration', 'dead_lettering_on_message_expiration', _parse_bool),
+            ('EnableBatchedOperations', 'enable_batched_operations', _parse_bool),
+            ('MaxDeliveryCount', 'max_delivery_count', int),
+            ('MessageCount', 'message_count', int),
+        ]
+
+        for mapping in mappings:
+            _read_etree_element(subscription_element, mapping[0], subscription, mapping[1], mapping[2])
+
+    for name, value in _ETreeXmlToObject.get_entry_properties_from_element(
+            entry_element, True, '/subscriptions').items():
+        setattr(subscription, name, value)
+
+    return subscription
+<switch:english>
+[english] The conversion relies heavily on helper functions like `_read_etree_element` for selective parsing, so ensure those dependencies are correctly defined elsewhere in your codebase.
+[english] What happens if the '<SubscriptionDescription>' element is missing entirely from the input XML?
+[english] If `subscription_element` is not found, the function skips all specific field mappings. However, it still attempts to extract general properties using `_ETreeXmlToObject` before returning an initialized subscription object.
+[english] That helps me understand how the data extraction handles missing elements!

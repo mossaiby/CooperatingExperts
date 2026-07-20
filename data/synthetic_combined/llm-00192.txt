@@ -1,0 +1,61 @@
+[english] How can I perform Gene Set Enrichment Analysis on my expression data using the ssGSEA approach?
+[english] This function serves as an easy wrapper to run single-sample GSEA. It initializes and executes the primary computation engine based on your provided gene sets and expression data.
+<switch:python>
+[python] def ssgsea(data, gene_sets, outdir="ssGSEA_", sample_norm_method='rank', min_size=15, max_size=2000,
+           permutation_num=0, weighted_score_type=0.25, scale=True, ascending=False, processes=1,
+           figsize=(7,6), format='pdf', graph_num=20, no_plot=False, seed=None, verbose=False):
+    """Run Gene Set Enrichment Analysis with single sample GSEA tool
+
+    :param data: Expression table, pd.Series, pd.DataFrame, GCT file, or .rnk file format.
+    :param gene_sets: Enrichr Library name or .gmt gene sets file or dict of gene sets. Same input with GSEA.
+    :param outdir: Results output directory.
+    :param str sample_norm_method: "Sample normalization method. Choose from {'rank', 'log', 'log_rank'}. Default: rank.
+
+               1. 'rank': Rank your expression data, and transform by 10000*rank_dat/gene_numbers
+               2. 'log' : Do not rank, but transform data by log(data + exp(1)), while data = data[data<1] =1.
+               3. 'log_rank': Rank your expression data, and transform by log(10000*rank_dat/gene_numbers+ exp(1))
+               4. 'custom': Do nothing, and use your own rank value to calculate enrichment score.
+    
+    see here: https://github.com/GSEA-MSigDB/ssGSEAProjection-gpmodule/blob/master/src/ssGSEAProjection.Library.R, line 86
+
+    :param int min_size: Minimum allowed number of genes from gene set also the data set. Default: 15.
+    :param int max_size: Maximum allowed number of genes from gene set also the data set. Default: 2000.
+    :param int permutation_num: Number of permutations for significance computation. Default: 0.
+    :param str weighted_score_type: Refer to :func:`algorithm.enrichment_score`. Default:0.25.
+    :param bool scale: If True, normalize the scores by number of genes in the gene sets.
+    :param bool ascending: Sorting order of rankings. Default: False.
+    :param int processes: Number of Processes you are going to use. Default: 1.
+    :param list figsize: Matplotlib figsize, accept a tuple or list, e.g. [width,height]. Default: [7,6].
+    :param str format: Matplotlib figure format. Default: 'pdf'.
+    :param int graph_num: Plot graphs for top sets of each phenotype.
+    :param bool no_plot: If equals to True, no figure will be drawn. Default: False.
+    :param seed: Random seed. expect an integer. Default:None.
+    :param bool verbose: Bool, increase output verbosity, print out progress of your job, Default: False.
+
+    :return: Return a ssGSEA obj. 
+             All results store to  a dictionary, access enrichment score by obj.resultsOnSamples,
+             and normalized enrichment score by obj.res2d.
+             if permutation_num > 0, additional results contain::
+
+                 | {es: enrichment score,
+                 |  nes: normalized enrichment score,
+                 |  p: P-value,
+                 |  fdr: FDR,
+                 |  size: gene set size,
+                 |  matched_size: genes matched to the data,
+                 |  genes: gene names from the data set
+                 |  ledge_genes: leading edge genes, if permutation_num >0}
+
+
+    """
+
+    ss = SingleSampleGSEA(data, gene_sets, outdir, sample_norm_method, min_size, max_size,
+                          permutation_num, weighted_score_type, scale, ascending,
+                          processes, figsize, format, graph_num, no_plot, seed, verbose)
+    ss.run()
+    return ss
+<switch:english>
+[english] The function returns a structured object containing both raw enrichment scores (es) and normalized results (nes), with permutation enabled for significance testing if requested.
+[english] If I set 'processes' greater than 1, will this execution leverage multiprocessing effectively?
+[english] Yes, the `ssgsea` function utilizes parallel processing via the `processes` parameter to speed up the computation of enrichment scores across multiple cores.
+[english] That clarifies how to speed up the computation.

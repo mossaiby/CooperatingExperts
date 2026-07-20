@@ -1,0 +1,20 @@
+[english] How do I automatically select the correct GDAL driver based on a file extension when processing images?
+[english] This function determines which specialized image driver should handle a given path. It extracts the file's extension and then iterates through available drivers to find a matching registered type.
+<switch:python>
+[python] def driver_for_path(path, drivers=None):
+    """Returns the gdal.Driver for a path or None based on the file extension.
+
+    Arguments:
+    path -- file path as str with a GDAL supported file extension
+    """
+    ext = (os.path.splitext(path)[1][1:] or path).lower()
+    drivers = drivers or ImageDriver.registry if ext else {}
+    for name, meta in drivers.items():
+        if ext == meta.get('DMD_EXTENSION', '').lower():
+            return ImageDriver(name)
+    return None
+<switch:english>
+[english] The function successfully maps the path extension to a driver object if a match is found in the registry. Note that this implementation relies on external imports like `os` and specific GDAL components.
+[english] If the provided `path` has no file extension, how does the function behave?
+[english] If no extension exists, the logic uses the entire path as the effective extension in step one. However, because it searches for a match against '_EXTENSION' fields which are usually empty for non-file types, it will likely return `None` unless that specific string is explicitly defined in the driver registry.
+[english] Got it, thanks for clarifying that edge case!

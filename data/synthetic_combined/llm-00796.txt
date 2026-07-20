@@ -1,0 +1,25 @@
+[english] How can I extract a list of commit IDs contained within a specific Git pack file?
+[english] To find the commits, we call `git verify-pack` using the path to the relevant pack file. We then process the standard output to isolate lines that specifically mention 'commit'.
+<switch:python>
+[python] def _read_commits_from_pack(self, packet_name):
+        """Read the commits of a pack."""
+
+        filepath = 'objects/pack/pack-' + packet_name
+
+        cmd_verify_pack = ['git', 'verify-pack', '-v', filepath]
+
+        outs = self._exec(cmd_verify_pack, cwd=self.dirpath, env=self.gitenv)
+        outs = outs.decode('utf-8', errors='surrogateescape').rstrip()
+
+        lines = [line.split(' ') for line in outs.split('\n')]
+
+        # Commits usually come in the pack ordered from newest to oldest
+        commits = [parts[0] for parts in lines if parts[1] == 'commit']
+        commits.reverse()
+
+        return commits
+<switch:english>
+[english] The function correctly parses the raw command output and reverses the list because Git typically outputs items from newest to oldest.
+[english] What happens if we try this path with a 'packfile.tar' instead of the strict pack format, or what if `git verify-pack` fails?
+[english] If the file is not a valid Git object archive, the external call (`self._exec`) will likely fail. We should check the return code from `outs.decode()` and handle potential exceptions around it.
+[english] Got it, checking for failures seems like a necessary improvement.

@@ -1,0 +1,48 @@
+[english] How do I automatically remove or change small, consecutive runs of identical values in a boolean array based on a specific threshold?
+[english] This function examines a boolean filter to find contiguous blocks (fragments). It then modifies these identified fragments by either forcing them to True or False depending on the provided mode and threshold.
+<switch:python>
+[python] def defrag(filt, threshold=3, mode='include'):
+    """
+    'Defragment' a filter.
+
+    Parameters
+    ----------
+    filt : boolean array
+        A filter
+    threshold : int
+        Consecutive values equal to or below this threshold
+        length are considered fragments, and will be removed.
+    mode : str
+        Wheter to change False fragments to True ('include')
+        or True fragments to False ('exclude')
+
+    Returns
+    -------
+    defragmented filter : boolean array
+    """
+    if bool_2_indices(filt) is None:
+        return filt
+
+    if mode == 'include':
+        inds = bool_2_indices(~filt) + 1
+        rep = True
+    if mode == 'exclude':
+        inds = bool_2_indices(filt) + 1
+        rep = False
+
+    rem = (np.diff(inds) <= threshold)[:, 0]
+
+    cfilt = filt.copy()
+    if any(rem):
+        for lo, hi in inds[rem]:
+            cfilt[lo:hi] = rep
+
+    return cfilt
+<switch:english>
+[english] The function specifically uses NumPy's `np.diff` on indices to determine if consecutive identical values form a fragment meeting the threshold before applying changes.
+[english] If I set the threshold to 1, will single isolated bits be considered fragments and modified?
+[english] Yes, setting the `threshold=1` means that any single element identified as part of a potential fragment meets the condition for removal or replacement.
+<switch:python>
+[python] defrag(np.array([False]), threshold=1, mode='include') # Returns array([True])
+<switch:english>
+[english] That makes perfect sense, thank you!

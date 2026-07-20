@@ -1,0 +1,47 @@
+[english] How do I implement the logic for outside contraction within a simplex-based optimization routine?
+[english] This function is a factory that generates a specific condition check (`_contraction`) used during an optimization loop – likely mimicking behavior found in evolutionary or metaheuristic solvers. It evaluates whether a contracted point offers better objective values than the current reflected state.
+<switch:python>
+[python] def _outside_contraction_fn(objective_function,
+                            simplex,
+                            objective_values,
+                            face_centroid,
+                            best_index,
+                            worst_index,
+                            reflected,
+                            objective_at_reflected,
+                            contraction,
+                            shrinkage,
+                            batch_evaluate_objective):
+  """Creates the condition function pair for an outside contraction."""
+  def _contraction():
+    """Performs a contraction."""
+    contracted = face_centroid + contraction * (reflected - face_centroid)
+    objective_at_contracted = objective_function(contracted)
+    is_contracted_acceptable = objective_at_contracted <= objective_at_reflected
+    def _accept_contraction():
+      next_simplex = _replace_at_index(simplex, worst_index, contracted)
+      objective_at_next_simplex = _replace_at_index(
+          objective_values,
+          worst_index,
+          objective_at_contracted)
+      return (False,
+              next_simplex,
+              objective_at_next_simplex,
+              1)
+
+    def _reject_contraction():
+      return _shrink_towards_best(objective_function,
+                                  simplex,
+                                  best_index,
+                                  shrinkage,
+                                  batch_evaluate_objective)
+
+    return prefer_static.cond(is_contracted_acceptable,
+                              _accept_contraction,
+                              _reject_contraction)
+  return _contraction
+<switch:english>
+[english] The resulting contraction logic decides between accepting a new state via `_accept_contraction` or reverting to a safer search path using `_reject_contraction`. It heavily relies on several external helper functions like `prefer_static` and `shrink_towards_best` which manage the iteration flow.
+[english] What precisely constitutes a 'shrink window' in this context?
+[english] In rejection, the contraction is bypassed, and the system calls `_shrink_towards_best`. This usually means shifting the simplex towards the best-performing element to further refine the solution when improvement is not found through simple movement.
+[english] That clarifies how the failure case behaves in this optimization scheme.

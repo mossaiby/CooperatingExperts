@@ -1,0 +1,26 @@
+[english] How can I automate the formatting of structured label/data pairs into consistently aligned output lines suitable for printing?
+[english] This function first determines the maximum length among all provided labels to establish a consistent column width. It then iterates through each pair, using that max length to align the labels and format either single data points or complex lists.
+<switch:python>
+[python] def info_formatter(info):
+    """Produce a sequence of formatted lines from info.
+
+    `info` is a sequence of pairs (label, data).  The produced lines are
+    nicely formatted, ready to print.
+
+    """
+    label_len = max([len(l) for l, _d in info])
+    for label, data in info:
+        if data == []:
+            data = "-none-"
+        if isinstance(data, (list, tuple)):
+            prefix = "%*s:" % (label_len, label)
+            for e in data:
+                yield "%*s %s" % (label_len+1, prefix, e)
+                prefix = ""
+        else:
+            yield "%*s: %s" % (label_len, label, data)
+<switch:english>
+[english] The use of `yield` makes this a memory-efficient generator that produces formatted lines one by one. Be aware that multi-line list entries are printed relative to the initial label width calculation.
+[english] What happens if one of the elements in the data list is itself another sequence or tuple?
+[english] The current implementation treats nested sequences literally because it only checks if the primary `data` object is a list or tuple. To handle deeper nesting, you would need to implement recursion within the inner loop.
+[english] Got it! I'll refactor this using recursion.

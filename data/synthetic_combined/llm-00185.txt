@@ -1,0 +1,16 @@
+[english] How can I set up a logging feature that displays which training parameters have been accessed?
+[english] This function systematically checks if a logger is available before proceeding to record parameter usage. It iterates through all tracked parameters and uses the defined logger to output usage information.
+<switch:python>
+[python] def report(self):
+        """
+        Report usage of training parameters.
+        """
+        if self.logger:
+            self.logger.info("accessed parameters:")
+            for key in self.used_parameters:
+                self.logger.info(" - %s %s" % (key, "(undefined)" if key in self.undefined_parameters else ""))
+<switch:english>
+[english] The logging logic cleverly differentiates between used parameters and those that are undefined, providing clear context in the log.
+[english] What would happen if `self.used_parameters` contained a parameter string that was too long for the logger's format?
+[english] The formatting `%s %s` will handle standard strings well, but exceptionally long keys might get truncated or wrapped by your specific logging configuration.
+[english] That makes sense, thanks!

@@ -1,0 +1,19 @@
+[english] How do I programmatically create and add a new list to my board using this Python function?
+[english] This method handles the creation process by making an HTTP POST request through `self.fetch_json`. It uses any provided query parameters or defaults to an empty dictionary for safety.
+<switch:python>
+[python] def add_list(self, query_params=None):
+        '''
+        Create a list for a board. Returns a new List object.
+        '''
+        list_json = self.fetch_json(
+            uri_path=self.base_uri + '/lists',
+            http_method='POST',
+            query_params=query_params or {}
+        )
+
+        return self.create_list(list_json)
+<switch:english>
+[english] The fetched JSON response is then processed immediately by calling `self.create_list` on that data; it relies entirely on the successful responses from those internal methods to function correctly.
+[english] If my specific query parameters are missing, how does this function handle potential errors during the fetch?
+[english] It defaults to `{}` for the `query_params`, which is safe. However, if `self.fetch_json` fails (e.g., API issues), you should add a try-except block around the call in your calling code.
+[english] That makes sense, I appreciate the clarification on error handling!

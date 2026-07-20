@@ -1,0 +1,25 @@
+[english] How do I programmatically insert a new and valid data chunk into an AIFF file object?
+[english] This method is designed to handle the necessary steps for adding a new piece of chunk data to the existing file format. It first validates the provided identifier, then properly writes the required header information at the appropriate offset.
+<switch:python>
+[python] def insert_chunk(self, id_):
+        """Insert a new chunk at the end of the IFF file"""
+
+        if not isinstance(id_, text_type):
+            id_ = id_.decode('ascii')
+
+        if not is_valid_chunk_id(id_):
+            raise KeyError("AIFF key must be four ASCII characters.")
+
+        self.__fileobj.seek(self.__next_offset)
+        self.__fileobj.write(pack('>4si', id_.ljust(4).encode('ascii'), 0))
+        self.__fileobj.seek(self.__next_offset)
+        chunk = IFFChunk(self.__fileobj, self[u'FORM'])
+        self[u'FORM'].resize(self[u'FORM'].data_size + chunk.size)
+
+        self.__chunks[id_] = chunk
+        self.__next_offset = chunk.offset + chunk.size
+<switch:english>
+[english] The function successfully updates the parent 'FORM' chunk size to accommodate the new data. However, users must ensure that self.__next_offset is correctly positioned before calling this method.
+[english] Does this function check if a chunk with the provided ID already exists in the file?
+[english] Currently, there is no explicit internal check for existing IDs within `self.__chunks`. If you need to prevent overwriting, you would add an 'if id_ not in self.__chunks:' guard.
+[english] This clarification helps me understand the limitations.

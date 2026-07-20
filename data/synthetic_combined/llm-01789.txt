@@ -1,0 +1,21 @@
+[english] I need a way to add localized descriptions to a controlled vocabulary identified by its ID.
+[english] The function validates the requested language reference (`lang_ref`) against pre-defined languages. It then appends the new description tuple to the existing list entry associated with the provided vocabulary ID.
+<switch:python>
+[python] def add_cv_description(self, cv_id, lang_ref, description=None):
+        """Add a description to a controlled vocabulary.
+
+        :param str cv_id: Name of the controlled vocabulary to add the
+            description.
+        :param str lang_ref: Language reference.
+        :param str description: Description, this can be none.
+        :throws KeyError: If there is no controlled vocabulary with that id.
+        :throws ValueError: If the language provided doesn't exist.
+        """
+        if lang_ref not in self.languages:
+            raise ValueError('Language not present: {}'.format(lang_ref))
+        self.controlled_vocabularies[cv_id][0].append((lang_ref, description))
+<switch:english>
+[english] This function will throw a KeyError if the `cv_id` is missing from `self.controlled_vocabularies`, as it accesses the key directly without pre-existing checks.
+[english] What should happen if I provide a `cv_id` that doesn't exist in the class state?
+[english] If the ID does not exist, Python will raise a KeyError when trying to access it. To handle this gracefully, you could add a check or use `.get()` before appending.
+[english] Does that help clarify how descriptions are managed?

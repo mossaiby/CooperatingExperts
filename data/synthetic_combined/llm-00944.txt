@@ -1,0 +1,56 @@
+[english] I need a robust way to retrieve messages from multiple mailing list archives while filtering out anything older than a specific date.
+[english] This function orchestrates the retrieval process by iterating through each mailbox in the list, validating individual messages, and yielding only those that meet the specified date criteria. It manages temporary file creation for safety during parsing attempts.
+<switch:python>
+[python] def _fetch_and_parse_messages(self, mailing_list, from_date):
+        """Fetch and parse the messages from a mailing list"""
+
+        from_date = datetime_to_utc(from_date)
+
+        nmsgs, imsgs, tmsgs = (0, 0, 0)
+
+        for mbox in mailing_list.mboxes:
+            tmp_path = None
+
+            try:
+                tmp_path = self._copy_mbox(mbox)
+
+                for message in self.parse_mbox(tmp_path):
+                    tmsgs += 1
+
+                    if not self._validate_message(message):
+                        imsgs += 1
+                        continue
+
+                    # Ignore those messages sent before the given date
+                    dt = str_to_datetime(message[MBox.DATE_FIELD])
+
+                    if dt < from_date:
+                        logger.debug("Message %s sent before %s; skipped",
+                                     message['unixfrom'], str(from_date))
+                        tmsgs -= 1
+                        continue
+
+                    # Convert 'CaseInsensitiveDict' to dict
+                    message = self._casedict_to_dict(message)
+
+                    nmsgs += 1
+                    logger.debug("Message %s parsed", message['unixfrom'])
+
+                    yield message
+            except (OSError, EOFError) as e:
+                logger.warning("Ignoring %s mbox due to: %s", mbox.filepath, str(e))
+            except Exception as e:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                raise e
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        logger.info("Done. %s/%s messages fetched; %s ignored",
+                    nmsgs, tmsgs, imsgs)
+<switch:english>
+[english] The code uses exception handling to gracefully skip corrupted mailboxes while ensuring cleanup of any temporary files via a `finally` block regardless of errors. This design makes it resilient against I/O problems in large archives.
+[english] What mechanism ensures that any temporary files generated for an individual mailbox are properly removed after processing?
+[english] The `finally` block at the end of the loop checks if `tmp_path` is set and exists before calling `os.remove(tmp_path)`, ensuring cleanup happens even if errors occur during message parsing.
+[english] That makes sense, thank you for explaining that logic.

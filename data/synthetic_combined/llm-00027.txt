@@ -1,0 +1,25 @@
+[english] I need a way to dynamically import specific modules shared across all applications listed in my Django project settings.
+[english] This function systematically traverses every application defined in your `INSTALLED_APPS` setting. For each app, it uses the provided module name and an assumed utility function to attempt an import, collecting any successfully loaded modules into a list before returning them.
+<switch:python>
+[python] def import_project_modules(module_name):
+    """Imports modules from registered apps using given module name
+    and returns them as a list.
+
+    :param str module_name:
+    :rtype: list
+
+    """
+    from django.conf import settings
+
+    submodules = []
+    for app in settings.INSTALLED_APPS:
+        module = import_app_module(app, module_name)
+        if module is not None:
+            submodules.append(module)
+
+    return submodules
+<switch:english>
+[english] The function relies heavily on the external helper function `import_app_module` to perform the actual logic of locating and loading code from specific application directories. It correctly filters out failures where no module is found.
+[english] What happens if a specific app in INSTALLED_APPS does not contain a valid module matching the input name?
+[english] If `import_app_module` fails to find or load the module within an application, it returns None. The function handles this by checking 'if module is not None' before adding it to the results list.
+[english] That makes perfect sense.

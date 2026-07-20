@@ -1,0 +1,37 @@
+[english] How can I calculate the marginal probability distribution for each state across every time step given initial and transition log-probabilities?
+[english] The function effectively calculates forward probabilities using a dynamic programming approach similar to the Forward algorithm in HMMs. It initializes all states with the starting log-probability and then iteratively applies transitions over time.
+<switch:python>
+[python] def _marginal_hidden_probs(self):
+    """Compute marginal pdf for each individual observable."""
+
+    initial_log_probs = tf.broadcast_to(self._log_init,
+                                        tf.concat([self.batch_shape_tensor(),
+                                                   [self._num_states]],
+                                                  axis=0))
+    # initial_log_probs :: batch_shape num_states
+
+    if self._num_steps > 1:
+      transition_log_probs = self._log_trans
+
+      def forward_step(log_probs, _):
+        return _log_vector_matrix(log_probs, transition_log_probs)
+
+      dummy_index = tf.zeros(self._num_steps - 1, dtype=tf.float32)
+
+      forward_log_probs = tf.scan(forward_step, dummy_index,
+                                  initializer=initial_log_probs,
+                                  name="forward_log_probs")
+
+      forward_log_probs = tf.concat([[initial_log_probs], forward_log_probs],
+                                    axis=0)
+    else:
+      forward_log_probs = initial_log_probs[tf.newaxis, ...]
+
+    # returns :: num_steps batch_shape num_states
+
+    return tf.exp(forward_log_probs)
+<switch:english>
+[english] The function ends by applying tf.exp to the accumulated log-probabilities (`forward_log_probs`), converting them back into a standard probability distribution.
+[english] When only one step occurs (self._num_steps == 1), does it handle batch dimensions correctly?
+[english] Yes, when `self._num_steps` is 1, the code executes `forward_log_probs = initial_log_probs[tf.newaxis, ...]`, which adds a dimension for time so the output shape matches expectations.
+[english] Thanks for clarifying how the batch dimensions work across steps!

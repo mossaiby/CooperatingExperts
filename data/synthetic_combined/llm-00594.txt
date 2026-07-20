@@ -1,0 +1,29 @@
+[english] I need a way to validate that messages being queued are correctly assigned to an active session before they proceed.
+[english] This function adds critical validation logic to ensure message integrity when queuing. It checks if either the sender's session is defined or if the incoming message itself specifies a group ID.
+<switch:python>
+[python] def queue_message(self, message):
+        """Queue a message to be sent later.
+
+        This operation should be followed up with send_pending_messages. If neither the Sender nor the message
+        has a session ID, a `ValueError` will be raised.
+
+        :param message: The message to be sent.
+        :type message: ~azure.servicebus.Message
+
+        Example:
+            .. literalinclude:: ../examples/test_examples.py
+                :start-after: [START queue_and_send_session_messages]
+                :end-before: [END queue_and_send_session_messages]
+                :language: python
+                :dedent: 4
+                :caption: Put the message to be sent later in the queue
+
+        """
+        if not self.session_id and not message.properties.group_id:
+            raise ValueError("Message must have Session ID.")
+        super(SessionSender, self).queue_message(message)
+<switch:english>
+[english] If the validation passes, the code defaults to calling the standard queue method via the superclass. This ensures all necessary session-specific checks are handled by the base implementation.
+[english] Can you clarify what happens if both `self.session_id` and `message.properties.group_id` are missing?
+[english] A `ValueError` will immediately be raised because neither conditional check (`if not self.session_id and not message.properties.group_id`) allows the function to proceed, enforcing strict session requirements.
+[english] That makes sense; clearer error handling is definitely needed here.

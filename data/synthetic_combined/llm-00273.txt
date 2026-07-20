@@ -1,0 +1,53 @@
+[english] I need a function that takes flat latent codes and outputs a probability distribution over generated images using deep learning.
+[english] This setup builds an image decoder by defining two partial functions for 2D convolution types, combining them into a sequential network, and then wrapping the output in a TensorFlow Probability distribution layer. This allows you to treat the decoded features as probabilistic outcomes.
+<switch:python>
+[python] def make_decoder(base_depth, activation, input_size, output_shape):
+  """Creates the decoder function.
+
+  Args:
+    base_depth: Layer base depth in decoder net.
+    activation: Activation function in hidden layers.
+    input_size: The flattened latent input shape as an int.
+    output_shape: The output image shape as a list.
+
+  Returns:
+    decoder: A `callable` mapping a `Tensor` of encodings to a
+      `tfd.Distribution` instance over images.
+  """
+  deconv = functools.partial(
+      tf.keras.layers.Conv2DTranspose, padding="SAME", activation=activation)
+  conv = functools.partial(
+      tf.keras.layers.Conv2D, padding="SAME", activation=activation)
+  decoder_net = tf.keras.Sequential([
+      tf.keras.layers.Reshape((1, 1, input_size)),
+      deconv(2 * base_depth, 7, padding="VALID"),
+      deconv(2 * base_depth, 5),
+      deconv(2 * base_depth, 5, 2),
+      deconv(base_depth, 5),
+      deconv(base_depth, 5, 2),
+      deconv(base_depth, 5),
+      conv(output_shape[-1], 5, activation=None),
+      tf.keras.layers.Reshape(output_shape),
+  ])
+
+  def decoder(codes):
+    """Builds a distribution over images given codes.
+
+    Args:
+      codes: A `Tensor` representing the inputs to be decoded, of shape `[...,
+        code_size]`.
+
+    Returns:
+      decoder_distribution: A multivariate `Bernoulli` distribution.
+    """
+    logits = decoder_net(codes)
+    return tfd.Independent(tfd.Bernoulli(logits=logits),
+                           reinterpreted_batch_ndims=len(output_shape),
+                           name="decoder_distribution")
+
+  return decoder
+<switch:english>
+[english] The final step uses `tfd.Independent(tfd.Bernoulli(...))` which models each pixel channel across all dimensions as an independent Bernoulli variable based on the network's logits. Note that this assumes your output image values can be interpreted via a sigmoid or logistic function, typically leading to binary-like intensity distributions.
+[english] Since I am using `tfd.Bernoulli`, do I need to scale my final layer weights before they feed into the distribution?
+[english] No explicit scaling is required; the `Bernoulli` object accepts raw logits as input. The internal logic handles transforming these real-valued logits into a probability mass function for each pixel.
+[english] That makes sense, thanks for clarifying how the logit handling works.

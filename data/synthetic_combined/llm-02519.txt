@@ -1,0 +1,20 @@
+[english] I need a way to fetch the text value of either the first child element or a specific child by name from an entity's data.
+[english] This method handles data retrieval for nested elements within the object represented by `self.e`. It conditionally uses different library calls based on whether a target name is provided, ensuring the correct child value is extracted.
+<switch:python>
+[python] def child_value(self, name=None):
+        """Get child value (value of the first child that is text).
+
+        If a name is provided, then the value of the first child with the
+        given name is returned.
+
+        """
+        if name is None:
+            res = lib.lsl_child_value(self.e)
+        else:
+            res = lib.lsl_child_value_n(self.e, str.encode(name))
+        return res.decode('utf-8')
+<switch:english>
+[english] The function guarantees that regardless of which underlying API call is made, the retrieved result is successfully decoded from bytes into a clean utf-8 string before being returned.
+[english] If I attempt to use this method without providing a name, and the entity has no child elements at all, what value does it return?
+[english] If there are no children, the underlying library call likely returns an empty or null result. After decoding, the function would typically return an empty string.
+[english] That makes sense for handling missing data.

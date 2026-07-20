@@ -1,0 +1,34 @@
+[english] How do I assert that a web element has a specific set of CSS styles, potentially matching complex patterns like regular expressions?
+[english] This function uses a `StyleQuery` to define expected styles and then employs a retry mechanism (`self.synchronize`) to wait until the styles are present on the element.
+<switch:python>
+[python] def assert_style(self, styles, **kwargs):
+        """
+        Asserts that an element has the specified CSS styles. ::
+
+            element.assert_style({"color": "rgb(0,0,255)", "font-size": re.compile(r"px")})
+
+        Args:
+            styles (Dict[str, str | RegexObject]): The expected styles.
+
+        Returns:
+            True
+
+        Raises:
+            ExpectationNotMet: The element doesn't have the specified styles.
+        """
+
+        query = StyleQuery(styles, **kwargs)
+
+        @self.synchronize(wait=query.wait)
+        def assert_style():
+            if not query.resolves_for(self):
+                raise ExpectationNotMet(query.failure_message)
+
+            return True
+
+        return assert_style()
+<switch:english>
+[english] If the element fails to match all required styles, it raises an ExpectationNotMet exception using a custom failure message for debugging.
+[english] What happens if one of the expected strings in `styles` is a valid regex but doesn't match anything?
+[english] The assertion will fail and raise an ExpectationNotMet exception because the element does not satisfy all the conditions defined by the style query.
+[english] Thanks for clarifying that!

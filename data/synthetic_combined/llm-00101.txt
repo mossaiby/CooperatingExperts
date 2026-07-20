@@ -1,0 +1,32 @@
+[english] How can I dynamically fetch various types of repository data, such as issues or pull requests, from a single unified endpoint?
+[english] This function serves as a dispatcher that routes the request based on the specified category. It extracts necessary time constraints and then calls specialized internal methods to handle the fetching logic.
+<switch:python>
+[python] def fetch_items(self, category, **kwargs):
+        """Fetch the items (issues or pull_requests)
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
+        from_date = kwargs['from_date']
+        to_date = kwargs['to_date']
+
+        if category == CATEGORY_ISSUE:
+            items = self.__fetch_issues(from_date, to_date)
+        elif category == CATEGORY_PULL_REQUEST:
+            items = self.__fetch_pull_requests(from_date, to_date)
+        else:
+            items = self.__fetch_repo_info()
+
+        return items
+<switch:english>
+[english] The `if/elif` structure allows this method to support different item types while providing a generic fallback for other repository data in the final `else` block.
+[english] What happens if I don't provide `from_date` or `to_date` when calling fetch_items?
+[english] Currently, accessing them directly via `kwargs['key']` will cause a KeyError. It is safer to use `.get()` with default values:
+<switch:python>
+[python] from datetime import date
+	from_date = kwargs.get('from_date', date(2023, 1, 1))
+tor_date = kwargs.get('to_date', date.today())
+<switch:english>
+[english] That makes sense; I'll add those default checks to prevent unexpected errors.

@@ -1,0 +1,16 @@
+[english] How can I take a mapping of specific indices and transform them into a fully operable global iterator?
+[english] This approach first begins by generating a complete set of results using the general `global_iterator()` method. It then applies your provided index dictionary to this structure, followed by constant substitution preparation.
+<switch:python>
+[python] def indices_to_global_iterator(self, indices):
+        """
+        Transform a dictionary of indices to a global iterator integer.
+
+        Inverse of global_iterator_to_indices().
+        """
+        global_iterator = self.subs_consts(self.global_iterator().subs(indices))
+        return global_iterator
+<switch:english>
+[english] Because this function returns an iterable object rather than a list, you must iterate over it or consume it before the calculations are performed.
+[english] What is the expected behavior if the input indices dictionary contains keys that do not exist in the global iterator?
+[english] If a key is missing from the global structure, the substitution typically ignores that index and leaves the original value unchanged to prevent errors.
+[english] I understand. That clears up my confusion!

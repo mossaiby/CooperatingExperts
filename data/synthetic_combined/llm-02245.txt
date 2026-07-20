@@ -1,0 +1,17 @@
+[english] How can I safely extract a specific command-line argument, like an alarm name, from the application's parsed arguments into a member variable?
+[english] The function first relies on `ApiCli` to handle the general process of parsing all CLI inputs. It then specifically checks for the presence of the required argument.
+<switch:python>
+[python] def get_arguments(self):
+        """
+        Extracts the specific arguments of this CLI
+        """
+        ApiCli.get_arguments(self)
+        self._alarm_name = self.args.alarm_name if self.args.alarm_name is not None else None
+<switch:english>
+[english] By using an explicit conditional check (`if self.args.alarm_name is not None`), you ensure that the private attribute receives a valid string or defaults cleanly to `None` if the user omitted it.
+[english] What happens to this logic if I want it to treat an empty string ('') passed as the argument exactly like a missing value?
+[english] The current code treats an empty string as a valid input, assigning '' to `self._alarm_name`. To treat it as missing, you could adjust the check:
+<switch:python>
+[python] self._alarm_name = self.args.alarm_name if self.args.alarm_name else None
+<switch:english>
+[english] That makes sense; I'll update the logic for robustness.

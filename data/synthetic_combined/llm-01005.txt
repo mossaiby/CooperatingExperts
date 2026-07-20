@@ -1,0 +1,97 @@
+[english] I need to map attributes from a complex data item into a dictionary format suitable for insertion into a structured database row.
+[english] This function serves as a dynamic extractor, allowing you to specify exactly which properties of an input item should be saved. It iterates through the requested column names and conditionally pulls the appropriate data from the `item`, handling complex serialization like string encoding and length truncation internally.
+<switch:python>
+[python] def _all_extract_insert_dict(self, item, colnames, additional_info=None):
+        """Extracts information from a given item to be stored into a pytable row.
+
+        Items can be a variety of things here, trajectories, single runs, group node,
+        parameters, results.
+
+        :param item: Item from which data should be extracted
+
+        :param colnames: Names of the columns in the pytable
+
+        :param additional_info: (dict)
+
+            Additional information that should be stored into the pytable row that cannot be
+            read out from `item`.
+
+        :return: Dictionary containing the data to be inserted into a row
+
+        """
+        insert_dict = {}
+
+        if 'length' in colnames:
+            insert_dict['length'] = len(item)
+
+        if 'comment' in colnames:
+            comment = self._all_cut_string(item.v_comment.encode('utf-8'),
+                                           pypetconstants.HDF5_STRCOL_MAX_COMMENT_LENGTH,
+                                           self._logger)
+
+            insert_dict['comment'] = comment
+
+        if 'location' in colnames:
+            insert_dict['location'] = item.v_location.encode('utf-8')
+
+        if 'name' in colnames:
+            name = item._name if (not item.v_is_root or not item.v_is_run) else item._crun
+            insert_dict['name'] = name.encode('utf-8')
+
+        if 'class_name' in colnames:
+            insert_dict['class_name'] = item.f_get_class_name().encode('utf-8')
+
+        if 'value' in colnames:
+            insert_dict['value'] = self._all_cut_string(
+                item.f_val_to_str().encode('utf-8'),
+                pypetconstants.HDF5_STRCOL_MAX_VALUE_LENGTH,
+                self._logger)
+
+        if 'hexdigest' in colnames:
+            insert_dict['hexdigest'] = additional_info['hexdigest']
+
+        if 'idx' in colnames:
+            insert_dict['idx'] = item.v_idx
+
+        if 'time' in colnames:
+            time_ = item._time
+            insert_dict['time'] = time_.encode('utf-8')
+
+        if 'timestamp' in colnames:
+            timestamp = item._timestamp
+            insert_dict['timestamp'] = timestamp
+
+        if 'range' in colnames:
+            third_length = pypetconstants.HDF5_STRCOL_MAX_RANGE_LENGTH // 3 + 10
+            item_range = itools.islice(item.f_get_range(copy=False), 0, third_length)
+            range_string = ', '.join([repr(x) for x in item_range])
+            insert_dict['range'] = self._all_cut_string(
+                range_string.encode('utf-8'),
+                pypetconstants.HDF5_STRCOL_MAX_RANGE_LENGTH,
+                self._logger)
+
+        # To allow backwards compatibility
+        if 'array' in colnames:
+            third_length = pypetconstants.HDF5_STRCOL_MAX_RANGE_LENGTH // 3 + 10
+            item_range = itools.islice(item.f_get_range(copy=False), 0, third_length)
+            range_string = ', '.join([repr(x) for x in item_range])
+            insert_dict['array'] = self._all_cut_string(
+                range_string.encode('utf-8'),
+                pypetconstants.HDF5_STRCOL_MAX_RANGE_LENGTH,
+                self._logger)
+
+        if 'version' in colnames:
+            insert_dict['version'] = item.v_version.encode('utf-8')
+
+        if 'python' in colnames:
+            insert_dict['python'] = item.v_python.encode('utf-8')
+
+        if 'finish_timestamp' in colnames:
+            insert_dict['finish_timestamp'] = item._finish_timestamp_run
+
+        return insert_dict
+<switch:english>
+[english] The method ensures integrity by using helper functions to truncate strings based on predetermined database limits, preventing overfilling of columns. Be mindful that some fields rely heavily on internal item properties or external configuration provided during initialization.
+[english] What error occurs if the 'hexdigest' column is requested but no value exists in `additional_info`?
+[english] If 'hexdigest' is extracted, and it doesn't exist in `additional_info`, accessing it directly will raise a KeyError. You can safely access required keys using `.get()` to provide default values.
+[english] That clarifies the data extraction process for me!

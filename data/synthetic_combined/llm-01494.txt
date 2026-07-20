@@ -1,0 +1,17 @@
+[english] How can I generate an SIS export report specifically tailored to include course data for a given account?
+[english] To handle this request, we're creating a specialized convenience method on `self`. This function pre-configures parameters needed for the SIS Export Report Type and calls the generic `create_report` method.
+<switch:python>
+[python] def create_course_sis_export_report(self, account_id, term_id=None,
+                                        params={}):
+        """
+        Convenience method for create_report, for creating a course sis export
+        report.
+        """
+        params["courses"] = True
+        return self.create_report(ReportType.SIS_EXPORT, account_id, term_id,
+                                  params)
+<switch:english>
+[english] This wrapper ensures that the SIS Export parameters are correctly set to include courses before calling the primary reporting engine.
+[english] What happens if `account_id` or a valid report type is missing when using this helper?
+[english] If required arguments like `account_id` are missing, the underlying `create_report` method will likely raise an error because it depends on those parameters to begin processing.
+[english] That makes sense; I'll ensure my inputs are validated first.

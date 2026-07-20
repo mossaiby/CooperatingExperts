@@ -1,0 +1,35 @@
+[english] I need a decorator that automatically enhances my function's docstring to include 'local -> array()' and 'spark -> array()' calls, dynamically listing all arguments.
+[english] This decorator wraps a function to modify its documentation. It uses introspection to extract the function's arguments and then constructs specialized lines for both local and spark routing within the docstring.
+<switch:python>
+[python] def wrapped(f):
+    """
+    Decorator to append routed docstrings
+    """
+    import inspect
+
+    def extract(func):
+        append = ""
+        args = inspect.getargspec(func)
+        for i, a in enumerate(args.args):
+            if i < (len(args) - len(args.defaults)):
+                append += str(a) + ", "
+            else:
+                default = args.defaults[i-len(args.defaults)]
+                if hasattr(default, "__name__"):
+                    default = default.__name__
+                else:
+                    default = str(default)
+                append += str(a) + "=" + default + ", "
+        append = append[:-2] + ")"
+        return append
+
+    doc = f.__doc__ + "\n"
+    doc += "    local -> array(" + extract(getattr(ConstructLocal, f.__name__)) + "\n"
+    doc += "    spark -> array(" + extract(getattr(ConstructSpark, f.__name__)) + "\n"
+    f.__doc__ = doc
+    return f
+<switch:english>
+[english] The `extract` inner function handles argument transformation by identifying positional versus defaulted arguments. This ensures the generated docstring is perfectly formatted for various call signatures.
+[english] What happens if my original function's docstring (f.__doc__) is None when applying this decorator?
+[english] If `f.__doc__` is `None`, Python treats it as an empty string. The code will still append the routed lines to that empty string, effectively creating a docstring containing only the routing info.
+[english] That makes sense; thanks for clarifying how None values are handled in decorators!

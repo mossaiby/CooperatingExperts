@@ -1,0 +1,22 @@
+[english] How can I safely attempt to acquire a unique lock on a resource while controlling whether that operation blocks or uses a callback?
+[english] This method acts as an interface to your core locking mechanism, allowing you to manage different acquisition behaviors. It passes several key parameters—like synchronization preference and maximum wait time—to the internal implementation.
+<switch:python>
+[python] def tryAcquire(self, lockID, callback=None, sync=False, timeout=None):
+        """Attempt to acquire lock.
+
+        :param lockID: unique lock identifier.
+        :type lockID: str
+        :param sync: True - to wait until lock is acquired or failed to acquire.
+        :type sync: bool
+        :param callback: if sync is False - callback will be called with operation result.
+        :type callback: func(opResult, error)
+        :param timeout: max operation time (default - unlimited)
+        :type timeout: float
+        :return True if acquired, False - somebody else already acquired lock
+        """
+        return self.__lockImpl.acquire(lockID, self.__selfID, time.time(), callback=callback, sync=sync, timeout=timeout)
+<switch:english>
+[english] The function delegates all complex timing and state management to `self.__lockImpl`, meaning its reliability depends entirely on that underlying class implementation.
+[english] If I call this method with sync=False, what exactly does the callback represent?
+[english] The callback is executed when the operation completes (either successfully or failing) in an asynchronous manner. It receives the result and any error encountered during the locking attempt:
+[english] I appreciate the clarification on the async parameters.

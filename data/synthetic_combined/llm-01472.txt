@@ -1,0 +1,37 @@
+[english] I need a function that fetches and caches postcode objects from an API while gracefully handling cases where the data might already be available locally.
+[english] This function uses a cache-first strategy: it first checks if the required PostCode exists in our local database. If not found, it attempts to retrieve it from an external API before saving and returning the result.
+<switch:python>
+[python] async def get_postcode(postcode_like: PostCodeLike) -> Optional[Postcode]:
+    """
+    Gets the postcode object for a given postcode string.
+    Acts as a middleware between us and the API, caching results.
+    :param postcode_like: The either a string postcode or PostCode object.
+    :return: The PostCode object else None if the postcode does not exist..
+    :raises CachingError: When the postcode is not in cache, and the API is unreachable.
+    """
+    if isinstance(postcode_like, Postcode):
+        return postcode_like
+
+    postcode_like = postcode_like.replace(" ", "").upper()
+
+    try:
+        postcode = Postcode.get(Postcode.postcode == postcode_like)
+    except DoesNotExist:
+        try:
+            postcode = await fetch_postcode_from_string(postcode_like)
+        except (ApiError, CircuitBreakerError):
+            raise CachingError(f"Requested postcode is not cached, and can't be retrieved.")
+        if postcode is not None:
+            postcode.save()
+
+    return postcode
+<switch:english>
+[english] The nested try/except blocks ensure that if the initial lookup fails, we attempt an API fetch, but if both fail due to network issues, a specific CachingError is raised.
+[english] If `postcode_like` is already a PostCode object passed into the function, what happens immediately?
+[english] The code executes this block:
+<switch:python>
+[python] if isinstance(postcode_like, Postcode):
+        return postcode_like
+<switch:english>
+[english] This allows us to skip all string normalization and database checks.
+[english] Got it. It’s smart to handle pre-existing objects that way.

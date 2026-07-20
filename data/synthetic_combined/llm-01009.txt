@@ -1,0 +1,26 @@
+[english] How can I estimate the number of unique items (cardinality) in a massive dataset using minimal memory?
+[english] This function estimates cardinality by implementing HyperLogLog logic, which provides highly accurate counts with very low memory usage. It calculates an initial raw estimate and then applies necessary range corrections based on the result.
+<switch:python>
+[python] def count(self):
+        '''
+        Estimate the cardinality of the data values seen so far.
+
+        Returns:
+            int: The estimated cardinality.
+        '''
+        # Use HyperLogLog estimation function
+        e = self.alpha * float(self.m ** 2) / np.sum(2.0**(-self.reg))
+        # Small range correction
+        if e <= (5.0 / 2.0) * self.m:
+            num_zero = self.m - np.count_nonzero(self.reg)
+            return self._linearcounting(num_zero)
+        # Normal range, no correction
+        if e <= (1.0 / 30.0) * (1 << 32):
+            return e
+        # Large range correction
+        return self._largerange_correction(e)
+<switch:english>
+[english] The code adjusts the raw estimation (e) if the count falls into a small or extremely large range where standard HLL formulas are less reliable. These specific conditional checks ensure accuracy across different data scales.
+[english] What is `self.m`, and how does changing its value affect the precision of the final cardinality estimate?
+[english] The parameter `m` determines the number of registers used in HyperLogLog, which directly controls the algorithm's error rate. Increasing `m` generally increases memory usage but improves the precision of the count.
+[english] That makes sense; optimizing for accuracy will be key to our pipeline.

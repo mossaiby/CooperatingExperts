@@ -1,0 +1,11 @@
+[english] I need a way to remove specific key-value pairs from an existing dictionary based entirely on whether their values match a given target.
+[english] To solve this efficiently, we utilize a dictionary comprehension. This allows us to iterate over every item in the input dictionary and only retain it if its value meets our exclusion criteria.
+<switch:python>
+[python] def _remove_dict_keys_with_value(dict_, val):
+  """Removes `dict` keys which have have `self` as value."""
+  return {k: v for k, v in dict_.items() if v is not val}
+<switch:english>
+[english] The function constructs and returns a new filtered dictionary rather than modifying the original one in place. Be aware that the comparison `is not val` checks for identity, which is stricter than checking standard equality (`!=`).
+[english] Does this function handle key collisions or if multiple keys share the same value we want to remove?
+[english] Since a dictionary comprehension evaluates all conditions before building the new structure, it removes every instance of the matching value. For example, if `val` is 5 and the dict has two entries with the value 5, both will be removed.
+[english] That makes perfect sense.

@@ -1,0 +1,33 @@
+[english] How can I convert an internal X509 certificate object into a string formatted as PEM, ASN.1, or plain text?
+[english] This function handles converting a certificate object (`cert`) into the desired buffer format using specialized cryptographic libraries. It checks the provided `type` argument to select the correct serialization method.
+<switch:python>
+[python] def dump_certificate(type, cert):
+    """
+    Dump the certificate *cert* into a buffer string encoded with the type
+    *type*.
+
+    :param type: The file type (one of FILETYPE_PEM, FILETYPE_ASN1, or
+        FILETYPE_TEXT)
+    :param cert: The certificate to dump
+    :return: The buffer with the dumped certificate in
+    """
+    bio = _new_mem_buf()
+
+    if type == FILETYPE_PEM:
+        result_code = _lib.PEM_write_bio_X509(bio, cert._x509)
+    elif type == FILETYPE_ASN1:
+        result_code = _lib.i2d_X509_bio(bio, cert._x509)
+    elif type == FILETYPE_TEXT:
+        result_code = _lib.X509_print_ex(bio, cert._x509, 0, 0)
+    else:
+        raise ValueError(
+            "type argument must be FILETYPE_PEM, FILETYPE_ASN1, or "
+            "FILETYPE_TEXT")
+
+    assert result_code == 1
+    return _bio_to_string(bio)
+<switch:english>
+[english] The function returns a string representation of the certificate data, but successful execution relies on valid external library functions and constants.
+[english] What specific error might occur if I try to use this function with an unsupported value for the 'type' parameter?
+[english] If you pass any value other than `FILETYPE_PEM`, `FILETYPE_ASN1`, or `FILETYPE_TEXT` to `dump_certificate`, it will raise a ValueError.
+[english] Make sure I handle that exception correctly when processing different certificate formats.

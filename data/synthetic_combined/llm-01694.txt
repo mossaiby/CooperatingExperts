@@ -1,0 +1,16 @@
+[english] I need a method that automatically wraps any HTML tag with a strong tag if its CSS style indicates it should be bold.
+[english] The function first retrieves the 'style' attribute from the provided tag. It then checks this string to see if either 'font-weight:bold' or 'font-weight:700' is present, indicating bold styling.
+<switch:python>
+[python] def create_strong(self, tag):
+        """
+        See if span tag has bold style and wrap with strong tag.
+        """
+        style = tag.get('style')
+        if (style and
+                ('font-weight:bold' in style or 'font-weight:700' in style)):
+            tag.wrap(self.soup.new_tag('strong'))
+<switch:english>
+[english] This logic effectively targets basic bolding definitions but might miss other font weight values (like 600) depending on the CSS source.
+[english] What happens if the style attribute contains additional declarations, like color and background, besides the font-weight?
+[english] Since it uses Python's 'in' operator, it safely identifies the bold property even if other styles exist in the string. For example, it recognizes "color: red; font-weight:bold;".
+[english] Got it, this implementation is perfect for my current need.

@@ -1,0 +1,15 @@
+[english] I need to find all unique data types associated with a specific project ID from my cloud instance.
+[english] This function retrieves data related to the current instance and then uses Python's set comprehension features to efficiently extract only the data types present in that dataset.
+<switch:python>
+[python] def data_types(self):
+        """Return a list of data types."""
+        data = self.gencloud.project_data(self.id)
+        return sorted(set(d.type for d in data))
+<switch:english>
+[english] By converting the generator expression into a set, duplicates are automatically removed before the final result is returned as a sorted list.
+[english] What happens if the project data returned by `project_data` is empty?
+[english] In that case, the function will return an empty list (`[]`) because there are no items to extract types from.
+<switch:python>
+[python] return []
+<switch:english>
+[english] That makes sense, thanks for clarifying!

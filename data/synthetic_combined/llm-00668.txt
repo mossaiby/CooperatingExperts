@@ -1,0 +1,108 @@
+[english] How can I extract a comprehensive list of domains to test by parsing complex filter lines from an adblock-formatted file?
+[english] This function iterates through every line in `self.to_format` using multiple regular expressions (`regex`, `regex_v3`, and `regex_v4`) to identify potential domain matches.
+<switch:python>
+[python] def decode(self):
+        """
+        Decode/extract the domains to test from the adblock formated file.
+
+        :return: The list of domains to test.
+        :rtype: list
+        """
+
+        # We initiate a variable which will save what we are going to return.
+        result = []
+
+        # We initiate the first regex we are going to use to get
+        # the element to format.
+        regex = r"^(?:.*\|\|)([^\/\$\^]{1,}).*$"
+
+        # We initiate the third regex we are going to use to get
+        # the element to format.
+        regex_v3 = (
+            r"(?:#+(?:[a-z]+?)?\[[a-z]+(?:\^|\*)\=(?:\'|\"))(.*\..*)(?:(?:\'|\")\])"
+        )
+
+        # We initiate the fourth regex we are going to use to get
+        # the element to format.
+        regex_v4 = r"^\|(.*\..*)\|$"
+
+        for line in self.to_format:
+            # We loop through the different line.
+
+            rematch = rematch_v3 = rematch_v4 = None
+
+            # We extract the different group from our first regex.
+            rematch = Regex(
+                line, regex, return_data=True, rematch=True, group=0
+            ).match()
+
+            # We extract the different group from our fourth regex.
+            #
+            # Note: We execute the following in second because it is more
+            # specific that others.
+            rematch_v4 = Regex(
+                line, regex_v4, return_data=True, rematch=True, group=0
+            ).match()
+
+            # We extract the different group from our third regex.
+            rematch_v3 = Regex(
+                line, regex_v3, return_data=True, rematch=True, group=0
+            ).match()
+
+            if rematch:
+                # The first extraction was successfull.
+
+                if self.options_separator in line:
+                    options = line.split(self.options_separator)[-1].split(
+                        self.option_separator
+                    )
+
+                    if (
+                        not options[-1]
+                        or "third-party" in options
+                        or "script" in options
+                        or "popup" in options
+                        or "xmlhttprequest" in options
+                    ):
+                        # We extend the result with the extracted elements.
+                        result.extend(self._extract_base(rematch))
+
+                    extra = self._handle_options(options)
+
+                    if extra and isinstance(extra, list):  # pragma: no cover
+                        extra.extend(self._extract_base(rematch))
+                        result.extend(self._extract_base(extra))
+                    elif extra:
+                        result.extend(self._extract_base(rematch))
+
+                else:
+                    # We extend the result with the extracted elements.
+                    result.extend(self._extract_base(rematch))
+
+            if rematch_v4:
+                # The fourth extraction was successfull.
+
+                # We extend the formatted elements from the extracted elements.
+                result.extend(List(self._format_decoded(rematch_v4)).format())
+
+            if rematch_v3:
+                # The second extraction was successfull.
+
+                # We extend the formatted elements from the extracted elements.
+                result.extend(List(self._format_decoded(rematch_v3)).format())
+
+        # We return the result.
+        return List(result).format()
+<switch:english>
+[english] The code prioritizes matching specific patterns first, then applies domain extraction logic based on the presence of options or separators within each line.
+[english] If a single line matches both `rematch` (using `regex`) and `rematch_v4`, how is the final list populated?
+[english] Both successful matches are processed independently, meaning any domains found by either regex are added to the same `result` list using `.extend()`:
+<switch:python>
+[python] if rematch:
+    # ... logic for regex match 1
+if rematch_v4:
+    # ... processing for specific group in regex v4
+domain_list.extend(self._extract_base(rematch))
+domain_list.extend(List(self._format_decoded(rematch_v4)).format())
+<switch:english>
+[english] That makes much more sense; thank you for the detailed breakdown.

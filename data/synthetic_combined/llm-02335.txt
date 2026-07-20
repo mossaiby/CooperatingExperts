@@ -1,0 +1,29 @@
+[english] I need a way to read a Git log file and turn every commit entry into a structured Python dictionary.
+[english] This function uses the generator pattern for efficiency, ensuring it reads and processes the log file line by line rather than loading everything into memory at once. It delegates the complex parsing of each log block to an internal `GitParser` object.
+<switch:python>
+[python] def parse_git_log_from_file(filepath):
+        """Parse a Git log file.
+
+        The method parses the Git log file and returns an iterator of
+        dictionaries. Each one of this, contains a commit.
+
+        :param filepath: path to the log file
+
+        :returns: a generator of parsed commits
+
+        :raises ParseError: raised when the format of the Git log file
+            is invalid
+        :raises OSError: raised when an error occurs reading the
+            given file
+        """
+        with open(filepath, 'r', errors='surrogateescape',
+                  newline=os.linesep) as f:
+            parser = GitParser(f)
+
+            for commit in parser.parse():
+                yield commit
+<switch:english>
+[english] By yielding commits instead of returning a list, this implementation is highly memory-efficient when analyzing very large Git history files.
+[english] What happens if I pass a file path that doesn't exist? Does it handle that gracefully?
+[english] The built-in `open()` function will raise an `OSError` if the file cannot be found or accessed. The function relies on the operating system to signal these issues.
+[english] Great, I understand how error handling is managed here.

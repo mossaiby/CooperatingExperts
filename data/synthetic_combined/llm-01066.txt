@@ -1,0 +1,95 @@
+[english] I need help writing a utility function that reads specific environment variables to configure my WIOTP device client.
+[english] This function uses `os.getenv` extensively to pull configuration values from your system. It performs several checks, ensuring critical identity and authentication fields are present before compiling the final settings dictionary.
+<switch:python>
+[python] def parseEnvVars():
+    """
+    Parse environment variables into a Python dictionary suitable for passing to the
+    device client constructor as the `options` parameter
+
+    - `WIOTP_IDENTITY_ORGID`
+    - `WIOTP_IDENTITY_TYPEID`
+    - `WIOTP_IDENTITY_DEVICEID`
+    - `WIOTP_AUTH_TOKEN`
+    - `WIOTP_OPTIONS_DOMAIN` (optional)
+    - `WIOTP_OPTIONS_LOGLEVEL` (optional)
+    - `WIOTP_OPTIONS_MQTT_PORT` (optional)
+    - `WIOTP_OPTIONS_MQTT_TRANSPORT` (optional)
+    - `WIOTP_OPTIONS_MQTT_CAFILE` (optional)
+    - `WIOTP_OPTIONS_MQTT_CLEANSTART` (optional)
+    - `WIOTP_OPTIONS_MQTT_SESSIONEXPIRY` (optional)
+    - `WIOTP_OPTIONS_MQTT_KEEPALIVE` (optional)
+    """
+
+    # Identify
+    orgId = os.getenv("WIOTP_IDENTITY_ORGID", None)
+    typeId = os.getenv("WIOTP_IDENTITY_TYPEID", None)
+    deviceId = os.getenv("WIOTP_IDENTITY_DEVICEID", None)
+    # Auth
+    authToken = os.getenv("WIOTP_AUTH_TOKEN", None)
+    # Options
+    domain = os.getenv("WIOTP_OPTIONS_DOMAIN", None)
+    logLevel = os.getenv("WIOTP_OPTIONS_LOGLEVEL", "info")
+    port = os.getenv("WIOTP_OPTIONS_MQTT_PORT", None)
+    transport = os.getenv("WIOTP_OPTIONS_MQTT_TRANSPORT", None)
+    caFile = os.getenv("WIOTP_OPTIONS_MQTT_CAFILE", None)
+    cleanStart = os.getenv("WIOTP_OPTIONS_MQTT_CLEANSTART", "False")
+    sessionExpiry = os.getenv("WIOTP_OPTIONS_MQTT_SESSIONEXPIRY", "3600")
+    keepAlive = os.getenv("WIOTP_OPTIONS_MQTT_KEEPALIVE", "60")
+    caFile = os.getenv("WIOTP_OPTIONS_MQTT_CAFILE", None)
+
+    if orgId is None:
+        raise ConfigurationException("Missing WIOTP_IDENTITY_ORGID environment variable")
+    if typeId is None:
+        raise ConfigurationException("Missing WIOTP_IDENTITY_TYPEID environment variable")
+    if deviceId is None:
+        raise ConfigurationException("Missing WIOTP_IDENTITY_DEVICEID environment variable")
+    if orgId != "quickstart" and authToken is None:
+        raise ConfigurationException("Missing WIOTP_AUTH_TOKEN environment variable")
+    if port is not None:
+        try:
+            port = int(port)
+        except ValueError as e:
+            raise ConfigurationException("WIOTP_OPTIONS_MQTT_PORT must be a number")
+
+    try:
+        sessionExpiry = int(sessionExpiry)
+    except ValueError as e:
+        raise ConfigurationException("WIOTP_OPTIONS_MQTT_SESSIONEXPIRY must be a number")
+
+    try:
+        keepAlive = int(keepAlive)
+    except ValueError as e:
+        raise ConfigurationException("WIOTP_OPTIONS_MQTT_KEEPAIVE must be a number")
+
+    if logLevel not in ["error", "warning", "info", "debug"]:
+        raise ConfigurationException("WIOTP_OPTIONS_LOGLEVEL must be one of error, warning, info, debug")
+    else:
+        # Convert log levels from string to int (we need to upper case our strings from the config)
+        logLevel = logging.getLevelName(logLevel.upper())
+
+    cfg = {
+        "identity": {"orgId": orgId, "typeId": typeId, "deviceId": deviceId},
+        "options": {
+            "domain": domain,
+            "logLevel": logLevel,
+            "mqtt": {
+                "port": port,
+                "transport": transport,
+                "caFile": caFile,
+                "cleanStart": cleanStart in ["True", "true", "1"],
+                "sessionExpiry": sessionExpiry,
+                "keepAlive": keepAlive,
+            },
+        },
+    }
+
+    # Quickstart doesn't support auth, so ensure we only add this if it's defined
+    if authToken is not None:
+        cfg["auth"] = {"token": authToken}
+
+    return cfg
+<switch:english>
+[english] The code handles type conversion for MQTT parameters like port, session expiry, and keep alive. Note that log levels are converted into Python's integer format using `logging.getLevelName` after validation.
+[english] What specific edge cases does the function handle regarding boolean configuration values?
+[english] The function explicitly checks for common string representations of 'true' or '1' when setting the `cleanStart` parameter, ensuring it safely evaluates to a Python boolean in the final dictionary structure.
+[english] That is very clear, thank you.

@@ -1,0 +1,41 @@
+[english] How can I execute a prepared HTTP request using a session while incorporating custom options like timeouts and proxies, and ensuring the response status is checked?
+[english] This function executes an internal HTTP call using the provided session object. It handles various optional parameters through `extra_options` and sets up error handling to manage connection issues for retry strategies.
+<switch:python>
+[python] def run_and_check(self, session, prepped_request, extra_options):
+        """
+        Grabs extra options like timeout and actually runs the request,
+        checking for the result
+
+        :param session: the session to be used to execute the request
+        :type session: requests.Session
+        :param prepped_request: the prepared request generated in run()
+        :type prepped_request: session.prepare_request
+        :param extra_options: additional options to be used when executing the request
+            i.e. {'check_response': False} to avoid checking raising exceptions on non 2XX
+            or 3XX status codes
+        :type extra_options: dict
+        """
+        extra_options = extra_options or {}
+
+        try:
+            response = session.send(
+                prepped_request,
+                stream=extra_options.get("stream", False),
+                verify=extra_options.get("verify", True),
+                proxies=extra_options.get("proxies", {}),
+                cert=extra_options.get("cert"),
+                timeout=extra_options.get("timeout"),
+                allow_redirects=extra_options.get("allow_redirects", True))
+
+            if extra_options.get('check_response', True):
+                self.check_response(response)
+            return response
+
+        except requests.exceptions.ConnectionError as ex:
+            self.log.warn(str(ex) + ' Tenacity will retry to execute the operation')
+            raise ex
+<switch:english>
+[english] The core logic resides in the try block, which uses `session.send()` to execute the request while conditionally calling `self.check_response(response)` based on the 'check_response' flag.
+[english] If I pass a status code that is not handled by `self.check_response`, how does the function behave?
+[english] The function returns the raw response object if the request succeeds and meets execution criteria. If an unhandled HTTP error occurs (like a 404), it bypasses the `try-except` block shown and raises that standard exception for external handling.
+[english] That clarifies how status codes are handled.

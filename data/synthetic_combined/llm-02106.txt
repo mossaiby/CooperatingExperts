@@ -1,0 +1,37 @@
+[english] How can I evaluate the predictive significance of my Continuous MDR model by comparing trait values across different groups?
+[english] This function assesses model quality using a t-test statistic, effectively measuring if there is a statistically significant difference in trait values between two defined groups.
+<switch:python>
+[python] def score(self, features, targets):
+        """Estimates the quality of the ContinuousMDR model using a t-statistic.
+
+        Parameters
+        ----------
+        features: array-like {n_samples, n_features}
+            Feature matrix to predict from
+        targets: array-like {n_samples}
+            List of true target values
+
+        Returns
+        -------
+        quality_score: float
+            The estimated quality of the Continuous MDR model
+
+        """
+        if self.feature_map is None:
+            raise ValueError('The Continuous MDR model must be fit before score() can be called.')
+
+        group_0_trait_values = []
+        group_1_trait_values = []
+
+        for feature_instance in self.feature_map:
+            if self.feature_map[feature_instance] == 0:
+                group_0_trait_values.extend(self.mdr_matrix_values[feature_instance])
+            else:
+                group_1_trait_values.extend(self.mdr_matrix_values[feature_instance])
+
+        return abs(ttest_ind(group_0_trait_values, group_1_trait_values).statistic)
+<switch:english>
+[english] The function uses `ttest_ind` to calculate the t-statistic between trait values and returns its absolute value as a quality score. Note that it relies on attributes like `self.feature_map` and `self.mdr_matrix_values` being populated.
+[english] If one of the groups has very few data points, how does that affect the calculated t-statistic?
+[english] The standard independent t-test assumes sufficient sample size in both comparison groups; a small sample can lead to low statistical power or unstable results. If `group_0_trait_values` or `group_1_trait_values` is empty, `ttest_ind` will raise an error.
+[english] Got it, I'll make sure my model has enough data before calling this.

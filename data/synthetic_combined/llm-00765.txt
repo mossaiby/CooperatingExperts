@@ -1,0 +1,29 @@
+[english] Can you write a function that aggregates all public tokens and groups them by the dataset they belong to?
+[english] This function maps public datasets to lists of associated tokens. It begins by retrieving every token available before iterating through them individually to identify their corresponding datasets.
+<switch:python>
+[python] def get_public_datasets_and_tokens(self):
+        """
+        NOTE: VERY SLOW!
+        Get a dictionary relating key:dataset to value:[tokens] that rely
+        on that dataset.
+
+        Arguments:
+            None
+
+        Returns:
+            dict: relating key:dataset to value:[tokens]
+        """
+        datasets = {}
+        tokens = self.get_public_tokens()
+        for t in tokens:
+            dataset = self.get_token_dataset(t)
+            if dataset in datasets:
+                datasets[dataset].append(t)
+            else:
+                datasets[dataset] = [t]
+        return datasets
+<switch:english>
+[english] The function builds the required aggregation by checking if a dataset key already exists, appending to it, or initializing a new list for that key.
+[english] What behavior is expected if get_token_dataset returns None or an unmapped value?
+[english] If `get_token_dataset` returns a null or unexpected value, Python will use that exact return value as the dictionary key. For example:
+[english] That makes sense, I appreciate the clear clarification on edge cases.

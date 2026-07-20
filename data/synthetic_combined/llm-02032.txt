@@ -1,0 +1,19 @@
+[english] I need a way to write a 16-bit value along with a command byte to a specific register address on my device.
+[english] This function first checks that the bus connection is valid, then uses `struct.pack` to compile the command and data into a binary format suitable for hardware communication. It ensures the value fits within 16 bits before sending it.
+<switch:python>
+[python] def write_word_data(self, addr, cmd, val):
+        """Write a word (2 bytes) of data to the specified cmd register of the
+        device.  Note that this will write the data in the endianness of the
+        processor running Python (typically little endian)!
+        """
+        assert self._device is not None, 'Bus must be opened before operations are made against it!'
+        # Construct a string of data to send with the command register and word value.
+        data = struct.pack('=BH', cmd & 0xFF, val & 0xFFFF)
+        # Send the data to the device.
+        self._select_device(addr)
+        self._device.write(data)
+<switch:english>
+[english] The function relies on Python's native endianness when packing the bytes into a string for transmission; note that this is explicitly documented in the function's docstring.
+[english] The code uses `& 0xFFFF` on `val`; what happens if I pass an integer larger than 65535?
+[english] The bitwise AND operator (`&`) effectively masks the input, ensuring that only the lowest 16 bits of `val` are retained for transmission. This prevents overflow and truncates any higher bits.
+[english] Perfect, I understand how padding and masking works now.

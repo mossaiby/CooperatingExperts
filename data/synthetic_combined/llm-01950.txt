@@ -1,0 +1,68 @@
+[english] How can I authenticate my user session and fetch data from a protected API endpoint?
+[english] This method handles authenticated requests by first verifying credentials. It then builds a complete set of request elements (URL, headers, body, etc.) before executing the network call.
+<switch:python>
+[python] def access(self, url, params=None, method='GET', headers=None,
+               body='', max_redirects=5, content_parser=None):
+        """
+        Fetches the **protected resource** of an authenticated **user**.
+
+        :param credentials:
+            The **user's** :class:`.Credentials` (serialized or normal).
+
+        :param str url:
+            The URL of the **protected resource**.
+
+        :param str method:
+            HTTP method of the request.
+
+        :param dict headers:
+            HTTP headers of the request.
+
+        :param str body:
+            Body of ``POST``, ``PUT`` and ``PATCH`` requests.
+
+        :param int max_redirects:
+            Maximum number of HTTP redirects to follow.
+
+        :param function content_parser:
+            A function to be used to parse the :attr:`.Response.data`
+            from :attr:`.Response.content`.
+
+        :returns:
+            :class:`.Response`
+
+        """
+
+        if not self.user and not self.credentials:
+            raise CredentialsError(u'There is no authenticated user!')
+
+        headers = headers or {}
+
+        self._log(
+            logging.INFO,
+            u'Accessing protected resource {0}.'.format(url))
+
+        request_elements = self.create_request_elements(
+            request_type=self.PROTECTED_RESOURCE_REQUEST_TYPE,
+            credentials=self.credentials,
+            url=url,
+            body=body,
+            params=params,
+            headers=headers,
+            method=method
+        )
+
+        response = self._fetch(*request_elements,
+                               max_redirects=max_redirects,
+                               content_parser=content_parser)
+
+        self._log(
+            logging.INFO,
+            u'Got response. HTTP status = {0}.'.format(
+                response.status))
+        return response
+<switch:english>
+[english] The function ensures secure access by logging the activity and properly handling redirects while returning a standardized response object.
+[english] What behavior occurs if both `self.user` and `self.credentials` are None?
+[english] If neither is present, a CredentialsError is raised because the user must be authenticated to proceed with accessing protected resources.
+[english] Perfect, that makes sense.

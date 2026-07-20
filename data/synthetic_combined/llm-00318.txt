@@ -1,0 +1,33 @@
+[english] How can I retrieve a paginated list of movies rated by a specific guest session ID?
+[english] This function retrieves movie data by first constructing the correct API endpoint path using the guest session ID, and then performing an authenticated GET request.
+<switch:python>
+[python] def rated_movies(self, **kwargs):
+        """
+        Get a list of rated moview for a specific guest session id.
+
+        Args:
+            page: (optional) Minimum 1, maximum 1000.
+            sort_by: (optional) 'created_at.asc' | 'created_at.desc'
+            language: (optional) ISO 639-1 code.
+
+        Returns:
+            A dict respresentation of the JSON returned from the API.
+        """
+        path = self._get_guest_session_id_path('rated_movies')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The response is processed internally via `self._set_attrs_to_values` before being returned, which organizes the raw JSON into usable object attributes for the class instance.
+[english] If no rated movies are found for a given session ID, what specific data structure does this function typically return?
+[english] The underlying API would usually return an empty list or a status indicating zero results. The function would then process that response and return it as such without raising an error.
+<switch:python>
+[python] try:
+    response = self._GET(path, kwargs)
+    self._set_attrs_to_values(response)
+    return response # If the API returns empty data structure
+finally:
+    # Error handling logic would go here
+<switch:english>
+[english] Got it, understanding how zero results are handled is very helpful.

@@ -1,0 +1,19 @@
+[english] How can I manage updating elements within a canvas when an existing object is replaced by a new one?
+[english] This function handles state transitions for components. It first checks if there was an 'old' component and removes it from the self.canvas collection, then adds the 'new' component as long as it isn't None.
+<switch:python>
+[python] def _component_changed(self, old, new):
+        """ Handles the component being changed.
+        """
+        canvas = self.canvas
+        if old is not None:
+            canvas.remove(old)
+        if new is not None:
+            canvas.add(new)
+<switch:english>
+[english] The use of 'is not None' is crucial here because it ensures that attempting to remove or add a None value won't cause an error in your canvas implementation.
+[english] What happens if both `old` and `new` are passed into this method?
+[english] If both arguments are provided, the existing component is removed first, then the new one is added. You could verify this behavior with a test case like:
+<switch:python>
+[python] c = self._component_changed(old=c1, new=c2)
+<switch:english>
+[english] That makes sense, thank you for clarifying.

@@ -1,0 +1,17 @@
+[english] I need a function that checks if there are any duplicate key values within a dictionary structure during static analysis.
+[english] To detect duplicates, we create a set to track keys encountered so far. We then iterate through the dictionary items, extracting the actual value of constant keys before comparing them against our tracking set.
+<switch:python>
+[python] def visit_dict(self, node):
+        """check duplicate key in dictionary"""
+        keys = set()
+        for k, _ in node.items:
+            if isinstance(k, astroid.Const):
+                key = k.value
+                if key in keys:
+                    self.add_message("duplicate-key", node=node, args=key)
+                keys.add(key)
+<switch:english>
+[english] This approach efficiently identifies collisions but only works for keys that are static constants defined at parse time, skipping complex dynamic keys.
+[english] Since this uses `astroid.Const`, what would happen if a key was dynamically generated via a function call?
+[english] The current implementation will skip it because it is not an instance of `astroid.Const`. Detecting duplicates for runtime expressions requires more advanced semantic analysis beyond this basic visitor.
+[english] Got it, thank you for explaining the limitations!

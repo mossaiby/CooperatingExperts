@@ -1,0 +1,12 @@
+[english] I need a way to calculate the total count of complex branches that have more than one possible exit point based on my parser's statistics.
+[english] This function determines the total number of significant branching paths by examining your parser's internal exit data. It first retrieves all exit counts and then uses a list comprehension to sum up only those counts registered above 1.
+<switch:python>
+[python] def total_branches(self):
+        """How many total branches are there?"""
+        exit_counts = self.parser.exit_counts()
+        return sum([count for count in exit_counts.values() if count > 1])
+<switch:english>
+[english] The method iterates over the values of the `exit_counts` dictionary, ensuring that only multi-path branches contribute to the final total.
+[english] If there are many exit points but they all have exactly one count, what will this function return?
+[english] The function will return 0 because the conditional filter (`if count > 1`) ensures that no counts equal to 1 are ever included in the final summation.
+[english] Perfect, I understand how it handles edge cases now.

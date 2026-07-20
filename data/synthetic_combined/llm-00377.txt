@@ -1,0 +1,25 @@
+[english] How can I programmatically discover and collect all input or dependency sensitivities present within a complex statement structure?
+[english] This function initiates a sensitivity analysis by first ensuring that no prior context exists. It then uses dedicated traversal methods to recursively aggregate all dependencies found during execution.
+<switch:python>
+[python] def _discover_sensitivity(self, seen) -> None:
+        """
+        Doc on parent class :meth:`HdlStatement._discover_sensitivity`
+        """
+        assert self._sensitivity is None, self
+        ctx = self._sensitivity = SensitivityCtx()
+
+        casual_sensitivity = set()
+        self.switchOn._walk_sensitivity(casual_sensitivity, seen, ctx)
+        if ctx.contains_ev_dependency:
+            raise HwtSyntaxError(
+                "Can not switch on event operator result", self.switchOn)
+        ctx.extend(casual_sensitivity)
+
+        for stm in self._iter_stms():
+            stm._discover_sensitivity(seen)
+            ctx.extend(stm._sensitivity)
+<switch:english>
+[english] The code meticulously checks for improper usage patterns (like event operator results) before merging the gathered sensitivities into the shared context.
+[english] What is the impact of calling `stm._discover_sensitivity(seen)` within this loop, especially if a sub-statement has already been seen?
+[english] Since it calls the discover method directly on each statement (`stm`), it ensures that all internal dependencies are analyzed and added to the context, effectively forcing a complete check rather than relying solely on previously recorded information.
+[english] That makes sense; thanks for clarifying how dependencies are tracked!

@@ -1,0 +1,21 @@
+[english] I have an assembly script where many labels aren't actually used in references; how can I automatically detect and remove all those unnecessary definitions?
+[english] This function cleans up assembly code by first checking if a line defines a label. If it does, it then scans the entire list of lines again to see if that specific label name is ever referenced as an operand.
+<switch:python>
+[python] def strip_unreferenced_labels(asm_lines):
+    """Strip all labels, which are never referenced."""
+    asm_stripped = []
+    for line in asm_lines:
+        if re.match(r'^\S+:', line):
+            # Found label
+            label = line[0:line.find(':')]
+            # Search for references to current label
+            if not any([re.match(r'^[^#]*\s' + re.escape(label) + '[\s,]?.*$', l) for l in asm_lines]):
+                # Skip labels without seen reference
+                line = ''
+        asm_stripped.append(line)
+    return asm_stripped
+<switch:english>
+[english] The logic correctly identifies unused labels but relies entirely on regular expressions to catch references, which might miss complex cross-line instructions or macros.
+[english] What happens if a label is only used conditionally, like within an 'if' block? Does this method need global scope?
+[english] Because the function checks every line against every potential reference globally, it treats all labels as having universal scope. It will remove the label even if its use truly depends on conditional logic that might make it unreachable.
+[english] That makes sense; I should probably rethink my optimization approach.

@@ -1,0 +1,15 @@
+[english] How do I programmatically create a new folder with specific properties using an existing file management API wrapper?
+[english] This function prepares all necessary parameters for a creation request by initializing metadata and ensuring the requested name is included.
+<switch:python>
+[python] def mkdir(self, name=None, folder_id='me/skydrive', metadata=dict()):
+		'''Create a folder with a specified "name" attribute.
+				folder_id allows to specify a parent folder.
+				metadata mapping may contain additional folder properties to pass to an API.'''
+		metadata = metadata.copy()
+		if name: metadata['name'] = name
+		return self(folder_id, data=metadata, method='post', auth_header=True)
+<switch:english>
+[english] The method constructs the required payload before delegating the actual network call to an internal instance method.
+[english] If I pass custom dictionaries into 'metadata', are those properties copied or modified in place?
+[english] The function explicitly copies the initial dictionary using `metadata = metadata.copy()` right at the start of the method, ensuring your original outer object is never mutated.
+[english] Perfect, that clarifies how mutable objects are handled.

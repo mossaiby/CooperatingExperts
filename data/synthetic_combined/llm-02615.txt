@@ -1,0 +1,84 @@
+[english] I need to retrieve a list of bundles associated with a given set of transaction hashes from a blockchain adapter, ensuring they are sorted by their tail transaction time.
+[english] This function first uses `GetTrytesCommand` to fetch all transactions related to the input hashes and separates them into 'tail' and 'non-tail' categories. It then queries the node again to find any missing tail transactions belonging to those non-tail bundles before processing the final list.
+<switch:python>
+[python] def get_bundles_from_transaction_hashes(
+        adapter,
+        transaction_hashes,
+        inclusion_states,
+):
+    # type: (BaseAdapter, Iterable[TransactionHash], bool) -> List[Bundle]
+    """
+    Given a set of transaction hashes, returns the corresponding bundles,
+    sorted by tail transaction timestamp.
+    """
+    transaction_hashes = list(transaction_hashes)
+    if not transaction_hashes:
+        return []
+
+    my_bundles = []  # type: List[Bundle]
+
+    # Sort transactions into tail and non-tail.
+    tail_transaction_hashes = set()
+    non_tail_bundle_hashes = set()
+
+    gt_response = GetTrytesCommand(adapter)(hashes=transaction_hashes)
+    all_transactions = list(map(
+        Transaction.from_tryte_string,
+        gt_response['trytes'],
+    ))  # type: List[Transaction]
+
+    for txn in all_transactions:
+        if txn.is_tail:
+            tail_transaction_hashes.add(txn.hash)
+        else:
+            # Capture the bundle ID instead of the transaction hash so
+            # that we can query the node to find the tail transaction
+            # for that bundle.
+            non_tail_bundle_hashes.add(txn.bundle_hash)
+
+    if non_tail_bundle_hashes:
+        for txn in find_transaction_objects(
+                adapter=adapter,
+                bundles=list(non_tail_bundle_hashes),
+        ):
+            if txn.is_tail:
+                if txn.hash not in tail_transaction_hashes:
+                    all_transactions.append(txn)
+                    tail_transaction_hashes.add(txn.hash)
+
+    # Filter out all non-tail transactions.
+    tail_transactions = [
+        txn
+        for txn in all_transactions
+        if txn.hash in tail_transaction_hashes
+    ]
+
+    # Attach inclusion states, if requested.
+    if inclusion_states:
+        gli_response = GetLatestInclusionCommand(adapter)(
+            hashes=list(tail_transaction_hashes),
+        )
+
+        for txn in tail_transactions:
+            txn.is_confirmed = gli_response['states'].get(txn.hash)
+
+    # Find the bundles for each transaction.
+    for txn in tail_transactions:
+        gb_response = GetBundlesCommand(adapter)(transaction=txn.hash)
+        txn_bundles = gb_response['bundles']  # type: List[Bundle]
+
+        if inclusion_states:
+            for bundle in txn_bundles:
+                bundle.is_confirmed = txn.is_confirmed
+
+        my_bundles.extend(txn_bundles)
+
+    return list(sorted(
+        my_bundles,
+        key=lambda bundle_: bundle_.tail_transaction.timestamp,
+    ))
+<switch:english>
+[english] It handles fetching inclusion states using `GetLatestInclusionCommand` for confirmed tails, finally iterating through all resulting transactions to gather and sort the associated bundles.
+[english] What happens if an input transaction hash refers to a bundle that was completely dropped or is invalid, like when accessing the node?
+[english] The current implementation assumes valid inputs; if an input hash points to non-existent data, `Transaction.from_tryte_string` will likely fail during deserialization, causing the function to error instead of gracefully skipping the item.
+[english] Should I check for null results or missing trytes before proceeding with these commands?

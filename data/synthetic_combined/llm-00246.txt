@@ -1,0 +1,20 @@
+[english] How can I enforce a coding standard that prevents developers from accidentally redefining essential Python built-in functions within their modules?
+[english] This function ensures structural integrity by examining all local variable names defined in a module. It iterates through these definitions, comparing them against known system built-ins to prevent unwanted name shadowing.
+<switch:python>
+[python] def visit_module(self, node):
+        """visit module : update consumption analysis variable
+        checks globals doesn't overrides builtins
+        """
+        self._to_consume = [NamesConsumer(node, "module")]
+        self._postponed_evaluation_enabled = is_postponed_evaluation_enabled(node)
+
+        for name, stmts in node.locals.items():
+            if utils.is_builtin(name) and not utils.is_inside_except(stmts[0]):
+                if self._should_ignore_redefined_builtin(stmts[0]) or name == "__doc__":
+                    continue
+                self.add_message("redefined-builtin", args=name, node=stmts[0])
+<switch:english>
+[english] The approach uses internal utility functions to categorize names and scope them appropriately. While robust, its effectiveness relies heavily on how extensively `utils` defines built-ins.
+[english] What happens if a user intentionally redefines a builtin name like 'list' for metaprogramming purposes?
+[english] The function currently flags this change with a "redefined-builtin" message, preventing accidental shadowing unless the redirection is explicitly allowed by `self._should_ignore_redefined_builtin`.
+[english] That makes sense; I need to ensure my project isn't breaking standard Python behavior.

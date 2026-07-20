@@ -1,0 +1,95 @@
+[english] I need a function that configures git sync init containers for retrieving diagrams (DAG) in a Kubernetes environment.
+[english] This `_get_init_containers` method first checks if pre-mounted volumes or image contents already handle DAG retrieval, which would negate the need for an initialization container. If not, it begins building necessary environmental variables and volume mounts.
+<switch:python>
+[python] def _get_init_containers(self):
+        """When using git to retrieve the DAGs, use the GitSync Init Container"""
+        # If we're using volume claims to mount the dags, no init container is needed
+        if self.kube_config.dags_volume_claim or \
+           self.kube_config.dags_volume_host or self.kube_config.dags_in_image:
+            return []
+
+        # Otherwise, define a git-sync init container
+        init_environment = [{
+            'name': 'GIT_SYNC_REPO',
+            'value': self.kube_config.git_repo
+        }, {
+            'name': 'GIT_SYNC_BRANCH',
+            'value': self.kube_config.git_branch
+        }, {
+            'name': 'GIT_SYNC_ROOT',
+            'value': self.kube_config.git_sync_root
+        }, {
+            'name': 'GIT_SYNC_DEST',
+            'value': self.kube_config.git_sync_dest
+        }, {
+            'name': 'GIT_SYNC_DEPTH',
+            'value': '1'
+        }, {
+            'name': 'GIT_SYNC_ONE_TIME',
+            'value': 'true'
+        }]
+        if self.kube_config.git_user:
+            init_environment.append({
+                'name': 'GIT_SYNC_USERNAME',
+                'value': self.kube_config.git_user
+            })
+        if self.kube_config.git_password:
+            init_environment.append({
+                'name': 'GIT_SYNC_PASSWORD',
+                'value': self.kube_config.git_password
+            })
+
+        volume_mounts = [{
+            'mountPath': self.kube_config.git_sync_root,
+            'name': self.dags_volume_name,
+            'readOnly': False
+        }]
+        if self.kube_config.git_ssh_key_secret_name:
+            volume_mounts.append({
+                'name': self.git_sync_ssh_secret_volume_name,
+                'mountPath': '/etc/git-secret/ssh',
+                'subPath': 'ssh'
+            })
+            init_environment.extend([
+                {
+                    'name': 'GIT_SSH_KEY_FILE',
+                    'value': '/etc/git-secret/ssh'
+                },
+                {
+                    'name': 'GIT_SYNC_SSH',
+                    'value': 'true'
+                }])
+        if self.kube_config.git_ssh_known_hosts_configmap_name:
+            volume_mounts.append({
+                'name': self.git_sync_ssh_known_hosts_volume_name,
+                'mountPath': '/etc/git-secret/known_hosts',
+                'subPath': 'known_hosts'
+            })
+            init_environment.extend([
+                {
+                    'name': 'GIT_KNOWN_HOSTS',
+                    'value': 'true'
+                },
+                {
+                    'name': 'GIT_SSH_KNOWN_HOSTS_FILE',
+                    'value': '/etc/git-secret/known_hosts'
+                }
+            ])
+        else:
+            init_environment.append({
+                'name': 'GIT_KNOWN_HOSTS',
+                'value': 'false'
+            })
+
+        return [{
+            'name': self.kube_config.git_sync_init_container_name,
+            'image': self.kube_config.git_sync_container,
+            'securityContext': {'runAsUser': 65533},  # git-sync user
+            'env': init_environment,
+            'volumeMounts': volume_mounts
+        }]
+<switch:english>
+[english] The function then populates a list of Kubernetes init containers. It specifically uses conditional logic to add secure volume mounts for SSH keys or known hosts if provided in the configuration.
+[english] How are user credentials handled, especially regarding security best practices?
+[english] If `self.kube_config.git_user` and `.git_password` are present, they are added to the environment variables as `GIT_SYNC_USERNAME` and `GIT_SYNC_PASSWORD`. However, for production security, it is better to reference a Secret instead of passing them directly in plain text.
+[english] This looks like exactly what I needed for my deployment setup.

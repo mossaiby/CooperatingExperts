@@ -1,0 +1,98 @@
+[english] How can I convert a specific entry within an HDF5 file containing structured neural data into its corresponding RAMON object?
+[english] This function first validates that the given `anno_id` exists in the input HDF5 file. It then dynamically determines the correct target class (e.g., Neuron or Synapse) based on metadata before initializing and populating its specific attributes.
+<switch:python>
+[python] def from_hdf5(hdf5, anno_id=None):
+    """
+    Converts an HDF5 file to a RAMON object. Returns an object that is a child-
+    -class of RAMON (though it's determined at run-time what type is returned).
+
+    Accessing multiple IDs from the same file is not supported, because it's
+    not dramatically faster to access each item in the hdf5 file at the same
+    time It's semantically and computationally easier to run this function
+    several times on the same file.
+
+    Arguments:
+        hdf5 (h5py.File): A h5py File object that holds RAMON data
+        anno_id (int): The ID of the RAMON obj to extract from the file. This
+            defaults to the first one (sorted) if none is specified.
+
+    Returns:
+        ndio.RAMON object
+    """
+    if anno_id is None:
+        # The user just wants the first item we find, so... Yeah.
+        return from_hdf5(hdf5, list(hdf5.keys())[0])
+
+    # First, get the actual object we're going to download.
+    anno_id = str(anno_id)
+    if anno_id not in list(hdf5.keys()):
+        raise ValueError("ID {} is not in this file. Options are: {}".format(
+            anno_id,
+            ", ".join(list(hdf5.keys()))
+        ))
+
+    anno = hdf5[anno_id]
+    # anno now holds just the RAMON of interest
+
+    # This is the most complicated line in here: It creates an object whose
+    # type is conditional on the ANNOTATION_TYPE of the hdf5 object.
+    try:
+        r = AnnotationType.get_class(anno['ANNOTATION_TYPE'][0])()
+    except:
+        raise InvalidRAMONError("This is not a valid RAMON type.")
+
+    # All RAMON types definitely have these attributes:
+    metadata = anno['METADATA']
+    r.author = metadata['AUTHOR'][0]
+    r.confidence = metadata['CONFIDENCE'][0]
+    r.status = metadata['STATUS'][0]
+    r.id = anno_id
+
+    # These are a little tougher, some RAMON types have special attributes:
+
+    if type(r) in [RAMONNeuron, RAMONSynapse]:
+        r.segments = metadata['SEGMENTS'][()]
+
+    if 'KVPAIRS' in metadata:
+        kvs = metadata['KVPAIRS'][()][0].split()
+        if len(kvs) != 0:
+
+            for i in kvs:
+                k, v = str(i).split(',')
+                r.kvpairs[str(k)] = str(v)
+        else:
+            r.kvpairs = {}
+
+    if issubclass(type(r), RAMONVolume):
+        if 'CUTOUT' in anno:
+            r.cutout = anno['CUTOUT'][()]
+        if 'XYZOFFSET' in anno:
+            r.cutout = anno['XYZOFFSET'][()]
+        if 'RESOLUTION' in anno:
+            r.cutout = anno['RESOLUTION'][()]
+
+    if type(r) is RAMONSynapse:
+        r.synapse_type = metadata['SYNAPSE_TYPE'][0]
+        r.weight = metadata['WEIGHT'][0]
+
+    if type(r) is RAMONSegment:
+        if 'NEURON' in metadata:
+            r.neuron = metadata['NEURON'][0]
+        if 'PARENTSEED' in metadata:
+            r.parent_seed = metadata['PARENTSEED'][0]
+        if 'SEGMENTCLASS' in metadata:
+            r.segmentclass = metadata['SEGMENTCLASS'][0]
+        if 'SYNAPSES' in metadata:
+            r.synapses = metadata['SYNAPSES'][()]
+        if 'ORGANELLES' in metadata:
+            r.organelles = metadata['ORGANELLES'][()]
+
+    if type(r) is RAMONOrganelle:
+        r.organelle_class = metadata['ORGANELLECLASS'][0]
+
+    return r
+<switch:english>
+[english] The code relies heavily on sequential type checks (`if type(r) is ...`) to handle varying schemas for different RAMON object types within a single extraction process.
+[english] What happens if the HDF5 entry contains required but missing metadata, like 'AUTHOR', and the function tries to access it?
+[english] If a key in `metadata` (like 'AUTHOR') is missing, the code will raise a KeyError or IndexError because it uses direct indexing on the data structure. You might want to safely check for keys before assignment.
+[english] This makes sense; defensive programming would be necessary when dealing with varied dataset schemas.

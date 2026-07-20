@@ -1,0 +1,22 @@
+[english] How do I clear or remove the status associated with a specific device management request ID?
+[english] This `delete` method interacts with an external API to attempt removal of a resource identified by a unique request ID.
+<switch:python>
+[python] def delete(self, requestId):
+        """
+        Clears the status of a device management request.
+        You can use this operation to clear the status for a completed request, or for an in-progress request which may never complete due to a problem.
+        It accepts requestId (string) as parameters
+        In case of failure it throws APIException
+        """
+        url = MgmtRequests.mgmtSingleRequest % (requestId)
+        r = self._apiClient.delete(url)
+
+        if r.status_code == 204:
+            return True
+        else:
+            raise ApiException(r)
+<switch:english>
+[english] The method checks for a successful deletion by looking specifically at `r.status_code`, which should be 204 to indicate success.
+[english] What happens if the request ID doesn't exist in the system?
+[english] If the API returns any status code other than 204, it raises an ApiException with the response details from the API call instead of returning True. This allows callers to handle specific error conditions programmatically.
+[english] This makes sense for robust cleanup operations.

@@ -1,0 +1,39 @@
+[english] I need a way to fetch, process, and yield filtered issues from an issue tracker API, enriching each one with detailed metadata.
+[english] This function iterates through groups of raw issues fetched via the client. It processes and enriches each issue item by conditionally fetching extra data like user details or comments for all specified target fields before yielding the result.
+<switch:python>
+[python] def __fetch_issues(self, from_date, to_date):
+        """Fetch the issues"""
+
+        issues_groups = self.client.issues(from_date=from_date)
+
+        for raw_issues in issues_groups:
+            issues = json.loads(raw_issues)
+            for issue in issues:
+
+                if str_to_datetime(issue['updated_at']) > to_date:
+                    return
+
+                self.__init_extra_issue_fields(issue)
+                for field in TARGET_ISSUE_FIELDS:
+
+                    if not issue[field]:
+                        continue
+
+                    if field == 'user':
+                        issue[field + '_data'] = self.__get_user(issue[field]['login'])
+                    elif field == 'assignee':
+                        issue[field + '_data'] = self.__get_issue_assignee(issue[field])
+                    elif field == 'assignees':
+                        issue[field + '_data'] = self.__get_issue_assignees(issue[field])
+                    elif field == 'comments':
+                        issue[field + '_data'] = self.__get_issue_comments(issue['number'])
+                    elif field == 'reactions':
+                        issue[field + '_data'] = \
+                            self.__get_issue_reactions(issue['number'], issue['reactions']['total_count'])
+
+                yield issue
+<switch:english>
+[english] The function uses `yield` to return processed issues one at a time, which is memory efficient when dealing with large datasets. Note that processing stops immediately if an issue's update date exceeds the provided `to_date`.
+[english] How does this handle pagination or potential API rate limits during the enrichment steps?
+[english] The current implementation relies on `self.client.issues()`, which typically handles basic pagination, but aggressive calls to helper methods like `__get_user` could trigger rate limiting.
+[english] Should I implement a retry mechanism within the helper functions?

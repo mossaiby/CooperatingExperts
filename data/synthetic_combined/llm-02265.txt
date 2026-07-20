@@ -1,0 +1,11 @@
+[english] I need a method that retrieves all initial input variables defined across different layers of my neural network structure.
+[english] To successfully identify the starting points for computation, we iterate through every layer in the collection. We use an `isinstance` check to ensure we only target genuine entry points designated as Input layers.
+<switch:python>
+[python] def inputs(self):
+        '''A list of Theano variables for feedforward computations.'''
+        return [l.input for l in self.layers if isinstance(l, layers.Input)]
+<switch:english>
+[english] The list comprehension efficiently gathers the required input objects while ensuring that only officially defined `layers.Input` types are considered relevant for graph tracing.
+[english] Are there scenarios where an input layer might not expose a `.input` attribute, and how would the function handle that?
+[english] If a layer is identified as an Input but lacks an `.input` attribute, accessing `l.input` will raise an AttributeError. It's crucial to ensure all layers are properly initialized.
+[english] This makes perfect sense now; thanks for breaking it down!

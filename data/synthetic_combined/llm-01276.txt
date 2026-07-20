@@ -1,0 +1,54 @@
+[english] How can I implement a robust mechanism to receive, interpret, deserialize, and dispatch various types of inbound shell requests?
+[english] This function processes incoming messages by ensuring control streams are flushed and then unserializing the raw message content. It extracts metadata from the header and uses `self.shell_handlers` as a lookup table to route the request to the specific logic responsible for that message type.
+<switch:python>
+[python] def dispatch_shell(self, stream, msg):
+        """dispatch shell requests"""
+        # flush control requests first
+        if self.control_stream:
+            self.control_stream.flush()
+        
+        idents,msg = self.session.feed_identities(msg, copy=False)
+        try:
+            msg = self.session.unserialize(msg, content=True, copy=False)
+        except:
+            self.log.error("Invalid Message", exc_info=True)
+            return
+
+        header = msg['header']
+        msg_id = header['msg_id']
+        msg_type = msg['header']['msg_type']
+        
+        # Print some info about this message and leave a '--->' marker, so it's
+        # easier to trace visually the message chain when debugging.  Each
+        # handler prints its message at the end.
+        self.log.debug('\n*** MESSAGE TYPE:%s***', msg_type)
+        self.log.debug('   Content: %s\n   --->\n   ', msg['content'])
+
+        if msg_id in self.aborted:
+            self.aborted.remove(msg_id)
+            # is it safe to assume a msg_id will not be resubmitted?
+            reply_type = msg_type.split('_')[0] + '_reply'
+            status = {'status' : 'aborted'}
+            sub = {'engine' : self.ident}
+            sub.update(status)
+            reply_msg = self.session.send(stream, reply_type, subheader=sub,
+                        content=status, parent=msg, ident=idents)
+            return
+        
+        handler = self.shell_handlers.get(msg_type, None)
+        if handler is None:
+            self.log.error("UNKNOWN MESSAGE TYPE: %r", msg_type)
+        else:
+            # ensure default_int_handler during handler call
+            sig = signal(SIGINT, default_int_handler)
+            try:
+                handler(stream, idents, msg)
+            except Exception:
+                self.log.error("Exception in message handler:", exc_info=True)
+            finally:
+                signal(SIGINT, sig)
+<switch:english>
+[english] The method is designed with safety in mind, including handling aborted messages via ID tracking and temporarily overriding signals like SIGINT so your handlers can be interrupted gracefully.
+[english] If the code successfully parses the `msg_type` but cannot find a corresponding function in the handlers map, what action does it take?
+[english] If no handler is found, the function logs an error using `self.log.error("UNKNOWN MESSAGE TYPE: %r", msg_type)` and terminates processing for that message.
+[english] Thanks for clarifying how those dispatch failures are handled.

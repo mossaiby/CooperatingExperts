@@ -1,0 +1,27 @@
+[english] How can I retrieve a specific HPO term object using its unique ID?
+[english] This function is designed to fetch a single resource from an underlying collection. It uses the provided string as the '_id' key for a targeted lookup.
+<switch:python>
+[python] def hpo_term(self, hpo_id):
+        """Fetch a hpo term
+
+        Args:
+            hpo_id(str)
+
+        Returns:
+            hpo_obj(dict)
+        """
+        LOG.debug("Fetching hpo term %s", hpo_id)
+
+        return self.hpo_term_collection.find_one({'_id': hpo_id})
+<switch:english>
+[english] The code utilizes `find_one` which efficiently searches for and returns only the first matching document, or None if no ID matches.
+[english] What happens internally if an HPO ID is passed that does not exist in the data store?
+[english] If the provided id doesn't match any record, `find_one` will return `None`. You should check for existence before attempting to access object attributes:
+<switch:python>
+[python] term = self.hpo_term(some_id)
+if term:
+    # process term
+else:
+    # handle missing data
+<switch:english>
+[english] The null handling advice is very helpful.

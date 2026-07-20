@@ -1,0 +1,30 @@
+[english] How can I reliably set various metadata attributes onto a managed object while ensuring they are valid for that specific object's type?
+[english] This function systematically iterates over the input dictionary using `six.iteritems`. It first evaluates whether each attribute is permissible on the target object's type via an internal policy.
+<switch:python>
+[python] def _set_attributes_on_managed_object(self, managed_object, attributes):
+        """
+        Given a kmip.pie object and a dictionary of attributes, attempt to set
+        the attribute values on the object.
+        """
+        for attribute_name, attribute_value in six.iteritems(attributes):
+            object_type = managed_object._object_type
+            if self._attribute_policy.is_attribute_applicable_to_object_type(
+                    attribute_name,
+                    object_type):
+                self._set_attribute_on_managed_object(
+                    managed_object,
+                    (attribute_name, attribute_value)
+                )
+            else:
+                name = object_type.name
+                raise exceptions.InvalidField(
+                    "Cannot set {0} attribute on {1} object.".format(
+                        attribute_name,
+                        ''.join([x.capitalize() for x in name.split('_')])
+                    )
+                )
+<switch:english>
+[english] If a provided attribute fails the validation check, the method halts execution and raises an InvalidField exception to inform the caller about the constraint violation.
+[english] What happens if the managed object lacks a necessary defining property like `_object_type`?
+[english] The function expects that `managed_object._object_type` is always present. If it is missing, attempting to access it on line 7 will raise an AttributeError before any validation can occur.
+[english] That makes sense, thanks for clarifying how strict the checks are!

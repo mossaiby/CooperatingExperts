@@ -1,0 +1,21 @@
+[english] How can I programmatically render a specific string on a canvas at defined coordinates using a particular font?
+[english] This function creates an instruction set for drawing text by first establishing a visual style from the given font. It then bundles this stylish text into a layout object, which contains all required parameters like position and alignment.
+<switch:python>
+[python] def draw_string(font, text, x, y, width=None, height=None, align=Alignment.left, vertical_align=VerticalAlignment.baseline):
+    '''Draw a string with the given font.
+
+    :note: Text alignment and word-wrapping is not yet implemented.  The text is rendered with the left edge and
+        baseline at ``(x, y)``.
+
+    :param font: the :class:`Font` to render text with
+    :param text: a string of text to render.
+    '''
+    style = Style(font)
+    run = GlyphRun(style, text)
+    glyph_layout = GlyphLayout([run], x, y, width, height, align, vertical_align)
+    draw_glyph_layout(glyph_layout)
+<switch:english>
+[english] The function abstracts the rendering process by separating style definition from layout logic. Currently, it only handles single runs of text and does not perform automatic word wrapping.
+[english] If I pass a string containing multiple lines or paragraphs, will this function automatically handle the line breaks?
+[english] No, the function appears to treat the entire input as one continuous run because of how `GlyphRun` is initialized. To support multi-line text, you would likely need logic outside of this method to split and iterate over the string.
+[english] Thanks for clarifying how it handles complex strings!

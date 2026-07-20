@@ -1,0 +1,48 @@
+[english] How can I convert a set of raw NumPy feature arrays and corresponding labels into an object structure suitable for processing by our Java bigDL backend?
+[english] This function prepares inputs by ensuring both features and labels are treated consistently as lists. It then converts each NumPy array using JTensor before initializing the final class instance.
+<switch:python>
+[python] def from_ndarray(cls, features, labels, bigdl_type="float"):
+        """
+        Convert a ndarray of features and labels to Sample, which would be used in Java side.
+        :param features: an ndarray or a list of ndarrays
+        :param labels: an ndarray or a list of ndarrays or a scalar
+        :param bigdl_type: "double" or "float"
+
+        >>> import numpy as np
+        >>> from bigdl.util.common import callBigDlFunc
+        >>> from numpy.testing import assert_allclose
+        >>> np.random.seed(123)
+        >>> sample = Sample.from_ndarray(np.random.random((2,3)), np.random.random((2,3)))
+        >>> sample_back = callBigDlFunc("float", "testSample", sample)
+        >>> assert_allclose(sample.features[0].to_ndarray(), sample_back.features[0].to_ndarray())
+        >>> assert_allclose(sample.label.to_ndarray(), sample_back.label.to_ndarray())
+        >>> expected_feature_storage = np.array(([[0.69646919, 0.28613934, 0.22685145], [0.55131477, 0.71946895, 0.42310646]]))
+        >>> expected_feature_shape = np.array([2, 3])
+        >>> expected_label_storage = np.array(([[0.98076421, 0.68482971, 0.48093191], [0.39211753, 0.343178, 0.72904968]]))
+        >>> expected_label_shape = np.array([2, 3])
+        >>> assert_allclose(sample.features[0].storage, expected_feature_storage, rtol=1e-6, atol=1e-6)
+        >>> assert_allclose(sample.features[0].shape, expected_feature_shape)
+        >>> assert_allclose(sample.labels[0].storage, expected_label_storage, rtol=1e-6, atol=1e-6)
+        >>> assert_allclose(sample.labels[0].shape, expected_label_shape)
+        """
+        if isinstance(features, np.ndarray):
+            features = [features]
+        else:
+            assert all(isinstance(feature, np.ndarray) for feature in features), \
+                "features should be a list of np.ndarray, not %s" % type(features)
+        if np.isscalar(labels):  # in case labels is a scalar.
+            labels = [np.array(labels)]
+        elif isinstance(labels, np.ndarray):
+            labels = [labels]
+        else:
+            assert all(isinstance(label, np.ndarray) for label in labels), \
+                "labels should be a list of np.ndarray, not %s" % type(labels)
+        return cls(
+            features=[JTensor.from_ndarray(feature) for feature in features],
+            labels=[JTensor.from_ndarray(label) for label in labels],
+            bigdl_type=bigdl_type)
+<switch:english>
+[english] By normalizing single arrays into list wrappers, the function guarantees that all components adhere to the expected iterable format necessary for compatibility with the Java side.
+[english] If I had a feature input that was something other than a NumPy ndarray (e.g., a standard Python list), what would happen?
+[english] The code includes an assertion check (`assert all(isinstance(...))`) which requires every element in the `features` or `labels` collections to be a NumPy `ndarray`, raising an error otherwise.
+[english] That clarifies the input validation process!

@@ -1,0 +1,86 @@
+[english] I need a way to dynamically create and register various specialized data group types (like ResultGroup or ParameterGroup) within our modeling structure.
+[english] This method provides a generic mechanism for object creation, responsible for determining the correct constructor based on a provided type name. It ensures that all newly created groups are properly initialized, named, and attached to their parent nodes in the data tree.
+<switch:python>
+[python] def _create_any_group(self, parent_node, name, type_name, instance=None, constructor=None,
+                          args=None, kwargs=None):
+        """Generically creates a new group inferring from the `type_name`."""
+
+        if args is None:
+            args = []
+
+        if kwargs is None:
+            kwargs = {}
+
+        full_name = self._make_full_name(parent_node.v_full_name, name)
+
+        if instance is None:
+            if constructor is None:
+                if type_name == RESULT_GROUP:
+                    constructor = ResultGroup
+                elif type_name == PARAMETER_GROUP:
+                    constructor = ParameterGroup
+                elif type_name == CONFIG_GROUP:
+                    constructor = ConfigGroup
+                elif type_name == DERIVED_PARAMETER_GROUP:
+                    constructor = DerivedParameterGroup
+                elif type_name == GROUP:
+                    constructor = NNGroupNode
+                else:
+                    raise RuntimeError('You shall not pass!')
+            instance = self._root_instance._construct_instance(constructor, full_name,
+                                                               *args, **kwargs)
+        else:
+            instance._rename(full_name)
+            # Check if someone tries to add a particular standard group to a branch where
+            # it does not belong:
+            if type_name == RESULT_GROUP:
+                if type(instance) in (NNGroupNode,
+                                   ParameterGroup,
+                                   ConfigGroup,
+                                   DerivedParameterGroup):
+                    raise TypeError('You cannot add a `%s` type of group under results' %
+                                    str(type(instance)))
+            elif type_name == PARAMETER_GROUP:
+                if type(instance) in (NNGroupNode,
+                                   ResultGroup,
+                                   ConfigGroup,
+                                   DerivedParameterGroup):
+                    raise TypeError('You cannot add a `%s` type of group under parameters' %
+                                    str(type(instance)))
+            elif type_name == CONFIG_GROUP:
+                if type(instance) in (NNGroupNode,
+                                   ParameterGroup,
+                                   ResultGroup,
+                                   DerivedParameterGroup):
+                    raise TypeError('You cannot add a `%s` type of group under config' %
+                                    str(type(instance)))
+            elif type_name == DERIVED_PARAMETER_GROUP:
+                if type(instance) in (NNGroupNode,
+                                   ParameterGroup,
+                                   ConfigGroup,
+                                   ResultGroup):
+                    raise TypeError('You cannot add a `%s` type of group under derived '
+                                    'parameters' % str(type(instance)))
+            elif type_name == GROUP:
+                if type(instance) in (ResultGroup,
+                                   ParameterGroup,
+                                   ConfigGroup,
+                                   DerivedParameterGroup):
+                    raise TypeError('You cannot add a `%s` type of group under other data' %
+                                    str(type(instance)))
+            else:
+                raise RuntimeError('You shall not pass!')
+
+        self._set_details_tree_node(parent_node, name, instance)
+        instance._nn_interface = self
+        self._root_instance._all_groups[instance.v_full_name] = instance
+        self._add_to_nodes_and_leaves(instance)
+        parent_node._children[name] = instance
+        parent_node._groups[name] = instance
+
+        return instance
+<switch:english>
+[english] The function includes strict logic ensuring that certain group types can only be placed under compatible parent categories, preventing invalid hierarchical structures from being built.
+[english] What happens if I try to add a ParameterGroup inside an NNGroupNode? Does it pass or fail?
+[english] If you attempt this placement, the `TypeError` blocks within the validation logic will catch it and raise a descriptive error because Parameters are not allowed under other data groups.
+[english] That makes sense; validating those hierarchies internally is crucial.

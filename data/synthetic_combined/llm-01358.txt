@@ -1,0 +1,19 @@
+[english] How can I control my shell's terminal prompt and ensure program standard output is written correctly?
+[english] This method handles writing the main program output to stdout and subsequently manages the rendering of a customized shell prompt. It conditionally writes the prompt based on whether full caching is enabled.
+<switch:python>
+[python] def write_output_prompt(self):
+        """Write the output prompt.
+
+        The default implementation simply writes the prompt to
+        ``io.stdout``.
+        """
+        # Use write, not print which adds an extra space.
+        io.stdout.write(self.shell.separate_out)
+        outprompt = self.shell.prompt_manager.render('out')
+        if self.do_full_cache:
+            io.stdout.write(outprompt)
+<switch:english>
+[english] The function employs `io.stdout.write` to ensure that standard output flows cleanly without automatic newline characters being added by Python's `print` function.
+[english] If `do_full_cache` is set to False, what exactly happens instead of writing the prompt?
+[english] The prompt (`outprompt`) will be rendered internally but its final write operation to `io.stdout` will simply be skipped by the conditional check, meaning no custom prompt is displayed.
+[english] That makes sense regarding how the caching flag influences output.

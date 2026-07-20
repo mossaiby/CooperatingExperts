@@ -1,0 +1,23 @@
+[english] How can I check if two lists of hardware description statements are logically identical?
+[english] To determine if both lists represent the same set of statements, we first handle identity checks before iterating through them.
+<switch:python>
+[python] def isSameStatementList(stmListA: List[HdlStatement],
+                        stmListB: List[HdlStatement]) -> bool:
+    """
+    :return: True if two lists of HdlStatement instances are same
+    """
+    if stmListA is stmListB:
+        return True
+    if stmListA is None or stmListB is None:
+        return False
+
+    for a, b in zip(stmListA, stmListB):
+        if not a.isSame(b):
+            return False
+
+    return True
+<switch:english>
+[english] The function relies on the `isSame` method provided by the `HdlStatement` class to ensure deep logical comparison rather than just reference equality.
+[english] What happens if one list is shorter than the other?
+[english] If the lists have unequal lengths, the `zip` function will only compare elements up to the length of the shortest list, causing the function to incorrectly return True when they are not truly identical by content or count. You should check for length inequality explicitly first.
+[english] That makes sense! I'll add a length check.

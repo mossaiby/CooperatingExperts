@@ -1,0 +1,27 @@
+[english] How do I sort a list of custom objects by multiple attributes, allowing some sorts to be in descending order?
+[english] To achieve multi-level sorting with mixed directions (ascending and descending), we iteratively apply `list.sort()` for each field starting from the least significant one.
+<switch:python>
+[python] def sort_by_fields(items, fields):
+    """
+    Sort a list of objects on the given fields. The field list works analogously to
+    queryset.order_by(*fields): each field is either a property of the object,
+    or is prefixed by '-' (e.g. '-name') to indicate reverse ordering.
+    """
+    # To get the desired behaviour, we need to order by keys in reverse order
+    # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
+    for key in reversed(fields):
+        # Check if this key has been reversed
+        reverse = False
+        if key[0] == '-':
+            reverse = True
+            key = key[1:]
+
+        # Sort
+        # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
+        # as comparing directly with None breaks on python3
+        items.sort(key=lambda x: (getattr(x, key) is not None, getattr(x, key)), reverse=reverse)
+<switch:english>
+[english] The function handles None values explicitly within the lambda key to ensure they are grouped consistently during comparison, preventing common Python errors when comparing types.
+[english] If I sort by '-age' then 'name', will the name be sorted in ascending order or descending?
+[english] Because it sorts from back to front (descending primarily), the subsequent ascending sort on 'name' will only affect items that share the same primary age, effectively keeping it in ascending order.
+[english] That makes sense!

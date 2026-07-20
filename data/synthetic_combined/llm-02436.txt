@@ -1,0 +1,21 @@
+[english] I need a way to dynamically evaluate an expression against an object context (like an AST) and store the retrieved value into another destination object.
+[english] This function achieves dynamic execution by constructing a complete Python expression string. It prepends 'ast' to your input variable and uses `eval()` to calculate the result based on that combined string.
+<switch:python>
+[python] def get_subnode(self, dst, ast, expr):
+    """
+        get the value of subnode
+
+        example::
+
+            R = [
+                __scope__:big  getsomethingbig:>big
+                #get(_, big, '.val') // copy big.val into _
+            ]
+    """
+    dst.value = eval('ast' + expr)
+    return True
+<switch:english>
+[english] The method successfully assigns the evaluated result to `dst.value`. However, relying on `eval` with untrusted inputs poses a significant security risk due to arbitrary code execution.
+[english] What happens if I try to pass an expression that results in a list or dictionary, rather than a simple boolean?
+[english] The function handles any valid return type from the evaluation. If the expression resolves to a list, `dst.value` will hold that entire list object instead of just True.
+[english] Thank you for explaining how this dynamic attribute retrieval works.

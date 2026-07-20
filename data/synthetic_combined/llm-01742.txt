@@ -1,0 +1,28 @@
+[english] How can I programmatically add multiple new records from a list of data dictionaries into a system's internal storage?
+[english] This method iterates through a batch of provided record data, instantiates a new Record object for each entry, and saves it internally.
+<switch:python>
+[python] def _dev_add_inert(self, records_data):
+        """
+        inert: hooks and links are not activated
+        """
+        added_records = []
+        for r_data in records_data:
+            # create record
+            record = Record(
+                self,
+                data=r_data
+            )
+
+            # store
+            # we don't check uniqueness here => will be done while checking hooks
+            self._records[record.get_pk()] = record
+            
+            # remember record
+            added_records.append(record)
+        
+        return added_records
+<switch:english>
+[english] It stores the newly created objects in `self._records`, but note that duplicate primary keys will simply overwrite existing entries without error checking at this stage.
+[english] If two incoming records share the same primary key, what happens to the record already stored in `self._records`?
+[english] The original record will be overwritten by the new one because the code uses `self._records[record.get_pk()] = record`, which is a standard dictionary assignment.
+[english] That clarifies how it handles potential conflicts.

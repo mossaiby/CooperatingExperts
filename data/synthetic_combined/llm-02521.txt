@@ -1,0 +1,75 @@
+[english] I need a way to construct the shell command required to run an Airflow task instance with specific overrides like success marking or ignoring dependencies.
+[english] This function acts as a utility to dynamically build an operational list of arguments for running an Airflow Task Runner. It initializes the basic call structure and then adds flags based on whether optional parameters are provided or set to true.
+<switch:python>
+[python] def generate_command(dag_id,
+                         task_id,
+                         execution_date,
+                         mark_success=False,
+                         ignore_all_deps=False,
+                         ignore_depends_on_past=False,
+                         ignore_task_deps=False,
+                         ignore_ti_state=False,
+                         local=False,
+                         pickle_id=None,
+                         file_path=None,
+                         raw=False,
+                         job_id=None,
+                         pool=None,
+                         cfg_path=None
+                         ):
+        """
+        Generates the shell command required to execute this task instance.
+
+        :param dag_id: DAG ID
+        :type dag_id: unicode
+        :param task_id: Task ID
+        :type task_id: unicode
+        :param execution_date: Execution date for the task
+        :type execution_date: datetime
+        :param mark_success: Whether to mark the task as successful
+        :type mark_success: bool
+        :param ignore_all_deps: Ignore all ignorable dependencies.
+            Overrides the other ignore_* parameters.
+        :type ignore_all_deps: bool
+        :param ignore_depends_on_past: Ignore depends_on_past parameter of DAGs
+            (e.g. for Backfills)
+        :type ignore_depends_on_past: bool
+        :param ignore_task_deps: Ignore task-specific dependencies such as depends_on_past
+            and trigger rule
+        :type ignore_task_deps: bool
+        :param ignore_ti_state: Ignore the task instance's previous failure/success
+        :type ignore_ti_state: bool
+        :param local: Whether to run the task locally
+        :type local: bool
+        :param pickle_id: If the DAG was serialized to the DB, the ID
+            associated with the pickled DAG
+        :type pickle_id: unicode
+        :param file_path: path to the file containing the DAG definition
+        :param raw: raw mode (needs more details)
+        :param job_id: job ID (needs more details)
+        :param pool: the Airflow pool that the task should run in
+        :type pool: unicode
+        :param cfg_path: the Path to the configuration file
+        :type cfg_path: basestring
+        :return: shell command that can be used to run the task instance
+        """
+        iso = execution_date.isoformat()
+        cmd = ["airflow", "run", str(dag_id), str(task_id), str(iso)]
+        cmd.extend(["--mark_success"]) if mark_success else None
+        cmd.extend(["--pickle", str(pickle_id)]) if pickle_id else None
+        cmd.extend(["--job_id", str(job_id)]) if job_id else None
+        cmd.extend(["-A"]) if ignore_all_deps else None
+        cmd.extend(["-i"]) if ignore_task_deps else None
+        cmd.extend(["-I"]) if ignore_depends_on_past else None
+        cmd.extend(["--force"]) if ignore_ti_state else None
+        cmd.extend(["--local"]) if local else None
+        cmd.extend(["--pool", pool]) if pool else None
+        cmd.extend(["--raw"]) if raw else None
+        cmd.extend(["-sd", file_path]) if file_path else None
+        cmd.extend(["--cfg_path", cfg_path]) if cfg_path else None
+        return cmd
+<switch:english>
+[english] The function returns a list of strings, which represents the arguments that should be passed directly to the system shell to execute the task.
+[english] How does this function handle cases where multiple dependency-ignoring flags (like `ignore_all_deps` and `ignore_task_deps`) are both set to True?
+[english] Because of how it uses list extension (`cmd.extend`), if both parameters are true, the resulting command will include the arguments for all specified ignored dependencies.
+[english] That clarifies how the flags are appended!

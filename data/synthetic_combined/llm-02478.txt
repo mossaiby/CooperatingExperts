@@ -1,0 +1,29 @@
+[english] How can I create a standardized action description dictionary that incorporates various attributes like status, input, and completion time from an existing object?
+[english] This function constructs a structured description for an action by initializing a main dictionary using `self.name`. It then conditionally adds optional fields based on whether the relevant instance variables are not None.
+<switch:python>
+[python] def as_action_description(self):
+        """
+        Get the action description.
+
+        Returns a dictionary describing the action.
+        """
+        description = {
+            self.name: {
+                'href': self.href_prefix + self.href,
+                'timeRequested': self.time_requested,
+                'status': self.status,
+            },
+        }
+
+        if self.input is not None:
+            description[self.name]['input'] = self.input
+
+        if self.time_completed is not None:
+            description[self.name]['timeCompleted'] = self.time_completed
+
+        return description
+<switch:english>
+[english] The function ensures the core metadata is always present, while `if` checks prevent unnecessary keys from being included for actions that haven't started or finished yet.
+[english] If all optional fields like 'input' and 'timeCompleted' are missing, will the returned dictionary still contain only the basic action details?
+[english] Yes, since `description` is initialized with the core fields (name, href, timeRequested, status), it always returns at least those entries. The conditional checks only add keys if data exists for them.
+[english] Does this approach scale well if I need to support many different optional attributes?

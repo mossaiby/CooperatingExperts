@@ -1,0 +1,18 @@
+[english] How can I initialize a run context, specify whether it should be 'raw', and automatically configure internal logging settings?
+[english] To begin setting up the operational environment, this function first captures any input passed to it via the `raw` parameter. Once stored, it utilizes an internal method call to establish the necessary configuration based on the current instance.
+<switch:python>
+[python] def init_run_context(self, raw=False):
+        """
+        Sets the log context.
+        """
+        self.raw = raw
+        self._set_context(self)
+<switch:english>
+[english] The function first sets a state (`self.raw`) based on user input and then delegates the actual configuration logic to an internal helper method, `_set_context`.
+[english] If the instance is already being used in a context where logging isn't allowed, how could I prevent this initialization from overwriting existing settings?
+[english] You would add a conditional check at the start of the function to validate system permissions before modifying state. For example:
+<switch:python>
+[python] if not self._can_set_context(): # Assuming such a method exists
+            raise PermissionError("Context setting is disallowed.")
+<switch:english>
+[english] That makes sense, thanks for the clarification!

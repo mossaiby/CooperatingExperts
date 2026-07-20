@@ -1,0 +1,17 @@
+[english] How can I safely retrieve a modification count stored in a key, returning zero if it hasn't been set yet?
+[english] This function attempts to fetch the value associated with `self.times_modified_key` from a persistent store via `self.conn.client.get`. It handles the case where no value is returned by checking for `None` before attempting conversion.
+<switch:python>
+[python] def get_times_modified(self):
+        """
+        :returns: The total number of times increment_times_modified has been called for this resource by all processes.
+        :rtype: int
+        """
+        times_modified = self.conn.client.get(self.times_modified_key)
+        if times_modified is None:
+            return 0
+        return int(times_modified)
+<switch:english>
+[english] If a value exists, it ensures compatibility across potential data types or storage formats by explicitly casting the retrieved string into an integer.
+[english] What happens if the stored value under that key exists but isn't actually a number?
+[english] The function relies on `int(times_modified)` to handle the conversion. If the stored data is malformed (e.g., 'hello'), it will raise a `ValueError` during retrieval.
+[english] Got it, I should probably add error handling for non-numeric values.

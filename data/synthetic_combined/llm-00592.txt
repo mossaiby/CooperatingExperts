@@ -1,0 +1,30 @@
+[english] How can I programmatically check if a given image contains content that violates safe search policies using Google Cloud Vision?
+[english] This function utilizes the configured GCP annotator client to specifically call the Safe Search Detection API. It initializes any missing configuration and prepares the request parameters before executing the detection.
+<switch:python>
+[python] def safe_search_detection(
+        self, image, max_results=None, retry=None, timeout=None, additional_properties=None
+    ):
+        """
+        For the documentation see:
+        :py:class:`~airflow.contrib.operators.gcp_vision_operator.CloudVisionDetectImageSafeSearchOperator`
+        """
+        client = self.annotator_client
+
+        self.log.info("Detecting safe search")
+
+        if additional_properties is None:
+            additional_properties = {}
+
+        response = client.safe_search_detection(
+            image=image, max_results=max_results, retry=retry, timeout=timeout, **additional_properties
+        )
+        response = MessageToDict(response)
+        self._check_for_error(response)
+
+        self.log.info("Safe search detection finished")
+        return response
+<switch:english>
+[english] The function translates the API response into a Python dictionary and rigorously checks for internal errors before returning the final safe search assessment.
+[english] What does the `max_results` parameter allow me to control in this safe search detection process?
+[english] `max_results` determines how many results (or bounding boxes for suggestive content) the API should return from the image, giving you granular control over the output size.
+[english] That clarifies how I can fine-tune the detection limits. Thanks!

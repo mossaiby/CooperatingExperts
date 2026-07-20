@@ -1,0 +1,26 @@
+[english] I need a way to initialize background workers that listen for messages from OpenStack Nova in our message queue setup.
+[english] This method starts by checking if notifications are configured to be enabled for the Nova component. If they are, it proceeds to create multiple consumers based on the system configuration settings.
+<switch:python>
+[python] def init_nova_consumer(self, mq):
+        """
+        Init openstack nova mq
+
+        1. Check if enable listening nova notification
+        2. Create consumer
+
+        :param mq: class ternya.mq.MQ
+        """
+        if not self.enable_component_notification(Openstack.Nova):
+            log.debug("disable listening nova notification")
+            return
+
+        for i in range(self.config.nova_mq_consumer_count):
+            mq.create_consumer(self.config.nova_mq_exchange,
+                               self.config.nova_mq_queue,
+                               ProcessFactory.process(Openstack.Nova))
+        log.debug("enable listening openstack nova notification.")
+<switch:english>
+[english] The function utilizes a loop to instantiate the required number of consumers, ensuring that message processing can be scaled up according to the defined worker count.
+[english] What is the execution flow like if Nova notification listening is explicitly disabled?
+[english] If notifications are disabled, `self.enable_component_notification` returns false; the function logs a debug message and immediately exits without creating any consumers.
+[english] That helps clarify how the initialization is guarded.

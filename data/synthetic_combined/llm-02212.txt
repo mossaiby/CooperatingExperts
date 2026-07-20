@@ -1,0 +1,23 @@
+[english] How do I load Java error messages from a pickle file to ensure they are ignored during unit tests?
+[english] This function checks if a Java message exclusion list exists and uses global variables to manage this state. It securely loads prior data from a pickled file or initializes the ignore structure.
+<switch:python>
+[python] def load_java_messages_to_ignore():
+    """
+    Load in pickle file that contains dict structure with bad java messages to ignore per unit test
+    or for all cases.  The ignored bad java info is stored in g_ok_java_messages dict.
+
+    :return:
+    """
+    global g_ok_java_messages
+    global g_java_message_pickle_filename
+
+    if os.path.isfile(g_java_message_pickle_filename):
+        with open(g_java_message_pickle_filename,'rb') as tfile:
+            g_ok_java_messages = pickle.load(tfile)
+    else:
+        g_ok_java_messages["general"] = []
+<switch:english>
+[english] The approach relies on persistent storage via a pickle file to maintain known errors across multiple test runs. However, relying heavily on mutable global dictionaries can complicate testing in parallel environments.
+[english] What specific error is raised if the value read from 'g_java_message_pickle_filename' points to a corrupted or unreadable pickle file?
+[english] If the pickle file is present but malformed, Python will raise a `pickle.UnpicklingError`. This requires adding exception handling around the load operation.
+[english] That addresses potential failure modes for persistence.

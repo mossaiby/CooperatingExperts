@@ -1,0 +1,12 @@
+[english] How can I implement a startup routine that reliably handles process forking events before initiating service startup?
+[english] We need a wrapper around the standard start method to manage specific operating system lifecycle events first. This approach leverages internal detection logic to guard against unintended re-initialization after process splitting.
+<switch:python>
+[python] def start(self, test_connection=True):
+        """Checks for forking and starts/restarts if desired"""
+        self._detect_fork()
+        super(ForkAwareLockerClient, self).start(test_connection)
+<switch:english>
+[english] This function ensures any necessary fork checks are completed via _detect_fork() before calling the core business logic defined in the parent class.
+[english] If a fork is detected, what specific action does super().start(test_connection) take?
+[english] When called after detecting a fork, super().start() executes the standard initialization and starting routines provided by ForkAwareLockerClient.
+[english] That clarifies how the startup sequence works.

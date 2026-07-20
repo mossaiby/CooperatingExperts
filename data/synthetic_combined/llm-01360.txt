@@ -1,0 +1,26 @@
+[english] I need a way to delete multiple subscription tiers from my system efficiently.
+[english] This function implements bulk deletion by looping through all provided tier names and calling remove on each one. It strategically delays cleanup until after all removal operations are complete to optimize performance.
+<switch:python>
+[python] def remove_tiers(self, tiers):
+        """Remove multiple tiers, note that this is a lot faster then removing
+        them individually because of the delayed cleaning of timeslots.
+
+        :param list tiers: Names of the tier to remove.
+        :raises KeyError: If a tier is non existent.
+        """
+        for a in tiers:
+            self.remove_tier(a, clean=False)
+        self.clean_time_slots()
+<switch:english>
+[english] By deferring `self.clean_time_slots()` until the end, this approach avoids the overhead of cleaning up timeslots individually for every single deleted tier.
+[english] What happens if a tier name provided in the list doesn't actually exist?
+[english] If a tier is not found during iteration, it will raise a KeyError because `self.remove_tier` relies on existing data to operate.
+<switch:python>
+[python] environ = {'tiers': ['non_existent']} 
+# This would raise KeyError
+temp_obj = object()
+temp_obj.__class__ = self # Mocking self for demonstration
+temp_func = lambda tiers: [temp_obj.remove_tier(a, clean=False) for a in tiers]
+temp_func({'tiers': ['non_existent']})
+<switch:english>
+[english] Got it, thanks!

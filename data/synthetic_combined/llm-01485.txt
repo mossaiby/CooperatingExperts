@@ -1,0 +1,64 @@
+[english] How can I create a robust build initialization function that accommodates different packaging tools and environment requirements?
+[english] This utility acts as a configuration wrapper for your project's setup process. It determines which distribution mode to use, ensures metadata like the README is included, and handles complex features like Debian package generation conditionally.
+<switch:python>
+[python] def init(
+    dist='dist',
+    minver=None,
+    maxver=None,
+    use_markdown_readme=True,
+    use_stdeb=False,
+    use_distribute=False,
+    ):
+    """Imports and returns a setup function.
+
+    If use_markdown_readme is set,
+    then README.md is added to setuptools READMES list.
+
+    If use_stdeb is set on a Debian based system,
+    then module stdeb is imported.
+    Stdeb supports building deb packages on Debian based systems.
+    The package should only be installed on the same system version
+    it was built on, though. See http://github.com/astraw/stdeb.
+
+    If use_distribute is set, then distribute_setup.py is imported.
+    """
+    if not minver == maxver == None:
+        import sys
+        if not minver <= sys.version < (maxver or 'Any'):
+            sys.stderr.write(
+                '%s: requires python version in <%s, %s), not %s\n' % (
+                sys.argv[0], minver or 'any', maxver or 'any', sys.version.split()[0]))
+            sys.exit(1)
+
+    if use_distribute:
+        from distribute_setup import use_setuptools
+        use_setuptools(to_dir=dist)
+        from setuptools import setup
+    else:
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
+
+    if use_markdown_readme:
+        try:
+            import setuptools.command.sdist
+            setuptools.command.sdist.READMES = tuple(list(getattr(setuptools.command.sdist, 'READMES', ()))
+                + ['README.md'])
+        except ImportError:
+            pass
+
+    if use_stdeb:
+        import platform
+        if 'debian' in platform.dist():
+            try:
+                import stdeb
+            except ImportError:
+                pass
+
+    return setup
+<switch:english>
+[english] The function abstracts away boilerplate packaging logic by configuring setuptools or distribute_setup based on the provided flags and environment checks.
+[english] When comparing Python versions using `sys.version`, are there any potential issues if the version strings don't follow a consistent format?
+[english] Yes, relying solely on string comparison of `sys.version` can be brittle across different operating systems. It compares the full runtime version string against your specified limits.
+[english] This makes setting up builds much easier!

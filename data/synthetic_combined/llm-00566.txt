@@ -1,0 +1,22 @@
+[english] I need a reliable way to clear out all existing gene data from my database collection.
+[english] This function helps manage data cleanup by checking for build-specific context first. It uses an adapter retrieved from a `context` dictionary to handle the actual deletion process according to whether a specific `build` parameter is provided.
+<switch:python>
+[python] def genes(context, build):
+    """Delete all genes in the database"""
+    LOG.info("Running scout delete genes")
+    adapter = context.obj['adapter']
+
+    if build:
+        LOG.info("Dropping genes collection for build: %s", build)
+    else:
+        LOG.info("Dropping genes collection")
+        adapter.drop_genes()
+<switch:english>
+[english] The logic ensures clear logging before operations start, providing flexibility depending on whether you are dropping a collection generally or targeting a specific build ID via the adapter.
+[english] Does this function include any error handling if the `context.obj['adapter']` key doesn't exist?
+[english] It does not explicitly handle missing keys; consider adding a check like:
+<switch:python>
+[python] adapter = context.obj.get('adapter') 
+ if not adapter: pass # Handle missing adapter accordingly
+<switch:english>
+[english] Got it, I will add that defensive programming now.

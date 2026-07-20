@@ -1,0 +1,44 @@
+[english] I need a way to check an AWS SQS queue for new messages on a fixed interval, retrieve them, and mark their existence in Airflow.
+[english] This function is designed to act as a sensor or task that polls a configured SQS queue. It uses the `SQSHook` to connect to AWS, calls `receive_message` to fetch items, and if messages are found, it pushes them into XCom before deleting them from the source.
+<switch:python>
+[python] def poke(self, context):
+        """
+        Check for message on subscribed queue and write to xcom the message with key ``messages``
+
+        :param context: the context object
+        :type context: dict
+        :return: ``True`` if message is available or ``False``
+        """
+
+        sqs_hook = SQSHook(aws_conn_id=self.aws_conn_id)
+        sqs_conn = sqs_hook.get_conn()
+
+        self.log.info('SQSSensor checking for message on queue: %s', self.sqs_queue)
+
+        messages = sqs_conn.receive_message(QueueUrl=self.sqs_queue,
+                                            MaxNumberOfMessages=self.max_messages,
+                                            WaitTimeSeconds=self.wait_time_seconds)
+
+        self.log.info("reveived message %s", str(messages))
+
+        if 'Messages' in messages and len(messages['Messages']) > 0:
+
+            entries = [{'Id': message['MessageId'], 'ReceiptHandle': message['ReceiptHandle']}
+                       for message in messages['Messages']]
+
+            result = sqs_conn.delete_message_batch(QueueUrl=self.sqs_queue,
+                                                   Entries=entries)
+
+            if 'Successful' in result:
+                context['ti'].xcom_push(key='messages', value=messages)
+                return True
+            else:
+                raise AirflowException(
+                    'Delete SQS Messages failed ' + str(result) + ' for messages ' + str(messages))
+
+        return False
+<switch:english>
+[english] If an SQS message is successfully received and deleted through `delete_message_batch`, the raw data is pushed to XCom. Otherwise, any failure during the deletion stage will trigger an explicit exception using AirflowException.
+[english] What prevents this function from running in an infinite loop or timing out indefinitely if the queue remains empty?
+[english] The `WaitTimeSeconds` parameter controls how long `receive_message` waits for a message before returning. If no messages are found within that window, the function returns False, allowing Airflow to control the scheduling and retry logic.
+[english] That makes sense.

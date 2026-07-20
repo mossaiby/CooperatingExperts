@@ -1,0 +1,19 @@
+[english] How can I programmatically check if a given X.509 certificate is valid for specific purposes using its Extended Key Usage?
+[english] To retrieve the extended key usage, we query the certificate's extensions directly by referencing the standardized Object Identifier (OID) associated with that extension.
+<switch:python>
+[python] def get_extended_key_usage_from_certificate(certificate):
+    """
+    Given an X.509 certificate, extract and return the extendedKeyUsage
+    extension.
+    """
+    try:
+        return certificate.extensions.get_extension_for_oid(
+            x509.oid.ExtensionOID.EXTENDED_KEY_USAGE
+        ).value
+    except x509.ExtensionNotFound:
+        return None
+<switch:english>
+[english] The `try...except` block is essential here; it ensures that if the certificate simply doesn't include this specific extension, the function returns `None` instead of raising an error.
+[english] If a legitimate but unrecognized OID happens to be present in the extensions, how would I handle that?
+[english] The current implementation only checks for `EXTENDED_KEY_USAGE`. To handle other OIDs, you would need to add more specific `try...except` blocks or implement custom logic to process arbitrary OIDs.
+[english] That helps me understand safe extraction from certificate data.

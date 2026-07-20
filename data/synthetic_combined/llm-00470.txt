@@ -1,0 +1,43 @@
+[english] How do I download a specific file or object from a defined container in my cloud storage system?
+[english] This method is designed to handle retrieving data objects by first constructing the full path using internal logic, and then making an external HTTP GET request.
+<switch:python>
+[python] def get_object(self, container, obj, headers=None, stream=True, query=None,
+                   cdn=False):
+        """
+        GETs the object and returns the results.
+
+        :param container: The name of the container.
+        :param obj: The name of the object.
+        :param headers: Additional headers to send with the request.
+        :param stream: Indicates whether to stream the contents or
+            preread them fully and return them as a str. Default:
+            True to stream the contents. When streaming, contents
+            will have the standard file-like-object read function,
+            which accepts an optional size parameter to limit how
+            much data is read per call. When streaming is on, be
+            certain to fully read the contents before issuing another
+            request.
+        :param query: Set to a dict of query values to send on the
+            query string of the request.
+        :param cdn: If set True, the CDN management interface will be
+            used.
+        :returns: A tuple of (status, reason, headers, contents).
+
+            :status: is an int for the HTTP status code.
+            :reason: is the str for the HTTP status (ex: "Ok").
+            :headers: is a dict with all lowercase keys of the HTTP
+                headers; if a header has multiple values, it will be a
+                list.
+            :contents: if *stream* was True, *contents* is a
+                file-like-object of the contents of the HTTP body. If
+                *stream* was False, *contents* is just a simple str of
+                the HTTP body.
+        """
+        path = self._object_path(container, obj)
+        return self.request(
+            'GET', path, '', headers, query=query, stream=stream, cdn=cdn)
+<switch:english>
+[english] The returned `contents` will be either the raw string body or a file-like object depending on whether the `stream` parameter was set to True during the call.
+[english] What happens internally when I explicitly pass 'True' for the `cdn` flag, and does that change how I access headers?
+[english] When you set `cdn=True`, the method uses its internal CDN management interface, which streamlines requests to optimized endpoints. This means the returned status codes and headers will specifically reflect the configuration of the CDN service used.
+[english] This is much clearer; thanks for explaining how the integration works!

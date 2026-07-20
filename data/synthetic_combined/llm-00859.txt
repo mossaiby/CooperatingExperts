@@ -1,0 +1,15 @@
+[english] How do I ensure all ongoing background processes and subtasks are safely terminated when my main application decides to shut down?
+[english] This function provides a robust method for graceful shutdown by first signaling other components through an event, which allows them a chance to clean up. It then checks for any active asynchronous operations like greenlets and forcefully terminates them.
+<switch:python>
+[python] def stop(self):
+        """Stop subtasks and let run() finish."""
+        self._stop_event.set()
+        if self.select_greenlet is not None:
+            self.select_greenlet.kill()
+            self.select_greenlet.get()
+            gevent.sleep()
+<switch:english>
+[english] While using `kill()` guarantees the component will stop, it's crucial that your code is resilient enough to handle this abrupt termination without leaving orphaned resources or data corruption behind. The final sleep ensures system state updates before exiting.
+[english] What happens if self.select_greenlet is already None when the 'stop' function is called?
+[english] If `self.select_greenlet` is `None`, the conditional block is safely skipped, preventing an AttributeError and ensuring the shutdown proceeds without trying to kill a nonexistent process.
+[english] That makes sense; I will apply this pattern to my worker class.

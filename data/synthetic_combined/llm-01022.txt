@@ -1,0 +1,27 @@
+[english] I need to save an arbitrary Python object so I can load it back later in the same environment.
+[english] This function uses the `pickle` module, which is designed specifically for serializing and de-serializing complex Python objects. By opening a file in binary write mode (`'wb'`), we ensure that the pickle data is saved correctly to disk.
+<switch:python>
+[python] def save(variable, filename):
+    """Save variable on given path using Pickle
+    
+    Args:
+        variable: what to save
+        path (str): path of the output
+    """
+    fileObj = open(filename, 'wb')
+    pickle.dump(variable, fileObj)
+    fileObj.close()
+<switch:english>
+[english] The `pickle.dump` function handles the transformation and writing process, while calling `.close()` ensures that all data is flushed to the file system cleanly.
+[english] What happens if I try to save a variable containing an external resource like a database connection?
+[english] Pickle serializes the object's state but cannot serialize active connections. You would need custom logic to save its necessary metadata instead.
+<switch:python>
+[python] def save_safe(variable, filename):
+    """
+    Example: Only saving essential IDs for external resources
+    """
+    data_to_save = {"id": variable.get_id(), "metadata": str(variable)}
+    with open(filename, 'wb') as f:
+        pickle.dump(data_to_save, f)
+<switch:english>
+[english] Looks clear! Thanks for the detailed breakdown.

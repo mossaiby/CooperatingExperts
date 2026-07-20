@@ -1,0 +1,23 @@
+[english] How do I update a specific JSON settings object associated with an integration without losing existing values?
+[english] This method first ensures the integration exists before accessing its data. It handles potential parsing errors when reading the stored configuration.
+<switch:python>
+[python] def update_settings(self, integration_id, settings):
+        """Updates settings for given integration."""
+
+        (integration, created) = self.get_or_create(integration_id=integration_id)
+
+        try:
+            current_settings = json.loads(integration.settings)
+        except ValueError:
+            current_settings = {}
+
+        current_settings.update(settings)
+
+        integration.settings = json.dumps(current_settings)
+
+        integration.save()
+<switch:english>
+[english] The function then overwrites the integration's settings with the updated JSON string and saves it back to the database.
+[english] What happens if we pass a setting that is not serializable by JSON?
+[english] Python's `json.dumps()` will raise a TypeError if any value in `settings` cannot be converted (like objects or functions), which you would need an error handler for.
+[english] Good to know. Thanks!

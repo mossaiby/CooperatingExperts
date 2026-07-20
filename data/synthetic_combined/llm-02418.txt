@@ -1,0 +1,14 @@
+[english] How can I retrieve a formatted column name that indicates both the field being sorted and whether the sort order is ascending or descending?
+[english] This method determines if a column has been chosen for ordering. It checks the selection state and conditionally prefixes the column name with a hyphen if the sort direction is set to descending.
+<switch:python>
+[python] def selected(self):
+        """Get column which is being order by."""
+        if self._selected:
+            return self._selected if self.asc else \
+                "-{0}".format(self._selected)
+        return None
+<switch:english>
+[english] The use of `'-'` acts as a conventional flag in this codebase to signify that the order should be processed descending rather than ascending.
+[english] If I wanted to fetch the current selection when no sorting has been applied yet, what would this function return?
+[english] When no column is selected (`self._selected` is None), the method returns `None`. If you needed a default unselected state marker, you would need to add logic to return a specific string here.
+[english] This detailed breakdown helps me understand how your current sorting conventions work.

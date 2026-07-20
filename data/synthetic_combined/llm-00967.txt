@@ -1,0 +1,12 @@
+[english] How do I check if a specific gene ID has already been added to an existing panel configuration?
+[english] To efficiently check for the presence of a gene within the panel object, we first convert the list of genes into a lookup dictionary using their hgnc IDs. Then, we use the .get() method on this new dictionary.
+<switch:python>
+[python] def existing_gene(store, panel_obj, hgnc_id):
+    """Check if gene is already added to a panel."""
+    existing_genes = {gene['hgnc_id']: gene for gene in panel_obj['genes']}
+    return existing_genes.get(hgnc_id)
+<switch:english>
+[english] This approach ensures quick access to the gene data if it exists in the panel structure, returning None otherwise.
+[english] What happens if `panel_obj['genes']` is an empty list?
+[english] If it's an empty list, `existing_genes` will be an empty dictionary, and `.get(hgnc_id)` will correctly return `None`, indicating the gene is not present.
+[english] That makes perfect sense!

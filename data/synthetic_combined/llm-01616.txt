@@ -1,0 +1,27 @@
+[english] How can I write a function that can locate a specific disease record by taking either its numerical identifier or its unique object ID?
+[english] This function attempts to determine if the input string is an integer first, creating a query dictionary with `disease_nr` if successful. If converting it fails, it defaults to using the original string as a MongoDB primary key in `_id`, ensuring maximum flexibility for querying.
+<switch:python>
+[python] def disease_term(self, disease_identifier):
+        """Return a disease term
+
+        Checks if the identifier is a disease number or a id
+
+        Args:
+            disease_identifier(str)
+
+        Returns:
+            disease_obj(dict)
+        """
+        query = {}
+        try:
+            disease_identifier = int(disease_identifier)
+            query['disease_nr'] = disease_identifier
+        except ValueError:
+            query['_id'] = disease_identifier
+
+        return self.disease_term_collection.find_one(query)
+<switch:english>
+[english] The method relies on exception handling (try/except) and uses `find_one` to retrieve at most a single matching document from the internal collection attribute.
+[english] What happens if both 'disease_nr' and '_id' keys are present in a specific disease record?
+[english] If both fields exist, MongoDB will process them as separate query conditions. Since this function uses `find_one`, it only needs one match to return the document; however, putting multiple criteria improves lookup precision.
+[english] Thanks for explaining how that error handling works!

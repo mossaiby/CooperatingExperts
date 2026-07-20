@@ -1,0 +1,35 @@
+[english] How can I programmatically remove nested parenthetical groups from a string so that only non-nested content remains?
+[english] To solve this, we employ an iterative regular expression approach to strip layers of brackets. The function repeatedly scans for and removes the simplest, innermost bracket sets until no more simple patterns exist in the text.
+<switch:python>
+[python] def remove_inner_forks(text):
+    """Recursively removes nested brackets
+
+    This function is used to remove nested brackets from fork strings using
+    regular expressions
+
+    Parameters
+    ----------
+    text: str
+        The string that contains brackets with inner forks to be removed
+
+    Returns
+    -------
+    text: str
+        the string with only the processes that are not in inner forks, thus
+        the processes that belong to a given fork.
+
+    """
+
+    n = 1  # run at least once for one level of fork
+    # Then this loop assures that all brackets will get removed in a nested
+    # structure
+    while n:
+        # this removes non-nested brackets
+        text, n = re.subn(r'\([^()]*\)', '', text)
+
+    return text
+<switch:english>
+[english] This loop ensures that even highly nested structures are peeled away one layer at a time. It's important to note this approach focuses solely on removing content within parentheses defined by `()`.
+[english] Does this function handle cases where brackets might be unbalanced, like an opening bracket without a matching closing bracket?
+[english] The current regex is designed for balanced pairs; unbalanced brackets will typically not be removed. For instance, input like '((a' would remain mostly unchanged because the pattern requires both starting and ending parentheses.
+[english] That clarifies how it handles edge cases, thanks!

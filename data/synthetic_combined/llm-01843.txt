@@ -1,0 +1,44 @@
+[english] I need a way to programmatically delete a specific S3 object given its bucket name and key.
+[english] This function begins by ensuring optional arguments like extra configuration or subscribers are initialized as empty if they aren't provided. It then validates all inputs against allowed deletion parameters before packaging the request into a CallArgs structure.
+<switch:python>
+[python] def delete(self, bucket, key, extra_args=None, subscribers=None):
+        """Delete an S3 object.
+
+        :type bucket: str
+        :param bucket: The name of the bucket.
+
+        :type key: str
+        :param key: The name of the S3 object to delete.
+
+        :type extra_args: dict
+        :param extra_args: Extra arguments that may be passed to the
+            DeleteObject call.
+
+        :type subscribers: list
+        :param subscribers: A list of subscribers to be invoked during the
+            process of the transfer request.  Note that the ``on_progress``
+            callback is not invoked during object deletion.
+
+        :rtype: s3transfer.futures.TransferFuture
+        :return: Transfer future representing the deletion.
+
+        """
+        if extra_args is None:
+            extra_args = {}
+        if subscribers is None:
+            subscribers = []
+        self._validate_all_known_args(extra_args, self.ALLOWED_DELETE_ARGS)
+        call_args = CallArgs(
+            bucket=bucket, key=key, extra_args=extra_args,
+            subscribers=subscribers
+        )
+        return self._submit_transfer(call_args, DeleteSubmissionTask)
+<switch:english>
+[english] The function concludes by submitting the `DeleteSubmissionTask` to the internal transfer mechanism, returning a future object that tracks the eventual success or failure of the asynchronous operation.
+[english] Since this returns a TransferFuture, how do I block and wait for the deletion to actually finish if I need synchronous confirmation?
+[english] You can synchronously wait for the task completion by calling the `.result()` method on the future object returned by the function calls.
+<switch:python>
+[python] future = delete(self, bucket, key)
+future.result()  # This blocks until the deletion completes
+<switch:english>
+[english] Perfect, that makes managing asynchronous S3 operations much clearer.

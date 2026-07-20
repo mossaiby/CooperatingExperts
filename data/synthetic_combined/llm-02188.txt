@@ -1,0 +1,15 @@
+[english] I need a way to retrieve all my internal widgets, making sure they are organized according to their positional coordinate.
+[english] This function first loops through every available widget and creates a structure containing its identity, object reference, and position. It then uses Python's built-in sorting mechanism to order these structures based specifically on the third element (the position).
+<switch:python>
+[python] def get_widgets_sorted(self):
+        """Returns the widgets sorted by position."""
+        result = []
+        for widget_name, widget in self.get_widgets().items():
+            result.append((widget_name, widget, widget.position))
+        result.sort(key=lambda x: x[2])
+        return result
+<switch:english>
+[english] The efficiency of this method relies on the assumption that `widget.position` holds a comparable numerical value.
+[english] If two widgets happen to have the exact same positional coordinate, how does the function decide which one comes first?
+[english] Since Python's sort algorithm is inherently stable, if positions are equal, the relative order of those identical items will remain unchanged from their original iteration sequence.
+[english] That clarity on stability is exactly what I needed. Thanks for the help!

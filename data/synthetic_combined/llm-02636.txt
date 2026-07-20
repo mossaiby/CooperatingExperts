@@ -1,0 +1,33 @@
+[english] I need a way to find the top k keys that have the highest Jaccard similarity compared to a given MinHash representation.
+[english] This function approximates similar data sets by iterating through potential candidates and using your MinHash query object. It systematically checks for matches and collects unique results until it reaches the desired quantity, `k`.
+<switch:python>
+[python] def query(self, minhash, k):
+        '''
+        Return the approximate top-k keys that have the highest
+        Jaccard similarities to the query set.
+
+        Args:
+            minhash (datasketch.MinHash): The MinHash of the query set.
+            k (int): The maximum number of keys to return.
+
+        Returns:
+            `list` of at most k keys.
+        '''
+        if k <= 0:
+            raise ValueError("k must be positive")
+        if len(minhash) < self.k*self.l:
+            raise ValueError("The num_perm of MinHash out of range")
+        results = set()
+        r = self.k
+        while r > 0:
+            for key in self._query(minhash, r, self.l):
+                results.add(key)
+                if len(results) >= k:
+                    return list(results)
+            r -= 1
+        return list(results)
+<switch:english>
+[english] The method prioritizes finding high-similarity keys by progressively reducing the search radius indicated by `r`. Because it uses a set for `results`, duplicate keys with similar scores are only stored once.
+[english] If two different keys have very similar Jaccard similarities, how does this function decide which one is considered 'better'?
+[english] The implementation returns keys in the order they are discovered by the internal search mechanism of `self._query` and stops as soon as `k` unique results are found. It doesn't perform an actual similarity sort across all returned elements.
+[english] This makes sense even though it loses true ranked precision.

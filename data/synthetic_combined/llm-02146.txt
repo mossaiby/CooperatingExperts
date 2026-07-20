@@ -1,0 +1,27 @@
+[english] I need to programmatically link a series of tasks so that each one depends on the previous task in the list.
+[english] To create this linear chain efficiently, we use `zip` with two slices of the input tuple. This pairs every upstream task with its corresponding downstream successor for us.
+<switch:python>
+[python] def chain(*tasks):
+    """
+    Given a number of tasks, builds a dependency chain.
+
+    chain(task_1, task_2, task_3, task_4)
+
+    is equivalent to
+
+    task_1.set_downstream(task_2)
+    task_2.set_downstream(task_3)
+    task_3.set_downstream(task_4)
+    """
+    for up_task, down_task in zip(tasks[:-1], tasks[1:]):
+        up_task.set_downstream(down_task)
+<switch:english>
+[english] This approach relies completely on all provided objects having a defined `.set_downstream()` method to successfully establish the dependency link.
+[english] What happens if I call chain() with zero tasks or only one task?
+[english] In both cases, the iteration logic is safe: if there are zero or one tasks, `zip` creates an empty sequence, so no operations are performed and no errors occur.
+<switch:python>
+[python] def chain(*tasks):
+    for up_task, down_task in zip(tasks[:-1], tasks[1:]):
+        up_task.set_downstream(down_task)
+<switch:english>
+[english] Got it, that covers the edge cases well!

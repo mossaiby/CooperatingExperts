@@ -1,0 +1,21 @@
+[english] How can I efficiently determine if a specific object pattern matches its internal string representation without re-running the regex check every time?
+[english] This method ensures performance by caching previous results based on the stored string. It first checks if the current state has already been evaluated against the pattern.
+<switch:python>
+[python] def _match(self):
+        """Return the match object for the current list."""
+        cache_match, cache_string = self._match_cache
+        string = self.string
+        if cache_string == string:
+            return cache_match
+        cache_match = fullmatch(
+            LIST_PATTERN_FORMAT.replace(b'{pattern}', self.pattern.encode()),
+            self._shadow,
+            MULTILINE,
+        )
+        self._match_cache = cache_match, string
+        return cache_match
+<switch:english>
+[english] By using a cache keyed to `self.string`, subsequent calls that use the same underlying data avoid expensive regex compilation and matching overhead.
+[english] If `self._shadow` was modified externally after an initial match, will the cached result still be considered valid?
+[english] No, because the caching is only keyed off `cache_string`. A change to `self._shadow` would require updating or clearing the cache before re-running the matching logic.
+[english] Got it, so I need to manually invalidate the cache if my data changes unexpectedly.

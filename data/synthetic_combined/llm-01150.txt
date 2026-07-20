@@ -1,0 +1,35 @@
+[english] How can I implement state management that tracks and updates selection history for various named components?
+[english] This method manages dynamic selection by maintaining historical records using `self.selection_histories`. It retrieves the previous state, creates a new selection from it, and then updates the storage to maintain a timeline.
+<switch:python>
+[python] def _selection(self, create_selection, name, executor=None, execute_fully=False):
+        """select_lasso and select almost share the same code"""
+        selection_history = self.selection_histories[name]
+        previous_index = self.selection_history_indices[name]
+        current = selection_history[previous_index] if selection_history else None
+        selection = create_selection(current)
+        executor = executor or self.executor
+        selection_history.append(selection)
+        self.selection_history_indices[name] += 1
+        # clip any redo history
+        del selection_history[self.selection_history_indices[name]:-1]
+        if 0:
+            if self.is_local():
+                if selection:
+                    # result = selection.execute(executor=executor, execute_fully=execute_fully)
+                    result = vaex.promise.Promise.fulfilled(None)
+                    self.signal_selection_changed.emit(self)
+                else:
+                    result = vaex.promise.Promise.fulfilled(None)
+                    self.signal_selection_changed.emit(self)
+            else:
+                self.signal_selection_changed.emit(self)
+                result = vaex.promise.Promise.fulfilled(None)
+        self.signal_selection_changed.emit(self)
+        result = vaex.promise.Promise.fulfilled(None)
+        logger.debug("select selection history is %r, index is %r", selection_history, self.selection_history_indices[name])
+        return result
+<switch:english>
+[english] The function handles execution flow via promises (`vaex.promise.Promise`) and actively emits change signals after every successful update or history modification.
+[english] What is the purpose of the line `del selection_history[self.selection_history_indices[name]: -1]`?
+[english] That specific code segment is used to clip any potential redo history, ensuring that only the immediately relevant part of the selection timeline remains available for future operations.
+[english] Thanks, this makes the state machine much clearer.

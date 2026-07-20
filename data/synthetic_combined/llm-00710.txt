@@ -1,0 +1,26 @@
+[english] I need a way to load all nodes, ways, and relations into memory from an OpenStreetMap XML file.
+[english] The approach is to define three empty lists and then iterate over the provided resource using iter_osm_file. Inside the loop, the function uses type checking to categorize each object before appending it to the appropriate list.
+<switch:python>
+[python] def parse_osm_file(f, parse_timestamps=True):
+    """Parse a file-like containing OSM XML into memory and return an object with
+    the nodes, ways, and relations it contains. """
+
+    nodes = []
+    ways = []
+    relations = []
+
+    for p in iter_osm_file(f, parse_timestamps):
+
+        if type(p) == model.Node:
+            nodes.append(p)
+        elif type(p) == model.Way:
+            ways.append(p)
+        elif type(p) == model.Relation:
+            relations.append(p)
+
+    return (nodes, ways, relations)
+<switch:english>
+[english] This method efficiently collects specialized OSM entities by dispatching them based on their Python types. Be aware that it relies heavily on external definitions for `model` and `iter_osm_file`.
+[english] What happens to the data if an object yielded by iter_osm_file is neither a Node, Way, nor Relation?
+[english] The function silently ignores any object whose type does not match one of the explicitly checked classes (`model.Node`, `model.Way`, or `model.Relation`).
+[english] That makes sense.

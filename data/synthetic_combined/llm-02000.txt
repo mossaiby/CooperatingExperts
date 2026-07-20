@@ -1,0 +1,21 @@
+[english] I need a way to reliably convert an input like a single axis index or a list of indices into a standardized tuple, while also verifying that all provided indices are valid within a given shape.
+[english] This function first attempts to normalize the `axes` argument, converting it from integers or lists into a consistent tuple structure. It then validates this tuple against the length of the input array's shape.
+<switch:python>
+[python] def _format_axes(axes, shape):
+        """
+        Format target axes given an array shape
+        """
+        if isinstance(axes, int):
+            axes = (axes,)
+        elif isinstance(axes, list) or hasattr(axes, '__iter__'):
+            axes = tuple(axes)
+        if not isinstance(axes, tuple):
+            raise ValueError("axes argument %s in the constructor not specified correctly" % str(axes))
+        if min(axes) < 0 or max(axes) > len(shape) - 1:
+            raise ValueError("invalid key axes %s given shape %s" % (str(axes), str(shape)))
+        return axes
+<switch:english>
+[english] The utility ensures that `axes` is always a tuple and strictly checks against the dimensions defined in `shape`, preventing runtime errors later.
+[english] If the provided shape is an empty list, will this function still validate correctly?
+[english] No. If `shape` is [], len(shape) is 0. Any positive index passed in for 'axes' would immediately trigger a ValueError because max() > -1 is true.
+[english] That clarification on the error handling is very helpful.

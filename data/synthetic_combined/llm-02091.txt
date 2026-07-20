@@ -1,0 +1,13 @@
+[english] I need a way to send an HTTP DELETE request using my configuration attributes like URL and headers.
+[english] This function handles the deletion process by delegating the network call to the requests library, passing all necessary authentication details and data payloads encapsulated within instance attributes.
+<switch:python>
+[python] def _do_delete(self):
+        """
+        HTTP Delete Request
+        """
+        return requests.delete(self._url, data=self._data, headers=self._headers, auth=(self._email, self._api_token))
+<switch:english>
+[english] It successfully executes the DELETE method using the configured URL and authentication tuple, which are retrieved via `self` attributes.
+[english] What should I do if the API returns an error status code for this deletion?
+[english] You can wrap the call in a try-except block or check the response object's status attribute after calling the function. For instance, using `.raise_for_status()` will raise an exception on bad status codes.
+[english] That makes sense, thanks for clarifying.

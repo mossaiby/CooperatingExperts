@@ -1,0 +1,37 @@
+[english] How do I add a single trusted SSL certificate to my application's internal store?
+[english] This function adds an X509 certificate to the store as a trusted entry. It begins by verifying that the provided input is indeed an instance of X509 before proceeding.
+<switch:python>
+[python] def add_cert(self, cert):
+        """
+        Adds a trusted certificate to this store.
+
+        Adding a certificate with this method adds this certificate as a
+        *trusted* certificate.
+
+        :param X509 cert: The certificate to add to this store.
+
+        :raises TypeError: If the certificate is not an :class:`X509`.
+
+        :raises OpenSSL.crypto.Error: If OpenSSL was unhappy with your
+            certificate.
+
+        :return: ``None`` if the certificate was added successfully.
+        """
+        if not isinstance(cert, X509):
+            raise TypeError()
+
+        # As of OpenSSL 1.1.0i adding the same cert to the store more than
+        # once doesn't cause an error. Accordingly, this code now silences
+        # the error for OpenSSL < 1.1.0i as well.
+        if _lib.X509_STORE_add_cert(self._store, cert._x509) == 0:
+            code = _lib.ERR_peek_error()
+            err_reason = _lib.ERR_GET_REASON(code)
+            _openssl_assert(
+                err_reason == _lib.X509_R_CERT_ALREADY_IN_HASH_TABLE
+            )
+            _lib.ERR_clear_error()
+<switch:english>
+[english] The code handles idempotency by specifically checking if OpenSSL reports that the certificate is already in the hash table, thus preventing errors on subsequent calls.
+[english] What kind of error would be raised if we tried to add a certificate with an internal structural issue or one that was expired?
+[english] If OpenSSL finds issues with the certificate structure or validity upon entry, it will raise an OpenSSL.crypto.Error. The function only explicitly handles errors indicating the cert is already present.
+[english] That makes sense; I appreciate the detail on how existing entries are managed.

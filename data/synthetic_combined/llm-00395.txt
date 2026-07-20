@@ -1,0 +1,39 @@
+[english] How can I create a reusable decorator that validates inputs before executing the decorated function, allowing me to bypass validation if needed?
+[english] This pattern creates a higher-order function called `validate` which returns an actual decorator. This returned decorator then wraps your target function (like one handling image processing), incorporating conditional logic based on a `validate` argument.
+<switch:python>
+[python] def validate(validator):
+    """
+    Return a decorator that validates arguments with provided `validator`
+    function.
+
+    This will also store the validator function as `func.validate`.
+    The decorator returned by this function, can bypass the validator
+    if `validate=False` is passed as argument otherwise the fucntion is
+    called directly.
+
+    The validator must raise an exception, if the function can not
+    be called.
+    """
+
+    def decorator(func):
+        """Bound decorator to a particular validator function"""
+
+        @wraps(func)
+        def wrapper(image, size, validate=True):
+            if validate:
+                validator(image, size)
+            return func(image, size)
+        return wrapper
+
+    return decorator
+<switch:english>
+[english] The wrapper uses the passed boolean flag to determine if the validation step should run before returning the result of the original function call.
+[english] If the validator raises an exception, how can I catch that specifically within the wrapper instead of letting it crash the application?
+[english] You would wrap the execution in a try-except block. For example:
+<switch:python>
+[python] @wraps(func)
+def wrapper(image, size, validate=True):
+    if validate: try: validator(image, size) except Exception as e: raise ValueError(e)
+    return func(image, size)
+<switch:english>
+[english] That makes sense; I'll try implementing this pattern now.

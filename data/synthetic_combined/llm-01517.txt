@@ -1,0 +1,27 @@
+[english] How do I programmatically create or update an SPF record within my hosted zone?
+[english] This function is designed to manage resource records by first checking for prior deletions using `self._halt_if_already_deleted()`. It then constructs and adds the new record definition.
+<switch:python>
+[python] def create_spf_record(self, name, values, ttl=60):
+        """
+        Creates a SPF record attached to this hosted zone.
+
+        :param str name: The fully qualified name of the record to add.
+        :param list values: A list of value strings for the record.
+        :keyword int ttl: The time-to-live of the record (in seconds).
+        :rtype: tuple
+        :returns: A tuple in the form of ``(rrset, change_info)``, where
+            ``rrset`` is the newly created SPFResourceRecordSet instance.
+        """
+
+        self._halt_if_already_deleted()
+
+        # Grab the params/kwargs here for brevity's sake.
+        values = locals()
+        del values['self']
+
+        return self._add_record(SPFResourceRecordSet, **values)
+<switch:english>
+[english] The core logic uses `self._add_record` to finalize and push the new resource record set into the hosted zone.
+[english] The function currently grabs arguments using `locals()` before deleting 'self'. Is this robust?
+[english] Relying on `locals()` is often considered bad practice because it relies on local variable scope order. It is safer to explicitly pass parameters like target name and TTL directly into the underlying SDK call.
+[english] That makes sense, thanks for clarifying!

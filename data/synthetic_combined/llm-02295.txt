@@ -1,0 +1,12 @@
+[english] I need a method to remove an item from my internal dictionary based on its zero-based position in an external list.
+[english] This function works by first looking up the identifier (the 'key') of the item currently at the specified index using a helper object. Once retrieved, it uses standard Python del syntax to remove that key from your internal items tracking.
+<switch:python>
+[python] def delete(self, a_position):
+        "Deletes the item at the zero-based index 'n' from the control."
+        key = self.wx_obj.GetPyData(a_position)
+        del self._items[key]
+<switch:english>
+[english] The implementation is concise, assuming wx_obj reliably maps indices to keys. If the provided position is invalid or the resulting key isn't in _items, it will raise an IndexError or KeyError.
+[english] What kind of error happens if I try to delete a position that doesn't actually exist?
+[english] If `a_position` exceeds the bounds accessible by `self.wx_obj`, it might raise an index related exception from there. If the key is valid but not in `self._items`, Python will raise a KeyError when executing the del statement.
+[english] Got it, so I need to handle those potential errors on my end.

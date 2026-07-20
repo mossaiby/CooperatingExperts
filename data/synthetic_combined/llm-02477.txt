@@ -1,0 +1,22 @@
+[english] How can I safely remove all of the query parameters from a given URL string using Python?
+[english] The most robust way to handle this is by utilizing the `urllib.parse` library. This function breaks the URL down into its constituent parts, allowing us to modify only the request component we want to eliminate.
+<switch:python>
+[python] def url_dequery(url):
+    """Return a URL with the query component removed.
+
+    :param url: URL to dequery.
+    :type url: str
+    :rtype: str
+    """
+    url = urlparse.urlparse(url)
+    return urlparse.urlunparse((url.scheme,
+                                url.netloc,
+                                url.path,
+                                url.params,
+                                '',
+                                url.fragment))
+<switch:english>
+[english] This method replaces the original query segment with an empty string when calling `urlunparse`, effectively stripping it while leaving all other URL components intact.
+[english] If the input URL already had no parameters, would this function successfully return the exact same original URL?
+[english] Yes, if there are no initial query parameters, the parsing step sets that field to an empty string. Replacing an empty string with another empty string results in the original URL being returned unchanged.
+[english] Perfect, thank you for clarifying how it handles base cases!

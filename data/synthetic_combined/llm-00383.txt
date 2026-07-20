@@ -1,0 +1,68 @@
+[english] How can I save a pandas DataFrame reliably into an HDF5 structure while managing metadata and avoiding accidental overwrites?
+[english] This function handles the complex task of persisting pandas data structures. It first ensures all necessary configuration parameters like filters and formats are set, then checks for existing data to prevent conflicts before saving.
+<switch:python>
+[python] def _prm_write_pandas_data(self, key, data, group, fullname, flag, **kwargs):
+        """Stores a pandas DataFrame into hdf5.
+
+        :param key:
+
+            Name of data item to store
+
+        :param data:
+
+            Pandas Data to Store
+
+        :param group:
+
+            Group node where to store data in hdf5 file
+
+        :param fullname:
+
+            Full name of the `data_to_store`s original container, only needed for throwing errors.
+
+        :param flag:
+
+            If it is a series, frame or panel
+
+        """
+        try:
+            if 'filters' not in kwargs:
+                filters = self._all_get_filters(kwargs)
+                kwargs['filters'] = filters
+            if 'format' not in kwargs:
+                kwargs['format'] = self.pandas_format
+            if 'encoding' not in kwargs:
+                kwargs['encoding'] = self.encoding
+
+            overwrite = kwargs.pop('overwrite', False)
+
+            if key in group and not (overwrite or kwargs.get('append', False)):
+                raise ValueError(
+                    'DataFrame `%s` already exists in `%s`. '
+                    'To append pass ``append=`True
+<switch:english>
+[english] .' % (key, fullname))
+            else:
+                self._logger.debug('Appending to pandas data `%s` in `%s`' % (key, fullname))
+
+            if data is not None and (kwargs['format'] == 'f' or kwargs['format'] == 'fixed'):
+                kwargs['expectedrows'] = data.shape[0]
+
+            name = group._v_pathname + '/' + key
+            self._hdf5store.put(name, data, **kwargs)
+            self._hdf5store.flush()
+            self._hdf5file.flush()
+
+            frame_group = group._f_get_child(key)
+            setattr(frame_group._v_attrs, HDF5StorageService.STORAGE_TYPE, flag)
+            self._hdf5file.flush()
+
+        except:
+            self._logger.error('Failed storing pandas data `%s` of `%s`.' % (key, fullname))
+            raise
+```
+
+The code includes robust error handling across storage operations and explicitly updates metadata (like storage type) on the created group nodes after writing.
+[english] If the file is large, does the function handle the memory footprint efficiently during the write operation?
+[english] It relies on `self._hdf5store.put()` which manages serialization; however, for very large data, you might need to verify that your underlying HDF5 store implementation handles streaming writes effectively rather than loading the entire DataFrame into memory at once.
+[english] This looks like a solid utility function for our persistence layer.

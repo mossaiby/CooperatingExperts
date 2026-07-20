@@ -1,0 +1,29 @@
+[english] How can I implement a function that moves an existing key in my dictionary structure to either the end or beginning of its ordered sequence?
+[english] This method manages the order within a doubly linked list represented by nodes. It first isolates the target node and adjusts surrounding pointers before relocating it to the front or back.
+<switch:python>
+[python] def move_to_end(self, key, last=True):
+        """Move an existing key to the beginning or end of this ordered bidict.
+
+        The item is moved to the end if *last* is True, else to the beginning.
+
+        :raises KeyError: if the key does not exist
+        """
+        node = self._fwdm[key]
+        node.prv.nxt = node.nxt
+        node.nxt.prv = node.prv
+        sntl = self._sntl
+        if last:
+            last = sntl.prv
+            node.prv = last
+            node.nxt = sntl
+            sntl.prv = last.nxt = node
+        else:
+            first = sntl.nxt
+            node.prv = sntl
+            node.nxt = first
+            sntl.nxt = first.prv = node
+<switch:english>
+[english] The logic relies heavily on re-routing four pointers for each relocation. It correctly handles the wrap-around conditions by reusing variables like `last` and `first` as anchors.
+[english] If I call this method with a key that is already at the desired end position, does it still perform pointer operations?
+[english] Yes, even if the node is already positioned correctly, the function executes a full relinking process to maintain consistency in the doubly linked list structure. This ensures that all pointers—prv and nxt—are properly updated.
+[english] That makes sense; thanks for clarifying how those internal pointers behave.

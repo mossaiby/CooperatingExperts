@@ -1,0 +1,19 @@
+[english] How do I safely retrieve and fuzz my object based on its internal internal JSON representation?
+[english] This function attempts to recursively 'fuzz' your data by first checking if your internal JSON structure contains keys indicating an array. It then handles the serialization process, wrapping it in a try-except block for robustness.
+<switch:python>
+[python] def get_fuzzed(self, indent=False, utf8=False):
+        """
+        Return the fuzzed object
+        """
+        try:
+            if "array" in self.json:
+                return self.fuzz_elements(dict(self.json))["array"]
+            else:
+                return self.fuzz_elements(dict(self.json))
+        except Exception as e:
+            raise PJFBaseException(e.message if hasattr(e, "message") else str(e))
+<switch:english>
+[english] The logic handles both dictionary and array structures found in `self.json` before calling the core fuzzing method. Note how all internal errors are caught and re-raised as a custom exception to maintain consistent error handling.
+[english] What happens if `fuzz_elements` fails or returns None for a simple object not wrapped inside an 'array'?
+[english] If the fuzzing process itself raises an unexpected exception, it will be caught by the general `except Exception as e:` block. If it successfully runs but produces no output, it will return that value directly.
+[english] Thanks for the detailed explanation!

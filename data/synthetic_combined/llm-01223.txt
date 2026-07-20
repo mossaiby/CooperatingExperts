@@ -1,0 +1,13 @@
+[english] How can I safely remove a specific key-value pair from an internal list of configuration items without modifying the original object?
+[english] To ensure data safety, we start by creating a copy of the current instance. We then use a list comprehension to rebuild the list of configuration tuples, filtering out any tuple that matches the target item.
+<switch:python>
+[python] def remove(self, name, value):
+        """ Remove a value from multiple value parameter. """
+        clone = self._clone()
+        clone._qsl = [qb for qb in self._qsl if qb != (name, str(value))]
+        return clone
+<switch:english>
+[english] Since this function returns a clone and modifies its internal state, the original object remains unchanged. However, remember that it explicitly casts the input value to a string for comparison against the existing tuples.
+[english] If there are multiple identical entries in `_qsl`, will all of them be removed?
+[english] Yes, the list comprehension iterates over and removes every instance where the tuple matches both the name and the string representation of the provided value.
+[english] That makes much more sense for handling immutable configuration data.

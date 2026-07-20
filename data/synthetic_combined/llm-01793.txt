@@ -1,0 +1,26 @@
+[english] How does the system register and configure a new custom code checker?
+[english] The `register_checker` method systematically sets up a provided checker by first verifying it meets priority requirements, then populating internal lists with its metadata like reporters and options.
+<switch:python>
+[python] def register_checker(self, checker):
+        """register a new checker
+
+        checker is an object implementing IRawChecker or / and IAstroidChecker
+        """
+        assert checker.priority <= 0, "checker priority can't be >= 0"
+        self._checkers[checker.name].append(checker)
+        for r_id, r_title, r_cb in checker.reports:
+            self.register_report(r_id, r_title, r_cb, checker)
+        self.register_options_provider(checker)
+        if hasattr(checker, "msgs"):
+            self.msgs_store.register_messages_from_checker(checker)
+        checker.load_defaults()
+
+        # Register the checker, but disable all of its messages.
+        # TODO(cpopa): we should have a better API for this.
+        if not getattr(checker, "enabled", True):
+            self.disable(checker.name)
+<switch:english>
+[english] Finally, after loading defaults, the function checks if the checker has been explicitly enabled; otherwise, it automatically disables it using `self.disable()`.
+[english] What is the effect of the assertion on line 5?
+[english] The `assert checker.priority <= 0` ensures that any incoming checker object must have a priority less than or equal to zero; otherwise, the function immediately raises an AssertionError and stops execution.
+[english] Got it, that's much clearer.

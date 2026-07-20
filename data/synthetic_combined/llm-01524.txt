@@ -1,0 +1,44 @@
+[english] How can I programmatically find the bounding box (AABB) dimensions of a cross-section sliced through a 3D mesh model?
+[english] This function leverages external scripting modules to perform precise geometric operations on your model. It first prepares the necessary scripts, applies rotation if required for correct alignment, and then executes the sectional cut.
+<switch:python>
+[python] def measure_section(fbasename=None, log=None, axis='z', offset=0.0,
+                    rotate_x_angle=None, ml_version=ml_version):
+    """Measure a cross section of a mesh
+    
+    Perform a plane cut in one of the major axes (X, Y, Z). If you want to cut on
+    a different plane you will need to rotate the model in place, perform the cut,
+    and rotate it back.
+    
+    Args:
+        fbasename (str): filename of input model
+        log (str): filename of log file
+        axis (str): axis perpendicular to the cutting plane, e.g. specify "z" to cut
+            parallel to the XY plane.
+        offset (float): amount to offset the cutting plane from the origin
+        rotate_x_angle (float): degrees to rotate about the X axis. Useful for correcting "Up" direction: 90 to rotate Y to Z, and -90 to rotate Z to Y. 
+
+    Returns:
+        dict: dictionary with the following keys for the aabb of the section:
+            min (list): list of the x, y & z minimum values
+            max (list): list of the x, y & z maximum values
+            center (list): the x, y & z coordinates of the center of the aabb
+            size (list): list of the x, y & z sizes (max - min)
+            diagonal (float): the diagonal of the aabb
+    """
+    ml_script1_file = 'TEMP3D_measure_section.mlx'
+    file_out = 'TEMP3D_sect_aabb.xyz'
+
+    ml_script1 = mlx.FilterScript(file_in=fbasename, file_out=file_out, ml_version=ml_version)
+    if rotate_x_angle is not None:
+        transform.rotate(ml_script1, axis='x', angle=rotate_x_angle)
+    compute.section(ml_script1, axis=axis, offset=offset)
+    layers.delete_lower(ml_script1)
+    ml_script1.save_to_file(ml_script1_file)
+    ml_script1.run_script(log=log, script_file=ml_script1_file)
+    aabb = measure_aabb(file_out, log)
+    return aabb
+<switch:english>
+[english] The results are returned as an AABB dictionary containing coordinates and dimensions of the section's extent relative to its own local space.
+[english] If I want to measure a slice parallel to the XY plane without any rotation, what value should I use for the `rotate_x_angle` parameter?
+[english] The function is designed to handle this automatically; if you pass `None` or omit it, no transformation will be applied, and the cut will occur based solely on your defined axis.
+[english] That makes sense!

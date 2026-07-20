@@ -1,0 +1,23 @@
+[english] I need a way to iterate through all nodes at the terminal points of a hierarchical data structure starting from the current group.
+[english] This function uses recursion (via f_iter_nodes) to traverse the entire tree below the current point, then checks each node individually before yielding it if it meets the leaf criteria. This ensures you only receive nodes that truly terminate branches.
+<switch:python>
+[python] def f_iter_leaves(self, with_links=True):
+        """Iterates (recursively) over all leaves hanging below the current group.
+
+        :param with_links:
+
+            If links should be ignored, leaves hanging below linked nodes are not listed.
+
+        :returns:
+
+            Iterator over all leaf nodes
+
+        """
+        for node in self.f_iter_nodes(with_links=with_links):
+            if node.v_is_leaf:
+                yield node
+<switch:english>
+[english] The code employs a generator pattern to yield only nodes where v_is_leaf is true, efficiently skipping non-terminal branches during traversal.
+[english] Why does f_iter_nodes need the 'with_links' parameter in the first place?
+[english] 'with_links' controls whether the full recursive search includes traversing connections defined as links. If set to False, it prevents leaves hidden behind linked nodes from being discovered.
+[english] That makes sense! I needed that context.

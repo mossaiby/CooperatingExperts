@@ -1,0 +1,42 @@
+[english] I need a way to safely sum several TensorFlow tensors, making sure that if any resulting elements are non-finite (like NaN or Infinity), they get replaced with a specific alternative value.
+[english] This function achieves safe summation by first stacking all input tensors into a single 3D structure. It then reduces this stack using `tf.reduce_sum`. Finally, it uses `tf.where` to conditionally replace any non-finite results with the specified fallback value.
+<switch:python>
+[python] def safe_sum(x, alt_value=-np.inf, name=None):
+  """Elementwise adds list members, replacing non-finite results with alt_value.
+
+  Typically the `alt_value` is chosen so the `MetropolisHastings`
+  `TransitionKernel` always rejects the proposal.
+
+  Args:
+    x: Python `list` of `Tensors` to elementwise add.
+    alt_value: Python scalar used to replace any elementwise sums which would
+      otherwise be non-finite.
+    name: Python `str` name prefixed to Ops created by this function.
+      Default value: `None` (i.e., "safe_sum").
+
+  Returns:
+    safe_sum: `Tensor` representing the elementwise sum of list of `Tensor`s
+      `x` or `alt_value` where sums are non-finite.
+
+  Raises:
+    TypeError: if `x` is not list-like.
+    ValueError: if `x` is empty.
+  """
+  with tf.compat.v1.name_scope(name, 'safe_sum', [x, alt_value]):
+    if not is_list_like(x):
+      raise TypeError('Expected list input.')
+    if not x:
+      raise ValueError('Input should not be empty.')
+    in_shape = x[0].shape
+    x = tf.stack(x, axis=-1)
+    x = tf.reduce_sum(input_tensor=x, axis=-1)
+    alt_value = np.array(alt_value, x.dtype.as_numpy_dtype)
+    alt_fill = tf.fill(tf.shape(input=x), value=alt_value)
+    x = tf.where(tf.math.is_finite(x), x, alt_fill)
+    x.set_shape(x.shape.merge_with(in_shape))
+    return x
+<switch:english>
+[english] The use of `x.set_shape()` ensures that the resulting tensor's shape matches the expected input dimension, which is useful for downstream TensorFlow graph operations.
+[english] If I pass a list containing tensors of varying shapes, how will this function behave?
+[english] The function expects all tensors in the input list `x` to have consistent dimensions so that they can be stacked (via `tf.stack`) and summed elementwise. If shapes mismatch, an error during stacking or summation would occur.
+[english] Thanks for clarifying how tensor shape consistency is handled!

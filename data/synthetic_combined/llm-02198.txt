@@ -1,0 +1,24 @@
+[english] How can I calculate the current propagation state by applying exponential growth factors derived from a set of system eigenvalues over a specific time $t$?
+[english] To solve this, we use NumPy's vectorization to efficiently compute the exponential function across all stored eigenvalues simultaneously. The method multiplies the scaling factor $\mu$, the time variable $t$, and every element in the `self.eigenvals` array before applying the exponent.
+<switch:python>
+[python] def _exp_lt(self, t):
+        """
+        Parameters
+        ----------
+
+         t : float
+            time to propagate
+
+        Returns
+        --------
+
+         exp_lt : numpy.array
+            Array of values exp(lambda(i) * t),
+            where (i) - alphabet index (the eigenvalue number).
+        """
+        return np.exp(self.mu * t * self.eigenvals)
+<switch:english>
+[english] The return value is a NumPy array of growth/decay multipliers specific to each system eigenvalue. Because it references `self.eigenvals`, this output should be used specifically within the class that holds these spectral properties.
+[english] If one of my eigenvalues is zero, how does that affect the resulting exponential factor?
+[english] If an eigenvalue is zero, $\exp(0) = 1$, meaning the corresponding component of the system remains stable and does not grow or decay over time $t$.
+[english] That makes sense for steady states.

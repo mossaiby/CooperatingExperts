@@ -1,0 +1,20 @@
+[english] I want to ensure that when I remove a specific 'additional context' block, it actually belongs to my current object instance.
+[english] This method handles cleanup by retrieving the most recently added context item from a global stack. Although popping an item is straightforward, this function adds a critical check to guarantee strict ownership and prevent misuse of contexts pushed by other objects.
+<switch:python>
+[python] def pop(self):
+        """
+        Pops the latest additional context.
+
+        If the additional context was pushed by a different additional manager,
+        a ``RuntimeError`` is raised.
+        """
+        rv = _additional_ctx_stack.pop()
+        if rv is None or rv[0] is not self:
+            raise RuntimeError(
+                "popped wrong additional context ({} instead of {})".format(rv, self)
+            )
+<switch:english>
+[english] The primary purpose here is safety: it ensures that any popped context was legitimately initiated by `self`, raising a strong error if the integrity of the context management is compromised.
+[english] If the global stack has been emptied (meaning pop() would normally fail or return None), how does this function prevent inconsistent state?
+[english] The function explicitly checks for `rv is None` immediately after popping. If it finds no valid context, it triggers a `RuntimeError`, preventing attempts to operate on non-existent data.
+[english] Thanks, that makes the thread safety requirements clear.

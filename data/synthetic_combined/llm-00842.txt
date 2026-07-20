@@ -1,0 +1,26 @@
+[english] I have a custom time string formatted like YYYY-MM-DDTHH:MM:SSTZ and need a Python function to convert it into a naive UTC datetime object.
+[english] This approach manually parses the date portion using strptime and calculates the total offset (hours, minutes) individually based on specific index slicing before adding that time delta to create the final datetime object.
+<switch:python>
+[python] def parse_timestamp(ts):
+    """Takes ISO 8601 format(string) and converts into a utc datetime(naive)"""
+    return (
+        datetime.datetime.strptime(ts[:-7], "%Y-%m-%dT%H:%M:%S") +
+        datetime.timedelta(hours=int(ts[-5:-3]), minutes=int(ts[-2:])) *
+        int(ts[-6:-5] + "1")
+    )
+<switch:english>
+[english] The code successfully converts the string but relies on fixed indices, which could cause errors if the input format deviates even slightly from the assumed structure.
+[english] This function assumes a specific timezone offset. What happens if the input timestamp doesn't include any fractional seconds or has zero minutes?
+[english] If there are no fractional seconds or zero minutes, the indexing will still work as long as the date and hour/minute positions remain consistent.
+<switch:python>
+[python] def parse_timestamp(ts):
+    """
+    Takes ISO 8601 format(string) and converts into a utc datetime(naive)
+    """
+    return (
+        datetime.datetime.strptime(ts[:-7], "%Y-%m-%dT%H:%M:%S") +
+        datetime.timedelta(hours=int(ts[-5:-3]), minutes=int(ts[-2:])) *
+        int(ts[-6:-5] + "1")
+    )
+<switch:english>
+[english] Wow, that makes much more sense!

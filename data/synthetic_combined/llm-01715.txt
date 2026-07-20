@@ -1,0 +1,30 @@
+[english] How can I create a 'super parent' representation of a molecule that is invariant to fragmentation, charge, isotopes, stereochemistry, and tautomer forms?
+[english] This function systematically reduces the input molecule by applying several normalization steps sequentially. It first simplifies the structure based on charge, then removes isotopic and stereochemical information before establishing the unique canonical tautomer.
+<switch:python>
+[python] def super_parent(self, mol, skip_standardize=False):
+        """Return the super parent of a given molecule.
+
+        THe super parent is fragment, charge, isotope, stereochemistry and tautomer insensitive. From the input
+        molecule, the largest fragment is taken. This is uncharged and then isotope and stereochemistry information is
+        discarded. Finally, the canonical tautomer is determined and returned.
+
+        :param mol: The input molecule.
+        :type mol: rdkit.Chem.rdchem.Mol
+        :param bool skip_standardize: Set to True if mol has already been standardized.
+        :returns: The super parent molecule.
+        :rtype: rdkit.Chem.rdchem.Mol
+        """
+        if not skip_standardize:
+            mol = self.standardize(mol)
+        # We don't need to get fragment parent, because the charge parent is the largest fragment
+        mol = self.charge_parent(mol, skip_standardize=True)
+        mol = self.isotope_parent(mol, skip_standardize=True)
+        mol = self.stereo_parent(mol, skip_standardize=True)
+        mol = self.tautomer_parent(mol, skip_standardize=True)
+        mol = self.standardize(mol)
+        return mol
+<switch:english>
+[english] The resulting molecule represents the most general structural core of the original compound, losing all specific details like exact bonding or ionization state in the process.
+[english] If the input molecule contains a mixture of isomers, does this function guarantee that only one super parent is returned for all of them?
+[english] Yes, because the final step calls `self.standardize(mol)`, which ensures that even if multiple structural variations existed before tautomerization, a single canonical form is generated and returned.
+[english] This helps tremendously when grouping compounds in large databases.

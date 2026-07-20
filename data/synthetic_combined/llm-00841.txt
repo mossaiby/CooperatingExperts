@@ -1,0 +1,12 @@
+[english] How should I programmatically read a specific record, given its index and a fixed block size, from an open file object?
+[english] To isolate a single record in a sequential file, we first need to calculate the precise starting byte offset based on the record's 1-based index. This is done by multiplying the index by the record length K.
+<switch:python>
+[python] def read_record(self, n):
+        """Return record `n` as 1,024 bytes; records are indexed from 1."""
+        self.file.seek(n * K - K)
+        return self.file.read(K)
+<switch:english>
+[english] This implementation efficiently reads exactly one block of data (K bytes) after calculating where that specific record should begin in the file.
+[english] The method assumes records are 1-indexed; if I pass an invalid or very large value for n, what will happen?
+[english] If `n` results in an offset past the end of the file, `.read(K)` will return only the remaining bytes or an empty byte string because it cannot read beyond EOF.
+[english] This makes sense; I'll add explicit boundary checks to handle those edge cases.

@@ -1,0 +1,42 @@
+[english] How can I initiate and manage the spawning of a server process associated with this manager object?
+[english] This function sets up the necessary multiprocessing infrastructure to launch a dedicated server process. It creates an inter-process communication channel using `mp.Pipe` before spawning the worker.
+<switch:python>
+[python] def start(self, initializer=None, initargs=()):
+        '''Spawn a server process for this manager object'''
+        assert self._state.value == State.INITIAL
+
+        if (initializer is not None
+                and not hasattr(initializer, '__call__')):
+            raise TypeError('initializer must be a callable')
+
+        # pipe over which we will retrieve address of server
+        reader, writer = mp.Pipe(duplex=False)
+
+        # spawn process which runs a server
+        self._process = Process(
+            target=type(self)._run_server,
+            args=(self._registry, self._address, bytes(self._authkey),
+                  self._serializer, writer, initializer, initargs),
+        )
+        ident = ':'.join(str(i) for i in self._process._identity)
+        self._process.name = type(self).__name__ + '-' + ident
+        self._process.start()
+
+        # get address of server
+        writer.close()
+        self._address = reader.recv()
+        reader.close()
+
+        # register a finalizer
+        self._state.value = State.STARTED
+        self.shutdown = mp.util.Finalize(
+            self, type(self)._finalize_manager,
+            args=(self._process, self._address, self._authkey,
+                  self._state, self._Client),
+            exitpriority=0
+        )
+<switch:english>
+[english] The function registers a finalizer (`self.shutdown`) to ensure proper cleanup when the manager object is destroyed, guaranteeing no orphaned processes remain.
+[english] How does the address communication work between the main process and the newly started server?),
+[english] After starting the server process, it closes its end of the pipe (`writer.close()`) and then waits for the server to send back its network address using `reader.recv()`.
+[english] That makes sense, thanks.

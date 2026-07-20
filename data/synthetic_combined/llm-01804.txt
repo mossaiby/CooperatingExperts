@@ -1,0 +1,76 @@
+[english] How can I parse a structured definition (`deftype*`) that outlines multiple interfaces and their corresponding method implementations?
+[english] This function iterates through the input sequence to distinguish between interface declarations (symbols) and individual methods. It maintains state to correctly associate declared methods with their respective parent interfaces before returning both aggregates.
+<switch:python>
+[python] def __deftype_impls(  # pylint: disable=too-many-branches
+    ctx: ParserContext, form: ISeq
+) -> Tuple[List[DefTypeBase], List[Method]]:
+    """Roll up deftype* declared bases and method implementations."""
+    current_interface_sym: Optional[sym.Symbol] = None
+    current_interface: Optional[DefTypeBase] = None
+    interfaces = []
+    methods: List[Method] = []
+    interface_methods: MutableMapping[sym.Symbol, List[Method]] = {}
+    for elem in form:
+        if isinstance(elem, sym.Symbol):
+            if current_interface is not None:
+                if current_interface_sym in interface_methods:
+                    raise ParserException(
+                        f"deftype* forms may only implement an interface once",
+                        form=elem,
+                    )
+                assert (
+                    current_interface_sym is not None
+                ), "Symbol must be defined with interface"
+                interface_methods[current_interface_sym] = methods
+
+            current_interface_sym = elem
+            current_interface = _parse_ast(ctx, elem)
+            methods = []
+
+            if not isinstance(current_interface, (MaybeClass, MaybeHostForm, VarRef)):
+                raise ParserException(
+                    f"deftype* interface implementation must be an existing interface",
+                    form=elem,
+                )
+            interfaces.append(current_interface)
+        elif isinstance(elem, ISeq):
+            if current_interface is None:
+                raise ParserException(
+                    f"deftype* method cannot be declared without interface", form=elem
+                )
+            methods.append(__deftype_method(ctx, elem, current_interface))
+        else:
+            raise ParserException(
+                f"deftype* must consist of interface or protocol names and methods",
+                form=elem,
+            )
+
+    if current_interface is not None:
+        if len(methods) > 0:
+            if current_interface_sym in interface_methods:
+                raise ParserException(
+                    f"deftype* forms may only implement an interface once",
+                    form=current_interface_sym,
+                )
+            assert (
+                current_interface_sym is not None
+            ), "Symbol must be defined with interface"
+            interface_methods[current_interface_sym] = methods
+        else:
+            raise ParserException(
+                f"deftype* may not declare interface without at least one method",
+                form=current_interface_sym,
+            )
+
+    return interfaces, list(chain.from_iterable(interface_methods.values()))
+<switch:english>
+[english] The helper ensures strict type checking for interface definitions, guaranteeing that only valid implementable types are processed throughout the parsing process.
+[english] Does this function support registering multiple implementations of the same interface symbol within a single `deftype*` definition?
+[english] No. The check inside the loop ensures uniqueness by raising a ParserException if an interface implementation is encountered more than once:
+<switch:python>
+[python] if current_interface_sym in interface_methods:
+    raise ParserException(
+        f"deftype* forms may only implement an interface once", form=elem,
+    )
+<switch:english>
+[english] That makes sense for type safety. Thanks!

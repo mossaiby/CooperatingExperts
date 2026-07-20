@@ -1,0 +1,26 @@
+[english] How can I reliably remove temporary source files and associated build directories when a requirement is slated for deletion?
+[english] This function handles resource cleanup by checking if specific deletion markers exist within a defined directory. It then recursively removes both the configured source directory and any internal temporary build paths.
+<switch:python>
+[python] def remove_temporary_source(self):
+        """Remove the source files from this requirement, if they are marked
+        for deletion"""
+        if self.source_dir and os.path.exists(
+                os.path.join(self.source_dir, PIP_DELETE_MARKER_FILENAME)):
+            logger.debug('Removing source in %s', self.source_dir)
+            rmtree(self.source_dir)
+        self.source_dir = None
+        if self._temp_build_dir and os.path.exists(self._temp_build_dir):
+            rmtree(self._temp_build_dir)
+        self._temp_build_dir = None
+<switch:english>
+[english] The code clears its state variables (`self.source_dir` and `self._temp_build_dir`) after attempting removal, assuming all necessary modules like os and rmtree are imported.
+[english] What if the operating system denies deletion due to insufficient permissions during rmtree execution?
+[english] The current implementation will raise an OSError upon failure. To handle permission issues gracefully, you should wrap the `rmtree` calls in a try/except block:
+<switch:python>
+[python] import os
+try:
+    # Code that might fail (e.g., rmtree)
+except OSError as e:
+    logger.error(f"Could not delete directory: {e}")
+<switch:english>
+[english] That makes the cleanup process far more robust against environmental factors.

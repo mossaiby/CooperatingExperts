@@ -1,0 +1,47 @@
+[english] Create a generic method to retrieve all items from several categorized APIs using pagination.
+[english] This function handles fetching data across different categories by implementing an iterative loop that continues reading until no 'next' URI is provided in the response.
+<switch:python>
+[python] def get_items(self, category=CATEGORY_EVENT, offset=REMO_DEFAULT_OFFSET):
+        """Retrieve all items for category using pagination """
+
+        more = True  # There are more items to be processed
+        next_uri = None  # URI for the next items page query
+        page = ReMoClient.FIRST_PAGE
+        page += int(offset / ReMoClient.ITEMS_PER_PAGE)
+
+        if category == CATEGORY_EVENT:
+            api = self.api_events_url
+        elif category == CATEGORY_ACTIVITY:
+            api = self.api_activities_url
+        elif category == CATEGORY_USER:
+            api = self.api_users_url
+        else:
+            raise ValueError(category + ' not supported in ReMo')
+
+        while more:
+            params = {
+                "page": page,
+                "orderby": "ASC"
+            }
+
+            logger.debug("ReMo client calls APIv2: %s params: %s",
+                         api, str(params))
+
+            raw_items = self.fetch(api, payload=params)
+            yield raw_items
+
+            items_data = json.loads(raw_items)
+            next_uri = items_data['next']
+
+            if not next_uri:
+                more = False
+            else:
+                # https://reps.mozilla.org/remo/api/remo/v1/events/?orderby=ASC&page=269
+                parsed_uri = urllib.parse.urlparse(next_uri)
+                parsed_params = urllib.parse.parse_qs(parsed_uri.query)
+                page = parsed_params['page'][0]
+<switch:english>
+[english] It uses `urllib` to safely parse the `next_uri`, allowing it to dynamically update page parameters and continue requesting subsequent pages of results. Note that this implementation updates the local variable `page` by overwriting it with values from the next URI.
+[english] If a category does not support paginated responses (i.e., 'next' is never included), will the generator function finish after the first call?
+[english] Yes, the `while more:` loop depends entirely on `more = True` being reset when `items_data['next']` is falsy or missing, which happens during the initial run if no pagination exists.
+[english] Got it, thanks for clarifying how the stopping condition works.

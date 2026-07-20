@@ -1,0 +1,37 @@
+[english] How do I reliably crop an image to specific dimensions while ensuring a defined point of interest remains centered?
+[english] This function takes an image and crops it according to predefined width and height. It handles the cropping logic, manages specific formats like GIFs, and saves the final result into an in-memory buffer.
+<switch:python>
+[python] def process_image(self, image, image_format, save_kwargs,
+                      width, height):
+        """
+        Return a BytesIO instance of `image` cropped to `width` and `height`.
+
+        Cropping will first reduce an image down to its longest side
+        and then crop inwards centered on the Primary Point of Interest
+        (as specified by `self.ppoi`)
+        """
+        imagefile = BytesIO()
+        palette = image.getpalette()
+        cropped_image = self.crop_on_centerpoint(
+            image,
+            width,
+            height,
+            self.ppoi
+        )
+
+        # Using ImageOps.fit on GIFs can introduce issues with their palette
+        # Solution derived from: http://stackoverflow.com/a/4905209/1149774
+        if image_format == 'GIF':
+            cropped_image.putpalette(palette)
+
+        cropped_image.save(
+            imagefile,
+            **save_kwargs
+        )
+
+        return imagefile
+<switch:english>
+[english] A key detail is that explicit palette preservation is implemented when processing GIF files to prevent visual artifacts during the operation.
+[english] What happens if the requested `width` or `height` is larger than the original input image?
+[english] The behavior depends on the internal `self.crop_on_centerpoint` method, which likely scales the image up first before cropping inwards. If you need explicit padding instead of scaling, you would adjust the initial logic.
+[english] That clarifies how size constraints are handled.

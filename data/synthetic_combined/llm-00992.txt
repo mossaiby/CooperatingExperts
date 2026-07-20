@@ -1,0 +1,11 @@
+[english] I need a way to preprocess incoming configuration strings so that a single comma-separated value can be split into multiple distinct plugin items.
+[english] This function acts as a callback during option preprocessing. It accepts an input string `value`, passes it through a helper to break it down, and then adds all resulting pieces to the internal plugins list.
+<switch:python>
+[python] def cb_add_plugins(self, name, value):
+        """callback for option preprocessing (i.e. before option parsing)"""
+        self._plugins.extend(utils._splitstrip(value))
+<switch:english>
+[english] Be aware that this function mutates the `self._plugins` state directly and relies entirely on how `utils._splitstrip` is implemented to handle various whitespace scenarios.
+[english] What behavior occurs if the input 'value' happens to be an integer or a non-string type?
+[english] Input types are expected to be strings; if they aren\'t, calling utils._splitstrip() might raise an error. You should ensure that robust type checking is performed before processing.
+[english] Got it, I will add explicit input validation.

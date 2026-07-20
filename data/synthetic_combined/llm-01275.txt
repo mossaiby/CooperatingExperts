@@ -1,0 +1,14 @@
+[english] How do I clear stored site tree data and reset related configurations?
+[english] To completely empty cached site trees, we first remove specific keys from a global cache object named 'sitetrees' and 'sitetrees_reset'. We then conditionally call an initialization method based on the provided keyword arguments to ensure dependencies are correctly set up.
+<switch:python>
+[python] def empty(self, **kwargs):
+        """Empties cached sitetree data."""
+        cache.delete('sitetrees')
+        cache.delete('sitetrees_reset')
+
+        kwargs.get('init', True) and self.init()
+<switch:english>
+[english] This function clears cached items but also handles optional re-initialization by checking if 'init' is passed in kwargs. Be aware that mutating global `cache` variables can affect other parts of the system, so use this sparingly.
+[english] What happens to the class instance state before init() is called again, even if it was previously initialized?
+[english] The function only explicitly manages cache keys and then calls `self.init()` if the 'init' flag is True; any internal object state preceding the call remains as its current value.
+[english] Thanks for explaining how this cleanup routine works!

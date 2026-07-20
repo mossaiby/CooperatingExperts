@@ -1,0 +1,29 @@
+[english] I need to generate synthetic 2D datasets with 'K' distinct cluster centers, each containing 'N' data points for testing machine learning algorithms.
+[english] This function creates a multivariate dataset suitable for clustering by iterating K times, generating random coordinates for K means, and then adding N normally distributed points near each mean. The total output is an array of shape (K*N, 2).
+<switch:python>
+[python] def generate_2d_data(self, N=100, K=5):
+        """Generates N*K 2D data points with K means and N data points
+            for each mean."""
+        # Seed the random
+        np.random.seed(seed=int(time.time()))
+
+        # Amount of spread of the centroids
+        spread = 30
+
+        # Generate random data
+        X = np.empty((0, 2))
+        for i in range(K):
+            mean = np.array([np.random.random()*spread,
+                             np.random.random()*spread])
+            x = np.random.normal(0.0, scale=1.0, size=(N, 2)) + mean
+            X = np.append(X, x, axis=0)
+
+        return X
+<switch:english>
+[english] While the data generation process mimics real-world clusters, using `np.append` in a loop can be slightly inefficient for very large datasets compared to concatenation.
+[english] The seeding mechanism uses time.time(). How could I ensure I get the exact same dataset every time if I want reproducible results?
+[english] To ensure reproducibility, you should pass an integer value instead of `int(time.time())` to the seed parameter in `np.random.seed()`, like this:
+<switch:python>
+[python] np.random.seed(seed=42)
+<switch:english>
+[english] That makes perfect sense; I'll use a fixed seed for my reproducible tests.

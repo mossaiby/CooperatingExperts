@@ -1,0 +1,38 @@
+[english] I need to read a byte stream and stop processing when either a defined terminal character or an invalid data type is encountered.
+[english] This function reads from a byte iterator while continuously checking two stopping conditions: if the next byte belongs in a `stop_bytes` set, or if it falls outside of the allowed bytes defined by `run_bytes`.
+<switch:python>
+[python] def read_to( idx_bytes, stop_bytes=None, run_bytes=None ):
+    '''
+    iterates through idx_bytes until a byte in stop_bytes or a byte
+    not in run_bytes.
+
+    :rtype (int, string): idx of last byte and all of bytes including
+    the terminal byte from stop_bytes or not in run_bytes
+    '''
+    idx = None
+    vals = []
+    next_b = None
+    while 1:
+        try:
+            idx, next_b = idx_bytes.next()
+        except StopIteration:
+            ## maybe something going wrong?
+            idx = None
+            next_b = None
+            break
+        ## stop when we see any byte in stop_bytes
+        if stop_bytes and next_b in stop_bytes:
+            break
+        ## stop when we see any byte not in run_bytes
+        if run_bytes and next_b not in run_bytes:
+            break
+        ## assemble the ret_val
+        vals.append( next_b )
+
+    ## return whatever we have assembled
+    return idx, b''.join(vals), next_b
+<switch:english>
+[english] It collects all valid data and returns the index, the assembled bytes, and the specific terminal byte that caused the thread to break.
+[english] If I don't specify a `stop_bytes`, will the function continue reading until the stream ends or an invalid byte is found?
+[english] Yes. If `stop_bytes` is not provided, the loop continues indefinitely processing as long as every byte encountered is present in the `run_bytes` set.
+[english] That helps me understand how to control input streams much better!

@@ -1,0 +1,41 @@
+[english] How do I round all values of a waveform's dependent variable vector to a specific number of decimal places?
+[english] This function creates a copy of your input wave, updates its name for easy identification, and then uses NumPy's `round` method on the internal data vector.
+<switch:python>
+[python] def round(wave, decimals=0):
+    r"""
+    Round a waveform's dependent variable vector to a given number of decimal places.
+
+    :param wave: Waveform
+    :type  wave: :py:class:`peng.eng.Waveform`
+
+    :param decimals: Number of decimals to round to
+    :type  decimals: integer
+
+    :rtype: :py:class:`peng.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. peng.wave_functions.round
+
+    :raises:
+     * RuntimeError (Argument \`decimals\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+    .. [[[end]]]
+    """
+    # pylint: disable=W0622
+    pexdoc.exh.addex(
+        TypeError,
+        "Cannot convert complex to integer",
+        wave._dep_vector.dtype.name.startswith("complex"),
+    )
+    ret = copy.copy(wave)
+    ret.dep_name = "round({0}, {1})".format(ret.dep_name, decimals)
+    ret._dep_vector = np.round(wave._dep_vector, decimals)
+    return ret
+<switch:english>
+[english] The function returns a new Waveform object with rounded values. Since NumPy makes a copy internally during rounding, the original waveform remains unmodified.
+[english] What happens if I pass a non-NumPy array or an integer as the `wave` argument?
+[english] If invalid types are passed for `wave`, Python will raise a `TypeError`. The function also explicitly checks and raises a `RuntimeError` if the dependent variable vector's data type is complex.
+[english] Thanks for clarifying how to handle different input types!

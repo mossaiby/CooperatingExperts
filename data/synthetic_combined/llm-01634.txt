@@ -1,0 +1,23 @@
+[english] How can I determine if a given directory path represents a standard Python package?
+[english] To identify a valid Python package, this function checks two things: first, it verifies that the input is a directory, and second, it confirms the existence of the necessary `__init__.py` or compiled `.pyc` file within that directory.
+<switch:python>
+[python] def _is_package(path):
+    """
+    判断传入的路径是否为一个 Python 模块包
+
+    :param str path: 待判断的路径
+    :return: 返回是，则传入 path 为一个 Python 包，否则不是
+    :rtype: bool
+    """
+    def _exists(s):
+        return os.path.exists(os.path.join(path, s))
+
+    return (
+        os.path.isdir(path) and
+        (_exists('__init__.py') or _exists('__init__.pyc'))
+    )
+<switch:english>
+[english] This approach correctly identifies traditional packages by looking for `__init__`. However, it relies on standard file system checks rather than verifying package resolution.
+[english] What if I am dealing with a 'namespace package' in Python 3.6+? Will this function accurately identify those as well?
+[english] No, this implementation will return False for modern namespace packages because they lack the explicit `__init__.py` file. Namespace packages are defined by simply being recognized as packages without requiring that initialization file.
+[english] That makes sense; I need to keep those distinctions in mind.

@@ -1,0 +1,35 @@
+[english] I am building a Bayesian ResNet and need to define the core residual block function using TensorFlow Probability layers.
+[english] This implementation defines a standard residual block, utilizing skip connections for improved gradient flow. It integrates probabilistic layers by replacing traditional convolutions with `tfp.layers.Convolution2DFlipout` across both principal and shortcut paths.
+<switch:python>
+[python] def _resnet_block(x, filters, kernel, stride, kernel_posterior_fn):
+  """Network block for ResNet."""
+  x = tf.keras.layers.BatchNormalization()(x)
+  x = tf.keras.layers.Activation('relu')(x)
+
+  if stride != 1 or filters != x.shape[1]:
+    shortcut = _projection_shortcut(x, filters, stride, kernel_posterior_fn)
+  else:
+    shortcut = x
+
+  x = tfp.layers.Convolution2DFlipout(
+      filters,
+      kernel,
+      strides=stride,
+      padding='same',
+      kernel_posterior_fn=kernel_posterior_fn)(x)
+  x = tf.keras.layers.BatchNormalization()(x)
+  x = tf.keras.layers.Activation('relu')(x)
+
+  x = tfp.layers.Convolution2DFlipout(
+      filters,
+      kernel,
+      strides=1,
+      padding='same',
+      kernel_posterior_fn=kernel_posterior_fn)(x)
+  x = tf.keras.layers.add([x, shortcut])
+  return x
+<switch:english>
+[english] The logic ensures that the bypass (`shortcut`) is dimensionally matched if strides or filter changes are required, before adding it to the main convolutional path's output.
+[english] If the input features already have the correct number of channels but a stride of 1, how does the shortcut handle itself?
+[english] The shortcut automatically becomes the original tensor `x` when no projection is necessary. If conditions match (`stride == 1` and filters equal `x.shape[1]`), it bypasses the projection logic.
+[english] That makes sense, I'll plug this into my model now.

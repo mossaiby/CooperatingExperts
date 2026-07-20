@@ -1,0 +1,23 @@
+[english] How do I reliably retrieve the most recent geographical coordinates of a tracked device?
+[english] This method prioritizes checking local, immediately available data first. If that information isn't present in internal state, it falls back to making an external API call to fetch the required location details from the M2X endpoint.
+<switch:python>
+[python] def location(self):
+        """ Method for `Read Device Location <https://m2x.att.com/developer/documentation/v2/device#Read-Device-Location>`_ endpoint.
+
+        :return: Most recently logged location of the Device, see M2X API docs for details
+        :rtype: dict
+
+        :raises: :class:`~requests.exceptions.HTTPError` if an error occurs when sending the HTTP request
+        """
+        return self.data.get('location') or \
+            self.api.get(self.subpath('/location')) or {}
+<switch:english>
+[english] Note that if neither internal data nor the API call yields a meaningful result, this function safely returns an empty dictionary instead of raising an immediate error.
+[english] What specifically does the function return if both `self.data` and the subsequent API request fail to find any location information?
+[english] The function defaults to returning an empty dictionary (`{}`) by design when all preceding attempts resolve to falsy values:
+<switch:python>
+[python] def location(self):
+        return self.data.get('location') or \
+            self.api.get(self.subpath('/location')) or {}
+<switch:english>
+[english] Thanks, that clarifies the fallback behavior.

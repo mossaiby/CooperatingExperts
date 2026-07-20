@@ -1,0 +1,22 @@
+[english] I need a clean way to recursively find all individual file paths located under a specific base directory.
+[english] The most robust way to handle recursive directory traversal in Python is using `os.walk`. We iterate through each folder this function finds and yield the full path for every file it encounters within that folder.
+<switch:python>
+[python] def _search_files(self):
+        """Retrieve the file paths stored under the base path."""
+
+        for root, _, files in os.walk(self.dirpath):
+            for filename in files:
+                location = os.path.join(root, filename)
+                yield location
+<switch:english>
+[english] By using `yield`, the function acts as a generator, which means it efficiently yields paths one by one rather than loading all files into memory at once.
+[english] What if I only want to find files with a specific extension (e.g., only .json files)?
+[english] You can filter within the inner loop by checking the filename before yielding it, like this:
+<switch:python>
+[python] for root, _, files in os.walk(self.dirpath):
+    for filename in files:
+        if filename.endswith('.json'):  # Filter step
+            location = os.path.join(root, filename)
+            yield location
+<switch:english>
+[english] That refinement is exactly what I needed to make this useful.

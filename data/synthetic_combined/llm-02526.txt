@@ -1,0 +1,20 @@
+[english] I need a way to count how many times specific values appear in a column, optionally cross-referenced with another column.
+[english] This function computes frequency tables by checking if an optional second dataset (`data2`) is provided. It then constructs an H2O expression—either for a single column or for the co-occurrence of two columns—based on whether `data2` exists in the parameters.
+<switch:python>
+[python] def table(self, data2=None, dense=True):
+        """
+        Compute the counts of values appearing in a column, or co-occurence counts between two columns.
+
+        :param H2OFrame data2: An optional single column to aggregate counts by.
+        :param bool dense: If True (default) then use dense representation, which lists only non-zero counts,
+            1 combination per row. Set to False to expand counts across all combinations.
+
+        :returns: H2OFrame of the counts at each combination of factor levels
+        """
+        return H2OFrame._expr(expr=ExprNode("table", self, data2, dense)) if data2 is not None else H2OFrame._expr(
+            expr=ExprNode("table", self, dense))
+<switch:english>
+[english] The function returns an object representing an H2OFrame expression, which defines how to compute the table rather than providing the computed data immediately.
+[english] If I call this function without any arguments, what does the 'dense=True' parameter specifically do for my frequency count?
+[english] 'dense=True' ensures that the resulting table structure only lists values with non-zero counts. If set to False, it will expand the result to include all possible combinations of factor levels, even if their count is zero.
+[english] Got it, thanks!

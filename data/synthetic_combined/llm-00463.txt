@@ -1,0 +1,26 @@
+[english] I need a way in Python to create a directory and all its parent folders if they don't exist.
+[english] This function first saves the current umask setting using `os.umask(0)` so we can restore it later. It then uses `os.makedirs` with the provided mode, ensuring all intermediate directories are created safely.
+<switch:python>
+[python] def mkdirs(path, mode):
+    """
+    Creates the directory specified by path, creating intermediate directories
+    as necessary. If directory already exists, this is a no-op.
+
+    :param path: The directory to create
+    :type path: str
+    :param mode: The mode to give to the directory e.g. 0o755, ignores umask
+    :type mode: int
+    """
+    try:
+        o_umask = os.umask(0)
+        os.makedirs(path, mode)
+    except OSError:
+        if not os.path.isdir(path):
+            raise
+    finally:
+        os.umask(o_umask)
+<switch:english>
+[english] The `try...finally` block guarantees that even if an error occurs during creation, the original umask is restored via `os.umask(o_umask)`, maintaining system consistency.
+[english] What happens if we try to write this function without the initial saving and restoring of the umask?
+[english] If you omit the umask handling, any permissions set in your calling script will apply when `os.makedirs` runs, potentially leading to unexpected security or access issues.
+[english] That makes sense; managing those system defaults is very important.

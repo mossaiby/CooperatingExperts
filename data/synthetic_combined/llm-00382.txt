@@ -1,0 +1,19 @@
+[english] How do I search for specific services by type or scope, while making sure my server is running first?
+[english] This function initiates a service search after verifying that the underlying server has started. It sends a probe to gather potential matches and then waits before filtering the results.
+<switch:python>
+[python] def searchServices(self, types=None, scopes=None, timeout=3):
+        'search for services given the TYPES and SCOPES in a given TIMEOUT'
+
+        if not self._serverStarted:
+            raise Exception("Server not started")
+
+        self._sendProbe(types, scopes)
+
+        time.sleep(timeout)
+
+        return self._filterServices(list(self._remoteServices.values()), types, scopes)
+<switch:english>
+[english] The function first checks the status flag and then uses a `time.sleep` to wait for asynchronous service discovery before returning filtered values.
+[english] What happens if I pass an empty list to 'types'?
+[english] If you pass an empty list, the `self._filterServices` method will return an empty collection since no services match that specific criteria.
+[english] Got it, thanks for the clarification!

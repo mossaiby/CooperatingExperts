@@ -1,0 +1,18 @@
+[english] How can I implement a fixed-size cache or sliding window that tracks unique items and reports if an incoming item is new?
+[english] This method manages a rolling list (`self.filter`) constrained by `self.max_items`. When processing data, it first checks for existence; if the data is new, it adds it to the end while dropping the oldest element from the front to maintain capacity.
+<switch:python>
+[python] def update(self, data):
+        "returns True if unknown"
+        if data not in self.filter:
+            self.filter.append(data)
+            if len(self.filter) > self.max_items:
+                self.filter.pop(0)
+            return True
+        else:
+            self.filter.append(self.filter.pop(0))
+            return False
+<switch:english>
+[english] The function successfully maintains the window order and size limits. However, checking membership using `data not in self.filter` performs a linear search (O(N)), which could be inefficient if your data set is large.
+[english] If I want faster checks for existing items when the list grows beyond 100 elements, what structural change should I consider?
+[english] To achieve O(1) lookups, you should store an auxiliary `set` of the current filter contents. This allows you to check membership instantly before performing the costly linear search on the `list` itself.
+[english] That makes sense; optimizing the lookup time is critical for performance.

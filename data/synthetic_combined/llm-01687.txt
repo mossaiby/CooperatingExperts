@@ -1,0 +1,39 @@
+[english] I need a way to determine if a given string conforms to valid domain name syntax.
+[english] This function first validates that the input is a non-empty string, returning None early otherwise. If the input is valid, it initializes configuration and then delegates the actual syntactic evaluation to an external `Check` method.
+<switch:python>
+[python] def syntax_check(domain):  # pragma: no cover
+    """
+    Check the syntax of the given domain.
+
+    :param domain: The domain to check the syntax for.
+    :type domain: str
+
+    :return: The syntax validity.
+    :rtype: bool
+
+    .. warning::
+        If an empty or a non-string :code:`domain` is given, we return :code:`None`.
+    """
+
+    if domain and isinstance(domain, str):
+        # * The given domain is not empty nor None.
+        # and
+        # * The given domain is a string.
+
+        # We silently load the configuration.
+        load_config(True)
+
+        return Check(domain).is_domain_valid()
+
+    # We return None, there is nothing to check.
+    return None
+<switch:english>
+[english] Be aware that this function relies on external dependencies like `load_config` and a mock or real `Check` class for domain validation.
+[english] If I call this with an empty string, what explicit value does it return, and how should I handle that in my application logic?
+[english] For an empty string (or non-string), the function returns None. You can check for a result using:
+<switch:python>
+[python] result = syntax_check("")
+if result is None:
+    print("Input was invalid.")
+<switch:english>
+[english] That makes sense, thanks for breaking down how this handles input errors.

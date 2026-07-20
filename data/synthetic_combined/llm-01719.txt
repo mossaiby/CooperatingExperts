@@ -1,0 +1,21 @@
+[english] I need to write a method that updates all current entities tracked by the session from persistent storage (like Redis).
+[english] To accomplish this, this function uses the self-tracked objects and calls an internal refresh mechanism on each one. By passing all known values as arguments, it triggers a bulk reload process.
+<switch:python>
+[python] def refresh_all(self, *objects, **kwargs):
+        '''
+        This method is an alternate API for refreshing all entities tracked
+        by the session. You can call::
+
+            session.refresh_all()
+            session.refresh_all(force=True)
+
+        And all entities known by the session will be reloaded from Redis.
+
+        To force reloading for modified entities, you can pass ``force=True``.
+        '''
+        self.refresh(*self.known.values(), force=kwargs.get('force'))
+<switch:english>
+[english] The method ensures that any optional `force` parameter is correctly passed down to the underlying refresh call to manage entity states.
+[english] If some entities are already modified or deleted and not present in Redis, how does this function prevent errors?
+[english] The implementation relies on `self.refresh`, which should handle exceptions internally for individual items. If an external error occurs during the refresh call, it would likely halt the entire process.
+[english] That clarifies how to manage entity consistency across a large session.

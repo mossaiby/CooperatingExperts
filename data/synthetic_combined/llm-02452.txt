@@ -1,0 +1,15 @@
+[english] How can I define and finalize the properties of a string literal token within my custom Python lexer?
+[english] This method defines how to identify a string pattern using regex and then ensures the token object is correctly configured with its boundaries.
+<switch:python>
+[python] def t_STRING(self, t):
+        r'"[^"\n]*"'
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+<switch:english>
+[english] It successfully sets the end position based on the current value's length, allowing downstream parsers to know where the token ends without recalculating it.
+[english] If `t.value` contained escape sequences like '\n', would this function still calculate the correct positional boundary?
+[english] The function calculates boundaries based on character count (`len(t.value)`), not rendered length. For complex escaping, you might need to adjust the calculation.
+<switch:python>
+[python] t.endlexpos = t.lexpos + len(token_with_escapes)
+<switch:english>
+[english] That makes sense; I'll keep that in mind for tokenizing strings with escapes.

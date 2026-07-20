@@ -1,0 +1,17 @@
+[english] How do I ensure that a specific class defining a metric has both a 'label' and a 'widget' attribute?
+[english] To validate your metric configuration, this approach uses Python's `hasattr` function to check for required attributes on the provided class.
+<switch:python>
+[python] def validate(metric_class):
+    """
+    Does basic Metric option validation. 
+    """
+    if not hasattr(metric_class, 'label'):
+        raise ImproperlyConfigured("No 'label' attribute found for metric %s." % metric_class.__name__)
+    
+    if not hasattr(metric_class, 'widget'):
+        raise ImproperlyConfigured("No 'widget' attribute found for metric %s." % metric_class.__name__)
+<switch:english>
+[english] If either vital attribute is missing, an `ImproperlyConfigured` error is raised, preventing further processing with incomplete data.
+[english] What happens if the input metric_class object doesn't support standard Python introspection?
+[english] The function relies on `hasattr`, which works for standard classes and objects. If it were a type-safe system that required specific types other than just existence, you would add explicit type checking.
+[english] Got it, thanks for the detailed explanation!

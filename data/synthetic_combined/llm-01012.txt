@@ -1,0 +1,19 @@
+[english] How can I configure an object to read data from a specific file path or an existing stream?
+[english] To make this function, we check the type of provided input first. If it's already a text-based IO stream, we reuse it; otherwise, if it's a string representing a path, we open and wrap that file.
+<switch:python>
+[python] def open(self, inp, opts=None):
+        """Use this to set what file to read from. """
+        if isinstance(inp, io.TextIOWrapper):
+            self.input = inp
+        elif isinstance(inp, 'string'.__class__):  # FIXME
+            self.name  = inp
+            self.input = open(inp, 'r')
+        else:
+            raise IOError("Invalid input type (%s) for %s" %
+                          (inp.__class__.__name__, inp))
+        return
+<switch:english>
+[english] This method provides flexibility by accepting either an existing reader or a path string. However, the check for strings relies on inspecting the internal classes of 'string' module objects, which can sometimes be brittle.
+[english] What happens if I try to open a directory path instead of a file?
+[english] If you pass a directory, Python will raise an `OSError` (like `FileNotFoundError`) during the execution of the standard `open(inp, 'r')` call.
+[english] Thanks for pointing out those type checking nuances!

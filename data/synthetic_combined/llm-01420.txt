@@ -1,0 +1,20 @@
+[english] How can I initialize a GChart object by passing either its parameter dictionary or the raw URL query string?
+[english] This function acts as a factory to create an instance of class `cls`. It first checks if the input is already a dictionary; otherwise, it treats the input as a full URL and extracts the parameters using specialized parsing.
+<switch:python>
+[python] def fromurl(cls, qs):
+        """
+        Reverse a chart URL or dict into a GChart instance
+        
+        >>> G = GChart.fromurl('http://chart.apis.google.com/chart?...')
+        >>> G
+        <GChartWrapper.GChart instance at...>
+        >>> G.image().save('chart.jpg','JPEG')
+        """
+        if isinstance(qs, dict):
+            return cls(**qs)
+        return cls(**dict(parse_qsl(qs[qs.index('?')+1:])))
+<switch:english>
+[english] The function relies on Python's standard library to cleanly separate query key-values from a string. If the input isn't a dict or a URL with '?', it will likely raise an error during index retrieval.
+[english] If I pass a valid dictionary but it is missing some required keys, how does this function handle that?
+[english] The function simply unpackages `cls(**qs)`. If the necessary arguments are missing from the input dictionary (`qs`), standard Python behavior dictates that a `TypeError` will be raised when attempting to instantiate the class.
+[english] Thanks for clarifying how parameter errors would propagate.

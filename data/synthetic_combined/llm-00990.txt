@@ -1,0 +1,20 @@
+[english] How can I robustly ensure that all necessary directories exist for a given file path, even if creation fails?
+[english] This function first calculates the required directory path from the filename using pathlib helpers. It then calls a helper to create those directories and wraps everything in an error handler.
+<switch:python>
+[python] def try_make_dirs(filename):
+    """ Tries to make directories for a given `filename`.
+
+    Ignores any error but notifies via stderr.
+
+    """
+    try:
+        dirname = os.path.dirname(os.path.normpath(filename))
+        racedirs(dirname)
+    except Exception as exc:
+        sys.stderr.write('ERROR during log config file handling, could not create dirs for '
+                         'filename `%s` because of: %s' % (filename, repr(exc)))
+<switch:english>
+[english] This approach prioritizes application availability by catching all exceptions and logging them to standard error instead of crashing.
+[english] What happens if the system returns a PermissionError during directory creation?
+[english] If `racedirs` encounters a permission issue or other OS-related failure, it will be caught by the generic exception handler. The function writes a detailed message to stderr explaining that directories could not be created for the specified filename.
+[english] This seems like a safe way to handle file path issues.

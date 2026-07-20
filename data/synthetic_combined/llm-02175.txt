@@ -1,0 +1,32 @@
+[english] How can I numerically approximate the x-coordinate where my function reaches its minimum?
+[english] Since this method relies on derivatives, we use a variation of the secant method to estimate the root of the derivative. We calculate the next point by finding the intersection of the lines formed by the given endpoints and their slopes.
+<switch:python>
+[python] def _secant(val_a, val_b):
+  """Returns the secant interpolation for the minimum.
+
+  The secant method is a technique for finding roots of nonlinear functions.
+  When finding the minimum, one applies the secant method to the derivative
+  of the function.
+  For an arbitrary function and a bounding interval, the secant approximation
+  can produce the next point which is outside the bounding interval. However,
+  with the assumption of opposite slope condtion on the interval [a,b] the new
+  point c is always bracketed by [a,b]. Note that by assumption,
+  f'(a) < 0 and f'(b) > 0.
+  Hence c is a weighted average of a and b and thus always in [a, b].
+
+  Args:
+    val_a: A namedtuple with the left end point, function value and derivative,
+      of the current interval (i.e. a).
+    val_b: A namedtuple with the right end point, function value and derivative,
+      of the current interval (i.e. b).
+
+  Returns:
+    approx_minimum: A scalar real `Tensor`. An approximation to the point
+      at which the derivative vanishes.
+  """
+  return (val_a.x * val_b.df - val_b.x * val_a.df) / (val_b.df - val_a.df)
+<switch:english>
+[english] This function calculates an approximation for the minimum's x-coordinate based on the specified derivatives. Note that this approach assumes the derivative values (`df`) are sufficiently different to avoid division by zero.
+[english] What happens if `val_b.df` and `val_a.df` are equal, leading to a potential division by zero?
+[english] If the derivatives are identical, the secant method fails because the slopes of the secant line cannot be uniquely determined. You should add error handling to check for this condition before performing the calculation.
+[english] That makes sense, thanks!

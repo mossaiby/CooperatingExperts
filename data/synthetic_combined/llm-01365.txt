@@ -1,0 +1,18 @@
+[english] I need a reliable way to generate unique and namespaced string identifiers for my session data keys.
+[english] This method dynamically builds a structured key by combining fixed configuration settings with the specific input needed.
+<switch:python>
+[python] def _session_key(self, key):
+        """
+        Generates session key string.
+
+        :param str key:
+            e.g. ``"authomatic:facebook:key"``
+
+        """
+
+        return '{0}:{1}:{2}'.format(self.settings.prefix, self.name, key)
+<switch:english>
+[english] The function ensures that all generated session keys are consistently prefixed based on the object's internal name and global configurations.
+[english] If the input `key` is already complex, will this formatting change affect its intended purpose?
+[english] Using `.format()` simply joins the parts with colons; it does not inherently alter the content of the original `key` parameter itself.
+[english] That makes sense, thanks for clarifying.

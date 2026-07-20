@@ -1,0 +1,18 @@
+[english] How can I write a helper function that determines if an attribute type in PKCS#11 represents a raw byte array instead of another data format?
+[english] To check for binary types, we simply need to exclude all other known simple data formats (like booleans, strings, and numbers).
+<switch:python>
+[python] def isBin(self, type):
+        """
+        is the type a byte array value?
+
+        :param type: PKCS#11 type like `CKA_MODULUS`
+        :rtype: bool
+        """
+        return (not self.isBool(type)) \
+            and (not self.isString(type)) \
+            and (not self.isNum(type))
+<switch:english>
+[english] By checking that the type is not classified as a boolean, string, or number, this function correctly assumes all remaining supported types are binary.
+[english] What happens if the attribute represents an array of these byte values?
+[english] The current implementation would still return True for the overall check. To specifically detect arrays, you might need to add a flag like `and (not self.isArray(type))` to ensure it's not just a container.
+[english] That makes sense; I will refine the checks based on that.

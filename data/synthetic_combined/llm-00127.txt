@@ -1,0 +1,19 @@
+[english] How can I ensure that a specific feature transformation function is applied consistently across all my model's training, validation, and testing data splits?
+[english] We need a wrapper method that systematically checks if each internal dataset exists before applying the mapping function. This approach ensures uniform processing regardless of which data split we are currently updating.
+<switch:python>
+[python] def map(self, func):
+        """
+        Process all data with given function.
+        The scheme of function should be x,y -> x,y.
+        """
+        if self._train_set:
+            self._train_set = map(func, self._train_set)
+        if self._valid_set:
+            self._valid_set = map(func, self._valid_set)
+        if self._test_set:
+            self._test_set = map(func, self._test_set)
+<switch:english>
+[english] The function recursively applies the provided transformation to every element within each set. Be sure that your custom functions adhere to the expected input/output signature (e.g., processing feature tuples).
+[english] What behavior should I expect if one of the sets, like the test set, has not yet been initialized?
+[english] The function includes a short guard clause (`if self._test_set:`) which prevents execution on empty or uninitialized datasets, skipping the transformation entirely for that specific split.
+[english] Thanks, this clarifies the scope of the operation.

@@ -1,0 +1,20 @@
+[english] I need a way to move active media playback to a different device and control whether it starts playing immediately.
+[english] This asynchronous method handles transferring the current media session state to a target device via an HTTP request. It accepts the new device object and uses a boolean flag to determine if the stream should begin playing after the transfer is complete.
+<switch:python>
+[python] async def transfer(self, device: SomeDevice, ensure_playback: bool = False):
+        """Transfer playback to a new device and determine if it should start playing.
+
+        Parameters
+        ----------
+        device : :obj:`SomeDevice`
+            The device on which playback should be started/transferred.
+        ensure_playback : bool
+            if `True` ensure playback happens on new device.
+            else keep the current playback state.
+        """
+        await self._user.http.transfer_player(str(device), play=ensure_playback)
+<switch:english>
+[english] The implementation relies on converting the `device` object into a string for the API call. Setting the `ensure_playback` parameter allows you to explicitly dictate whether playback remains running or pauses on the new device.
+[english] What happens if I pass None instead of a valid SomeDevice object?
+[english] If `None` is passed, the function attempts to convert it to a string, which sends an invalid identifier to the API. This will likely cause the underlying HTTP request to fail or target an unintended default device.
+[english] Thanks for clarifying how this transfer works!

@@ -1,0 +1,52 @@
+[english] I need to compute the Cumulative Distribution Function (CDF) and its derivative with respect to concentration for a von Mises distribution using series expansion.
+[english] This function uses TensorFlow's `tf.while_loop` to iteratively compute the components of the von Mises CDF series up to `num_terms`. It simultaneously tracks how these components change when the concentration parameter varies.
+<switch:python>
+[python] def _von_mises_cdf_series(x, concentration, num_terms, dtype):
+  """Computes the von Mises CDF and its derivative via series expansion."""
+  # Keep the number of terms as a float. It should be a small integer, so
+  # exactly representable as a float.
+  num_terms = tf.cast(num_terms, dtype=dtype)
+
+  def loop_body(n, rn, drn_dconcentration, vn, dvn_dconcentration):
+    """One iteration of the series loop."""
+
+    denominator = 2. * n / concentration + rn
+    ddenominator_dk = -2. * n / concentration ** 2 + drn_dconcentration
+    rn = 1. / denominator
+    drn_dconcentration = -ddenominator_dk / denominator ** 2
+
+    multiplier = tf.sin(n * x) / n + vn
+    vn = rn * multiplier
+    dvn_dconcentration = (drn_dconcentration * multiplier +
+                          rn * dvn_dconcentration)
+    n -= 1.
+
+    return n, rn, drn_dconcentration, vn, dvn_dconcentration
+
+  (_, _, _, vn, dvn_dconcentration) = tf.while_loop(
+      cond=lambda n, *_: n > 0.,
+      body=loop_body,
+      loop_vars=(
+          num_terms,  # n
+          tf.zeros_like(x, name="rn"),
+          tf.zeros_like(x, name="drn_dconcentration"),
+          tf.zeros_like(x, name="vn"),
+          tf.zeros_like(x, name="dvn_dconcentration"),
+      ),
+  )
+
+  cdf = .5 + x / (2. * np.pi) + vn / np.pi
+  dcdf_dconcentration = dvn_dconcentration / np.pi
+
+  # Clip the result to [0, 1].
+  cdf_clipped = tf.clip_by_value(cdf, 0., 1.)
+  # The clipped values do not depend on concentration anymore, so set their
+  # derivative to zero.
+  dcdf_dconcentration *= tf.cast((cdf >= 0.) & (cdf <= 1.), dtype)
+
+  return cdf_clipped, dcdf_dconcentration
+<switch:english>
+[english] The result is first clipped to ensure it stays within the valid probability range [0, 1], which then dictates where its derivative with respect to concentration must be zero. This combination allows for stable calculations even outside the main domain of convergence.
+[english] What happens if `num_terms` is set to a very large number?
+[english] While increasing `num_terms` improves accuracy, it increases computation time significantly. If the input parameters are extremely far from the mean, convergence may slow drastically or fail entirely.
+[english] Thanks for the clear demonstration of this numerical method!

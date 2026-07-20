@@ -1,0 +1,14 @@
+[english] I need a reliable way to remove all existing exons from my database for a specific build.
+[english] This function provides a utility for database cleanup, specifically targeting exon data without needing complex query construction. It begins by logging the action being performed and retrieves an adapter object from the provided context.
+<switch:python>
+[python] def exons(context, build):
+    """Delete all exons in the database"""
+    LOG.info("Running scout delete exons")
+    adapter = context.obj['adapter']
+
+    adapter.drop_exons(build)
+<switch:english>
+[english] The core functionality relies on calling `adapter.drop_exons` to handle the deletion logic based on the specified build version. Since this permanently deletes data, ensure you run it within a proper transaction or backup strategy.
+[english] What would happen if `context.obj['adapter']` did not exist when the function is called?
+[english] If the 'adapter' key is missing from `context.obj`, the script will crash and raise a KeyError. It is best practice to add error checking or use `.get()` to retrieve the adapter safely.
+[english] I appreciate the cautionary notes on handling potential errors.

@@ -1,0 +1,19 @@
+[english] How do I initialize a lockset for my blockchain genesis block that requires only one initial vote?
+[english] This function sets up a minimal signing requirement by creating a single voted block based on the genesis hash.
+<switch:python>
+[python] def genesis_signing_lockset(genesis, privkey):
+    """
+    in order to avoid a complicated bootstrapping, we define
+    the genesis_signing_lockset as a lockset with one vote by any validator.
+    """
+    v = VoteBlock(0, 0, genesis.hash)
+    v.sign(privkey)
+    ls = LockSet(num_eligible_votes=1)
+    ls.add(v)
+    assert ls.has_quorum
+    return ls
+<switch:english>
+[english] The resulting lockset is extremely lenient since `num_eligible_votes` is set to 1, meaning any single signed vote immediately satisfies the quorum.
+[english] If we wanted multiple validators to agree on the genesis block, how would I adjust this?
+[english] To require N voters, you would simply change the parameter initialization: `ls = LockSet(num_eligible_votes=N)` and then call `.add()` for each validator's signed vote.
+[english] Got it, thanks for clarifying how to scale the consensus requirements.

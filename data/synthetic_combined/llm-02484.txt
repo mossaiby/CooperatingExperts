@@ -1,0 +1,12 @@
+[english] How do I retrieve asset details using its specific symbol?
+[english] This method fetches data for a single asset by constructing a URL that incorporates the provided symbol. It uses an internal GET request to gather the necessary response and then transforms that raw data into a usable object.
+<switch:python>
+[python] def get_asset(self, symbol):
+        '''Get an asset'''
+        resp = self.get('/assets/{}'.format(symbol))
+        return Asset(resp)
+<switch:english>
+[english] The function assumes successful API communication, so it is important to handle potential errors from the network request or missing symbols in a production environment.
+[english] What happens if the asset with the given symbol does not exist?
+[english] If the asset doesn't exist, `self.get` will likely return an error response (like 404). You should add try-except blocks around the request to properly handle these failures.
+[english] That makes sense; I need to make sure my client handles API errors gracefully.

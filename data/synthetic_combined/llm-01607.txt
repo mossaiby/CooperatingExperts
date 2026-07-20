@@ -1,0 +1,81 @@
+[english] How can I automate the granting of specific read and write permissions for operational roles on custom Airflow DAG views?
+[english] This function works by first identifying all active or paused DAG models in the database. It then iterates through every available permission set, creating dedicated read/write view-menu pairings for each discovered DAG to provide granular control.
+<switch:python>
+[python] def create_custom_dag_permission_view(self, session=None):
+        """
+        Workflow:
+        1. Fetch all the existing (permissions, view-menu) from Airflow DB.
+        2. Fetch all the existing dag models that are either active or paused. Exclude the subdags.
+        3. Create both read and write permission view-menus relation for every dags from step 2
+        4. Find out all the dag specific roles(excluded pubic, admin, viewer, op, user)
+        5. Get all the permission-vm owned by the user role.
+        6. Grant all the user role's permission-vm except the all-dag view-menus to the dag roles.
+        7. Commit the updated permission-vm-role into db
+
+        :return: None.
+        """
+        self.log.debug('Fetching a set of all permission, view_menu from FAB meta-table')
+
+        def merge_pv(perm, view_menu):
+            """Create permission view menu only if it doesn't exist"""
+            if view_menu and perm and (view_menu, perm) not in all_pvs:
+                self._merge_perm(perm, view_menu)
+
+        all_pvs = set()
+        for pv in self.get_session.query(self.permissionview_model).all():
+            if pv.permission and pv.view_menu:
+                all_pvs.add((pv.permission.name, pv.view_menu.name))
+
+        # Get all the active / paused dags and insert them into a set
+        all_dags_models = session.query(models.DagModel)\
+            .filter(or_(models.DagModel.is_active, models.DagModel.is_paused))\
+            .filter(~models.DagModel.is_subdag).all()
+
+        # create can_dag_edit and can_dag_read permissions for every dag(vm)
+        for dag in all_dags_models:
+            for perm in self.DAG_PERMS:
+                merge_pv(perm, dag.dag_id)
+
+        # for all the dag-level role, add the permission of viewer
+        # with the dag view to ab_permission_view
+        all_roles = self.get_all_roles()
+        user_role = self.find_role('User')
+
+        dag_role = [role for role in all_roles if role.name not in EXISTING_ROLES]
+        update_perm_views = []
+
+        # need to remove all_dag vm from all the existing view-menus
+        dag_vm = self.find_view_menu('all_dags')
+        ab_perm_view_role = sqla_models.assoc_permissionview_role
+        perm_view = self.permissionview_model
+        view_menu = self.viewmenu_model
+
+        all_perm_view_by_user = session.query(ab_perm_view_role)\
+            .join(perm_view, perm_view.id == ab_perm_view_role
+                  .columns.permission_view_id)\
+            .filter(ab_perm_view_role.columns.role_id == user_role.id)\
+            .join(view_menu)\
+            .filter(perm_view.view_menu_id != dag_vm.id)
+        all_perm_views = set([role.permission_view_id for role in all_perm_view_by_user])
+
+        for role in dag_role:
+            # Get all the perm-view of the role
+            existing_perm_view_by_user = self.get_session.query(ab_perm_view_role)\
+                .filter(ab_perm_view_role.columns.role_id == role.id)
+
+            existing_perms_views = set([pv.permission_view_id
+                                        for pv in existing_perm_view_by_user])
+            missing_perm_views = all_perm_views - existing_perms_views
+
+            for perm_view_id in missing_perm_views:
+                update_perm_views.append({'permission_view_id': perm_view_id,
+                                          'role_id': role.id})
+
+        if update_perm_views:
+            self.get_session.execute(ab_perm_view_role.insert(), update_perm_views)
+        self.get_session.commit()
+<switch:english>
+[english] The code calculates missing role permissions based on what a generic 'User' role already sees, ensuring that dag roles receive specific, bounded access without inheriting overly broad 'all-dag' visibility. This structure requires careful coordination with other permission updates and relies heavily on existing DAG definitions.
+[english] If a user is already assigned multiple views via the 'User' role, does this function always successfully identify only new permissions for operational roles?
+[english] Yes, it calculates a set of all relevant view IDs based on the User role's visibility (excluding an 'all_dags' menu) and then uses set subtraction (`missing_perm_views = all_perm_views - existing_perms_views`) to identify only those specific permissions that need adding for the target dag roles.
+[english] That makes sense; I will integrate this logic into my deployment script.

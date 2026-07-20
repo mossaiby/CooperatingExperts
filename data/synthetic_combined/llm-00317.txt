@@ -1,0 +1,15 @@
+[english] I need a reliable way to stop my script immediately when the user provides invalid arguments.
+[english] To handle parsing failures gracefully, we should write an error message to standard error and then terminate the process using a specific exit code.
+<switch:python>
+[python] def error_parsing(msg="unknown options"):
+    """
+    Print any parsing error and exit with status -1
+    """
+    sys.stderr.write("Error parsing command line: %s\ntry 'mongotail --help' for more information\n" % msg)
+    sys.stderr.flush()
+    exit(EINVAL)
+<switch:english>
+[english] The use of `sys.stderr` ensures that errors do not mix with successful program output, while exiting with an error code like `EINVAL` signals failure to calling processes.
+[english] If I call this function without any arguments, what is the default message displayed?
+[english] By using a default parameter in the signature (`msg="unknown options"`), the function will automatically use that string if no specific message is passed during the call.
+[english] Got it, thanks for clarifying how defaults work.

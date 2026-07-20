@@ -1,0 +1,29 @@
+[english] Write a function that prepares the environment for one training epoch in an iterative machine learning process.
+[english] This method handles all necessary setup before a training loop starts. It tracks epoch progression, manages data pools, and applies scheduled learning rate reductions if criteria are met.
+<switch:python>
+[python] def prepare_epoch(self):
+        """
+        Prepare for one epoch.
+        Returns:
+            bool: False if to stop the training.
+        """
+        self.epoch += 1
+        if self.epoch >= self.epoch_start_halving and ((self.epoch - self.epoch_start_halving) % self._halving_freq == 0):
+            self._lr *= 0.5
+        self._current_iter = 0
+        self._iters_from_last_valid = 0
+        self._train_costs = []
+        self.prepared_worker_pool.clear()
+        self.batch_pool = range(self.num_train_batches)
+        self.rand.shuffle(self.batch_pool)
+        if self.epoch > self.end_at:
+            self.log("Training is done, wait all workers to stop")
+            return False
+        else:
+            self.log("start epoch {} with lr={}".format(self.epoch, self._lr))
+            return True
+<switch:english>
+[english] The function ensures the internal state is clean for a new round and uses its boolean return value to signal whether the overall training process should continue or terminate.
+[english] How does this code specifically determine when to halve the learning rate?
+[english] The learning rate adjustment occurs if the current epoch has reached `self.epoch_start_halving` and is a multiple of `self._halving_freq`, which triggers line 7: `if self.epoch >= self.epoch_start_halving and ((self.epoch - self.epoch_start_halving) % self._halving_freq == 0):`
+[english] That clarifies the schedule, thank you.

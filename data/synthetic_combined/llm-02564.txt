@@ -1,0 +1,27 @@
+[english] How can I check if a specific attribute, like 'Name', is valid or applicable when working with a defined object type?
+[english] This function determines applicability by first looking up the given `attribute` within an internal dictionary of rule sets. It then checks if the provided `object_type` is listed as one of the acceptable types in that attribute's rules.
+<switch:python>
+[python] def is_attribute_applicable_to_object_type(self, attribute, object_type):
+        """
+        Check if the attribute is supported by the given object type.
+
+        Args:
+            attribute (string): The name of the attribute (e.g., 'Name').
+                Required.
+            object_type (ObjectType): An ObjectType enumeration
+                (e.g., ObjectType.SYMMETRIC_KEY). Required.
+        Returns:
+            bool: True if the attribute is applicable to the object type.
+                False otherwise.
+        """
+        # TODO (peterhamilton) Handle applicability between certificate types
+        rule_set = self._attribute_rule_sets.get(attribute)
+        if object_type in rule_set.applies_to_object_types:
+            return True
+        else:
+            return False
+<switch:english>
+[english] The core logic relies on `self._attribute_rule_sets` to define constraints. If the attribute is not found, `rule_set` will be None, which implicitly fails the check.
+[english] What happens if the provided 'attribute' name doesn't exist as a key in `self._attribute_rule_sets`?
+[english] If the attribute is missing from the rules dictionary, `rule_set` will be `None`. Attempting to access `.applies_to_object_types`, which is needed for the comparison, would raise an AttributeError. You should add a check first to handle cases where the attribute has no defined rules.
+[english] Thanks, that clears up how to manage unknown attributes.

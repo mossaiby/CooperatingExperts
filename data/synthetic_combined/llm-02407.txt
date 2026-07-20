@@ -1,0 +1,28 @@
+[english] How can I write a reusable method to handle standardized HTTP requests (GET, POST, etc.) while automatically managing base URLs and error handling?
+[english] This function encapsulates the logic for making an external API call. It constructs the full URL using `self._base_url` and then relies on a session object to send the request with predefined headers.
+<switch:python>
+[python] def _request(self, method, url, **kwargs):
+        """Make HTTP request and return response object
+
+            Args:
+                method (str): GET, POST, PUT, DELETE
+                url (str): path appended to the base_url to create request
+                **kwargs: passed directly to a requests.request object
+        """
+        resp = self._session.request(method,
+                                     '{}/{}'.format(self._base_url, url),
+                                     headers=self._headers,
+                                     **kwargs)
+
+        try:
+            resp.raise_for_status()
+        except HTTPError as e:
+            logging.error(resp.content)
+            raise RestClientError(e)
+
+        return resp
+<switch:english>
+[english] It uses a try-except block around `resp.raise_for_status()` to catch HTTP errors, logging the response content before raising a specific custom exception (`RestClientError`).
+[english] What happens if the API returns a 204 No Content status code?
+[english] If the request is successful (e.g., status 204) and there is no body to process, `resp.raise_for_status()` will not raise an exception. You can check for this explicitly after calling the method.
+[english] That makes sense; I'll adapt it.

@@ -1,0 +1,28 @@
+[english] How can I make sure a specific permission is correctly mapped to a view menu without creating duplicate records?
+[english] This function first attempts to retrieve existing Permission and ViewMenu objects using internal methods. It then checks the database to see if these two entities are already connected in the role mapping table.
+<switch:python>
+[python] def _merge_perm(self, permission_name, view_menu_name):
+        """
+        Add the new permission , view_menu to ab_permission_view_role if not exists.
+        It will add the related entry to ab_permission
+        and ab_view_menu two meta tables as well.
+
+        :param permission_name: Name of the permission.
+        :type permission_name: str
+        :param view_menu_name: Name of the view-menu
+        :type view_menu_name: str
+        :return:
+        """
+        permission = self.find_permission(permission_name)
+        view_menu = self.find_view_menu(view_menu_name)
+        pv = None
+        if permission and view_menu:
+            pv = self.get_session.query(self.permissionview_model).filter_by(
+                permission=permission, view_menu=view_menu).first()
+        if not pv and permission_name and view_menu_name:
+            self.add_permission_view_menu(permission_name, view_menu_name)
+<switch:english>
+[english] If an existing link is not found, the method ensures both names are provided before calling `self.add_permission_view_menu` to establish the necessary relationship.
+[english] What specific validation prevents adding a new entry if only one of the required parameters (the permission or view menu) is missing?
+[english] The function explicitly checks for both inputs in the line `if not pv and permission_name and view_menu_name:`. If either parameter is falsy, the insertion logic at this point will be skipped.
+[english] That clarifies how input validation is handled. Thanks for the explanation!

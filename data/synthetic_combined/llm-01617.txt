@@ -1,0 +1,20 @@
+[english] How can I properly clean up my database connections and sessions when shutting down my Python application?
+[english] The best way to handle this is by creating a dedicated function that checks for global ORM objects before attempting cleanup. This ensures we don't try to dispose of an engine or session that might not have been initialized yet.
+<switch:python>
+[python] def dispose_orm():
+    """ Properly close pooled database connections """
+    log.debug("Disposing DB connection pool (PID %s)", os.getpid())
+    global engine
+    global Session
+
+    if Session:
+        Session.remove()
+        Session = None
+    if engine:
+        engine.dispose()
+        engine = None
+<switch:english>
+[english] This function safely checks if the global `Session` or `engine` objects exist before calling their respective cleanup methods, preventing runtime errors.
+[english] What happens if these variables are defined without using the 'global' keyword inside this specific disposal function?
+[english] Since the dispose_orm function declares `global engine` and `global Session`, it explicitly references the global names to modify them locally. Without these keywords, any assignment (like setting Session = None) would create a local variable that wouldn't affect the module-level state.
+[english] Thanks for clarifying how managing scope works here!

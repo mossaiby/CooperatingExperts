@@ -1,0 +1,19 @@
+[english] I need a robust method to automatically generate sequential and unique IDs for annotations within an object.
+[english] This function manages ID generation by maintaining internal state (`self.maxaid`). On the first call, it scans existing `timeslots` to establish the starting point; otherwise, it simply increments the current counter.
+<switch:python>
+[python] def generate_annotation_id(self):
+        """Generate the next annotation id, this function is mainly used
+        internally.
+        """
+        if not self.maxaid:
+            valid_anns = [int(''.join(filter(str.isdigit, a)))
+                          for a in self.timeslots]
+            self.maxaid = max(valid_anns + [1])+1
+        else:
+            self.maxaid += 1
+        return 'a{:d}'.format(self.maxaid)
+<switch:english>
+[english] The initial setup requires iterating through all timeslots to find the highest numeric identifier present in the data.
+[english] What happens if the `self.timeslots` list is empty when this function is called for the first time?
+[english] If no IDs are found in `self.timeslots`, the line `valid_anns + [1]` ensures the maximum value used to initialize `self.maxaid` will be at least 1, leading to a starting ID of 'a2'.
+[english] That makes sense for handling initial setups!

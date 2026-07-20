@@ -1,0 +1,20 @@
+[english] How do I get the secret associated with a request token for a specific client key?
+[english] This function retrieves and verifies a request token's security secret. It first checks if the requested token already exists within the current request object.
+<switch:python>
+[python] def get_request_token_secret(self, client_key, token, request):
+        """Get request token secret.
+
+        The request token object should a ``secret`` attribute.
+        """
+        log.debug('Get request token secret of %r for %r',
+                  token, client_key)
+        tok = request.request_token or self._grantgetter(token=token)
+        if tok and tok.client_key == client_key:
+            request.request_token = tok
+            return tok.secret
+        return None
+<switch:english>
+[english] If the retrieved token matches the provided client key, its secret is returned; otherwise, it returns None to indicate failure or lack of match.
+[english] What happens if `request.request_token` does not have a `.secret` attribute?
+[english] The function assumes that if a valid token object (`tok`) is found and matches the client key, it will have a `.secret` attribute. If it were missing, an AttributeError would be raised.
+[english] Should I consider adding defensive checks for required attributes?

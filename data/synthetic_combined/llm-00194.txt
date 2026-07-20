@@ -1,0 +1,33 @@
+[english] How do I display all user institute details, including who is enrolled in each one?
+[english] This function fetches a list of institutes using `user_institutes` and iterates through them. It builds a structured dictionary containing names, IDs, and specific metadata for the template.
+<switch:python>
+[python] def institutes():
+    """Display a list of all user institutes."""
+    institute_objs = user_institutes(store, current_user)
+    institutes = []
+    for ins_obj in institute_objs:
+        sanger_recipients = []
+        for user_mail in ins_obj.get('sanger_recipients',[]):
+            user_obj = store.user(user_mail)
+            if not user_obj:
+                continue
+            sanger_recipients.append(user_obj['name'])
+        institutes.append(
+            {
+                'display_name': ins_obj['display_name'],
+                'internal_id': ins_obj['_id'],
+                'coverage_cutoff': ins_obj.get('coverage_cutoff', 'None'),
+                'sanger_recipients': sanger_recipients,
+                'frequency_cutoff': ins_obj.get('frequency_cutoff', 'None'),
+                'phenotype_groups': ins_obj.get('phenotype_groups', PHENOTYPE_GROUPS)
+            }
+        )
+
+    data = dict(institutes=institutes)
+    return render_template(
+        'overview/institutes.html', **data)
+<switch:english>
+[english] The code safely extracts various attributes from the institute objects, using default values like 'None' or `PHENOTYPE_GROUPS` if the data is missing.
+[english] What happens if one of the user emails in 'sanger_recipients' points to a completely invalid or non-existent user?
+[english] The function handles this by checking `if not user_obj:` and using `continue`. This ensures that only valid users are added, preventing errors from missing records.
+[english] That covers the institute processing logic perfectly.

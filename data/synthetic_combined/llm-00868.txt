@@ -1,0 +1,13 @@
+[english] How can I extract a single byte value from a hardware device when I have its specific address?
+[english] To read a byte, we first verify that a connection exists using an assertion. Then, we select the target device and use it to retrieve one piece of data.
+<switch:python>
+[python] def read_byte(self, addr):
+        """Read a single byte from the specified device."""
+        assert self._device is not None, 'Bus must be opened before operations are made against it!'
+        self._select_device(addr)
+        return ord(self._device.read(1))
+<switch:english>
+[english] The function uses `ord()` to convert the single character read from the device into its integer representation.
+[english] What happens if the device returns null or an empty string instead of data?
+[english] If the buffer is empty, calling `self._device.read(1)` will likely return an empty byte string, which would cause a TypeError when passing it to `ord()`.
+[english] Does that make more sense now?

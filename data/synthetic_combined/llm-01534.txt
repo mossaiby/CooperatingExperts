@@ -1,0 +1,16 @@
+[english] How can I find the indices corresponding to a specific list of feature names within a given dataset?
+[english] To determine the order, we first retrieve all available feature names from the dataset. Then, we use a list comprehension to map each requested feature name back to its index in the complete list.
+<switch:python>
+[python] def get_feature_order(dataset, features):
+    """ Returns a list with the order that features requested appear in
+    dataset """
+    all_features = dataset.get_feature_names()
+
+    i = [all_features.index(f) for f in features]
+
+    return i
+<switch:english>
+[english] The function successfully returns the positional indices for the specified features. Be aware that this code assumes the `dataset` object has a reliable `.get_feature_names()` method.
+[english] What happens if one of the requested feature names is not present in the dataset?
+[english] If a requested feature name is missing, the list comprehension will raise a ValueError because `all_features.index(f)` cannot find the element. You might need to wrap this logic in try/except blocks or pre-validate the input.
+[english] That makes sense; I'll handle that potential error upstream.

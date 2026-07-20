@@ -1,0 +1,23 @@
+[english] How do I change an existing keybind from one combination to another in my system?
+[english] This function iterates through your current bindings to find any reference to `kbname` and removes it. It then registers the same bind under the new `combo`.
+<switch:python>
+[python] def changeKeybind(self,kbname,combo):
+        """
+        Changes a keybind of a specific keybindname.
+        
+        :param str kbname: Same as kbname of :py:meth:`add()`
+        :param str combo: New key combination
+        """
+        for key,value in self.keybinds.items():
+            if kbname in value:
+                del value[value.index(kbname)]
+                break
+        if combo not in self.keybinds:
+            self.keybinds[combo]=[]
+        self.keybinds[combo].append(kbname)
+        self.peng.sendEvent("peng3d.keybind.change",{"peng":self.peng,"kbname":kbname,"combo":combo})
+<switch:english>
+[english] Note that the function immediately triggers a change event to notify external systems about this modification.
+[english] What happens if I call this function with a `kbname` that isn't currently part of any binding?
+[english] If `kbname` is not found in any existing lists within `self.keybinds`, the initial removal loop simply finishes without making changes, and the bind is only added to the new combo.
+[english] Thanks for clarifying how the system handles missing data.

@@ -1,0 +1,24 @@
+[english] How can I reliably parse and validate incoming JSON payloads from an API request, ensuring proper error handling?
+[english] This function acts as a robust middleware to handle input. It first attempts to decode the raw request into a Python dictionary using `request.json`, catching parsing errors immediately. After successful decoding, it performs schema validation against predefined rules.
+<switch:python>
+[python] def decode(request):
+    """ Get/decode/validate json from request """
+    try:
+        data = yield from request.json(loader=json.loads)
+    except Exception as err:
+        raise ParseError(err)
+
+    try:
+        validate(data, REQ_JSONRPC20)
+    except ValidationError as err:
+        raise InvalidRequest(err)
+    except SchemaError as err:
+        raise InternalError(err)
+    except Exception as err:
+        raise InternalError(err)
+    return data
+<switch:english>
+[english] The layered exception handling ensures that specific failures—whether they are structural (parse) or content-based (validation)—are elevated into meaningful custom exceptions for the rest of your application to handle.
+[english] If a field required by `REQ_JSONRPC20` is present but contains an incompatible data type, how does this function behave?
+[english] The schema validator handles type checking. If a value's type mismatches the schema definition, it raises a `ValidationError`, which the function catches and re-raises as an `InvalidRequest` exception.
+[english] That makes sense; so any API input deviating from my specification is appropriately flagged.

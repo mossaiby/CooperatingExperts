@@ -1,0 +1,20 @@
+[english] I need a way to quickly remove all files in a specific directory that match a given file extension.
+[english] To solve this, we use `glob` to find all file paths matching the desired pattern and then iterate over those results using a list comprehension to delete each one with `os.remove`.
+<switch:python>
+[python] def cleanup(workdir, extension):
+    """ Remove the files in workdir that have the given extension.
+
+    Parameters
+    ----------
+    workdir:
+        Folder path from where to clean the files.
+
+    extension: str
+        File extension without the dot, e.g., 'txt'
+    """
+    [os.remove(f) for f in glob(os.path.join(workdir, '*.' + extension))]
+<switch:english>
+[english] This function efficiently finds and removes files matching the pattern within the specified directory.
+[english] What will happen if the `workdir` path provided doesn't actually exist?
+[english] If the directory does not exist, `glob` will return an empty list. The list comprehension will then simply run zero iterations and complete without raising a FileNotFoundError or doing anything.
+[english] That makes perfect sense; thanks for clarifying how it handles missing paths.

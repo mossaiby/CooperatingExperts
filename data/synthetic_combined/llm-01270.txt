@@ -1,0 +1,44 @@
+[english] I need a function that takes a TensorFlow distribution and an event dimension mapping to automatically generate an override dictionary by slicing parameters.
+[english] This function iterates through each expected parameter name in `params_event_ndims`. For every valid parameter, it verifies its existence within the input distribution, converts the tensor type if necessary, and uses a helper function to perform the required batch slicing based on defined event dimensions. This results in a dictionary mapping parameter names to appropriately sliced tensors.
+<switch:python>
+[python] def _slice_params_to_dict(dist, params_event_ndims, slices):
+  """Computes the override dictionary of sliced parameters.
+
+  Args:
+    dist: The tfd.Distribution being batch-sliced.
+    params_event_ndims: Per-event parameter ranks, a `str->int` `dict`.
+    slices: Slices as received by __getitem__.
+
+  Returns:
+    overrides: `str->Tensor` `dict` of batch-sliced parameter overrides.
+  """
+  override_dict = {}
+  for param_name, param_event_ndims in six.iteritems(params_event_ndims):
+    # Verify that either None or a legit value is in the parameters dict.
+    if param_name not in dist.parameters:
+      raise ValueError('Distribution {} is missing advertised '
+                       'parameter {}'.format(dist, param_name))
+    param = dist.parameters[param_name]
+    if param is None:
+      # some distributions have multiple possible parameterizations; this
+      # param was not provided
+      continue
+    dtype = None
+    if hasattr(dist, param_name):
+      attr = getattr(dist, param_name)
+      dtype = getattr(attr, 'dtype', None)
+    if dtype is None:
+      dtype = dist.dtype
+      warnings.warn('Unable to find property getter for parameter Tensor {} '
+                    'on {}, falling back to Distribution.dtype {}'.format(
+                        param_name, dist, dtype))
+    param = tf.convert_to_tensor(value=param, dtype=dtype)
+    override_dict[param_name] = _slice_single_param(param, param_event_ndims,
+                                                    slices,
+                                                    dist.batch_shape_tensor())
+  return override_dict
+<switch:english>
+[english] The function handles missing parameter types gracefully by skipping them if `param is None`. However, it issues a warning and falls back to the distribution's overall dtype if specific attribute dtypes cannot be found.
+[english] What exactly happens when the code encounters a parameter where the value is explicitly set to None inside the distribution?
+[english] The function uses `continue` to skip processing that parameter entirely. This handles distributions that might have multiple potential parameterization methods, but one specific slot for a given named parameter is not populated.
+[english] That makes sense; it provides robustness against incomplete distribution definitions.

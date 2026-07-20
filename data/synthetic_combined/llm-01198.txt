@@ -1,0 +1,15 @@
+[english] How do I save the architecture and configuration of my Keras model so others can load it without the original file?
+[english] To persist the model's structure, we first use the `.to_json()` method on the Keras object. This converts the internal model details into a string representation.
+<switch:python>
+[python] def save_keras_definition(keras_model, path):
+    """
+    Save a Keras model definition to JSON with given path
+    """
+    model_json = keras_model.to_json()
+    with open(path, "w") as json_file:
+        json_file.write(model_json)
+<switch:english>
+[english] This approach exports the model's blueprint but does not include the learned weights. If you need to save both structure and trained parameters, consider the `model.save()` method.
+[english] Can this function handle models with custom layers or configurations that aren't standard in Keras?
+[english] Saving complex custom architectures via JSON can be challenging because the definition relies on known class names. For maximum compatibility and saving weights, it is often better to use `model.save(path)` which saves the model in the native H5 or SavedModel format.
+[english] Got it, I'll stick to serialization methods for now.

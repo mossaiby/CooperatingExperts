@@ -1,0 +1,20 @@
+[english] How do I restrict my model count query to only include active main components?
+[english] This method extends a base counting query by applying specific filters to define what qualifies as a primary, operational DAG Model.
+<switch:python>
+[python] def get_count_query(self):
+        """
+        Default filters for model
+        """
+        return (
+            super().get_count_query()
+            .filter(models.DagModel.is_active)
+            .filter(~models.DagModel.is_subdag)
+        )
+<switch:english>
+[english] The use of `~` negates the subdag check, effectively ensuring that only top-level models meeting all criteria are counted.
+[english] What if I needed to specifically exclude a certain model status, like 'deprecated', instead of just counting active ones?
+[english] You can easily chain another filter to exclude specific statuses. For example:
+<switch:python>
+[python] .filter(models.DagModel.status != 'deprecated')
+<switch:english>
+[english] Got it, thanks for the clarification!

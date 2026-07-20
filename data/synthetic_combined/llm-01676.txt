@@ -1,0 +1,93 @@
+[english] How do I write a robust function to parse various command-line arguments specifying line ranges for a 'list' command?
+[english] This function parses complex positional and relative arguments provided to a 'list' command, handling cases like simple counts or referencing specific file locations.
+<switch:python>
+[python] def parse_list_cmd(proc, args, listsize=10):
+    """Parses arguments for the "list" command and returns the tuple:
+    (filename, first line number, last line number)
+    or sets these to None if there was some problem."""
+
+    text = proc.current_command[len(args[0])+1:].strip()
+
+    if text in frozenset(('', '.', '+', '-')):
+        if text == '.':
+            location = resolve_location(proc, '.')
+            return location.path, location.line_number, listsize
+        else:
+            if proc.list_lineno is None:
+                proc.errmsg("Don't have previous list location")
+                return INVALID_PARSE_LIST
+            filename = proc.list_filename
+            if text == '+':
+                first = max(1, proc.list_lineno + listsize)
+            elif text == '-':
+                if proc.list_lineno == 1 + listsize:
+                    proc.errmsg("Already at start of %s." % proc.list_filename)
+                    return INVALID_PARSE_LIST
+                first = max(1, proc.list_lineno - (2*listsize) - 1)
+            elif text == '':
+                # Continue from where we last left off
+                first = proc.list_lineno + 1
+        last = first + listsize - 1
+        return filename, first, last
+    else:
+        try:
+            list_range = build_range(text)
+        except LocationError as e:
+            proc.errmsg("Error in parsing list range at or around:")
+            proc.errmsg(e.text)
+            proc.errmsg(e.text_cursor)
+            return INVALID_PARSE_LIST
+        except ScannerError as e:
+            proc.errmsg("Lexical error in parsing list range at or around:")
+            proc.errmsg(e.text)
+            proc.errmsg(e.text_cursor)
+            return INVALID_PARSE_LIST
+
+        if list_range.first is None:
+            # Last must have been given
+            assert isinstance(list_range.last, Location)
+            location = resolve_location(proc, list_range.last)
+            if not location:
+                return INVALID_PARSE_LIST
+            last     = location.line_number
+            first    = max(1, last - listsize)
+            return location.path, first, last
+        elif isinstance(list_range.first, int):
+            first    = list_range.first
+            location = resolve_location(proc, list_range.last)
+            if not location:
+                return INVALID_PARSE_LIST
+            filename = location.path
+            last     = location.line_number
+            if last < first:
+                # Treat as a count rather than an absolute location
+                last = first + last
+            return location.path, first, last
+        else:
+            # First is location. Last may be empty or a number
+            assert isinstance(list_range.first, Location)
+            location = resolve_location(proc, list_range.first)
+            if not location:
+                return INVALID_PARSE_LIST
+            first    = location.line_number
+            last     = list_range.last
+            if location.method:
+                first -= listsize // 2
+            if isinstance(last, str):
+                # Is an offset +number
+                assert last[0] == '+'
+                last = first + int(last[1:])
+            elif not last:
+                last = first + listsize
+            elif last < first:
+                # Treat as a count rather than an absolute location
+                last = first + last
+
+            return location.path, first, last
+        pass
+    return
+<switch:english>
+[english] The logic relies heavily on helper functions (like `resolve_location` and `build_range`) which determine how absolute positions are calculated from line numbers or string representations.
+[english] How is the relative positioning handled when arguments start with '+' or '-'?
+[english] When 'text' matches '+' or '-', the function calculates the new starting point by adding or subtracting specified multiples of `listsize` from the previously known location (`proc.list_lineno`).
+[english] This looks very thorough for handling different input formats.

@@ -1,0 +1,36 @@
+[english] I need a way to delete one or several specific objects from an AWS S3 bucket using their key names.
+[english] This function standardizes the input, ensuring that whether you pass a single string or a list of keys, it is converted into a list. It then builds a structured dictionary payload necessary for performing batch deletions in S3 before making the API call.
+<switch:python>
+[python] def delete_objects(self,
+                       bucket,
+                       keys):
+        """
+        :param bucket: Name of the bucket in which you are going to delete object(s)
+        :type bucket: str
+        :param keys: The key(s) to delete from S3 bucket.
+
+            When ``keys`` is a string, it's supposed to be the key name of
+            the single object to delete.
+
+            When ``keys`` is a list, it's supposed to be the list of the
+            keys to delete.
+        :type keys: str or list
+        """
+        if isinstance(keys, list):
+            keys = keys
+        else:
+            keys = [keys]
+
+        delete_dict = {"Objects": [{"Key": k} for k in keys]}
+        response = self.get_conn().delete_objects(Bucket=bucket,
+                                                  Delete=delete_dict)
+        return response
+<switch:english>
+[english] The method utilizes the underlying AWS SDK client to execute the `delete_objects` operation, efficiently handling multiple files in one request. Keep in mind that this function relies on an established connection provided by `self.get_conn()`.
+[english] If I pass a list of keys and some are already deleted or wrong, what kind of error response do I get?
+[english] The S3 API handles individual errors within the batch operation; the returned response object will include 'Errors' details showing exactly which specific keys failed to delete.
+<switch:python>
+[python] # Example structure indicating failure:
+# {'Delete': {'Errors': [{'Code': 'NoSuchKey', 'Key': 'missing_file'}]}}
+<switch:english>
+[english] Thanks for breaking down how the batch deletion process works.

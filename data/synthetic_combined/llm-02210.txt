@@ -1,0 +1,26 @@
+[english] How can I write a function to decide which character or string representation to use when handling alternative readings in linguistic datasets?
+[english] I've implemented this function, `select_text`, to handle cases where an input text has multiple forms (like number vs. reading). It prioritizes the specified reading style first before checking for commonalities with preferred options.
+<switch:python>
+[python] def select_text(text, reading=False, prefer=None):
+    """Select the correct text from the Japanese number, reading and
+    alternatives"""
+    # select kanji number or kana reading
+    if reading:
+        text = text[1]
+    else:
+        text = text[0]
+
+    # select the preferred one or the first one from multiple alternatives
+    if not isinstance(text, strtype):
+        common = set(text) & set(prefer or set())
+        if len(common) == 1:
+            text = common.pop()
+        else:
+            text = text[0]
+
+    return text
+<switch:english>
+[english] The logic in this function directly modifies the `text` variable based on whether it is a concrete string or an iterable of alternatives.
+[english] What happens if 'prefer' is provided but there are no common elements with the input set?
+[english] If no common elements exist, the code falls back to selecting the first item from the original text: `text = text[0]` in lines 14-15.
+[english] That makes sense. Thanks for clarifying!

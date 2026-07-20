@@ -1,0 +1,54 @@
+[english] I need a way to set the currently viewing directory in my file browser and automatically update all related UI elements like navigation history.
+[english] This function first validates that the provided `path` starts within the model's root. It then iterates through the path segments, ensuring all necessary child nodes for the location are loaded before updating the filesystem widget and building the location history in a dedicated list.
+<switch:python>
+[python] def _setLocation(self, path):
+        '''Set current location to *path*.
+
+        *path* must be the same as root or under the root.
+
+        .. note::
+
+            Comparisons are case-sensitive. If you set the root as 'D:/' then
+            location can be set as 'D:/folder' *not* 'd:/folder'.
+
+        '''
+        model = self._filesystemWidget.model()
+
+        if not path.startswith(model.root.path):
+            raise ValueError('Location must be root or under root.')
+
+        # Ensure children for each segment in path are loaded.
+        segments = self._segmentPath(path)
+        for segment in reversed(segments):
+            pathIndex = model.pathIndex(segment)
+            model.fetchMore(pathIndex)
+
+        self._filesystemWidget.setRootIndex(model.pathIndex(path))
+        self._locationWidget.clear()
+
+        # Add history entry for each segment.
+        for segment in segments:
+            index = model.pathIndex(segment)
+            if not index.isValid():
+                # Root item.
+                icon = model.iconFactory.icon(
+                    riffle.icon_factory.IconType.Computer
+                )
+                self._locationWidget.addItem(
+                    icon, model.root.path or model.root.name, model.root.path
+                )
+            else:
+                icon = model.icon(index)
+                self._locationWidget.addItem(icon, segment, segment)
+
+        if self._locationWidget.count() > 1:
+            self._upButton.setEnabled(True)
+            self._upShortcut.setEnabled(True)
+        else:
+            self._upButton.setEnabled(False)
+            self._upShortcut.setEnabled(False)
+<switch:english>
+[english] The code carefully handles UI updates by clearing previous history and re-populating the `_locationWidget` while managing the state of upward navigation buttons based on whether the path is deep within the directory structure.
+[english] If one of the segments required for the path is not found in the filesystem, how does this function currently behave?
+[english] The current implementation assumes that all segments are valid; if `model.pathIndex(segment)` returns an invalid index which isn't the root item, it will cause errors when attempting to access its properties or trigger operations like `fetchMore()`.
+[english] Is it possible to make this function more robust against missing path components?

@@ -1,0 +1,32 @@
+[english] How can I ensure that certain resource metrics, like CPU usage, are added to a process tracking dictionary if they don't exist yet?
+[english] This method systematically checks required resources for a specific process and tries to populate missing data from the provided values.
+<switch:python>
+[python] def _update_process_resources(self, process, vals):
+        """Updates the resources info in :attr:`processes` dictionary.
+        """
+
+        resources = ["cpus"]
+
+        for r in resources:
+            if not self.processes[process][r]:
+                try:
+                    self.processes[process][r] = vals[0]["cpus"]
+                # When the trace column is not present
+                except KeyError:
+                    pass
+<switch:english>
+[english] The function specifically handles only 'cpus' and uses exception handling (`try/except`) to prevent crashes when update source data is incomplete.
+[english] What happens if I want this function to handle multiple resources besides CPU?
+[english] You would need to adjust the hardcoded `resources` list at the beginning of the function to include other keys, like memory or disk usage. This allows the loop to attempt updating various metrics sequentially.
+<switch:python>
+[python] def _update_process_resources(self, process, vals):
+        resources = ["cpus", "memory", "disks"]
+        for r in resources:
+            if not self.processes[process][r]: 
+                try:
+                    # Access the appropriate resource key from vals
+                    self.processes[process][r] = vals[0][r]
+                except KeyError: 
+                    pass
+<switch:english>
+[english] Thank you for clarifying how to generalize this logic.

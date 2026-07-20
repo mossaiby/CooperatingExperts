@@ -1,0 +1,13 @@
+[english] How can we safely configure the timeout in seconds for a single HTTP REST API request?
+[english] This method ensures that the provided value is an integer or None. It then strictly validates that if a timeout is specified, it must be positive before saving it.
+<switch:python>
+[python] def single_request_timeout(self, value):
+        """The timeout (seconds) for a single HTTP REST API request."""
+        check_type(value, int)
+        assert value is None or value > 0
+        self._single_request_timeout = value
+<switch:english>
+[english] This function stores the validated integer in an instance variable, which other methods within the class will likely reference when making requests.
+[english] If I pass a negative number to this function, how is that handled?
+[english] The code includes the assertion `assert value is None or value > 0`, so passing any negative number will cause an AssertionError and halt execution.
+[english] Got it, thank you for reviewing this!

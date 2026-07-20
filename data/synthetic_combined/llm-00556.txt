@@ -1,0 +1,92 @@
+[english] I need a unified function to decrypt data, supporting both symmetric ciphers like AES and asymmetric methods like RSA.
+[english] This function serves as a dispatcher that determines the decryption strategy based on your provided algorithm. It checks if you're using an asymmetrical algorithm (RSA) or if it should proceed with a standard symmetric process.
+<switch:python>
+[python] def decrypt(self,
+                decryption_algorithm,
+                decryption_key,
+                cipher_text,
+                cipher_mode=None,
+                padding_method=None,
+                iv_nonce=None,
+                hashing_algorithm=None):
+        """
+        Decrypt data using symmetric decryption.
+
+        Args:
+            decryption_algorithm (CryptographicAlgorithm): An enumeration
+                specifying the symmetric decryption algorithm to use for
+                decryption.
+            decryption_key (bytes): The bytes of the symmetric key to use for
+                decryption.
+            cipher_text (bytes): The bytes to be decrypted.
+            cipher_mode (BlockCipherMode): An enumeration specifying the
+                block cipher mode to use with the decryption algorithm.
+                Required in the general case. Optional if the decryption
+                algorithm is RC4 (aka ARC4). If optional, defaults to None.
+            padding_method (PaddingMethod): An enumeration specifying the
+                padding method to use on the data after decryption. Required
+                if the cipher mode is for block ciphers (e.g., CBC, ECB).
+                Optional otherwise, defaults to None.
+            iv_nonce (bytes): The IV/nonce value to use to initialize the mode
+                of the decryption algorithm. Optional, defaults to None.
+            hashing_algorithm (HashingAlgorithm): An enumeration specifying
+                the hashing algorithm to use with the decryption algorithm,
+                if needed. Required for OAEP-based asymmetric decryption.
+                Optional, defaults to None.
+
+        Returns:
+            bytes: the bytes of the decrypted data
+
+        Raises:
+            InvalidField: Raised when the algorithm is unsupported or the
+                length is incompatible with the algorithm.
+            CryptographicFailure: Raised when the key generation process
+                fails.
+
+        Example:
+            >>> engine = CryptographyEngine()
+            >>> result = engine.decrypt(
+            ...     decryption_algorithm=CryptographicAlgorithm.AES,
+            ...     decryption_key=(
+            ...         b'\xF3\x96\xE7\x1C\xCF\xCD\xEC\x1F'
+            ...         b'\xFC\xE2\x8E\xA6\xF8\x74\x28\xB0'
+            ...     ),
+            ...     cipher_text=(
+            ...         b'\x18\x5B\xB9\x79\x1B\x4C\xD1\x8F'
+            ...         b'\x9A\xA0\x65\x02\x62\xA3\x3D\x63'
+            ...     ),
+            ...     cipher_mode=BlockCipherMode.CBC,
+            ...     padding_method=PaddingMethod.ANSI_X923,
+            ...     iv_nonce=(
+            ...         b'\x38\x71\x41\x05\xC4\x86\x03\xD9'
+            ...         b'\x3D\xEF\xDF\xB8\x6B\x65\x9A\xA2'
+            ...     )
+            ... )
+            >>> result
+            b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f'
+        """
+        if decryption_algorithm is None:
+            raise exceptions.InvalidField("Decryption algorithm is required.")
+
+        if decryption_algorithm == enums.CryptographicAlgorithm.RSA:
+            return self._decrypt_asymmetric(
+                decryption_algorithm,
+                decryption_key,
+                cipher_text,
+                padding_method,
+                hashing_algorithm=hashing_algorithm
+            )
+        else:
+            return self._decrypt_symmetric(
+                decryption_algorithm,
+                decryption_key,
+                cipher_text,
+                cipher_mode=cipher_mode,
+                padding_method=padding_method,
+                iv_nonce=iv_nonce
+            )
+<switch:english>
+[english] The core logic neatly separates asymmetric decryption from symmetric operations, allowing specific parameters like block modes and padding to be handled appropriately by delegated methods.
+[english] If I don't specify any mode or padding when using AES, will the function handle that gracefully?
+[english] No. If `decryption_algorithm` is set for symmetric encryption but required fields like `cipher_mode` and `padding_method` are missing, the underlying decryption logic (e.g., in `self._decrypt_symmetric`) would likely raise an error because these components are essential for most block cipher operations.
+[english] That makes sense, I will ensure all parameters are correctly set.

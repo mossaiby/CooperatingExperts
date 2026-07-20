@@ -1,0 +1,12 @@
+[english] How can I write a method that sends an ACCEPT reply using specific metadata and channel parameters?
+[english] This function prepares and dispatches an 'ACCEPT' reply back through the provided socket. It first retrieves any existing information associated with the current instance before calling a centralized sending method.
+<switch:python>
+[python] def accept(self, reply_socket, channel):
+        """Sends ACCEPT reply."""
+        info = self.info or b''
+        self.send_raw(reply_socket, ACCEPT, info, *channel)
+<switch:english>
+[english] The `self.send_raw` call handles the actual network transmission, passing along the gathered info and channel details as arguments.
+[english] What happens if `self.info` is None?
+[english] If `self.info` is `None`, it defaults to an empty bytes object (`b''`) before sending. This ensures the code doesn't fail when trying to access attributes on a non-existent value.
+[english] Got it, that makes sense.

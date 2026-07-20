@@ -1,0 +1,16 @@
+[english] How do I define and insert a custom unitary gate operation into my program list?
+[english] This function defines the process for integrating a specific quantum operation. It first constructs a CustomUnitary node using the elements designated as inputs and then proceeds with several validation checks.
+<switch:python>
+[python] def p_unitary_op_2(self, program):
+        """
+        unitary_op : id primary_list
+        """
+        program[0] = node.CustomUnitary([program[1], program[2]])
+        self.verify_as_gate(program[1], program[2])
+        self.verify_reg_list(program[2], 'qreg')
+        self.verify_distinct([program[2]])
+<switch:english>
+[english] The code ensures that the input elements are valid gates and specifically verifies that the second register provided, `program[2]`, is properly identified as a quantum register (qreg).
+[english] If `self.verify_distinct` fails to find an entry in the program list, what happens next?
+[english] The function does not specify error handling for such cases; typically, the subsequent calls would raise an assertion or validation failure depending on how those helper methods are implemented.
+[english] Perfect, that makes sense now.

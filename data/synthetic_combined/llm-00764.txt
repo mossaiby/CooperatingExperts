@@ -1,0 +1,22 @@
+[english] How can I retrieve synthesis data from a remote API based on predefined filters and legislative periods?
+[english] This function acts as an interface to fetch summary data from an external resource using `self.base_url`. It first checks for specific known API limitations before building the URL, defaulting to 'data' if no month is provided.
+<switch:python>
+[python] def synthese(self, month=None):
+        """
+        month format: YYYYMM
+        """
+        if month is None and self.legislature == '2012-2017':
+            raise AssertionError('Global Synthesis on legislature does not work, see https://github.com/regardscitoyens/nosdeputes.fr/issues/69')
+
+        if month is None:
+            month = 'data'
+
+        url = '%s/synthese/%s/%s' % (self.base_url, month, self.format)
+
+        data = requests.get(url).json()
+        return [depute[self.ptype] for depute in data[self.ptype_plural]]
+<switch:english>
+[english] Finally, it uses a list comprehension to extract values. Specifically, it iterates through all items indexed by `self.ptype_plural` and pulls the attribute defined in `self.ptype`.
+[english] Given that this function relies heavily on dynamic keys like `self.ptype_plural`, what errors would occur if the API response structure unexpectedly changed?
+[english] If the JSON returned by requests.get(url).json() is missing the key specified by `self.ptype_plural`, it will raise a KeyError, causing the program to crash immediately.
+[english] That makes sense; I need to handle those cases!

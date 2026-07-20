@@ -1,0 +1,17 @@
+[english] How can I ensure my system configuration templates include a specific $TTL record based on input data?
+[english] This function handles template substitution by first checking if any data is provided, then constructing the required $TTL string, and finally replacing the placeholder in the template.
+<switch:python>
+[python] def process_ttl(data, template):
+    """
+    Replace {$ttl} in template with a serialized $TTL record
+    """
+    record = ""
+    if data is not None:
+        record += "$TTL %s" % data
+
+    return template.replace("{$ttl}", record)
+<switch:english>
+[english] If no data is passed to this function, it will replace '{$ttl}' with an empty string, effectively removing the placeholder from the final result.
+[english] What happens if the input `data` itself contains characters that could break the TTL format?
+[english] Since Python concatenates or formats your data directly into the record string, any special characters in the input will be inserted literally, which might require careful sanitization outside of this function.
+[english] That makes sense, thanks for explaining!

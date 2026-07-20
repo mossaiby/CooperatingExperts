@@ -1,0 +1,59 @@
+[english] How do I prepare all the necessary parameters and construct a transaction object to deploy a Safe contract instance using fixed-cost creation?
+[english] This function prepares the complex setup required for deploying a Safe contract. It calculates gas requirements, determines payment mechanisms (Ether vs. token), and generates the initialization data needed for deployment.
+<switch:python>
+[python] def build(self, owners: List[str], threshold: int, salt_nonce: int,
+              gas_price: int, payment_receiver: Optional[str] = None,
+              payment_token: Optional[str] = None,
+              payment_token_eth_value: float = 1.0, fixed_creation_cost: Optional[int] = None):
+        """
+        Prepare Safe creation
+        :param owners: Owners of the Safe
+        :param threshold: Minimum number of users required to operate the Safe
+        :param salt_nonce: Web3 instance
+        :param gas_price: Gas Price
+        :param payment_receiver: Address to refund when the Safe is created. Address(0) if no need to refund
+        :param payment_token: Payment token instead of paying the funder with ether. If None Ether will be used
+        :param payment_token_eth_value: Value of payment token per 1 Ether
+        :param fixed_creation_cost: Fixed creation cost of Safe (Wei)
+        """
+
+        assert 0 < threshold <= len(owners)
+        payment_receiver = payment_receiver or NULL_ADDRESS
+        payment_token = payment_token or NULL_ADDRESS
+        assert Web3.isChecksumAddress(payment_receiver)
+        assert Web3.isChecksumAddress(payment_token)
+
+        # Get bytes for `setup(address[] calldata _owners, uint256 _threshold, address to, bytes calldata data,
+        # address paymentToken, uint256 payment, address payable paymentReceiver)`
+        # This initializer will be passed to the ProxyFactory to be called right after proxy is deployed
+        # We use `payment=0` as safe has no ether yet and estimation will fail
+        safe_setup_data: bytes = self._get_initial_setup_safe_data(owners, threshold, payment_token=payment_token,
+                                                                   payment_receiver=payment_receiver)
+
+        magic_gas: int = self._calculate_gas(owners, safe_setup_data, payment_token)
+        estimated_gas: int = self._estimate_gas(safe_setup_data,
+                                                salt_nonce, payment_token, payment_receiver)
+        logger.debug('Magic gas %d - Estimated gas %d' % (magic_gas, estimated_gas))
+        gas = max(magic_gas, estimated_gas)
+
+        # Payment will be safe deploy cost
+        payment = self._calculate_refund_payment(gas,
+                                                 gas_price,
+                                                 fixed_creation_cost,
+                                                 payment_token_eth_value)
+
+        # Now we have a estimate for `payment` so we get initialization data again
+        safe_setup_data: bytes = self._get_initial_setup_safe_data(owners, threshold, payment_token=payment_token,
+                                                                   payment=payment, payment_receiver=payment_receiver)
+
+        safe_address = self.calculate_create2_address(safe_setup_data, salt_nonce)
+        assert int(safe_address, 16), 'Calculated Safe address cannot be the NULL ADDRESS'
+
+        return SafeCreate2Tx(salt_nonce, owners, threshold, self.master_copy_address, self.proxy_factory_address,
+                             payment_receiver, payment_token, payment, gas, gas_price, payment_token_eth_value,
+                             fixed_creation_cost, safe_address, safe_setup_data)
+<switch:english>
+[english] After calculating all necessary financial parameters like gas and payment, the final `SafeCreate2Tx` object is constructed with all finalized addresses and setup bytes.
+[english] When should I use `payment_token` instead of relying on Ether to fund the Safe's deployment costs?
+[english] You should use a `payment_token` if you want the initial funding/refund mechanism tied to a specific token rather than raw ETH. The function handles this by adjusting payment logic based on whether `payment_token` is provided.
+[english] That makes sense; I will adjust my setup accordingly.

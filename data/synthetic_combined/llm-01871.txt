@@ -1,0 +1,27 @@
+[english] How can I automatically generate all required BWA reference index files from a provided genome file within my computational pipeline?
+[english] This function orchestrates the process of creating necessary indices for sequence alignment. It first fetches your reference genome into a temporary workspace and then executes the `bwa` command inside a specific Docker container to perform the indexing.
+<switch:python>
+[python] def run_bwa_index(job, ref_id):
+    """
+    Use BWA to create reference index files
+
+    :param JobFunctionWrappingJob job: passed automatically by Toil
+    :param str ref_id: FileStoreID for the reference genome
+    :return: FileStoreIDs for BWA index files
+    :rtype: tuple(str, str, str, str, str)
+    """
+    job.fileStore.logToMaster('Created BWA index files')
+    work_dir = job.fileStore.getLocalTempDir()
+    job.fileStore.readGlobalFile(ref_id, os.path.join(work_dir, 'ref.fa'))
+    command = ['index', '/data/ref.fa']
+    dockerCall(job=job, workDir=work_dir, parameters=command,
+               tool='quay.io/ucsc_cgl/bwa:0.7.12--256539928ea162949d8a65ca5c79a72ef557ce7c')
+    ids = {}
+    for output in ['ref.fa.amb', 'ref.fa.ann', 'ref.fa.bwt', 'ref.fa.pac', 'ref.fa.sa']:
+        ids[output.split('.')[-1]] = (job.fileStore.writeGlobalFile(os.path.join(work_dir, output)))
+    return ids['amb'], ids['ann'], ids['bwt'], ids['pac'], ids['sa']
+<switch:english>
+[english] The function maps all generated output index components back to stable global file stores so they can be accessed by subsequent jobs in the pipeline. These indexed files allow fast searching of DNA sequences against the reference genome.
+[english] What is the expected structure and eventual type of data returned if any part of a BWA index fails to generate?
+[english] The function returns a tuple containing five FileStoreIDs corresponding to the key BWA components: 'amb', 'ann', 'bwt', 'pac', and 'sa'. If one file generation fails, it would raise an exception during the process:
+[english] This is very clear. Thank you for explaining how this complex setup handles the resource mapping.

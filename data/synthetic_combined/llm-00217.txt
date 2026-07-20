@@ -1,0 +1,29 @@
+[english] How can I design a mechanism to automatically restart a Python process indefinitely, similar to how watch tools operate?
+[english] This function implements an infinite monitoring and restarting cycle by spawning new interpreter instances in the background.
+<switch:python>
+[python] def restart_with_reloader(self):
+        """Spawn a new Python interpreter with the same arguments as this one,
+        but running the reloader thread.
+        """
+        while 1:
+            _log('info', ' * Restarting with %s' % self.name)
+            args = [sys.executable] + sys.argv
+            new_environ = os.environ.copy()
+            new_environ['WERKZEUG_RUN_MAIN'] = 'true'
+
+            # a weird bug on windows. sometimes unicode strings end up in the
+            # environment and subprocess.call does not like this, encode them
+            # to latin1 and continue.
+            if os.name == 'nt' and PY2:
+                for key, value in iteritems(new_environ):
+                    if isinstance(value, text_type):
+                        new_environ[key] = value.encode('iso-8859-1')
+
+            exit_code = subprocess.call(args, env=new_environ)
+            if exit_code != 3:
+                return exit_code
+<switch:english>
+[english] The code uses a `while 1` loop combined with `subprocess.call`, ensuring that whenever the spawned process exits, the current instance initiates a replacement process.
+[english] Why is there special logic to encode strings using ISO-8859-1 specifically for Windows environments?
+[english] This encoding handles historical bugs on Windows where certain unicode objects might interfere with how subprocesses handle environment variables.
+[english] That makes sense, so it's a safety measure for Windows development.

@@ -1,0 +1,28 @@
+[english] How do I stop replicating all regions for a specific VM image?
+[english] This function is designed to handle the complex process of stopping global replication for a defined VM image. It validates the input and then constructs a specialized path to initiate that unreplication.
+<switch:python>
+[python] def unreplicate_vm_image(self, vm_image_name):
+        '''
+        Unreplicate a VM image from all regions This operation
+        is only for publishers. You have to be registered as image publisher
+        with Microsoft Azure to be able to call this
+
+        vm_image_name:
+            Specifies the name of the VM Image that is to be used for
+            unreplication. The VM Image Name should be the user VM Image,
+            not the published name of the VM Image.
+
+        '''
+        _validate_not_none('vm_image_name', vm_image_name)
+
+        return self._perform_put(
+            self._get_unreplication_path_using_vm_image_name(vm_image_name),
+            None,
+            as_async=True,
+            x_ms_version='2015-04-01'
+        )
+<switch:english>
+[english] The method first retrieves the correct unreplication path using a helper function before executing the PUT request asynchronously. Note that this is strictly for published VM images.
+[english] What happens if I call this without being registered as an image publisher?
+[english] Based on the docstring, the system assumes you are licensed and registered; however, without proper permissions in Azure, the underlying _perform_put operation would typically fail with an authorization error.
+[english] This was very helpful!

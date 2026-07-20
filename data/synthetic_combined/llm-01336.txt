@@ -1,0 +1,22 @@
+[english] How can I determine which specific version control backend (like Git or SVN) is registered and available at a given directory path?
+[english] This function attempts to identify the appropriate VCS backend by iterating through all known types in `self._registry`. For each type, it constructs an expected absolute path based on the input location.
+<switch:python>
+[python] def get_backend_name(self, location):
+        """
+        Return the name of the version control backend if found at given
+        location, e.g. vcs.get_backend_name('/path/to/vcs/checkout')
+        """
+        for vc_type in self._registry.values():
+            logger.debug('Checking in %s for %s (%s)...',
+                         location, vc_type.dirname, vc_type.name)
+            path = os.path.join(location, vc_type.dirname)
+            if os.path.exists(path):
+                logger.debug('Determine that %s uses VCS: %s',
+                             location, vc_type.name)
+                return vc_type.name
+        return None
+<switch:english>
+[english] The function checks for the existence of each backend directory and returns that backend's name upon first match. If no backends are found at any expected subpath, it defaults to returning `None`.
+[english] If multiple different backends exist as sibling directories under the provided location, which one is guaranteed to be returned?
+[english] It returns the first backend whose directory exists based on the iteration order of `self._registry.values()`. Since dictionary iteration order is preserved, a prioritized search may occur.
+[english] That clarification makes sense; I'll need to ensure my registration order is correct.

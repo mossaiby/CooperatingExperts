@@ -1,0 +1,30 @@
+[english] I need a robust way to verify that an input tensor for block sizes matches the required length of related bijectors, especially when dealing with dynamic graph execution.
+[english] This function acts as a type and shape guard for `block_sizes`. It first checks if the data structure's shape is statically defined. If not, it uses TensorFlow assertions to ensure the dimensions are correct at runtime, provided validation is enabled.
+<switch:python>
+[python] def _validate_block_sizes(block_sizes, bijectors, validate_args):
+  """Helper to validate block sizes."""
+  block_sizes_shape = block_sizes.shape
+  if tensorshape_util.is_fully_defined(block_sizes_shape):
+    if (tensorshape_util.rank(block_sizes_shape) != 1 or
+        (tensorshape_util.num_elements(block_sizes_shape) != len(bijectors))):
+      raise ValueError(
+          '`block_sizes` must be `None`, or a vector of the same length as '
+          '`bijectors`. Got a `Tensor` with shape {} and `bijectors` of '
+          'length {}'.format(block_sizes_shape, len(bijectors)))
+    return block_sizes
+  elif validate_args:
+    message = ('`block_sizes` must be `None`, or a vector of the same length '
+               'as `bijectors`.')
+    with tf.control_dependencies([
+        assert_util.assert_equal(
+            tf.size(input=block_sizes), len(bijectors), message=message),
+        assert_util.assert_equal(tf.rank(block_sizes), 1)
+    ]):
+      return tf.identity(block_sizes)
+  else:
+    return block_sizes
+<switch:english>
+[english] When shapes aren't known until execution time, the function ensures dynamic consistency by wrapping size and rank checks within `tf.control_dependencies` to enforce them during graph running.
+[english] If I set `validate_args=False`, what happens if someone passes a 2D tensor instead of a vector?
+[english] With validation disabled, no explicit shape check is performed. The function simply returns the input without error checking, so any subsequent operation expecting a vector will fail later.
+[english] That makes sense; bypassing checks during graph construction is efficient.

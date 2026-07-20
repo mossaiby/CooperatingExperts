@@ -1,0 +1,54 @@
+[english] How can I visualize calculated phase offsets across coarse channels alongside the corresponding UV noise diode spectra to check system stability?
+[english] This function first processes raw input data (`dio_cross`) to extract various differential Stokes parameters (Udiff, Vdiff) and subsequent noise characteristics. It then calculates the phase offsets for each channel and generates two vertically stacked plots using Matplotlib.
+<switch:python>
+[python] def plot_phase_offsets(dio_cross,chan_per_coarse=8,feedtype='l',ax1=None,ax2=None,legend=True,**kwargs):
+    '''
+    Plots the calculated phase offsets of each coarse channel along with
+    the UV (or QU) noise diode spectrum for comparison
+    '''
+    #Get ON-OFF ND spectra
+    Idiff,Qdiff,Udiff,Vdiff,freqs = get_diff(dio_cross,feedtype,**kwargs)
+    obs = Waterfall(dio_cross,max_load=150)
+    tsamp = obs.header['tsamp']
+    data = obs.data
+    obs = None
+    I,Q,U,V = get_stokes(data,feedtype)
+
+    #Get phase offsets and convert to degrees
+    coarse_psis = phase_offsets(I,Q,U,V,tsamp,chan_per_coarse,feedtype,**kwargs)
+    coarse_freqs = convert_to_coarse(freqs,chan_per_coarse)
+    coarse_degs = np.degrees(coarse_psis)
+
+    #Plot phase offsets
+    if ax2==None:
+        plt.subplot(211)
+    else:
+        axPsi = plt.axes(ax2)
+        plt.setp(axPsi.get_xticklabels(),visible=False)
+    plt.plot(coarse_freqs,coarse_degs,'ko',markersize=2,label='Coarse Channel $\psi$')
+    plt.ylabel('Degrees')
+    plt.grid(True)
+    plt.title('Phase Offsets')
+    if legend==True:
+        plt.legend()
+
+    #Plot U and V spectra
+    if ax1==None:
+        plt.subplot(212)
+    else:
+        axUV = plt.axes(ax1)
+    plt.plot(freqs,Udiff,'g-',label='U')
+    if feedtype=='l':
+        plt.plot(freqs,Vdiff,'m-',label='V')
+    if feedtype=='c':
+        plt.plot(freqs,Qdiff,'r-',label='Q')
+    plt.xlabel('Frequency (MHz)')
+    plt.ylabel('Power (Counts)')
+    plt.grid(True)
+    if legend==True:
+        plt.legend()
+<switch:english>
+[english] The plotting is highly modular; by passing specific axes objects (`ax1`, `ax2`), you can integrate these visualizations into a larger figure layout or save them to files without relying on global state. Note that the function relies heavily on several external helper functions like phase_offsets and convert_to_coarse.
+[english] If I set feedtype='c', am I guaranteed to see a Q spectrum plotted in the lower subplot?
+[english] Yes, when `feedtype` is set to `'c'`, the function explicitly plots the $Q_{diff}$ spectrum (`plt.plot(freq[s], Qdiff...`) instead of $V_{diff}$, ensuring one noise quantity is always displayed.
+[english] Perfect, that makes more sense for handling different feed types.

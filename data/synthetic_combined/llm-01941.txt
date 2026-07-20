@@ -1,0 +1,68 @@
+[english] How can we accurately track and update suppression states for messages that span complex code blocks like functions or classes?
+[english] The function recursively walks the AST, using node types like `Module` or `FunctionDef` to determine boundaries. It then iterates through existing message states to see if they overlap with the current block range.
+<switch:python>
+[python] def _collect_block_lines(self, msgs_store, node, msg_state):
+        """Recursively walk (depth first) AST to collect block level options
+        line numbers.
+        """
+        for child in node.get_children():
+            self._collect_block_lines(msgs_store, child, msg_state)
+        first = node.fromlineno
+        last = node.tolineno
+        # first child line number used to distinguish between disable
+        # which are the first child of scoped node with those defined later.
+        # For instance in the code below:
+        #
+        # 1.   def meth8(self):
+        # 2.        """test late disabling"""
+        # 3.        # pylint: disable=E1102
+        # 4.        print self.blip
+        # 5.        # pylint: disable=E1101
+        # 6.        print self.bla
+        #
+        # E1102 should be disabled from line 1 to 6 while E1101 from line 5 to 6
+        #
+        # this is necessary to disable locally messages applying to class /
+        # function using their fromlineno
+        if (
+            isinstance(node, (nodes.Module, nodes.ClassDef, nodes.FunctionDef))
+            and node.body
+        ):
+            firstchildlineno = node.body[0].fromlineno
+        else:
+            firstchildlineno = last
+        for msgid, lines in msg_state.items():
+            for lineno, state in list(lines.items()):
+                original_lineno = lineno
+                if first > lineno or last < lineno:
+                    continue
+                # Set state for all lines for this block, if the
+                # warning is applied to nodes.
+                message_definitions = msgs_store.get_message_definitions(msgid)
+                for message_definition in message_definitions:
+                    if message_definition.scope == WarningScope.NODE:
+                        if lineno > firstchildlineno:
+                            state = True
+                        first_, last_ = node.block_range(lineno)
+                    else:
+                        first_ = lineno
+                        last_ = last
+                for line in range(first_, last_ + 1):
+                    # do not override existing entries
+                    if line in self._module_msgs_state.get(msgid, ()):
+                        continue
+                    if line in lines:  # state change in the same block
+                        state = lines[line]
+                        original_lineno = line
+                    if not state:
+                        self._suppression_mapping[(msgid, line)] = original_lineno
+                    try:
+                        self._module_msgs_state[msgid][line] = state
+                    except KeyError:
+                        self._module_msgs_state[msgid] = {line: state}
+                del lines[lineno]
+<switch:english>
+[english] It handles complex scenarios by checking if a message's scope is defined as `WarningScope.NODE`, allowing it to apply changes across entire blocks rather than just individual lines.
+[english] The logic includes handling message state changes within the existing iteration; how does this guarantee correct priority when block suppression and line-level suppression conflict?
+[english] If a specific line is present in `lines` (meaning an explicit change was defined for that line), it overrides any inherited state from `node.fromlineno` or `last` to ensure local definitions take precedence.
+[english] That makes sense, ensuring local overrides prevail.

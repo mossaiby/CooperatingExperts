@@ -1,0 +1,44 @@
+[english] I need a way to automatically verify that all required prerequisites are met before allowing a function to execute.
+[english] This decorator factory uses a higher-order function pattern to enforce preconditions. It allows you to wrap any target function, guaranteeing an environment is ready by checking requirements using your own logic.
+<switch:python>
+[python] def check_prerequisites(
+        prerequisites,
+        checker,
+        msg_tmpl='Prerequisites "{}" are required in method "{}" but not '
+        'found, please install them first.'):
+    """A decorator factory to check if prerequisites are satisfied.
+
+    Args:
+        prerequisites (str of list[str]): Prerequisites to be checked.
+        checker (callable): The checker method that returns True if a
+            prerequisite is meet, False otherwise.
+        msg_tmpl (str): The message template with two variables.
+
+    Returns:
+        decorator: A specific decorator.
+    """
+
+    def wrap(func):
+
+        @functools.wraps(func)
+        def wrapped_func(*args, **kwargs):
+            requirements = [prerequisites] if isinstance(
+                prerequisites, str) else prerequisites
+            missing = []
+            for item in requirements:
+                if not checker(item):
+                    missing.append(item)
+            if missing:
+                print(msg_tmpl.format(', '.join(missing), func.__name__))
+                raise RuntimeError('Prerequisites not meet.')
+            else:
+                return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrap
+<switch:english>
+[english] The internal wrapper handles both string and list inputs for prerequisites and gracefully stops execution if the provided checker fails on even one item.
+[english] If a prerequisite is missing, I currently raise a RuntimeError. How can I modify it to just print a warning instead of halting the program?
+[english] You simply remove the `raise RuntimeError(...)` statement from inside the `if missing:` block in `wrapped_func`. You could then return an empty configuration or default values instead.
+[english] That makes sense, thank you for explaining this pattern!

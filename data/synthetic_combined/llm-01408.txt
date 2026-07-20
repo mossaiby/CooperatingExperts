@@ -1,0 +1,49 @@
+[english] How can I efficiently remove a specific block of bytes from an existing file without shifting the rest of the data manually?
+[english] This function is designed to delete a specific chunk of bytes at any given offset within a file object. It first attempts to use memory mapping (`mmap`) for high-speed content relocation, falling back to a buffered read/write loop if `mmap` fails.
+<switch:python>
+[python] def delete_bytes(fobj, size, offset, BUFFER_SIZE=2**16):
+    """Delete size bytes of empty space starting at offset.
+
+    fobj must be an open file object, open rb+ or
+    equivalent. Mutagen tries to use mmap to resize the file, but
+    falls back to a significantly slower method if mmap fails.
+    """
+
+    locked = False
+    assert 0 < size
+    assert 0 <= offset
+    fobj.seek(0, 2)
+    filesize = fobj.tell()
+    movesize = filesize - offset - size
+    assert 0 <= movesize
+    try:
+        if movesize > 0:
+            fobj.flush()
+            try:
+                import mmap
+                file_map = mmap.mmap(fobj.fileno(), filesize)
+                try:
+                    file_map.move(offset, offset + size, movesize)
+                finally:
+                    file_map.close()
+            except (ValueError, EnvironmentError, ImportError):
+                # handle broken mmap scenarios
+                locked = lock(fobj)
+                fobj.seek(offset + size)
+                buf = fobj.read(BUFFER_SIZE)
+                while buf:
+                    fobj.seek(offset)
+                    fobj.write(buf)
+                    offset += len(buf)
+                    fobj.seek(offset + size)
+                    buf = fobj.read(BUFFER_SIZE)
+        fobj.truncate(filesize - size)
+        fobj.flush()
+    finally:
+        if locked:
+            unlock(fobj)
+<switch:english>
+[english] The process concludes by truncating the original file size down to the new length. Remember that this function depends on external `lock` and `unlock` functions to handle concurrency safely.
+[english] What constraint prevents this deletion logic from simply using fobj.read() and writing it back without shifting data?
+[english] The code needs to shift data because deleting bytes creates a gap; if you're just reading, the file size won't change unless you explicitly trim it.
+[english] Got it, that makes sense now!

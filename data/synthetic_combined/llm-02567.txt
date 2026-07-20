@@ -1,0 +1,27 @@
+[english] I have a large segmentation mask and need an efficient way to extract each distinct object into its own isolated binary mask.
+[english] This function parallelizes segment separation using `multiprocessing` to handle multiple unique IDs simultaneously. It begins by identifying all non-zero IDs present in the input mask.
+<switch:python>
+[python] def _separate_masks(mask, threshold=0.025):
+    """
+    Returns a list of segmentation masks each of the same dimension as the input one,
+    but where they each have exactly one segment in them and all other samples in them
+    are zeroed.
+
+    Only bothers to return segments that are larger in total area than `threshold * mask.size`.
+    """
+    try:
+        ncpus = multiprocessing.cpu_count()
+    except NotImplementedError:
+        ncpus = 2
+
+    with multiprocessing.Pool(processes=ncpus) as pool:
+        mask_ids = [id for id in np.unique(mask) if id != 0]
+        thresholds = [threshold * mask.size for _ in range(len(mask_ids))]
+        masks = [mask for _ in range(len(mask_ids))]
+        ms = pool.starmap(_separate_masks_task, zip(mask_ids, thresholds, masks))
+    return [m for m in ms if m is not None]
+<switch:english>
+[english] The function ensures that only segments meeting a minimum size defined by the threshold are returned. The final list comprehension filters out any `None` results, effectively dropping small or irrelevant objects.
+[english] What criteria determine if a segment is considered large enough to be kept?
+[english] A segment must have a total area greater than `threshold * mask.size` before it is included in the final result.
+[english] That makes perfect sense for managing noisy segmentation data.

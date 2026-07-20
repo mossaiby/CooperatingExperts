@@ -1,0 +1,31 @@
+[english] How can I randomly select an appropriate greeting title for a user given their language preference and gender?
+[english] This function generates a random title by first setting defaults for languages and genders, then retrieving a list of available titles based on the requested language. It uses a dictionary lookup combined with `random.choice` to ensure the chosen title matches the specified gender.
+<switch:python>
+[python] def title(languages=None, genders=None):
+    """
+    returns a random title
+
+    .. code-block:: python
+
+        >>> d.title()
+        u'Mrs.'
+        >>> d.title(['es'])
+        u'El Sr.'
+        >>> d.title(None, [GENDER_FEMALE])
+        u'Mrs.'
+
+    :param languages: list of allowed languages. ['en'] if None
+    :param genders: list of allowed genders. (GENDER_FEMALE, GENDER_MALE) if None
+    """
+    languages = languages or ['en']
+    genders = genders or (GENDER_FEMALE, GENDER_MALE)
+
+    choices = _get_titles(languages)
+    gender = {'m':0, 'f':1}[random.choice(genders)]
+
+    return random.choice(choices)[gender]
+<switch:english>
+[english] The function assumes that `_get_titles` handles multilingual mapping and that `GENDER_FEMALE`/`GENDER_MALE` are defined constants for indexing.
+[english] What happens if I pass a list of languages, but none of those languages have titles available in the internal system?
+[english] If no title matches your specified language(s), the function will likely raise an error inside `_get_titles`. To handle this gracefully, you should check the output of `_get_titles` before proceeding.
+[english] Thanks for clarifying how to manage potential errors here.

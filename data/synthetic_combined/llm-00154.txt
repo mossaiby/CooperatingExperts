@@ -1,0 +1,30 @@
+[english] How can I generate a human-readable or compressed mnemonic label from an integer index based on its value?
+[english] This function maps raw integer indices to various descriptive labels, using predefined symbolic names for low values and complex bitwise encoding for high values.
+<switch:python>
+[python] def mnemonic(self, index, verbose=False):
+        """Give mnemonic representation of meaning.
+        verbose compresses strings of x's
+        """
+        if index<16:
+            return ['last', '2last', '3last', '4last',
+                'last-1', 'last+1', 'last-2', 'last+2', 'last-3', 'last+3',
+                '2last-1', '2last+1', '2last-2', '2last+2', '2last-3', '2last+3'
+                ][index]
+        if index<16+self.NDIRECT:
+            return str(index-16)
+        #construct strings like "1xx01-15"
+        index -= self.NDIRECT+16
+        hcode = index >> self.NPOSTFIX
+        lcode = index & (1<<self.NPOSTFIX)-1
+        if self.NPOSTFIX: formatString = '1{0}{1}{2:0{3}b}{4:+d}'
+        else: formatString = '1{0}{1}{4:+d}'
+        return formatString.format(
+            hcode&1,
+            'x'*(2+hcode>>1) if hcode<13 or verbose else '[{}*x]'.format(2+hcode>>1),
+            lcode, self.NPOSTFIX,
+            self.NDIRECT+1-(4<<self.NPOSTFIX))
+<switch:english>
+[english] The handling of large indices is quite dense because it uses bitwise operations (`>>`, `&`) to construct compact, encoded string formats like '1xx01-15'.
+[english] What happens if I call this function with an index that falls within the range defined by self.NDIRECT?
+[english] If the index is less than 16 + self.NDIRECT, it skips the symbolic names and simply returns a direct string representation of the calculated number.
+[english] That makes much more sense now.

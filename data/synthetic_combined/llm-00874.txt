@@ -1,0 +1,16 @@
+[english] How can I create a maintenance routine to clean up unused database snapshots in my application infrastructure?
+[english] This script defines a cleanup function that first retrieves the main application context and performs any necessary version upgrades before proceeding with deletion.
+<switch:python>
+[python] def gc():
+    """Deletes old stellar tables that are not used anymore"""
+    def after_delete(database):
+        click.echo("Deleted table %s" % database)
+
+    app = get_app()
+    upgrade_from_old_version(app)
+    app.delete_orphan_snapshots(after_delete)
+<switch:english>
+[english] The core logic utilizes `delete_orphan_snapshots` to identify and remove tables, logging each deletion using the defined `after_delete` callback.
+[english] What if a required snapshot is accidentally considered 'orphaned' by this process?
+[english] To prevent unintended deletions of critical data, you could add filtering logic inside `app.delete_orphan_snapshots`, ensuring that snapshots with specific tags or labels are excluded from the cleanup.
+[english] That makes sense; I will adjust the parameters to be more selective.

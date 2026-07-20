@@ -1,0 +1,20 @@
+[english] How do I properly clean up and save metadata after completing a data run?
+[english] This function handles the final steps of a process by setting internal flags to indicate completion, resetting specific components, and persisting any necessary state information.
+<switch:python>
+[python] def _finalize(self, store_meta_data=True):
+        """Final rollback initiated by the environment
+
+        Restores the trajectory as root of the tree, and stores meta data to disk.
+        This updates the trajectory's information about single runs, i.e. if they've been
+        completed, when they were started, etc.
+
+        """
+        self._is_run = False
+        self.f_set_crun(None)
+        if store_meta_data:
+            self.f_store(only_init=True)
+<switch:english>
+[english] The execution ensures that once `store_meta_data` is False or if it isn't defined, only the cleanup procedures are run without saving additional metadata.
+[english] If I leave store_meta_data as None, what happens to the internal state?
+[english] When `store_meta_data` is None, Python treats it as falsy in a boolean context. The code will skip the call to `self.f_store(only_init=True)` and proceed directly with the cleanup.
+[english] That clarifies exactly when the metadata persistence happens.

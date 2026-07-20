@@ -1,0 +1,21 @@
+[english] How can I retrieve a specific database connection record from the Connection table using its ID?
+[english] This function queries the `Connection` table using your `db_conn_id`. First, it logs the retrieval attempt before executing the SQLAlchemy query.
+<switch:python>
+[python] def retrieve_connection(self, session=None):
+        """
+        Retrieves the dynamically created connection from the Connection table.
+
+        :param session: Session of the SQL Alchemy ORM (automatically generated with
+                        decorator).
+        """
+        self.log.info("Retrieving connection %s", self.db_conn_id)
+        connections = session.query(Connection).filter(
+            Connection.conn_id == self.db_conn_id)
+        if connections.count():
+            return connections[0]
+        return None
+<switch:english>
+[english] The code uses `connections.count()` to verify if any records match the filter before safely accessing and returning the first element.
+[english] Is there a more efficient way, perhaps avoiding counting all results just to get one?
+[english] Yes, you can use `.first()` instead of checking the count and then indexing: `return connections.one_or_none()` or simply `connections.first()`, which is often cleaner for retrieving single items.
+[english] That makes perfect sense, thank you for clarifying the optimization.

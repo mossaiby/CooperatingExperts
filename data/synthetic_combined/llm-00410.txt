@@ -1,0 +1,19 @@
+[english] How can I reliably retrieve and validate a specific XML element using an XPath expression?
+[english] This function abstracts the lookup process by defining an inner helper method that handles finding the element based on your provided path. It attempts to find the corresponding data structure and validates it against the required element type.
+<switch:python>
+[python] def xml_find(xpath):
+    """Find a XML element via xpath."""
+    def xpath_find(value):
+        validate(ET.iselement, value)
+        value = value.find(xpath)
+        if value is None:
+            raise ValueError("XPath '{0}' did not return an element".format(xpath))
+
+        return validate(ET.iselement, value)
+
+    return transform(xpath_find)
+<switch:english>
+[english] Since it performs validation inside `xpath_find`, this implementation guarantees a structured, valid tree from the target path or raises a descriptive error if the path is invalid.
+[english] What happens if I pass an XPath that returns multiple elements instead of just one?
+[english] The current logic uses `.find(xpath)`, which only retrieves the first match found. To handle multiple results, you would need to modify it to use `.findall()` within `xpath_find`.
+[english] That's exactly what I needed!

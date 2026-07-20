@@ -1,0 +1,32 @@
+[english] I need a way to securely log into a specific website using Python and get an authenticated session back.
+[english] This function manages the authentication process by ensuring a unique session is created only when needed. It performs a prerequisite GET request before POSTing your credentials, allowing `requests` to capture initial site cookies.
+<switch:python>
+[python] def login(self):
+        """
+        登陆系统,返回一个requests的session对象
+
+        :return: session with login cookies
+        :rtype: requests.sessions.Session
+        """
+        if not hasattr(self, 'session'):
+            self.last_connect = time.time()
+            s = requests.session()
+            s.get('http://bkjws.sdu.edu.cn')
+
+            data = {
+                'j_username': self.student_id,
+                'j_password': self.password_md5
+            }
+            r6 = s.post('http://bkjws.sdu.edu.cn/b/ajaxLogin', headers={
+                'user-agent': self._ua},
+                data=data)
+            if r6.text == '"success"':
+                return s
+            else:
+                s.close()
+                raise AuthFailure(r6.text)
+<switch:english>
+[english] The session object `s` handles persistent cookies throughout the login process, and if authentication fails, it explicitly calls `s.close()` before raising an appropriate exception.
+[english] If the initial get request 'http://bkjws.sdu.edu.cn' raises a connection error (like DNS failure) instead of just returning a non-'success' text, what happens?
+[english] The current code does not explicitly catch network exceptions after the initial GET attempt; if that call fails, execution would proceed to try and log in with invalid credentials or crash depending on other dependencies.
+[english] This helps me understand how robust the connection setup is.

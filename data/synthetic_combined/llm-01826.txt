@@ -1,0 +1,22 @@
+[english] How do I safely verify and retrieve data from a signed string while ensuring it hasn't expired?
+[english] This function reverses a signing operation to authenticate and decode a message. It uses `self.make_signer` along with an underlying unsign method, allowing for explicit signature validation.
+<switch:python>
+[python] def loads(self, s, max_age=None, return_timestamp=False, salt=None):
+        """Reverse of :meth:`dumps`, raises :exc:`BadSignature` if the
+        signature validation fails.  If a `max_age` is provided it will
+        ensure the signature is not older than that time in seconds.  In
+        case the signature is outdated, :exc:`SignatureExpired` is raised
+        which is a subclass of :exc:`BadSignature`.  All arguments are
+        forwarded to the signer's :meth:`~TimestampSigner.unsign` method.
+        """
+        base64d, timestamp = self.make_signer(salt) \
+            .unsign(s, max_age, return_timestamp=True)
+        payload = self.load_payload(base64d)
+        if return_timestamp:
+            return payload, timestamp
+        return payload
+<switch:english>
+[english] It successfully decodes the base64 data into a payload while providing options to return the original creation timestamp if requested via `return_timestamp}.
+[english] If the signature on the input string `s` is invalid or too old according to `max_age`, what specific exceptions will be raised?
+[english] It raises `BadSignature` for general validation failures. If it fails specifically due to time constraints, it raises `SignatureExpired`, which is a subclass of `BadSignature`.
+[english] Should I configure the max age or let the default handle all expiration issues?

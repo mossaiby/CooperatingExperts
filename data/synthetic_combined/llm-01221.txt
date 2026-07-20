@@ -1,0 +1,20 @@
+[english] How can I calculate the estimated number of bytes written during a single high-level iteration?
+[english] This method estimates write density by multiplying the size of a specific data type with the step increment used in the innermost loop. It retrieves these values from internal state trackers.
+<switch:python>
+[python] def bytes_per_iteration(self):
+        """
+        Consecutive bytes written out per high-level iterations (as counted by loop stack).
+
+        Is used to compute number of iterations per cacheline.
+        """
+        # TODO Find longst consecutive writes to any variable and use as basis
+        var_name = list(self.destinations)[0]
+        var_type = self.variables[var_name][0]
+        # FIXME this is correct most of the time, but not guaranteed:
+        # Multiplying datatype size with step increment of inner-most loop
+        return self.datatypes_size[var_type] * self._loop_stack[-1][3]
+<switch:english>
+[english] The function provides a strong initial estimate, but it is important to remember that this calculation may not accurately reflect all complex memory access patterns due to its assumptions.
+[english] What happens if there are multiple variables being written to at the same time within one iteration cycle?
+[english] Currently, the function only considers the first destination variable it finds. If you need an accurate count for simultaneous writes, you should sum the `datatypes_size` multiplied by the step increment for each individual write operation.
+[english] Thanks! That clarifies how to handle multiple variables.

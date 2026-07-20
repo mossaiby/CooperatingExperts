@@ -1,0 +1,54 @@
+[english] How do I correctly initialize a Sender object for an Azure Service Bus endpoint, considering whether it requires session support?
+[english] This method determines which specific sender implementation to use based on the configuration of the service endpoint.
+<switch:python>
+[python] def get_sender(self, message_timeout=0, session=None, **kwargs):
+        """Get a Sender for the Service Bus endpoint.
+
+        A Sender represents a single open connection within which multiple send operations can be made.
+
+        :param message_timeout: The period in seconds during which messages sent with
+         this Sender must be sent. If the send is not completed in this time it will fail.
+        :type message_timeout: int
+        :param session: An optional session ID. If supplied this session ID will be
+         applied to every outgoing message sent with this Sender.
+         If an individual message already has a session ID, that will be
+         used instead. If no session ID is supplied here, nor set on an outgoing
+         message, a ValueError will be raised if the entity is sessionful.
+        :type session: str or ~uuid.Guid
+        :returns: A Sender instance with an unopened connection.
+        :rtype: ~azure.servicebus.aio.async_send_handler.Sender
+
+        Example:
+            .. literalinclude:: ../examples/async_examples/test_examples_async.py
+                :start-after: [START open_close_sender_context]
+                :end-before: [END open_close_sender_context]
+                :language: python
+                :dedent: 4
+                :caption: Send multiple messages with a Sender.
+
+        """
+        handler_id = str(uuid.uuid4())
+        if self.entity and self.requires_session:
+            return SessionSender(
+                handler_id,
+                self.entity_uri,
+                self.auth_config,
+                session=session,
+                loop=self.loop,
+                debug=self.debug,
+                msg_timeout=message_timeout,
+                **kwargs)
+        return Sender(
+            handler_id,
+            self.entity_uri,
+            self.auth_config,
+            session=session,
+            loop=self.loop,
+            debug=self.debug,
+            msg_timeout=message_timeout,
+            **kwargs)
+<switch:english>
+[english] The function uses a conditional check to decide between generic and session-aware sender creation.
+[english] What happens if I set 'session=None' on an outgoing message after using this Sender?
+[english] If the entity is sessionful, setting `session=None` will cause a `ValueError` because the required session ID must be explicitly provided at initialization or within the individual message properties.
+[english] Thanks for clarifying the behavior!

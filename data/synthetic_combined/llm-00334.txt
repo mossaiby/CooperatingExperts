@@ -1,0 +1,21 @@
+[english] How can I retrieve all remaining rows from a database query result into a list of lists?
+[english] This helper method iterates through the results one row at a time until no more data is available, ensuring that even partial results are captured.
+<switch:python>
+[python] def fetchall(self):
+        """
+        Fetch all (remaining) rows of a query result, returning them as a sequence of
+        sequences (e.g. a list of tuples).
+        """
+        result = []
+        while True:
+            one = self.fetchone()
+            if one is None:
+                break
+            else:
+                result.append(one)
+        return result
+<switch:english>
+[english] The logic relies on `self.fetchone()` returning None when the cursor has been fully exhausted.
+[english] If the original query returned zero results, what would this function return?
+[english] The function returns an empty list of lists (`[]`) because the `while` loop condition (`one is None`) will be met immediately during the first call to `self.fetchone()` if no rows exist.
+[english] That makes perfect sense!

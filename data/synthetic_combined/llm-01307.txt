@@ -1,0 +1,24 @@
+[english] How can I fetch all promotional videos, clips, or teasers associated with a specific TV episode?
+[english] This function constructs the necessary API path for video retrieval and then uses an internal GET request handler to pull the data.
+<switch:python>
+[python] def videos(self, **kwargs):
+        """
+        Get the videos that have been added to a TV episode (teasers, clips,
+        etc...).
+
+        Args:
+            language: (optional) ISO 639 code.
+
+        Returns:
+            A dict respresentation of the JSON returned from the API.
+        """
+        path = self._get_series_id_season_number_episode_number_path('videos')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The retrieved response is processed using `self._set_attrs_to_values` and returned as a dictionary representation of the raw JSON.
+[english] If no videos have been added to the episode, what does the function return?
+[english] It will typically return an empty list or dict matching the API's structured response for 'no results found.' Code is not needed here.
+[english] Thanks, that makes sense.

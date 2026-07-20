@@ -1,0 +1,26 @@
+[english] How do I check my dictionary to find all keys whose associated values cannot be safely pickled?
+[english] To identify unpicklable items, this function iterates through every key-value pair in the input dictionary. For each item, it attempts to serialize both the key and the value using pickle; any serialization error flags that key as invalid.
+<switch:python>
+[python] def invalid_dict_pickle_keys(self, msg_dict):
+        """Return a list of keys that can't be pickled.  Return [] if 
+        there are no pickling problems with the values associated with the
+        keys.  Return the list of keys, if there are problems."""
+        no_pickle_keys = list()
+        for key, val in msg_dict.items():
+
+            try:
+                pickle.dumps(key)
+                pickle.dumps(val)
+            except TypeError:
+                no_pickle_keys.append(key)  # This key has an unpicklable value
+            except pickle.PicklingError:
+                no_pickle_keys.append(key)  # This key has an unpicklable value
+            except pickle.UnpickleableError:
+                no_pickle_keys.append(key)  # This key has an unpicklable value
+
+        return no_pickle_keys
+<switch:english>
+[english] The function correctly catches various serialization exceptions to detect non-serializable data in the dictionary's contents.
+[english] What if a key itself cannot be pickled, but its value is fine?
+[english] The current implementation checks both `key` and `val` during pickling. If you primarily care about values, you could modify the check to only call `pickle.dumps(val)` within the loop.
+[english] Thanks for explaining how this works!

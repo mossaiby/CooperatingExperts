@@ -1,0 +1,52 @@
+[english] How can I write a utility to transform various file formats into an HTML web page?
+[english] The `convert` function orchestrates this transformation by first checking if the input is already in HTML format; otherwise, it uses a provided converter to ensure the data is temporarily stored as a `.docx` file before extracting its content and building the final HTML.
+<switch:python>
+[python] def convert(file_path, image_handler=None, fall_back=None, converter=None):
+    """
+    ``file_path`` is a path to the file on the file system that you want to be
+        converted to html.
+    ``image_handler`` is a function that takes an image_id and a
+        relationship_dict to generate the src attribute for images. (see readme
+        for more details)
+    ``fall_back`` is a function that takes a ``file_path``. This function will
+        only be called if for whatever reason the conversion fails.
+    ``converter`` is a function to convert a document that is not docx to docx
+        (examples in docx2html.converters)
+
+    Returns html extracted from ``file_path``
+    """
+    file_base, extension = os.path.splitext(os.path.basename(file_path))
+
+    if extension == '.html' or extension == '.htm':
+        return read_html_file(file_path)
+
+    # Create the converted file as a file in the same dir with the
+    # same name only with a .docx extension
+    docx_path = replace_ext(file_path, '.docx')
+    if extension == '.docx':
+        # If the file is already html, just leave it in place.
+        docx_path = file_path
+    else:
+        if converter is None:
+            raise FileNotDocx('The file passed in is not a docx.')
+        converter(docx_path, file_path)
+        if not os.path.isfile(docx_path):
+            if fall_back is None:
+                raise ConversionFailed('Conversion to docx failed.')
+            else:
+                return fall_back(file_path)
+
+    try:
+        # Docx files are actually just zip files.
+        zf = get_zip_file_handler(docx_path)
+    except BadZipfile:
+        raise MalformedDocx('This file is not a docx')
+
+    # Need to populate the xml based on word/document.xml
+    tree, meta_data = _get_document_data(zf, image_handler)
+    return create_html(tree, meta_data)
+<switch:english>
+[english] This approach treats DOCX files as archives for XML extraction. If any internal steps like zip handling or document parsing fail, appropriate exceptions are raised to notify the calling code of the malformed input.
+[english] What specific error is triggered if I try to convert a file type that isn't docx and don't supply a custom converter function?
+[english] If the extension doesn't match existing HTML or DOCX formats, and you haven't supplied a `converter`, it raises a `FileNotDocx` exception.
+[english] I see, that prevents silent failures.

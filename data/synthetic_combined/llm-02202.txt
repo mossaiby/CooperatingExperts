@@ -1,0 +1,21 @@
+[english] How do I safely retrieve a list of all foci currently stored within a specific system state?
+[english] This method guarantees that the instance is designed to handle data retrieval (a Fold) before attempting transformation. It uses functional patterns (`pure` and `func`) to map the input state into a comprehensive list.
+<switch:python>
+[python] def to_list_of(self, state):
+        # type: (S) -> List[B]
+        '''Returns a list of all the foci within `state`.
+
+        Requires kind Fold. This method will raise TypeError if the
+        optic has no way to get any foci.
+        '''
+        if not self._is_kind(Fold):
+            raise TypeError('Must be an instance of Fold to .to_list_of()')
+
+        pure = lambda a: Const([])
+        func = lambda a: Const([a])
+        return self.apply(func, pure, state).unwrap()
+<switch:english>
+[english] It relies on strict type checking via `self._is_kind(Fold)` and utilizes functional composition to guarantee the output is always unwrapped into a standard Python list.
+[english] If the provided state contains no elements matching the focus criteria, what will this method return?
+[english] It returns an empty list because the `pure` lambda function initializes the process using `Const([])`, ensuring a default empty collection is handled if nothing else matches.
+[english] That clarifies how the initial state is handled. Thanks for explaining!

@@ -1,0 +1,24 @@
+[english] How can I inspect and retrieve the actual content of a specific key in my database without knowing its data structure beforehand?
+[english] The function first uses `DB.type(key)` to determine if the stored data is meant to be a collection (`set`) or a single value (`string`). It then conditionally calls either `DB.smembers` or `DB.get` and prints the result using color formatting.
+<switch:python>
+[python] def do_DBKEY(self, key):
+        """Print raw content of a DB key.
+        DBKEY g|u09tyzfe"""
+        type_ = DB.type(key).decode()
+        if type_ == 'set':
+            out = DB.smembers(key)
+        elif type_ == 'string':
+            out = DB.get(key)
+        else:
+            out = 'Unsupported type {}'.format(type_)
+        print('type:', magenta(type_))
+        print('value:', white(out))
+<switch:english>
+[english] The function handles string and set types successfully by retrieving their contents, but it currently ignores other database structures like hashmaps. This reliance on explicit type checking means only known types will yield meaningful data.
+[english] What happens if the key exists but is an unhandled type, such as a hash?
+[english] The function displays 'Unsupported type...' because there is no conditional check for 'hash'. To support it, you would add another elif block like this:
+<switch:python>
+[python] elif type_ == 'hash':
+            out = DB.hgetall(key)
+<switch:english>
+[english] Thanks for the detailed walkthrough!

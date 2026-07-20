@@ -1,0 +1,103 @@
+[english] How do I initialize and start a secure TCP server that manages dynamic policies?
+[english] This function initializes all necessary components for the server, including policy management and security settings.
+<switch:python>
+[python] def start(self):
+        """
+        Prepare the server to start serving connections.
+
+        Configure the server socket handler and establish a TLS wrapping
+        socket from which all client connections descend. Bind this TLS
+        socket to the specified network address for the server.
+
+        Raises:
+            NetworkingError: Raised if the TLS socket cannot be bound to the
+                network address.
+        """
+        self.manager = multiprocessing.Manager()
+        self.policies = self.manager.dict()
+        policies = copy.deepcopy(operation_policy.policies)
+        for policy_name, policy_set in six.iteritems(policies):
+            self.policies[policy_name] = policy_set
+
+        self.policy_monitor = monitor.PolicyDirectoryMonitor(
+            self.config.settings.get('policy_path'),
+            self.policies,
+            self.live_policies
+        )
+
+        def interrupt_handler(trigger, frame):
+            self.policy_monitor.stop()
+        signal.signal(signal.SIGINT, interrupt_handler)
+        signal.signal(signal.SIGTERM, interrupt_handler)
+
+        self.policy_monitor.start()
+
+        self._engine = engine.KmipEngine(
+            policies=self.policies,
+            database_path=self.config.settings.get('database_path')
+        )
+
+        self._logger.info("Starting server socket handler.")
+
+        # Create a TCP stream socket and configure it for immediate reuse.
+        socket.setdefaulttimeout(10)
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        self._logger.debug(
+            "Configured cipher suites: {0}".format(
+                len(self.config.settings.get('tls_cipher_suites'))
+            )
+        )
+        for cipher in self.config.settings.get('tls_cipher_suites'):
+            self._logger.debug(cipher)
+        auth_suite_ciphers = self.auth_suite.ciphers.split(':')
+        self._logger.debug(
+            "Authentication suite ciphers to use: {0}".format(
+                len(auth_suite_ciphers)
+            )
+        )
+        for cipher in auth_suite_ciphers:
+            self._logger.debug(cipher)
+
+        self._socket = ssl.wrap_socket(
+            self._socket,
+            keyfile=self.config.settings.get('key_path'),
+            certfile=self.config.settings.get('certificate_path'),
+            server_side=True,
+            cert_reqs=ssl.CERT_REQUIRED,
+            ssl_version=self.auth_suite.protocol,
+            ca_certs=self.config.settings.get('ca_path'),
+            do_handshake_on_connect=False,
+            suppress_ragged_eofs=True,
+            ciphers=self.auth_suite.ciphers
+        )
+
+        try:
+            self._socket.bind(
+                (
+                    self.config.settings.get('hostname'),
+                    int(self.config.settings.get('port'))
+                )
+            )
+        except Exception as e:
+            self._logger.exception(e)
+            raise exceptions.NetworkingError(
+                "Server failed to bind socket handler to {0}:{1}".format(
+                    self.config.settings.get('hostname'),
+                    self.config.settings.get('port')
+                )
+            )
+        else:
+            self._logger.info(
+                "Server successfully bound socket handler to {0}:{1}".format(
+                    self.config.settings.get('hostname'),
+                    self.config.settings.get('port')
+                )
+            )
+            self._is_serving = True
+<switch:english>
+[english] Finally, it attempts to bind the configured SSL socket to the specified network address.
+[english] What happens if the authentication suite has a configuration error when wrapping the initial socket?
+[english] If there is an issue with the TLS setup (like missing private keys), Python's `ssl.wrap_socket` will raise an exception before binding can occur.
+[english] That makes sense, thanks for the clarification.

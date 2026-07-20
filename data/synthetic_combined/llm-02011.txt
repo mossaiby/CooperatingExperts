@@ -1,0 +1,21 @@
+[english] I need a way to programmatically open and connect an instance of my device controller to a specific I2C SMBus number.
+[english] This method translates the provided bus number into its corresponding system path, performing preliminary checks before attempting the low-level connection.
+<switch:python>
+[python] def open(self, bus):
+        """open(bus)
+
+        Connects the object to the specified SMBus.
+        """
+        bus = int(bus)
+        path = "/dev/i2c-%d" % (bus,)
+        if len(path) >= MAXPATH:
+                raise OverflowError("Bus number is invalid.")
+        try:
+            self._fd = os.open(path, os.O_RDWR, 0)
+        except OSError as e:
+            raise IOError(e.errno)
+<switch:english>
+[english] The function handles raw operating system errors by converting them into more descriptive IOExceptions for easier error handling in higher layers.
+[english] If a user provides an invalid or non-existent bus ID (like 99), what specific exception will be raised?
+[english] If the path specified does not exist, `os.open` will raise an OSError; this method catches it and re-raises it as an IOError, which can provide useful system error codes.
+[english] That helps me understand how to handle failures!

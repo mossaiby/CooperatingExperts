@@ -1,0 +1,15 @@
+[english] How do I set the default panels for a specific case, user, and institute?
+[english] This approach first retrieves necessary objects (institute, case, user) from the store and then gathers the actual panel objects required. Finally, it calls the update method using all collected data.
+<switch:python>
+[python] def update_default_panels(store, current_user, institute_id, case_name, panel_ids):
+    """Update default panels for a case."""
+    institute_obj, case_obj = institute_and_case(store, institute_id, case_name)
+    user_obj = store.user(current_user.email)
+    link = url_for('cases.case', institute_id=institute_id, case_name=case_name)
+    panel_objs = [store.panel(panel_id) for panel_id in panel_ids]
+    store.update_default_panels(institute_obj, case_obj, user_obj, link, panel_objs)
+<switch:english>
+[english] The function leverages helper methods and list comprehensions to ensure all required entities are properly initialized before updating the system defaults.
+[english] What happens if one of the provided `panel_ids` does not correspond to an existing panel?
+[english] If an ID is invalid, the list comprehension will likely raise a KeyError or similar error when trying to fetch it from `store.panel()`. You might add validation before building `panel_objs`.
+[english] That makes sense; I should probably handle those missing IDs in my input layer.

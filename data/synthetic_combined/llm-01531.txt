@@ -1,0 +1,36 @@
+[english] We need a way to run an input through some recurrent layers to generate parameters for a multivariate normal distribution representing latent features.
+[english] This function uses bidirectional LSTM (`self.bilstm`) on batched image frame representations to transform them into parameters (mean `loc` and diagonal scale `scale_diag`). It then constructs and returns a distributional representation using the TensorFlow probability functions.
+<switch:python>
+[python] def call(self, inputs):
+    """Runs the model to generate a distribution `q(f | x_{1:T})`.
+
+    This generates a list of batched MultivariateNormalDiag
+    distributions using the output of the recurrent model at each
+    timestep to parameterize each distribution.
+
+    Args:
+      inputs: A batch of intermediate representations of image frames
+        across all timesteps, of shape [..., batch_size, timesteps,
+        hidden_size].
+
+    Returns:
+      A batched MultivariateNormalDiag distribution with event shape
+      [latent_size], batch shape [..., batch_size], and sample shape
+      [sample_shape, ..., batch_size, latent_size].
+    """
+    # TODO(dusenberrymw): Remove these reshaping commands after b/113126249 is
+    # fixed.
+    collapsed_shape = tf.concat(([-1], tf.shape(input=inputs)[-2:]), axis=0)
+    out = tf.reshape(inputs, collapsed_shape)  # (sample*batch_size, T, hidden)
+    out = self.bilstm(out)  # (sample*batch_size, hidden)
+    expanded_shape = tf.concat((tf.shape(input=inputs)[:-2], [-1]), axis=0)
+    out = tf.reshape(out, expanded_shape)  # (sample, batch_size, hidden)
+    out = self.output_layer(out)  # (sample, batch_size, 2*latent_size)
+    loc = out[..., :self.latent_size]
+    scale_diag = tf.nn.softplus(out[..., self.latent_size:]) + 1e-5  # keep > 0
+    return tfd.MultivariateNormalDiag(loc=loc, scale_diag=scale_diag)
+<switch:english>
+[english] Note that this implementation assumes fixed sizes for latent dimensions when reshaping, which might need adjustment if batch or sample complexities change. The function results in a batched distribution object directly ready for sampling or expectation calculations.
+[english] How does the hardcoded `1e-5` offset affect the scale of the generated distribution?
+[english] The small value added to the softplus output ensures that `scale_diag` is strictly positive, preventing potential numerical instability when taking log operations or performing inversions within the distribution class.
+[english] Got it!

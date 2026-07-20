@@ -1,0 +1,25 @@
+[english] I need a reliable way to check which registered player in our system is capable of handling or supporting a particular incoming command.
+[english] This function iterates through predefined supported players and checks if the input command matches any of their registered possible commands. It first cleans the input using OS-specific logic to safely extract the base executable name in lowercase.
+<switch:python>
+[python] def supported_player(cls, cmd):
+        """
+        Check if the current player supports adding a title
+
+        :param cmd: command to test
+        :return: name of the player|None
+        """
+        if not is_win32:
+            # under a POSIX system use shlex to find the actual command
+            # under windows this is not an issue because executables end in .exe
+            cmd = shlex.split(cmd)[0]
+
+        cmd = os.path.basename(cmd.lower())
+        for player, possiblecmds in SUPPORTED_PLAYERS.items():
+            for possiblecmd in possiblecmds:
+                if cmd.startswith(possiblecmd):
+                    return player
+<switch:english>
+[english] The function returns the player's name if the provided command starts with a recognized possible command for that player, which effectively enables prefix-based routing rather than requiring an exact match.
+[english] If I pass 'git commit -m message', and only 'git' is listed as supported, how does it determine support?
+[english] Because the code uses `cmd.startswith(possiblecmd)`, passing 'git commit -m message' when 'git' is defined will successfully match and return the player associated with 'git'.
+[english] That makes sense; partial command matching seems like a useful feature.

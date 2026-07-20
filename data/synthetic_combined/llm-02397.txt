@@ -1,0 +1,15 @@
+[english] How do I handle the logic for receiving a Negative Acknowledgment while my system is in a rebinding state?
+[english] This function manages specific packet reception when you are attempting to rebind. It first validates the received message before determining if an initialization reset is required.
+<switch:python>
+[python] def receive_nak_rebinding(self, pkt):
+        """Receive NAK in REBINDING state."""
+        logger.debug("C3.1. Received NAK?, in RENEWING state.")
+        if self.process_received_nak(pkt):
+            logger.debug("C3.1: T. Received NAK, in RENEWING state, "
+                         "raise INIT.")
+            raise self.INIT()
+<switch:english>
+[english] The code checks if the packet is a valid NAK using `process_received_nak`. If successful, it intentionally raises an initialization exception.
+[english] What happens if process_received_nak(pkt) returns false, meaning the NAK was somehow ignored or invalid?
+[english] If the check fails (returns False), the function completes without execution further. You can think of this as it simply does nothing and exits normally.
+[english] Thanks for explaining the flow, that makes the state transition much clearer.

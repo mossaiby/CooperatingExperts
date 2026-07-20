@@ -1,0 +1,61 @@
+[english] How can I generate a list of birthdays from a collection of vCards, sorted by date, formatted for either machine readability or human display?
+[english] This function first filters out all contacts that do not have a birthday, then sorts the remaining contacts primarily by their month and day. It iterates through this pre-sorted list to generate formatted output strings tailored whether you need tab-separated data or a standard view.
+<switch:python>
+[python] def birthdays_subcommand(vcard_list, parsable):
+    """Print birthday contact table.
+
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
+    :returns: None
+    :rtype: None
+
+    """
+    # filter out contacts without a birthday date
+    vcard_list = [
+        vcard for vcard in vcard_list if vcard.get_birthday() is not None]
+    # sort by date (month and day)
+    # The sort function should work for strings and datetime objects.  All
+    # strings will besorted before any datetime objects.
+    vcard_list.sort(
+        key=lambda x: (x.get_birthday().month, x.get_birthday().day)
+        if isinstance(x.get_birthday(), datetime.datetime)
+        else (0, 0, x.get_birthday()))
+    # add to string list
+    birthday_list = []
+    for vcard in vcard_list:
+        date = vcard.get_birthday()
+        if parsable:
+            if config.display_by_name() == "first_name":
+                birthday_list.append("%04d.%02d.%02d\t%s"
+                                     % (date.year, date.month, date.day,
+                                        vcard.get_first_name_last_name()))
+            else:
+                birthday_list.append("%04d.%02d.%02d\t%s"
+                                     % (date.year, date.month, date.day,
+                                        vcard.get_last_name_first_name()))
+        else:
+            if config.display_by_name() == "first_name":
+                birthday_list.append("%s\t%s"
+                                     % (vcard.get_first_name_last_name(),
+                                        vcard.get_formatted_birthday()))
+            else:
+                birthday_list.append("%s\t%s"
+                                     % (vcard.get_last_name_first_name(),
+                                        vcard.get_formatted_birthday()))
+    if birthday_list:
+        if parsable:
+            print('\n'.join(birthday_list))
+        else:
+            list_birthdays(birthday_list)
+    else:
+        if not parsable:
+            print("Found no birthdays")
+        sys.exit(1)
+<switch:english>
+[english] The formatting logic relies heavily on `config` settings to decide how names (first/last) should appear, as seen in the string construction blocks.
+[english] What happens if 'parsable' is True and no birthdays are found? Does the function handle that gracefully?
+[english] If no birthdays are found when parsable mode is active, the method terminates silently without printing anything, allowing upstream scripts to handle the lack of data. If parsable is False, it prints a specific message 'Found no birthdays.' followed by sys.exit(1).
+[english] That clarifies how the list generation and exit handling are structured.

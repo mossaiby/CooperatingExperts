@@ -1,0 +1,57 @@
+[english] How can I automatically segment audio files using different boundary detection and labeling methods?
+[english] This function orchestrates a pipeline for audio segmentation, allowing dynamic switching between predefined modules to detect boundaries and apply labels.
+<switch:python>
+[python] def run_flat(file_struct, bounds_module, labels_module, frame_times, config,
+             annotator_id):
+    """Runs the flat algorithms with the specified identifiers on the
+    audio_file. See run_algorithm for more information.
+    """
+    # Get features to make code nicer
+    features = config["features"].features
+
+    # Segment using the specified boundaries and labels
+    # Case when boundaries and labels algorithms are the same
+    if bounds_module is not None and labels_module is not None and \
+            bounds_module.__name__ == labels_module.__name__:
+        S = bounds_module.Segmenter(file_struct, **config)
+        est_idxs, est_labels = S.processFlat()
+    # Different boundary and label algorithms
+    else:
+        # Identify segment boundaries
+        if bounds_module is not None:
+            S = bounds_module.Segmenter(file_struct, in_labels=[], **config)
+            est_idxs, est_labels = S.processFlat()
+        else:
+            try:
+                # Ground-truth boundaries
+                est_times, est_labels = io.read_references(
+                    file_struct.audio_file, annotator_id=annotator_id)
+                est_idxs = io.align_times(est_times, frame_times)
+                if est_idxs[0] != 0:
+                    est_idxs = np.concatenate(([0], est_idxs))
+            except IOError:
+                logging.warning("No references found for file: %s" %
+                                file_struct.audio_file)
+                return [], []
+
+        # Label segments
+        if labels_module is not None:
+            if len(est_idxs) == 2:
+                est_labels = np.array([0])
+            else:
+                S = labels_module.Segmenter(file_struct,
+                                            in_bound_idxs=est_idxs,
+                                            **config)
+                est_labels = S.processFlat()[1]
+
+    # Make sure the first and last boundaries are included
+    est_times, est_labels = utils.process_segmentation_level(
+        est_idxs, est_labels, features.shape[0], frame_times,
+        config["features"].dur)
+
+    return est_times, est_labels
+<switch:english>
+[english] The final step ensures proper temporal alignment by padding or adjusting the derived indices before returning the structured times and labels.
+[english] What happens if both `bounds_module` and `labels_module` are None?
+[english] If no modules are provided, the function attempts to load ground-truth references using `io.read_references`. If this fails or is impossible, it returns empty lists for times and labels.
+[english] That makes perfect sense for a fall-back scenario, thanks!

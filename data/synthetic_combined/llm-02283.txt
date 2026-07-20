@@ -1,0 +1,53 @@
+[english] A researcher needs a versatile utility to switch between different formats of image data, such as raw numpy arrays and NiBabel objects, for analysis.
+[english] The function handles diverse inputs by first verifying if the input is a string or an existing NiBabel object. It then uses conditional logic to transform and reshape the data into the requested output format ('vector', 'array', or 'image').
+<switch:python>
+[python] def get_image(self, image, output='vector'):
+        """ A flexible method for transforming between different
+        representations of image data.
+        Args:
+            image: The input image. Can be a string (filename of image),
+                NiBabel image, N-dimensional array (must have same shape as
+                self.volume), or vectorized image data (must have same length
+                as current conjunction mask).
+            output: The format of the returned image representation. Must be
+                one of:
+                    'vector': A 1D vectorized array
+                    'array': An N-dimensional array, with
+                        shape = self.volume.shape
+                    'image': A NiBabel image
+        Returns: An object containing image data; see output options above.
+        """
+        if isinstance(image, string_types):
+            image = nb.load(image)
+
+        if type(image).__module__.startswith('nibabel'):
+            if output == 'image':
+                return image
+            image = image.get_data()
+
+        if not type(image).__module__.startswith('numpy'):
+            raise ValueError("Input image must be a string, a NiBabel image, "
+                             "or a numpy array.")
+
+        if image.shape[:3] == self.volume.shape:
+            if output == 'image':
+                return nb.nifti1.Nifti1Image(image, None, self.get_header())
+            elif output == 'array':
+                return image
+            else:
+                image = image.ravel()
+
+        if output == 'vector':
+            return image.ravel()
+
+        image = np.reshape(image, self.volume.shape)
+
+        if output == 'array':
+            return image
+
+        return nb.nifti1.Nifti1Image(image, None, self.get_header())
+<switch:english>
+[english] Note that this method relies heavily on `self.volume.shape`, meaning it must be called within a context where `self` has this attribute defined.
+[english] What specific error is raised if the input image shape cannot be converted to match self.volume.shape?
+[english] If the initial dimension check (and subsequent reshaping) fails, the function will typically either return the input un-reshaped as is or fail during `np.reshape` depending on the execution path. In short, it mandates dimensional congruence.
+[english] That clarifies how data consistency is maintained!

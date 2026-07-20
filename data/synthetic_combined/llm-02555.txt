@@ -1,0 +1,28 @@
+[english] How can I execute external fuzz targets dynamically using inputs provided by my fuzzer?
+[english] This function executes an external program, handling two primary strategies for feeding input. It either pipes the raw fuzz data into standard input or intelligently substitutes placeholders within a predefined command structure.
+<switch:python>
+[python] def execute(self, obj):
+        """
+        Perform the actual external fuzzing, you may replace this method in order to increase performance
+        """
+        try:
+            if self.config.stdin:
+                    self.spawn(self.config.command, stdin_content=obj, stdin=True, timeout=1)
+            else:
+                if "@@" not in self.config.command:
+                    raise PJFMissingArgument("Missing @@ filename indicator while using non-stdin fuzzing method")
+                for x in self.config.command:
+                    if "@@" in x:
+                        self.config.command[self.config.command.index(x)] = x.replace("@@", obj)
+                self.spawn(self.config.command, timeout=2)
+            self.logger.debug("[{0}] - PJFExternalFuzzer successfully completed".format(time.strftime("%H:%M:%S")))
+            return self._out
+        except KeyboardInterrupt:
+            return ""
+        except Exception as e:
+            raise PJFBaseException(e.message if hasattr(e, "message") else str(e))
+<switch:english>
+[english] The code uses robust error management and logs execution status via `self.logger`. Be aware that replacing this method is recommended to improve performance in high-speed testing scenarios.
+[english] If my custom fuzz logic fails during the placeholder replacement phase, how does the function handle that specific error?
+[english] Any runtime exception encountered within the try block, including errors during substitution or spawning, will be caught and re-raised as a PJFBaseException.
+[english] Got it; I'll monitor for those potential exceptions.

@@ -1,0 +1,37 @@
+[english] How can I safely fetch and decode Python source code from an external URL while ensuring correct character encoding?
+[english] This function fetches file contents using `urllib`, then intelligently determines the necessary encoding via a helper that inspects the beginning of the response. It uses buffering to treat the downloaded bytes as readable text.
+<switch:python>
+[python] def read_py_url(url, errors='replace', skip_encoding_cookie=True):
+    """Read a Python file from a URL, using the encoding declared inside the file.
+    
+    Parameters
+    ----------
+    url : str
+      The URL from which to fetch the file.
+    errors : str
+      How to handle decoding errors in the file. Options are the same as for
+      bytes.decode(), but here 'replace' is the default.
+    skip_encoding_cookie : bool
+      If True (the default), and the encoding declaration is found in the first
+      two lines, that line will be excluded from the output - compiling a
+      unicode string with an encoding declaration is a SyntaxError in Python 2.
+    
+    Returns
+    -------
+    A unicode string containing the contents of the file.
+    """
+    response = urllib.urlopen(url)
+    buffer = io.BytesIO(response.read())
+    encoding, lines = detect_encoding(buffer.readline)
+    buffer.seek(0)
+    text = TextIOWrapper(buffer, encoding, errors=errors, line_buffering=True)
+    text.mode = 'r'
+    if skip_encoding_cookie:
+        return "".join(strip_encoding_cookie(text))
+    else:
+        return text.read()
+<switch:english>
+[english] The function smartly handles Python 2/3 compatibility by conditionally removing encoding declarations from the start of the file if the flag is set, preventing syntax errors during compilation.
+[english] If 'detect_encoding' fails or returns an unreliable guess, what happens to the resulting string?
+[english] If detection fails, the subsequent text decoding will rely on Python's default encoding settings for that environment. You can specify a fallback encoding directly when calling this function if you expect certain file types.
+[english] That makes sense; I appreciate the detailed logic.

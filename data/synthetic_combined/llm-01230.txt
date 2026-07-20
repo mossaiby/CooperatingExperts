@@ -1,0 +1,21 @@
+[english] I need a way to lazily load and cache the correct data type converter for different plugins based on configuration.
+[english] This method manages a cached attribute that determines how values are converted. It checks if the converter is already loaded before attempting to find it, prioritizing specific plugin definitions first.
+<switch:python>
+[python] def converter(self):
+        """
+        :rtype: callable
+        """
+        if self._converter is None:
+            try:
+                self._converter = self.SPECIAL_CONVERTERS[self.plugin][self.name]
+            except KeyError:
+                try:
+                    self._converter = self._get_scheme_converter()
+                except UnknownOption:
+                    self._converter = self.CONVERTERS_FOR_UNKNOWN.get(self.plugin, self.dummy_converter)
+        return self._converter
+<switch:english>
+[english] If all other lookup methods fail, it defaults to a generic 'dummy' converter to prevent execution errors during setup.
+[english] What happens if `self.plugin` or `self.name` is missing in the initial configuration?
+[english] A `KeyError` is caught when accessing specific converters. If that fails, it attempts to find a fallback using `_get_scheme_converter()`, and finally returns a generic converter from `CONVERTERS_FOR_UNKNOWN`.
+[english] This pattern seems robust for library extensibility.

@@ -1,0 +1,39 @@
+[english] How can I calculate an orientation envelope using a von-Mises distribution, given a mean direction and bandwidth?
+[english] This function calculates a radial probability density for orientations near a specified mean angle ($	heta$). It uses the characteristics of a von-Mises distribution, often modeled with an exponential function in its approximation.
+<switch:python>
+[python] def orientation(self, theta, B_theta, force=False):
+        """
+        Returns the orientation envelope:
+        We use a von-Mises distribution on the orientation:
+        - mean orientation is ``theta`` (in radians),
+        - ``B_theta`` is the bandwidth (in radians). It is equal to the standard deviation of the Gaussian
+        envelope which approximate the distribution for low bandwidths. The Half-Width at Half Height is
+        given by approximately np.sqrt(2*B_theta_**2*np.log(2)).
+
+        # selecting one direction,  theta is the mean direction, B_theta the spread
+        # we use a von-mises distribution on the orientation
+        # see http://en.wikipedia.org/wiki/Von_Mises_distribution
+        """
+        if B_theta is np.inf: # for large bandwidth, returns a strictly flat envelope
+            enveloppe_orientation = 1.
+        elif self.pe.use_cache and not force:
+            tag = str(theta) + '_' + str(B_theta)
+            try:
+                return self.cache['orientation'][tag]
+            except:
+                if self.pe.verbose>50: print('doing orientation cache for tag ', tag)
+                self.cache['orientation'][tag] = self.orientation(theta, B_theta, force=True)
+                return self.cache['orientation'][tag]
+        else: # non pathological case
+            # As shown in:
+            #  http://www.csse.uwa.edu.au/~pk/research/matlabfns/PhaseCongruency/Docs/convexpl.html
+            # this single bump allows (without the symmetric) to code both symmetric
+            # and anti-symmetric parts in one shot.
+            cos_angle = np.cos(self.f_theta-theta)
+            enveloppe_orientation = np.exp(cos_angle/B_theta**2)
+        return enveloppe_orientation
+<switch:english>
+[english] The implementation handles caching using `self.pe.use_cache` for efficiency, but notes that extremely wide bandwidth (`B_theta is np.inf`) results in a flat (uniform) envelope of 1.
+[english] What happens if the required attribute `self.f_theta` isn't defined when calling this function?
+[english] The code will raise an `AttributeError` because it attempts to access `self.f_theta` within the final calculation block (`cos_angle = np.cos(self.f_theta - theta)`). You must ensure that instance variable is initialized before using `orientation()`.
+[english] That makes sense, thanks for clarifying how the dependencies work.

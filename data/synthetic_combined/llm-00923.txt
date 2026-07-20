@@ -1,0 +1,27 @@
+[english] I need a way to check if the Deep Water model builder is currently available and ready to use on our platform.
+[english] This function queries the H2O API for details about the 'deepwater' algorithm builder, specifically checking its visibility setting.
+<switch:python>
+[python] def available():
+        """Returns True if a deep water model can be built, or False otherwise."""
+        builder_json = h2o.api("GET /3/ModelBuilders", data={"algo": "deepwater"})
+        visibility = builder_json["model_builders"]["deepwater"]["visibility"]
+        if visibility == "Experimental":
+            print("Cannot build a Deep Water model - no backend found.")
+            return False
+        else:
+            return True
+<switch:english>
+[english] The function returns False only when the backend explicitly marks the model as experimental; otherwise, it assumes availability.
+[english] What if there were other status values besides 'Experimental'? Should I handle those too?
+[english] If you wanted to support multiple statuses requiring caution, you could check for any value indicating a prerequisite is not met. For example:,
+<switch:python>
+[python] def available():
+    builder_json = h2o.api("GET /3/ModelBuilders", data={"algo": "deepwater"})
+    visibility = builder_json["model_builders"]["deepwater"]["visibility"]
+    forbidden_statuses = ["Experimental", "Deprecated"] 
+    if visibility in forbidden_statuses:
+        print(f"Cannot build Deep Water: Status is {visibility}")
+        return False
+    return True"
+<switch:english>
+[english] Got it, that makes the logic much more robust!

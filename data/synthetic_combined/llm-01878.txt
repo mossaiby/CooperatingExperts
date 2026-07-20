@@ -1,0 +1,30 @@
+[english] I need a Python function to check if a given pipeline string contains any forbidden characters like parentheses or pipes.
+[english] This validation checks the input string against a specific list of disallowed symbols using the 'in' operator, providing immediate feedback upon finding an issue.
+<switch:python>
+[python] def validate_pipeline(pipeline_string):
+        """Validate pipeline string
+
+        Validates the pipeline string by searching for forbidden characters
+
+        Parameters
+        ----------
+        pipeline_string : str
+            STring with the processes provided
+
+        Returns
+        -------
+
+        """
+        if "(" in pipeline_string or ")" in pipeline_string or "|" in \
+                pipeline_string:
+            logger.error(
+                colored_print("Please provide a valid task list!", "red_bold")
+            )
+            return False
+
+        return True
+<switch:english>
+[english] The function currently relies on external dependencies (logger and colored_print) for error handling rather than raising exceptions or returning error messages directly to the calling context.
+[english] How can I modify this code so it raises a descriptive ValueError instead of using custom logging functions?
+[english] You can replace the conditional block with an assertion that intentionally throws a value error if any forbidden characters are detected in the pipeline_string.
+[english] That makes much more sense for general API use!

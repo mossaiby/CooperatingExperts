@@ -1,0 +1,48 @@
+[english] I need a way to traverse an Abstract Syntax Tree (AST) node, ensure its lines haven't been processed, and collect all relevant source code lines for that block.
+[english] This function acts as a visitor method that checks if the current AST node represents executable Python code. It meticulously determines the starting line number and collects all subsequent lines up to the end of the statement's range.
+<switch:python>
+[python] def visit_default(self, node):
+        """check the node line number and check it if not yet done"""
+        if not node.is_statement:
+            return
+        if not node.root().pure_python:
+            return  # XXX block visit of child nodes
+        prev_sibl = node.previous_sibling()
+        if prev_sibl is not None:
+            prev_line = prev_sibl.fromlineno
+        else:
+            # The line on which a finally: occurs in a try/finally
+            # is not directly represented in the AST. We infer it
+            # by taking the last line of the body and adding 1, which
+            # should be the line of finally:
+            if (
+                isinstance(node.parent, nodes.TryFinally)
+                and node in node.parent.finalbody
+            ):
+                prev_line = node.parent.body[0].tolineno + 1
+            else:
+                prev_line = node.parent.statement().fromlineno
+        line = node.fromlineno
+        assert line, node
+        if prev_line == line and self._visited_lines.get(line) != 2:
+            self._check_multi_statement_line(node, line)
+            return
+        if line in self._visited_lines:
+            return
+        try:
+            tolineno = node.blockstart_tolineno
+        except AttributeError:
+            tolineno = node.tolineno
+        assert tolineno, node
+        lines = []
+        for line in range(line, tolineno + 1):
+            self._visited_lines[line] = 1
+            try:
+                lines.append(self._lines[line].rstrip())
+            except KeyError:
+                lines.append("")
+<switch:english>
+[english] The logic includes complex handling for inferring previous line numbers, especially when dealing with structures like `try/finally` where standard AST attributes might be missing.
+[english] How does the function handle cases where a single line contains multiple executable statements?
+[english] If a node spans lines but only one line requires special multi-statement checking (like in `self._check_multi_statement_line`), it processes that specific case and returns early, ensuring subsequent lines are handled normally.
+[english] Does this function rely on external state to track visited code?

@@ -1,0 +1,56 @@
+[english] I need a robust function that updates documentation files to ensure they always reference the current branch's proper URL and information.
+[english] This method dynamically configures replacement rules based on whether it detects a 'dev' or 'master' environment. It then reads the target file's content, iteratively applies the necessary regex replacements, and finally overwrites the original document with the corrected text.
+<switch:python>
+[python] def _update_docs(self, file_to_update):
+        """
+        Update the given documentation file or :code:`README.rst` so that
+        it always gives branch related URL and informations.
+
+        .. note::
+            This only apply to :code:`dev` and :code:`master` branch.
+
+        :param file_to_update: The file to update.
+        :type file_to_update: str
+        """
+
+        if self.is_dev_version():
+            # The current version is the dev version.
+
+            # We map what we have to replace.
+            # Format: {match:replacement}
+            regexes = {
+                "/%s/" % "dev": r"\/%s\/" % "master",
+                "=%s" % "dev": "=%s" % "master",
+            }
+        elif self.is_master_version():
+            # The current version is the master version.
+
+            # We map what we have to replace.
+            regexes = {
+                "/%s/" % "master": r"\/%s\/" % "dev",
+                "=%s" % "master": "=%s" % "dev",
+            }
+        else:
+            # The current version is not the master nor the dev version.
+
+            # We raise an exception as the branch we are currently is not meaned
+            # for production.
+            raise Exception("Please switch to `dev` or `master` branch.")
+
+        # We get the content of the file to fix.
+        to_update = File(file_to_update).read()
+
+        for replacement, regex in regexes.items():
+            # We loop through reach element of the map.
+
+            # We process the replacement.
+            to_update = Regex(to_update, regex, replace_with=replacement).replace()
+
+        # We finally overwrite the file to fix with the filtered.
+        # content.
+        File(file_to_update).write(to_update, overwrite=True)
+<switch:english>
+[english] Be careful when using this function, as it directly writes to and overwrites the specified documentation file. This ensures consistency but requires caution during execution.
+[english] What will happen if I try to run `_update_docs` on a branch that isn't explicitly 'dev' or 'master'?
+[english] If the current branch is neither `dev` nor `master`, the function catches this discrepancy and immediately raises an Exception, preventing unintended documentation modification.
+[english] Got it, thanks for the clear explanation!

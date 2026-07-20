@@ -1,0 +1,21 @@
+[english] I need a centralized way to run various initialization scripts or checks before my main program execution begins.
+[english] This function iterates through all registered pre-execution callbacks and executes them sequentially. It allows you to register multiple setup functions that receive any keyword arguments passed during the call.
+<switch:python>
+[python] def on_pre_execution(**kwargs):
+    """
+    Calls callbacks before execution.
+    Note that any exception from callback will be logged but won't be propagated.
+    :param kwargs:
+    :return: None
+    """
+    logging.debug("Calling callbacks: %s", __pre_exec_callbacks)
+    for cb in __pre_exec_callbacks:
+        try:
+            cb(**kwargs)
+        except Exception:
+            logging.exception('Failed on pre-execution callback using %s', cb)
+<switch:english>
+[english] The try/except block ensures that a failure in one callback does not prevent subsequent callbacks from running, guaranteeing robust execution flow even with failing hooks.
+[english] If no keyword arguments are provided when calling this function, what will be passed to the registered callbacks?
+[english] Empty dictionaries. When called without keywords, `**kwargs` evaluates to an empty dictionary in Python, meaning each callback receives `{}` as its argument.
+[english] That clarifies the behavior perfectly.

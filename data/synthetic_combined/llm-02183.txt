@@ -1,0 +1,15 @@
+[english] I need a way to execute external commands using internal methods and ensure that any non-zero exit codes result in a custom exception.
+[english] To wrap command execution safely, we first call our internal runner and capture the return code along with the output. If the execution fails (return code is not zero), we raise the specific CommandError to handle failures gracefully before returning successful data.
+<switch:python>
+[python] def check_output(self, cmd):
+        """Wrapper for subprocess.check_output."""
+        ret, output = self._exec(cmd)
+        if not ret == 0:
+            raise CommandError(self)
+
+        return output
+<switch:english>
+[english] This wrapper ensures that the command is successful before exposing its standard output to other parts of the code. Be aware it only checks the immediate exit code, not potential runtime errors within the executed script itself.
+[english] What happens if the command succeeds but produces no stdout?
+[english] If a command executes successfully and generates no output, the function will return an empty string since `output` captures everything after the successful execution.
+[english] That is exactly what I needed; thanks for the clear explanation.

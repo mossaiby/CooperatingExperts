@@ -1,0 +1,37 @@
+[english] How can I ensure that task instance states accurately reflect the statuses reported by the external executor?
+[english] This function acts as a state validator by comparing tasks registered in `running` against events coming from the executor's internal buffer.
+<switch:python>
+[python] def _manage_executor_state(self, running):
+        """
+        Checks if the executor agrees with the state of task instances
+        that are running
+
+        :param running: dict of key, task to verify
+        """
+        executor = self.executor
+
+        for key, state in list(executor.get_event_buffer().items()):
+            if key not in running:
+                self.log.warning(
+                    "%s state %s not in running=%s",
+                    key, state, running.values()
+                )
+                continue
+
+            ti = running[key]
+            ti.refresh_from_db()
+
+            self.log.debug("Executor state: %s task %s", state, ti)
+
+            if state == State.FAILED or state == State.SUCCESS:
+                if ti.state == State.RUNNING or ti.state == State.QUEUED:
+                    msg = ("Executor reports task instance {} finished ({}) "
+                           "although the task says its {}. Was the task "
+                           "killed externally?".format(ti, state, ti.state))
+                    self.log.error(msg)
+                    ti.handle_failure(msg)
+<switch:english>
+[english] The logic detects inconsistencies where the executor reports a finished state (SUCCESS/FAILED) while the task instance internally believes it is still running.
+[english] If an event from the executor arrives for a key that isn't in my `running` dictionary, should I log a warning and ignore it?
+[english] Yes, the function logs this as a warning but continues to processing other events, effectively ignoring any untracked tasks.
+[english] Got it. Thanks for clarifying.

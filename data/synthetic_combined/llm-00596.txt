@@ -1,0 +1,87 @@
+[english] How can I retrieve the IDs of all configured notification channels or filter them based on specific criteria using an SDLC API?
+[english] The function first fetches comprehensive data for all existing notification channels via a GET request. It then determines if filtering is needed, either collecting every ID available or selectively finding matches defined in the input list.
+<switch:python>
+[python] def get_notification_ids(self, channels=None):
+        '''**Description**
+            Get an array of all configured Notification Channel IDs, or a filtered subset of them.
+
+        **Arguments**
+            - **channels**: an optional array of dictionaries to limit the set of Notification Channel IDs returned. If not specified, IDs for all configured Notification Channels are returned. Each dictionary contains a ``type`` field that can be one of the available types of Notification Channel (``EMAIL``, ``SNS``, ``PAGER_DUTY``, ``SLACK``, ``OPSGENIE``, ``VICTOROPS``, ``WEBHOOK``) as well as additional elements specific to each channel type.
+
+        **Success Return Value**
+            An array of Notification Channel IDs (integers).
+
+        **Examples**
+            - `examples/create_alert.py <https://github.com/draios/python-sdc-client/blob/master/examples/create_alert.py>`_
+            - `examples/restore_alerts.py <https://github.com/draios/python-sdc-client/blob/master/examples/restore_alerts.py>`_
+        '''
+
+        res = requests.get(self.url + '/api/notificationChannels', headers=self.hdrs, verify=self.ssl_verify)
+
+        if not self._checkResponse(res):
+            return False, self.lasterr
+
+        ids = []
+
+        # If no array of channel types/names was provided to filter by,
+        # just return them all.
+        if channels is None:
+            for ch in res.json()["notificationChannels"]:
+                ids.append(ch['id'])
+            return [True, ids]
+
+        # Return the filtered set of channels based on the provided types/names array.
+        # Should try and improve this M * N lookup
+        for c in channels:
+            found = False
+            for ch in res.json()["notificationChannels"]:
+                if c['type'] == ch['type']:
+                    if c['type'] == 'SNS':
+                        opt = ch['options']
+                        if set(opt['snsTopicARNs']) == set(c['snsTopicARNs']):
+                            found = True
+                            ids.append(ch['id'])
+                    elif c['type'] == 'EMAIL':
+                        opt = ch['options']
+                        if 'emailRecipients' in c:
+                            if set(c['emailRecipients']) == set(opt['emailRecipients']):
+                                found = True
+                                ids.append(ch['id'])
+                        elif 'name' in c:
+                            if c['name'] == ch.get('name'):
+                                found = True
+                                ids.append(ch['id'])
+                    elif c['type'] == 'PAGER_DUTY':
+                        opt = ch['options']
+                        if opt['account'] == c['account'] and opt['serviceName'] == c['serviceName']:
+                            found = True
+                            ids.append(ch['id'])
+                    elif c['type'] == 'SLACK':
+                        opt = ch['options']
+                        if 'channel' in opt and opt['channel'] == c['channel']:
+                            found = True
+                            ids.append(ch['id'])
+                    elif c['type'] == 'OPSGENIE':
+                        if 'name' in c:
+                            if c['name'] == ch.get('name'):
+                                found = True
+                                ids.append(ch['id'])
+                    elif c['type'] == 'VICTOROPS':
+                        if 'name' in c:
+                            if c['name'] == ch.get('name'):
+                                found = True
+                                ids.append(ch['id'])
+                    elif c['type'] == 'WEBHOOK':
+                        if 'name' in c:
+                            if c['name'] == ch.get('name'):
+                                found = True
+                                ids.append(ch['id'])
+            if not found:
+                return False, "Channel not found: " + str(c)
+
+        return True, ids
+<switch:english>
+[english] The core logic involves extensive type-checking and comparison (e.g., comparing ARN sets for SNS or recipient lists for Email) to accurately match requested criteria against existing configurations.
+[english] If I provide a set of filters that don't match any configured channels, what exact output structure will the function return?
+[english] Since it must confirm each provided filter exists, if a channel definition is not found, it returns False and an error message: `(False, 'Channel not found: [channel]')`. If all checks pass but no matches are found, it continues and may return an empty list depending on the iteration path.
+[english] Thanks for clarifying that behavior.

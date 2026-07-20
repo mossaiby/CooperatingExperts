@@ -1,0 +1,18 @@
+[english] How do I retrieve all the item objects associated with this specific checklist, formatted correctly?
+[english] This function fetches a list of raw data items and then transforms each one into an instance of ChecklistItem by linking it to the correct parent card.
+<switch:python>
+[python] def get_item_objects(self, query_params=None):
+        """
+        Get the items for this checklist. Returns a list of ChecklistItem objects.
+        """
+        card = self.get_card()
+        checklistitems_list = []
+        for checklistitem_json in self.get_items(query_params):
+            checklistitems_list.append(self.create_checklist_item(card.id, self.id, checklistitem_json))
+
+        return checklistitems_list
+<switch:english>
+[english] The method relies on several internal dependencies like `get_card()` and `create_checklist_item()`, so ensure those are properly configured for this flow.
+[english] What happens if 'query_params' is not provided when calling the function?
+[english] If no parameters are passed, it calls `self.get_items(None)`, which presumably retrieves all available items without specific filtering.
+[english] Got it, thanks for clarifying how that handles optional inputs!

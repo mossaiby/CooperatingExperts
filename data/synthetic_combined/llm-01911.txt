@@ -1,0 +1,28 @@
+[english] How do I update specific attributes of an existing category without overwriting all its other values?
+[english] This function enables smart, partial updates by checking if parameters like `nmin`, `n`, or `nmax` are provided before applying changes. It first confirms the category exists within the internal structure to ensure data integrity.
+<switch:python>
+[python] def updateCategory(self,name,nmin=None,n=None,nmax=None):
+        """
+        Smartly updates the given category.
+        
+        Only values that are given will be updated, others will be left unchanged.
+        
+        If the category does not exist, a :py:exc:`KeyError` will be thrown. Use
+        :py:meth:`addCategory()` instead if you want to add a category.
+        """
+        # smart update, only stuff that was given
+        if name not in self.categories:
+            raise KeyError("No Category with name '%s'"%name)
+        if nmin is not None:
+            self.categories[name][0]=nmin
+        if n is not None:
+            self.categories[name][1]=n
+        if nmax is not None:
+            self.categories[name][2]=nmax
+        self.redraw()
+        self.doAction("progresschange")
+<switch:english>
+[english] The update modifies specific indices (0, 1, and 2) of the list stored for that category; this is immediately followed by state synchronization steps like `self.redraw()`.
+[english] What happens if I call this method with a name that isn't currently in my categories?
+[english] If the provided category name does not exist in `self.categories`, the function explicitly raises a KeyError, forcing you to use the dedicated `addCategory()` method instead.
+[english] That makes sense; so it is strictly for modifying known data.

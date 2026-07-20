@@ -1,0 +1,24 @@
+[english] How can I ensure my widget responds correctly to various user inputs like mouse clicks and when the window is resized?
+[english] To implement event handling in this system, we need to explicitly tell the underlying manager how to react to specific events. This method registers our corresponding handler methods with the framework's event dispatcher.
+<switch:python>
+[python] def registerEventHandlers(self):
+        """
+        Registers event handlers used by this widget, e.g. mouse click/motion and window resize.
+        
+        This will allow the widget to redraw itself upon resizing of the window in case the position needs to be adjusted.
+        """
+        self.peng.registerEventHandler("on_mouse_press",self.on_mouse_press)
+        self.peng.registerEventHandler("on_mouse_release",self.on_mouse_release)
+        self.peng.registerEventHandler("on_mouse_drag",self.on_mouse_drag)
+        self.peng.registerEventHandler("on_mouse_motion",self.on_mouse_motion)
+        self.peng.registerEventHandler("on_resize",self.on_resize)
+<switch:english>
+[english] This setup establishes a direct link between external system events and the internal methods of this class. If any handler method is missing, that specific interaction will be ignored.
+[english] If I needed to execute multiple handlers for a single mouse press event, how would I modify this registration?
+[english] You could wrap your logic inside a new composite function and register that instead:
+<switch:python>
+[python] def handle_mouse_press(self):
+    self.on_mouse_press()
+    # add other actions here
+<switch:english>
+[english] That makes sense, thanks for clarifying how to chain events!

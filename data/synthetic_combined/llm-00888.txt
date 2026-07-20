@@ -1,0 +1,34 @@
+[english] How can I implement a generic method to execute configurable HTTP requests using parameters stored in an internal object attribute?
+[english] This function acts as a flexible wrapper around an external request library, pulling all configuration (URL, headers, body, auth) from `self.data`. It systematically builds the necessary keyword arguments for the request and handles basic status checking to validate the response before returning data.
+<switch:python>
+[python] def execute(self, root_allowed=False):
+        """Execute using self.data
+
+        :param bool root_allowed: Only used for ExecuteCmd
+        :return:
+        """
+        kwargs = {'stream': True, 'timeout': 15,
+                  'headers': self.data.get('headers', {})}
+        if self.data.get('content-type'):
+            kwargs['headers']['content-type'] = self.data['content-type']
+        if self.data.get('body'):
+            kwargs['data'] = self.data['body']
+        if self.data.get('auth'):
+            kwargs['auth'] = tuple(self.data['auth'].split(':', 1))
+        try:
+            resp = request(self.data.get('method', 'get').lower(), self.data['url'],
+                           verify=self.data.get('verify', True),
+                           **kwargs)
+        except RequestException as e:
+            raise ExecuteError('Exception on request to {}: {}'.format(self.data['url'], e))
+        if resp.status_code >= 400:
+            raise ExecuteError('"{}" return code {}.'.format(self.data['url'], resp.status_code))
+        data = resp.raw.read(1000, decode_content=True)
+        if sys.version_info >= (3,):
+            data = data.decode('utf-8', errors='ignore')
+        return data
+<switch:english>
+[english] The method prioritizes streaming and uses a generous timeout of 15 seconds by default. Note that it relies on Python version checks to correctly decode the response body into a UTF-8 string.
+[english] What if I set `self.data['auth']` as a tuple like ('base64_string') instead of letting the function split a colon-separated string?
+[english] The current logic expects a string and attempts to split it using `.split(':', 1);`, so passing an existing tuple would result in a TypeError when method is called.
+[english] Got it, I should make sure my data structure is correctly formatted for the splitting logic.

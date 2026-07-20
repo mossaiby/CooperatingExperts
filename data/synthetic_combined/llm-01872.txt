@@ -1,0 +1,14 @@
+[english] I need a function that automatically creates all my required database tables when the application starts.
+[english] This method handles the initialization while using a connection managed by context. It loops through defined table structures and executes each one against the connected database.
+<switch:python>
+[python] def setup(self):
+        """ Initialize the required tables in the database """
+        with self._db_conn() as conn:
+            for table_defn in self._tables.values():
+                conn.execute(table_defn)
+        return self
+<switch:english>
+[english] Since it relies on `self._db_conn()`, this assumes that all necessary credentials and connection logic are handled elsewhere in the class.
+[english] Is there any guarantee that if one of my SQL definitions fails to run, the entire setup will stop?
+[english] By default, a database error during `conn.execute()` will raise an exception and immediately exit the context manager, preventing further table creation.
+[english] I see; I should add specific try/except handling if I want partial success.

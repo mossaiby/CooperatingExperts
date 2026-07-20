@@ -1,0 +1,26 @@
+[english] How do I add a specific filter or constraint to my existing database join conditions?
+[english] This method allows you to dynamically build upon the query logic by storing filtering criteria. It takes a field name and its desired value, then appends them as a pair.
+<switch:python>
+[python] def add_condition(self, field, value: Any) -> None:
+        """Adds an extra condition to this join.
+
+        Arguments:
+            field:
+                The field that the condition will apply to.
+
+            value:
+                The value to compare.
+        """
+
+        self.extra_conditions.append((field, value))
+<switch:english>
+[english] This function assumes `self.extra_conditions` is initialized as a list; otherwise, trying to append will raise an AttributeError.
+[english] If I call this multiple times on the same object, how does that affect the final query?
+[english] It accumulates all conditions into a single list of tuples. For example,
+<switch:python>
+[python] obj = self.__class__() # Assume initialization
+objet.add_condition('user_id', 5)
+object.add_condition('status', 'active') 
+# obj.extra_conditions is now [('user_id', 5), ('status', 'active')]
+<switch:english>
+[english] Got it, stacking conditions makes sense.

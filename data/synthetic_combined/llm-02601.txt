@@ -1,0 +1,16 @@
+[english] How can I specify where the legend should appear within my chart instance?
+[english] This method ensures that the provided position is a recognized value before applying it to the object's internal settings.
+<switch:python>
+[python] def legend_pos(self, pos):
+        """
+        Define a position for your legend to occupy
+        APIPARAM: chdlp
+        """
+        assert pos in LEGEND_POSITIONS, 'Unknown legend position: %s'%pos
+        self['chdlp'] = str(pos)
+        return self
+<switch:english>
+[english] The function modifies the object in place and returns `self`, allowing for method chaining. Be aware that the input position is cast to a string upon saving.
+[english] What exactly happens if I try to pass a value for 'pos' that isn't listed in LEGEND_POSITIONS?
+[english] The code will raise an AssertionError because of the check on line 5, as shown below. The assertion enforces data integrity during configuration calls.
+[english] That makes sense, thanks!

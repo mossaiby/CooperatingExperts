@@ -1,0 +1,24 @@
+[english] How do I compute the $n$-th power of this quantum channel superoperator?
+[english] This function first checks if 'n' is positive, utilizing the inherited superclass method for efficiency. If n is not positive, it explicitly converts the current object into a Chi channel representation to ensure the matrix power calculation works correctly.
+<switch:python>
+[python] def power(self, n):
+        """The matrix power of the channel.
+
+        Args:
+            n (int): compute the matrix power of the superoperator matrix.
+
+        Returns:
+            Chi: the matrix power of the SuperOp converted to a Chi channel.
+
+        Raises:
+            QiskitError: if the input and output dimensions of the
+            QuantumChannel are not equal, or the power is not an integer.
+        """
+        if n > 0:
+            return super().power(n)
+        return Chi(SuperOp(self).power(n))
+<switch:english>
+[english] The usage of `Chi(SuperOp(self))` suggests that when handling non-positive powers, the internal state might be converted or normalized before computation. Always check documentation for constraints on expected dimensions if n is very large.
+[english] What happens to the object type if I pass $n=0$ into this method?
+[english] For $n=0$, it executes the path `Chi(SuperOp(self)).power(0)`, which should return the identity channel representation of the current state.
+[english] That makes sense, thanks for the detailed breakdown.

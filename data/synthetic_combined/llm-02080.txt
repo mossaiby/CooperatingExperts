@@ -1,0 +1,32 @@
+[english] How can I take a large block of text with multiple paragraphs and ensure every paragraph is wrapped neatly to a maximum column width?
+[english] This function uses regular expressions to identify and split the input into individual paragraphs based on sequences of empty lines. It then iterates through these paragraphs, applying `textwrap.fill` while attempting to preserve existing leading indentation.
+<switch:python>
+[python] def wrap_paragraphs(text, ncols=80):
+    """Wrap multiple paragraphs to fit a specified width.
+
+    This is equivalent to textwrap.wrap, but with support for multiple
+    paragraphs, as separated by empty lines.
+
+    Returns
+    -------
+
+    list of complete paragraphs, wrapped to fill `ncols` columns.
+    """
+    paragraph_re = re.compile(r'\n(\s*\n)+', re.MULTILINE)
+    text = dedent(text).strip()
+    paragraphs = paragraph_re.split(text)[::2] # every other entry is space
+    out_ps = []
+    indent_re = re.compile(r'\n\s+', re.MULTILINE)
+    for p in paragraphs:
+        # presume indentation that survives dedent is meaningful formatting,
+        # so don't fill unless text is flush.
+        if indent_re.search(p) is None:
+            # wrap paragraph
+            p = textwrap.fill(p, ncols)
+        out_ps.append(p)
+    return out_ps
+<switch:english>
+[english] The code checks for initial line indentation before wrapping; if a paragraph already has visible indentation, it skips automatic re-wrapping, preserving intentional formatting.
+[english] If all my paragraphs are already perfectly wrapped and fit under the `ncols` limit, will this function unnecessarily change their existing line breaks?
+[english] The function uses `textwrap.fill`, which is designed to enforce a maximum width. Even if lines fit, it might reflow them slightly based on how `textwrap.fill` determines optimal breaking points.
+[english] That makes sense; thanks for the breakdown.

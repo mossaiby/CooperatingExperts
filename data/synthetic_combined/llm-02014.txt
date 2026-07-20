@@ -1,0 +1,26 @@
+[english] I need a function that reliably transforms arbitrary input data, like numbers or strings, into a list format suitable for performing exact equality searches in a database index.
+[english] This helper function standardizes data by converting various inputs into strings, then wraps that single standardized entry inside a list to ensure it's ready for indexing. It handles non-string types and ensures the value is present before processing.
+<switch:python>
+[python] def IDENTITY(val):
+    '''
+    This is a basic "equality" index keygen, primarily meant to be used for
+    things like::
+
+        Model.query.filter(col='value')
+
+    Where ``FULL_TEXT`` would transform a sentence like "A Simple Sentence" into
+    an inverted index searchable by the words "a", "simple", and/or "sentence",
+    ``IDENTITY`` will only be searchable by the orginal full sentence with the
+    same capitalization - "A Simple Sentence". See ``IDENTITY_CI`` for the
+    same function, only case-insensitive.
+    '''
+    if not val:
+        return None
+    if not isinstance(val, six.string_types_ex):
+        val = str(val)
+    return [val]
+<switch:english>
+[english] Because this function prioritizes exact matches, any input modifications—like capitalization or punctuation—are fully preserved within the returned list.
+[english] Since the function preserves casing exactly, what happens if I pass in a boolean `True` versus the string 'true'?
+[english] The function relies on Python's implicit casting and checks. Passing `bool(True)` will result in the list `['True']`, while passing the literal string `'true'` will return the list `['true']`. The type conversion happens internally, but it treats strings as literal text.
+[english] That makes sense! Thanks for explaining how data types are handled.

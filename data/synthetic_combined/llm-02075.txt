@@ -1,0 +1,24 @@
+[english] I need a way to automatically refresh an existing Skype authentication token when it is about to expire so I can maintain continuous access.
+[english] This function handles token renewal by first sending your current valid token to the API via self.sendToken(). This initial request triggers the server to begin the refresh process, and the resulting response is then used by getToken() to retrieve the final refreshed data.
+<switch:python>
+[python] def auth(self, token):
+        """
+        Take an existing Skype token and refresh it, to extend the expiry time without other credentials.
+
+        Args:
+            token (str): existing Skype token
+
+        Returns:
+            (str, datetime.datetime) tuple: Skype token, and associated expiry if known
+
+        Raises:
+            .SkypeAuthException: if the login request is rejected
+            .SkypeApiException: if the login form can't be processed
+        """
+        t = self.sendToken(token)
+        return self.getToken(t)
+<switch:english>
+[english] It's important to note that if either of these internal calls fails due to an invalid or rejected token, the function will raise specific Skype authentication exceptions.
+[english] If a user tries this on a token that was previously revoked by the service, what errors should I expect?
+[english] A globally revoked token would likely cause self.sendToken() to fail validation and immediately raise a .SkypeAuthException before any refresh attempt could occur.
+[english] Perfect, knowing how it handles rejection helps me implement better error recovery.

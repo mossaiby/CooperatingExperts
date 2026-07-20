@@ -1,0 +1,40 @@
+[english] I need a reliable way, within my application context, to create and authenticate with an Apache Hive database connection.
+[english] This function dynamically establishes a Hive connection by first reading credentials and security configuration from itself. It expertly handles different authentication methods, including defaults for 'NONE' versus proper configurations for Kerberos.
+<switch:python>
+[python] def get_conn(self, schema=None):
+        """
+        Returns a Hive connection object.
+        """
+        db = self.get_connection(self.hiveserver2_conn_id)
+        auth_mechanism = db.extra_dejson.get('authMechanism', 'NONE')
+        if auth_mechanism == 'NONE' and db.login is None:
+            # we need to give a username
+            username = 'airflow'
+        kerberos_service_name = None
+        if configuration.conf.get('core', 'security') == 'kerberos':
+            auth_mechanism = db.extra_dejson.get('authMechanism', 'KERBEROS')
+            kerberos_service_name = db.extra_dejson.get('kerberos_service_name', 'hive')
+
+        # pyhive uses GSSAPI instead of KERBEROS as a auth_mechanism identifier
+        if auth_mechanism == 'GSSAPI':
+            self.log.warning(
+                "Detected deprecated 'GSSAPI' for authMechanism "
+                "for %s. Please use 'KERBEROS' instead",
+                self.hiveserver2_conn_id
+            )
+            auth_mechanism = 'KERBEROS'
+
+        from pyhive.hive import connect
+        return connect(
+            host=db.host,
+            port=db.port,
+            auth=auth_mechanism,
+            kerberos_service_name=kerberos_service_name,
+            username=db.login or username,
+            password=db.password,
+            database=schema or db.schema or 'default')
+<switch:english>
+[english] The code ensures that whether you use basic auth or need modern Kerberos flags, the `pyhive` parameters are correctly assembled for your operational environment.
+[english] If no username is provided in the connection details, how does it handle the login identity?
+[english] If neither a username nor a password is supplied but authentication requires one, the code defaults to using 'airflow' as the required username.
+[english] That makes sense now!

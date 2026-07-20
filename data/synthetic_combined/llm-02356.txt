@@ -1,0 +1,25 @@
+[english] How can I initialize an instance from multiple fortune files by aggregating their content while allowing for weighted counts?
+[english] This function initializes the object using class instantiation before iterating through a list of file paths. It progressively loads and aggregates fortunes, calculating a running total weight based on whether all fortunes are deemed equal.
+<switch:python>
+[python] def fromlist(cls, files, equal=False, offensive=False, lang=None):
+        """Initialize based on a list of fortune files"""
+        self = cls.__new__(cls)
+        self.files = fortunes = []
+        count = 0
+        for file in files:
+            fortune = load_fortune(file, offensive=offensive, lang=lang)
+            if fortune is None:
+                logger.warn("Can't load: %s", file)
+                continue
+            count += 1 if equal else fortune.size
+            fortunes.append((fortune, count))
+        if not fortunes:
+            raise ValueError('All fortune files specified are invalid')
+        self.count = count
+        self.keys = [i[1] for i in self.files]
+        return self
+<switch:english>
+[english] The method determines `self.count` by summing either 1 (if `equal=True`) or the size metadata from each loaded fortune. Note that `self.keys` is currently mapped incorrectly to `self.files` in the provided snippet.
+[english] If an empty list of files is passed, does the function fail immediately?
+[english] No, it completes the loop gracefully but will then raise a ValueError upon checking if any fortunes were actually loaded.
+[english] That clears up the initialization failure mode for me.

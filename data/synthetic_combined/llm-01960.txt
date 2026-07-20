@@ -1,0 +1,16 @@
+[english] I have a very large list of items that I need to process in manageable batches, but I don't want to load all those individual chunks into memory at once.
+[english] We can solve this by creating a generator that calculates the starting index for each chunk and then uses slicing to yield the data iteratively. This approach ensures excellent memory efficiency.
+<switch:python>
+[python] def chunks(items, chunk_size):
+    """
+    Yield successive chunks of a given size from a list of items
+    """
+    if chunk_size <= 0:
+        raise ValueError('Chunk size must be a positive integer')
+    for i in range(0, len(items), chunk_size):
+        yield items[i:i + chunk_size]
+<switch:english>
+[english] Since the function uses `yield`, it processes the input list incrementally, meaning you never have to store all resulting chunks in memory simultaneously.
+[english] What would happen if I passed a non-integer value for chunk_size, like None?
+[english] If you pass a non-integer type such as `None`, the function will raise a TypeError when it attempts to perform numerical comparisons against that value in the initial safety check.
+[english] That clarifies how input validation is handled. Thanks!

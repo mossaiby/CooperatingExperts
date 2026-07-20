@@ -1,0 +1,15 @@
+[english] How can I write a simple handler that serves an application's main index.html file when a user visits the root directory?
+[english] To handle root requests, this function first constructs an absolute path to the profile HTML using `os.path.join` and `__file__.`, then opens that file for reading.
+<switch:python>
+[python] def _handle_root():
+        """Handles index.html requests."""
+        res_filename = os.path.join(
+            os.path.dirname(__file__), _PROFILE_HTML)
+        with io.open(res_filename, 'rb') as res_file:
+            content = res_file.read()
+        return content, 'text/html'
+<switch:english>
+[english] The function uses a context manager with `io.open` to ensure the resource file is properly closed after reading its content in binary mode (`'rb'`).
+[english] What error handling mechanism should I add if _PROFILE_HTML does not exist at the calculated path?
+[english] You can wrap the file operations in a try-except block and return a 404 response or an informative error page upon failure.
+[english] That clarifies the potential issues, thank you!

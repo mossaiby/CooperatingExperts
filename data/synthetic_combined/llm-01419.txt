@@ -1,0 +1,18 @@
+[english] How do I properly initialize the internal slots of my LeanMinHash object using a specific seed and hash values?
+[english] This method sets up the necessary variables for the instance by securely storing the provided random seed and transforming the incoming raw hash data into a usable format.
+<switch:python>
+[python] def _initialize_slots(self, seed, hashvalues):
+        '''Initialize the slots of the LeanMinHash.
+
+        Args:
+            seed (int): The random seed controls the set of random
+                permutation functions generated for this LeanMinHash.
+            hashvalues: The hash values is the internal state of the LeanMinHash.
+        '''
+        self.seed = seed
+        self.hashvalues = self._parse_hashvalues(hashvalues)
+<switch:english>
+[english] Note that it relies on calling a private helper method `_parse_hashvalues` to handle any complex data conversion before storing the final state in self.hashvalues.
+[english] What happens if the input `seed` is None instead of an integer?
+[english] The function expects `seed` to be an integer; if `None`, it will simply store that value, which may cause type errors later when internal methods attempt to use the seed for generating random permutations.
+[english] Got it, thanks for clarifying!

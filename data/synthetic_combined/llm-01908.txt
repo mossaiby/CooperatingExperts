@@ -1,0 +1,34 @@
+[english] How can I generate a professional HTML error page that clearly displays both the exception message and the full traceback?
+[english] This function is designed to turn complex Python error objects into a friendly, readable HTML string for users. It uses a template to embed specific details like the error title and the complete stack trace.
+<switch:python>
+[python] def _error_traceback_html(exc_info, traceback_):
+    """
+    Generates error traceback HTML.
+
+    :param tuple exc_info:
+        Output of :func:`sys.exc_info` function.
+
+    :param traceback:
+        Output of :func:`traceback.format_exc` function.
+
+    """
+
+    html = """
+    <html>
+        <head>
+            <title>ERROR: {error}</title>
+        </head>
+        <body style="font-family: sans-serif">
+            <h4>The Authomatic library encountered an error!</h4>
+            <h1>{error}</h1>
+            <pre>{traceback}</pre>
+        </body>
+    </html>
+    """
+
+    return html.format(error=exc_info[1], traceback=traceback_)
+<switch:english>
+[english] The code pulls the main error description from the second element of `exc_info` while using `traceback_` to populate the preformatted text area that holds the full debugging log.
+[english] If I pass a tuple where `exc_info[1]` is not specifically set, how does the HTML look?
+[english] If `exc_info[1]` is missing or None, the function will render an empty head tag: <h1 /></h1>. To prevent that, you should ensure fallback values are provided before calling .format().
+[english] This helps me wrap my error handling logic much more cleanly.

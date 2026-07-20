@@ -1,0 +1,33 @@
+[english] I need a way to automatically discover all arguments required by an argument in my plugin configuration, while also verifying that no circular dependencies exist.
+[english] This function is implemented using recursion and a results set. It starts with the target 'name' and traverses its dependency chain (`argument.requires`). By tracking visited nodes in `results`, it ensures all necessary plugins are found before declaring success or detecting a loop.
+<switch:python>
+[python] def requires(self, name):
+        """
+        Find all the arguments required by name
+
+        :param name: name of the argument the find the dependencies
+
+        :return: list of dependant arguments
+        """
+        results = set([name])
+        argument = self.get(name)
+        for reqname in argument.requires:
+            required = self.get(reqname)
+            if not required:
+                raise KeyError("{0} is not a valid argument for this plugin".format(reqname))
+
+            if required.name in results:
+                raise RuntimeError("cycle detected in plugin argument config")
+            results.add(required.name)
+            yield required
+
+            for r in self.requires(required.name):
+                if r.name in results:
+                    raise RuntimeError("cycle detected in plugin argument config")
+                results.add(r.name)
+                yield r
+<switch:english>
+[english] The function uses generators, which means it returns dependencies one by one instead of compiling them into a list first to save memory. Be mindful that the definition relies on accessing attributes like 'requires' and 'name'.
+[english] If an argument in the deep dependency chain has no requirements itself, does it contribute anything to the final output?
+[english] Yes, every argument successfully retrieved within the recursion (even leaf nodes) is yielded by the function using `yield required` or `yield r`, making them part of the list delivered via iteration.
+[english] This makes dependency checking much more scalable.

@@ -1,0 +1,34 @@
+[english] How can I calculate differential Stokes parameters (I, Q, U, V) by subtracting noise diode offset measurements?
+[english] This function analyzes cross-polarization data from a noise diode to derive Stokes parameters and then compares the 'ON' state to the 'OFF' baseline.
+<switch:python>
+[python] def get_diff(dio_cross,feedtype,**kwargs):
+    '''
+    Returns ON-OFF for all Stokes parameters given a cross_pols noise diode measurement
+    '''
+    #Get Stokes parameters, frequencies, and time sample length
+    obs = Waterfall(dio_cross,max_load=150)
+    freqs = obs.populate_freqs()
+    tsamp = obs.header['tsamp']
+    data = obs.data
+    obs = None
+
+    I,Q,U,V = get_stokes(data,feedtype)
+
+    #Fold noise diode data
+    I_OFF,I_ON = foldcal(I,tsamp,**kwargs)
+    Q_OFF,Q_ON = foldcal(Q,tsamp,**kwargs)
+    U_OFF,U_ON = foldcal(U,tsamp,**kwargs)
+    V_OFF,V_ON = foldcal(V,tsamp,**kwargs)
+
+    #Do ON-OFF subtraction
+    Idiff = I_ON-I_OFF
+    Qdiff = Q_ON-Q_OFF
+    Udiff = U_ON-U_OFF
+    Vdiff = V_ON-V_OFF
+
+    return Idiff,Qdiff,Udiff,Vdiff,freqs
+<switch:english>
+[english] The final results are specific differences ($I_{ON}-I_{OFF}$, etc.) which effectively represent the signals relative to the noise diode levels.
+[english] Will the function handle cases where the input data is empty?
+[english] If `data` from the `Waterfall` initialization is empty, `get_stokes` will likely fail or return None, leading to a TypeError during subsequent subtraction operations. You might add an initial check.
+[english] That makes sense; I'll add the input validation.

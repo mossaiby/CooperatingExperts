@@ -1,0 +1,45 @@
+[english] I have sparse matrix properties serialized into a list and need to rebuild the actual SciPy matrix object.
+[english] To reconstruct the matrix, we first determine its format from the input list. We then check if it is empty before constructing the specific type of SciPy sparse matrix required (like CSR or CSC) using the provided data and shape information.
+<switch:python>
+[python] def _reconstruct_matrix(data_list):
+        """Reconstructs a matrix from a list containing sparse matrix extracted properties
+
+        `data_list` needs to be formatted as the first result of
+        :func:`~pypet.parameter.SparseParameter._serialize_matrix`
+
+        """
+        matrix_format = data_list[0]
+        data = data_list[1]
+        is_empty = isinstance(data, str) and data == '__empty__'
+
+        if matrix_format == 'csc':
+            if is_empty:
+                return spsp.csc_matrix(data_list[4])
+            else:
+                return spsp.csc_matrix(tuple(data_list[1:4]), shape=data_list[4])
+        elif matrix_format == 'csr':
+            if is_empty:
+                return spsp.csr_matrix(data_list[4])
+            else:
+                return spsp.csr_matrix(tuple(data_list[1:4]), shape=data_list[4])
+        elif matrix_format == 'bsr':
+            if is_empty:
+                # We have an empty matrix, that cannot be build as in elee case
+                return spsp.bsr_matrix(data_list[4])
+            else:
+                return spsp.bsr_matrix(tuple(data_list[1:4]), shape=data_list[4])
+        elif matrix_format == 'dia':
+            if is_empty:
+                return spsp.dia_matrix(data_list[3])
+            else:
+                return spsp.dia_matrix(tuple(data_list[1:3]), shape=data_list[3])
+        else:
+            raise RuntimeError('You shall not pass!')
+<switch:english>
+[english] The function relies heavily on precise indexing of `data_list` based on the selected sparse format. Ensure that all serialized properties match the expected length and order for safe operation.
+[english] What error occurs if one of the matrix formats is not recognized by this function?
+[english] If an unsupported format string is encountered, the function raises a runtime error:
+<switch:python>
+[python] raise RuntimeError('You shall not pass!')
+<switch:english>
+[english] That makes sense, thanks for clarifying!

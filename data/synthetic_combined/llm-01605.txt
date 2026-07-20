@@ -1,0 +1,27 @@
+[english] How can I implement a custom logic to transform or filter a list of hierarchical items depending on whether that logic is triggered by a menu, breadcrumbs, or other system components?
+[english] This function acts as a dispatcher for item processing hooks. First, it checks if the necessary processor hook has been registered; if not, it simply returns the original list unmodified.
+<switch:python>
+[python] def apply_hook(self, items, sender):
+        """Applies item processing hook, registered with ``register_item_hook()``
+        to items supplied, and returns processed list.
+
+        Returns initial items list if no hook is registered.
+
+        :param list items:
+        :param str|unicode sender: menu, breadcrumbs, sitetree, {type}.children, {type}.has_children
+        :rtype: list
+        """
+        processor = _ITEMS_PROCESSOR
+
+        if processor is None:
+            return items
+
+        if _ITEMS_PROCESSOR_ARGS_LEN == 2:
+            return processor(tree_items=items, tree_sender=sender)
+
+        return processor(tree_items=items, tree_sender=sender, context=self.current_page_context)
+<switch:english>
+[english] The function dynamically calls the registered hook (`processor`), passing either just the items and sender or including additional page context based on how the hook was defined.
+[english] If a developer registers an item processor that only expects two arguments, will it still work correctly if `self.current_page_context` is populated?
+[english] Yes, it works because the function explicitly checks `_ITEMS_PROCESSOR_ARGS_LEN`. If the length is 2, it calls the processor using only `items` and `sender`, avoiding any extra arguments.
+[english] Thanks for clarifying how this hook registration handles varying dependencies!

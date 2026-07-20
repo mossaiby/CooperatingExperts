@@ -1,0 +1,25 @@
+[english] I need a helper function to calculate and format event start and end datetimes based on configuration.
+[english] This approach calculates the current time once, then returns a dictionary using `datetime.timedelta` to offset that time for both the 'start' and 'end' keys.
+<switch:python>
+[python] def create_event_datetimes(options, config):
+    """
+    Create event start and end datetimes.
+    """
+
+    now = datetime.datetime.now()
+
+    return {
+        "start": {
+            "dateTime": (now + datetime.timedelta(minutes=int(config["start"]))).strftime(DT_FORMAT),
+            "timeZone": options.timezone,
+        },
+        "end": {
+            "dateTime": (now + datetime.timedelta(minutes=int(config["end"]))).strftime(DT_FORMAT),
+            "timeZone": options.timezone,
+        },
+    }
+<switch:english>
+[english] The function relies heavily on the pre-defined `DT_FORMAT` string to ensure the output datetime strings comply with common API standards like RFC 3339.
+[english] What should I do if `config['start']` happens to be a non-numeric value?
+[english] The current implementation uses `int()` so passing non-integer values will raise a TypeError. If you need robustness, add type checking or use error handling around the minutes calculation.
+[english] That makes perfect sense, thank you for your help.

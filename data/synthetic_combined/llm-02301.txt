@@ -1,0 +1,21 @@
+[english] I need a function that filters out disallowed attributes from a tag based on a predefined whitelist of allowed attributes.
+[english] This method ensures attribute safety by first checking if the tag name is recognized in `ATTR_WHITELIST`. If it is, it iterates through all existing attributes to validate and process them against the allowed list.
+<switch:python>
+[python] def parse_attrs(self, tag):
+        """
+        Reject attributes not defined in ATTR_WHITELIST.
+        """
+        if tag.name in ATTR_WHITELIST.keys():
+            attrs = copy(tag.attrs)
+            for attr, value in attrs.items():
+                if attr in ATTR_WHITELIST[tag.name]:
+                    tag.attrs[attr] = self._parse_attr(tag.name, attr, value)
+                else:
+                    del tag.attrs[attr]
+        else:
+            tag.attrs = {}
+<switch:english>
+[english] The function maintains a safe state by either modifying the valid attributes via self._parse_attr or completely removing any attribute not listed as permissible.
+[english] If a tag's name is not found within ATTR_WHITELIST, how does the function handle its current set of attributes?
+[english] If `tag.name` isn't in `ATTR_WHITELIST`, the entire existing collection of attributes on that tag is wiped clean and reset to an empty dictionary.
+[english] This clear approach makes a lot more sense now!

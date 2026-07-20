@@ -1,0 +1,58 @@
+[english] Set up argument parsing and validation logic for a command-line tool that interacts with Google Calendar.
+[english] This function uses OptionParser to define all accepted CLI flags, but it adds custom mandatory checks afterward. It ensures that critical fields like calendar ID and message are supplied when running in standard operation mode.
+<switch:python>
+[python] def parse_options():
+    """
+    Commandline options arguments parsing.
+    """
+
+    # build options and help
+    version = "%%prog {version}".format(version=__version__)
+    parser = OptionParser(version=version)
+    parser.add_option(
+        "-u", "--username", action="store", dest="username",
+        type="string", default="", metavar="RECIPIENT", help="user"
+    )
+    parser.add_option(
+        "-C", "--calendar", metavar="CALENDAR", action="store",
+        type="string", dest="calendar", default="", help="google calendar ID"
+    )
+    parser.add_option(
+        "-t", "--timezone", metavar="TIMEZONE", action="store",
+        type="string", dest="timezone", default="", help="user timezone"
+    )
+    parser.add_option(
+        "-m", "--message", metavar="MESSAGE", action="store",
+        type="string", dest="message", default="", help="message text"
+    )
+    parser.add_option(
+        "-c", "--config", metavar="CONFIG", action="store",
+        type="string", dest="config", help="path to config file",
+        default="/etc/nagios/notification_google_calendar.ini")
+    parser.add_option(
+        "-q", "--quiet", metavar="QUIET", action="store_true",
+        default=False, dest="quiet", help="be quiet"
+    )
+    parser.add_option(
+        "-g", "--get-google-credentials", metavar="GET-GOOGLE-CREDENTIALS",
+        action="store_true", default=False, dest="get_google_credentials",
+        help="get google API credentials for user"
+    )
+
+    options = parser.parse_args(sys.argv)[0]
+
+    mandatories = ["username", ]
+    # check mandatory command line options supplied
+    if not options.get_google_credentials:
+        mandatories.append("calendar")  # set calendar option required when sending message
+        mandatories.append("message")  # set message option required when sending message
+        mandatories.append("timezone")  # set timezone option required when sending message
+    if not all(options.__dict__[mandatory] for mandatory in mandatories):
+        parser.error("Required command line option missing\n")
+
+    return options
+<switch:english>
+[english] The code successfully validates required inputs based on the presence of the credential fetching flag, though it assumes `sys.argv` is correctly handled upstream.
+[english] What if I provide a username but omit the timezone? Will it throw an error?
+[english] If you don't use --get-google-credentials, your current mandatory list only requires 'username'. Since timezone isn't explicitly added to `mandatories` in that block, providing the username should be sufficient under the existing logic.
+[english] Got it, I appreciate the detailed review!

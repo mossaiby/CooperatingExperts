@@ -1,0 +1,35 @@
+[english] I need a reliable way to convert various date and datetime strings, like '1231' or '2023-12-31 14:30', into Python objects.
+[english] This function uses a cascading try/except pattern. It iterates through multiple known format strings, attempting to parse the input until one succeeds.
+<switch:python>
+[python] def string_to_date(input):
+    """Convert string to date object.
+
+    :param input: the date string to parse
+    :type input: str
+    :returns: the parsed datetime object
+    :rtype: datetime.datetime
+    """
+    # try date formats --mmdd, --mm-dd, yyyymmdd, yyyy-mm-dd and datetime
+    # formats yyyymmddThhmmss, yyyy-mm-ddThh:mm:ss, yyyymmddThhmmssZ,
+    # yyyy-mm-ddThh:mm:ssZ.
+    for format_string in ("--%m%d", "--%m-%d", "%Y%m%d", "%Y-%m-%d",
+                          "%Y%m%dT%H%M%S", "%Y-%m-%dT%H:%M:%S",
+                          "%Y%m%dT%H%M%SZ", "%Y-%m-%dT%H:%M:%SZ"):
+        try:
+            return datetime.strptime(input, format_string)
+        except ValueError:
+            pass
+    # try datetime formats yyyymmddThhmmsstz and yyyy-mm-ddThh:mm:sstz where tz
+    # may look like -06:00.
+    for format_string in ("%Y%m%dT%H%M%S%z", "%Y-%m-%dT%H:%M:%S%z"):
+        try:
+            return datetime.strptime(''.join(input.rsplit(":", 1)),
+                                     format_string)
+        except ValueError:
+            pass
+    raise ValueError
+<switch:english>
+[english] The code is built for maximum flexibility across formats but relies entirely on matching a predefined string pattern; any completely unrecognized date will raise an exception.
+[english] What specific behavior does the function use when encountering timezone indicators like 'Z' (Zulu time)?
+[english] It explicitly includes several format strings that account for the 'Z' suffix, such as '%Y%m%dT%H%M%SZ', allowing correct conversion of UTC times.
+[english] That example helps clear up how it handles those special characters.

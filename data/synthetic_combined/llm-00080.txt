@@ -1,0 +1,13 @@
+[english] I need a method that calculates the intersection between two scope objects, returning a new combined scope.
+[english] To calculate the intersection, we first initialize a new Scope object using the values from the current instance. Then, we use an in-place operation to compute the intersection with the provided argument.
+<switch:python>
+[python] def intersection(self, sig: Scope) -> Scope:
+        """ Create a new Set produce by the intersection of 2 Set """
+        new = Scope(sig=self._hsig.values(), state=self.state)
+        new &= sig
+        return new
+<switch:english>
+[english] This function relies on Python's operator overloading for scope objects; specifically, it leverages the `&=` operator to perform the set intersection efficiently.
+[english] What specific behavior occurs if both the current and input scopes are entirely empty?
+[english] If both scopes are empty, the initial construction will yield an empty Scope object. The intersection operation on an empty collection ensures that the resulting scope remains empty.
+[english] This makes sense! Thanks for clarifying.

@@ -1,0 +1,40 @@
+[english] How do I implement an iterative attention mechanism that refines alignment between input sketches and target keys over a specified depth?
+[english] This function implements an iterated attention block using a loop over `attention_depth`. In each step, it uses the previous sketch and cumulative attention to generate a refined sketch and aligned hidden state via `attention_gen_step`.
+<switch:python>
+[python] def attention_gen_block(hidden_for_sketch, hidden_for_attn_alignment, key, attention_depth):
+    """ It is a implementation of the Luong et al. attention mechanism with general score and the constrained softmax (csoftmax).
+        Based on the papers:
+        https://arxiv.org/abs/1508.04025 "Effective Approaches to Attention-based Neural Machine Translation"
+        https://andre-martins.github.io/docs/emnlp2017_final.pdf "Learning What's Easy: Fully Differentiable Neural Easy-First Taggers"
+    Args:
+        hidden_for_sketch: A tensorflow tensor for a sketch computing. This tensor have dimensionality [None, max_num_tokens, sketch_hidden_size]
+        hidden_for_attn_alignment: A tensorflow tensor is aligned for output during a performing. This tensor have dimensionality [None, max_num_tokens, hidden_size_for_attn_alignment]
+        key: A tensorflow tensor with dimensionality [None, None, key_size]
+        attention_depth: Number of usage csoftmax
+    Returns:
+        final_aligned_hiddens: Tensor at the output with dimensionality [1, attention_depth, hidden_size_for_attn_alignment]
+    """
+    with tf.name_scope('attention_block'):
+        sketch_dims = tf.shape(hidden_for_sketch)
+        batch_size = sketch_dims[0]
+        num_tokens = sketch_dims[1]
+        hidden_size = sketch_dims[2]
+
+        attn_alignment_dims = tf.shape(hidden_for_attn_alignment)
+        attn_alignment_hidden_size = attn_alignment_dims[2]
+
+        sketches = [tf.zeros(shape=[batch_size, hidden_size], dtype=tf.float32)]
+        aligned_hiddens = []
+        cum_att = tf.zeros(shape=[batch_size, num_tokens])  # cumulative attention
+        for i in range(attention_depth):
+            sketch, cum_att_, aligned_hidden = attention_gen_step(hidden_for_sketch, hidden_for_attn_alignment, sketches[-1], key, cum_att)
+            sketches.append(sketch) #sketch
+            aligned_hiddens.append(aligned_hidden) #sketch
+            cum_att += cum_att_
+        final_aligned_hiddens = tf.reshape(tf.transpose(tf.stack(aligned_hiddens), [1, 0, 2]),[1, attention_depth, attn_alignment_hidden_size])
+    return final_aligned_hiddens
+<switch:english>
+[english] The final output is created by stacking and reshaping all generated aligned hidden states (`aligned_hiddens`) into a tensor structure suitable for deep multi-depth attention layers.
+[english] Is it guaranteed that the initial zero sketch used before the loop provides a stable starting point for the first call to `attention_gen_step`?
+[english] Yes, initializing the process with `tf.zeros(shape=[batch_size, hidden_size], ...)` ensures that the first alignment step uses a predictable baseline representation before subsequent iterations refine it.
+[english] That makes sense; good to know about the initialization strategy.

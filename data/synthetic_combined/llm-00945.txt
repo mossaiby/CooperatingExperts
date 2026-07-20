@@ -1,0 +1,65 @@
+[english] How can I add custom metadata (like help strings or default choices) to arguments defined within a standard Python function signature, similar to how `argparse` works?
+[english] This function acts as a decorator factory that wraps the target function. It intercepts argument definitions and modifies an internal list attribute, ATTR_ARGS, attached to the decorated function.
+<switch:python>
+[python] def arg(*args, **kwargs):
+    """
+    Declares an argument for given function. Does not register the function
+    anywhere, nor does it modify the function in any way.
+
+    The signature of the decorator matches that of
+    :meth:`argparse.ArgumentParser.add_argument`, only some keywords are not
+    required if they can be easily guessed (e.g. you don't have to specify type
+    or action when an `int` or `bool` default value is supplied).
+
+    Typical use cases:
+
+    - In combination with :func:`expects_obj` (which is not recommended);
+    - in combination with ordinary function signatures to add details that
+      cannot be expressed with that syntax (e.g. help message).
+
+    Usage::
+
+        from argh import arg
+
+        @arg('path', help='path to the file to load')
+        @arg('--format', choices=['yaml','json'])
+        @arg('-v', '--verbosity', choices=range(0,3), default=2)
+        def load(path, something=None, format='json', dry_run=False, verbosity=1):
+            loaders = {'json': json.load, 'yaml': yaml.load}
+            loader = loaders[args.format]
+            data = loader(args.path)
+            if not args.dry_run:
+                if verbosity < 1:
+                    print('saving to the database')
+                put_to_database(data)
+
+    In this example:
+
+    - `path` declaration is extended with `help`;
+    - `format` declaration is extended with `choices`;
+    - `dry_run` declaration is not duplicated;
+    - `verbosity` is extended with `choices` and the default value is
+      overridden.  (If both function signature and `@arg` define a default
+      value for an argument, `@arg` wins.)
+
+    .. note::
+
+        It is recommended to avoid using this decorator unless there's no way
+        to tune the argument's behaviour or presentation using ordinary
+        function signatures.  Readability counts, don't repeat yourself.
+
+    """
+    def wrapper(func):
+        declared_args = getattr(func, ATTR_ARGS, [])
+        # The innermost decorator is called first but appears last in the code.
+        # We need to preserve the expected order of positional arguments, so
+        # the outermost decorator inserts its value before the innermost's:
+        declared_args.insert(0, dict(option_strings=args, **kwargs))
+        setattr(func, ATTR_ARGS, declared_args)
+        return func
+    return wrapper
+<switch:english>
+[english] The decorator ensures that new argument declarations created via `@arg` are inserted at the beginning of the existing declared arguments to preserve proper positional ordering.
+[english] Since the documentation warns about duplication, what happens if an argument is defined both in the standard function signature and using `@arg`?
+[english] If both define a default value for an argument, the declaration provided by the `@arg` decorator takes precedence. This is handled when `kwargs` are unpacked during the argument merging process.
+[english] That makes sense; I'll stick to only decorating functions that need extra presentation details.

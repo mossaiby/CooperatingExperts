@@ -1,0 +1,23 @@
+[english] I need a way to recursively find and collect every single subgraph contained within my current graph object.
+[english] This function utilizes recursion to deeply scan the graph structure. The inner `get_subgraphs` helper discovers all nested components by iterating through its list of subgraphs.
+<switch:python>
+[python] def _get_all_graphs(self):
+        """ Property getter.
+        """
+        top_graph = self
+
+        def get_subgraphs(graph):
+            assert isinstance(graph, BaseGraph)
+            subgraphs = graph.subgraphs[:]
+            for subgraph in graph.subgraphs:
+                subsubgraphs = get_subgraphs(subgraph)
+                subgraphs.extend(subsubgraphs)
+            return subgraphs
+
+        subgraphs = get_subgraphs(top_graph)
+        return [top_graph] + subgraphs
+<switch:english>
+[english] The final return statement guarantees that the top-level graph instance is included in the list alongside every subgraph it contains.
+[english] If one of the graphs contained a circular reference (a cycle), what would happen when calling this function?
+[english] Currently, if a cycle exists in the structure, the recursion will run infinitely and result in a `RecursionError`. Handling cycles would require passing a 'visited' set to track processed graph objects.
+[english] Good point; I definitely need to keep graph traversal robust.

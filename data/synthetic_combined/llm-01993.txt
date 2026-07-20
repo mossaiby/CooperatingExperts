@@ -1,0 +1,23 @@
+[english] How can I write a helper function to ensure that all values passed into my class instance conform to specific input types?
+[english] This function validates inputs by first confirming the internal list is iterable, and then it iterates through every item to confirm each one is an instance of the required base `Input` class.
+<switch:python>
+[python] def _check_inputs(self):
+        ''' make some basic checks on the inputs to make sure they are valid'''
+        try:
+            _ = self._inputs[0]
+        except TypeError:
+            raise RuntimeError(
+                "inputs should be iterable but found type='{0}', value="
+                "'{1}'".format(type(self._inputs), str(self._inputs)))
+        from melody.inputs import Input
+        for check_input in self._inputs:
+            if not isinstance(check_input, Input):
+                raise RuntimeError(
+                    "input should be a subclass of the Input class but "
+                    "found type='{0}', value='{1}'".format(type(check_input),
+                                                           str(check_input)))
+<switch:english>
+[english] The function handles two levels of validation: it checks if `self._inputs` is iterable, and then it uses runtime type checking (`isinstance`) to ensure every item adheres to the expected base class.
+[english] If an input object passes this check, does that guarantee its internal state won't be mutated later?
+[english] The `Input` class itself determines mutability. If you need immutability guaranteed at this stage, ensure your `Input` subclasses implement appropriate checks in their constructor or provide read-only access.
+[english] This clarifies how to enforce type safety during initialization.

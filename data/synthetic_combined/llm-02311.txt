@@ -1,0 +1,57 @@
+[english] I need to ensure that all graph items passed into a list belong to the same base data type, ignoring null values.
+[english] This function iterates through the provided items to establish an initial expected type from the first non-None item. It then validates every subsequent item against this established type.
+<switch:python>
+[python] def _assert_same_base_type(items, expected_type=None):
+  r"""Asserts all items are of the same base type.
+
+  Args:
+    items: List of graph items (e.g., `Variable`, `Tensor`, `SparseTensor`,
+        `Operation`, or `IndexedSlices`). Can include `None` elements, which
+        will be ignored.
+    expected_type: Expected type. If not specified, assert all items are
+        of the same base type.
+
+  Returns:
+    Validated type, or none if neither expected_type nor items provided.
+
+  Raises:
+    ValueError: If any types do not match.
+  """
+  original_expected_type = expected_type
+  mismatch = False
+  for item in items:
+    if item is not None:
+      item_type = base_dtype(item.dtype)
+      if not expected_type:
+        expected_type = item_type
+      elif expected_type != item_type:
+        mismatch = True
+        break
+  if mismatch:
+    # Loop back through and build up an informative error message (this is very
+    # slow, so we don't do it unless we found an error above).
+    expected_type = original_expected_type
+    original_item_str = None
+    get_name = lambda x: x.name if hasattr(x, 'name') else str(x)
+    for item in items:
+      if item is not None:
+        item_type = base_dtype(item.dtype)
+        if not expected_type:
+          expected_type = item_type
+          original_item_str = get_name(item)
+        elif expected_type != item_type:
+          raise ValueError(
+              '{}, type={}, must be of the same type ({}){}.'.format(
+                  get_name(item),
+                  item_type,
+                  expected_type,
+                  ((' as {}'.format(original_item_str))
+                   if original_item_str else '')))
+    return expected_type  # Should be unreachable
+  else:
+    return expected_type
+<switch:english>
+[english] If any mismatch occurs, it uses a second loop to construct a detailed error message referencing the incorrect items and their types for better debugging.
+[english] What happens if `items` is an empty list or contains only `None` values?
+[english] In those cases, the function returns `None` since no type was established in the first pass. If you require a ValueError when no data is present, you would need to add a check for an empty valid item set.
+[english] Thanks, that's very clear.

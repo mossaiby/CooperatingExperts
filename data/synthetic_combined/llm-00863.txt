@@ -1,0 +1,44 @@
+[english] How can I extract specific substrings from every element within a given column or series?
+[english] This helper function wraps string slicing operations, allowing you to easily define start and stop positions across an entire collection of strings.
+<switch:python>
+[python] def str_slice(x, start=0, stop=None):  # TODO: support n
+    """Slice substrings from each string element in a column.
+
+    :param int start: The start position for the slice operation.
+    :param int end: The stop position for the slice operation.
+    :returns: an expression containing the sliced substrings.
+
+    Example:
+
+    >>> import vaex
+    >>> text = ['Something', 'very pretty', 'is coming', 'our', 'way.']
+    >>> df = vaex.from_arrays(text=text)
+    >>> df
+      #  text
+      0  Something
+      1  very pretty
+      2  is coming
+      3  our
+      4  way.
+
+    >>> df.text.str.slice(start=2, stop=5)
+    Expression = str_pandas_slice(text, start=2, stop=5)
+    Length: 5 dtype: str (expression)
+    ---------------------------------
+    0  met
+    1   ry
+    2   co
+    3    r
+    4   y.
+    """
+    if stop is None:
+        sll = _to_string_sequence(x).slice_string_end(start)
+    else:
+        sll = _to_string_sequence(x).slice_string(start, stop)
+    return sll
+<switch:english>
+[english] It uses an internal function to convert the input into a sliceable sequence and then applies the specified start/stop indices.
+[english] What is the behavior if a string in that column is shorter than the specified start position?
+[english] Python slicing handles this gracefully by returning an empty string instead of throwing an error, ensuring robustness against varying data lengths.
+	for x in ['Short', 'Longer']: print(str_slice(x, start=10))
+[english] Thanks for the clear explanation!

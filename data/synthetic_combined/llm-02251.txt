@@ -1,0 +1,38 @@
+[english] How can I programmatically replace every instance of a specific identifier string within an abstract syntax tree (AST)?
+[english] This function performs a deep, recursive search across the entire AST structure. When it finds an ID matching the target name, it meticulously checks all attributes to find where that node resides.
+<switch:python>
+[python] def replace_id(ast, id_name, replacement):
+    """
+    Replace all matching ID nodes in ast (in-place), with replacement.
+
+    :param id_name: name of ID node to match
+    :param replacement: single or list of node to insert in replacement for ID node.
+    """
+    for a in ast:
+        if isinstance(a, c_ast.ID) and a.name == id_name:
+            # Check all attributes of ast
+            for attr_name in dir(ast):
+                # Exclude special and method attributes
+                if attr_name.startswith('__') or callable(getattr(ast, attr_name)):
+                    continue
+                attr = getattr(ast, attr_name)
+                # In case of direct match, just replace
+                if attr is a:
+                    setattr(ast, attr_name, replacement)
+                # If contained in list replace occurrence with replacement
+                if type(attr) is list:
+                    for i, attr_element in enumerate(attr):
+                        if attr_element is a:
+                            if type(replacement) is list:
+                                # If replacement is list, inject
+                                attr[i:i+1] = replacement
+                            else:
+                                # otherwise replace
+                                attr[i] = replacement
+        else:
+            replace_id(a, id_name, replacement)
+<switch:english>
+[english] The replacement logic is robust because it intelligently handles situations where the replacement itself might be a single node or a list of new nodes.
+[english] If a specific attribute contains a list, and one item in that list matches the ID, how does the code ensure all occurrences are replaced?
+[english] The function iterates through lists contained within attributes, checking if any element is identical to the target ID. When a match is found, it uses slice assignment (`attr[i:i+1] = replacement`) to handle both single entity replacements and list injections correctly.
+[english] I appreciate the detailed breakdown of the implementation.

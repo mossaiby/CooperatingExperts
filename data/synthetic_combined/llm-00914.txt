@@ -1,0 +1,24 @@
+[english] How do I programmatically generate a new cryptographic key handle using a specific template and desired algorithm within my security module?
+[english] This function automates the process of creating a secure key by first translating the user's configuration template into an attribute list compatible with PKCS#11. It then calls the low-level C generation routine to create the key object on the underlying session.
+<switch:python>
+[python] def generateKey(self, template, mecha=MechanismAESGENERATEKEY):
+        """
+        generate a secret key
+
+        :param template: template for the secret key
+        :param mecha: mechanism to use
+        :return: handle of the generated key
+        :rtype: PyKCS11.LowLevel.CK_OBJECT_HANDLE
+        """
+        t = self._template2ckattrlist(template)
+        ck_handle = PyKCS11.LowLevel.CK_OBJECT_HANDLE()
+        m = mecha.to_native()
+        rv = self.lib.C_GenerateKey(self.session, m, t, ck_handle)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+        return ck_handle
+<switch:english>
+[english] If `rv` (the return value) indicates any error other than success, the function raises a specific exception wrapping the raw status code. Note that this relies entirely on the availability and configuration of the underlying library binding (`self.lib`).
+[english] What happens to the generated key handle if I close the session before using it?
+[english] The generated key handle is tied to the current `session`. Closing the session will typically invalidate or destroy that key handle, meaning any subsequent attempts to use it will fail.
+[english] That makes sense; managing those handles is critical.

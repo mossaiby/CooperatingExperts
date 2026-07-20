@@ -1,0 +1,33 @@
+[english] How can I ensure that my widget context includes a clear 'is_rendered' flag while also gathering all necessary data from both its parent class and the specific widget instance?
+[english] To manage rendering state across multiple view calls, this method first fetches the base context from the mixin. It then explicitly updates the context with `'is_rendered': True` before incorporating any specialized attributes from the individual widget.
+<switch:python>
+[python] def get_context_data(self, **kwargs):
+        """
+        Adds ``is_rendered`` to the context and the widget's context data.
+
+        ``is_rendered`` signals that the AJAX view has been called and that
+        we are displaying the full widget now. When ``is_rendered`` is not
+        found in the widget template it means that we are seeing the first
+        page load and all widgets still have to get their real data from
+        this AJAX view.
+
+        """
+        ctx = super(RenderWidgetMixin, self).get_context_data(**kwargs)
+        ctx.update({
+            'is_rendered': True,
+            'widget': self.widget,
+        })
+        ctx.update(self.widget.get_context_data())
+        return ctx
+<switch:english>
+[english] This flow ensures that whether it's the initial page load or a subsequent AJAX call, the template always has the current rendering status and all required widget data available.
+[english] What happens if self.widget is None when this method executes?
+[english] If `self.widget` is `None`, calling `.get_context_data()` on it will raise an AttributeError. You might add a check like this to prevent that:
+<switch:python>
+[python] ctx = super(RenderWidgetMixin, self).get_context_data(**kwargs)
+ctx.update({'is_rendered': True, 'widget': self.widget})
+if self.widget is not None: 
+    ctx.update(self.widget.get_context_data())
+return ctx
+<switch:english>
+[english] Thanks for providing that example and the edge case handling.

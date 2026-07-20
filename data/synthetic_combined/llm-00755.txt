@@ -1,0 +1,23 @@
+[english] I need a way to recursively search an old directory for files matching a specific pattern and organize their paths into new destination base entries.
+[english] This function traverses the directory defined by `treeroot` using os.walk, which allows us to iterate through every subdirectory. For each level found, it uses fnmatch.filter against the provided pattern to collect all relevant filenames. Then, it constructs new paths mapping those files back to their specified base.
+<switch:python>
+[python] def recursive_glob_with_tree(new_base, old_base, treeroot, pattern):
+    '''generate a list of tuples(new_base, list(paths to put there)
+    where the files are found inside of old_base/treeroot.
+    '''
+    results = []
+    old_cwd = os.getcwd()
+    os.chdir(old_base)
+    for rel_base, dirs, files in os.walk(treeroot):
+        goodfiles = fnmatch.filter(files, pattern)
+        one_dir_results = []
+        for f in goodfiles:
+            one_dir_results.append(os.path.join(old_base, rel_base, f))
+        results.append((os.path.join(new_base, rel_base), one_dir_results))
+    os.chdir(old_cwd)
+    return results
+<switch:english>
+[english] The approach is reliable for path generation, but note that this function temporarily modifies the environment by changing the working directory via os.chdir before restoring it using old_cwd.
+[english] If no files match the pattern in a given subdirectory, will that directory still be included in the final results with an empty file list?
+[english] Yes, if os.walk finds a directory relative to treeroot, it is added as a key in `results`. If zero matches are found by fnmatch.filter, `one_dir_results` will be an empty list.
+[english] Got it, I appreciate the clarification.

@@ -1,0 +1,28 @@
+[english] How can I programmatically build an integer value, potentially applying constraints or randomness?
+[english] This function handles the logic for constructing an instance's value based on its defined range and properties.
+<switch:python>
+[python] def build(self, pre=None, shortest=False):
+        """Build the integer, optionally providing a ``pre`` list
+        that *may* be used to define prerequisites for a Field being built.
+
+        :param list pre: A list of prerequisites to be collected during the building of a Field.
+        :param bool shortest: Whether or not the shortest reference-chain (most minimal) version of the field should be generated.
+        """
+        if pre is None:
+            pre = []
+
+        if self.value is not None and rand.maybe():
+            return utils.val(self.value, pre, shortest=shortest)
+
+        if self.min == self.max:
+            return self.min
+
+        res = self._odds_val()
+        if self.neg and rand.maybe():
+            res = -res
+        return res
+<switch:english>
+[english] The logic prioritizes returning a predefined value if available, otherwise it calculates the result using custom methods like `self._odds_val()`.
+[english] If both positive and negative flags are set (`self.neg` is true), does this function consider different random paths?
+[english] Currently, if `self.neg` is true, the function simply negates the single value produced by `self._odds_val()`, following a direct calculation path.
+[english] Thanks for clarifying that behavior!

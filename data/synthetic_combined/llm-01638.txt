@@ -1,0 +1,17 @@
+[english] How can I reliably convert a full file path or filename into its appropriate Python module name, stripping extensions and directories?
+[english] I can help you extract the module name by first isolating the base filename using `osp.basename`. Then, if a dot exists in the basename, we find the position of the very last dot to correctly remove the file extension.
+<switch:python>
+[python] def file2module(filename):
+    """Given a file name, extract the most likely module name. """
+    basename = osp.basename(filename)
+    if '.' in basename:
+        pos = basename.rfind('.')
+        return basename[:pos]
+    else:
+        return basename
+    return None
+<switch:english>
+[english] This approach successfully handles simple extension stripping by utilizing `rfind('.')` to locate the final delimiter before returning the module name.
+[english] What happens if a file has multiple dots, like 'api.v2.client.py'?
+[english] Because it uses `rfind()`, the function correctly identifies only the last dot. For 'api.v2.client.py', it will return 'api.v2.client'.
+[english] That makes perfect sense, thanks for the clarification!

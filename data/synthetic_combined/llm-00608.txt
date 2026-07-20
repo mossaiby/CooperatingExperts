@@ -1,0 +1,24 @@
+[english] I need to create a function that registers a specific symbol from an external module into my current namespace while supporting optional alternative names (aliases).
+[english] This approach adds both the primary import and any provided aliases to internal mapping structures within this object.
+<switch:python>
+[python] def add_import(
+        self, sym: sym.Symbol, module: types.ModuleType, *aliases: sym.Symbol
+    ) -> None:
+        """Add the Symbol as an imported Symbol in this Namespace. If aliases are given,
+        the aliases will be applied to the """
+        self._imports.swap(lambda m: m.assoc(sym, module))
+        if aliases:
+            self._import_aliases.swap(
+                lambda m: m.assoc(
+                    *itertools.chain.from_iterable([(alias, sym) for alias in aliases])
+                )
+            )
+<switch:english>
+[english] The code uses `itertools.chain` inside the alias logic to flatten and associate multiple potential name mappings efficiently into the namespace's records.
+[english] How would I handle importing a symbol that might already exist in both my core scope and an existing internal import list?
+[english] If a symbol exists, you typically overwrite or merge it using `.assoc()`. For example:
+<switch:python>
+[python] se._imports.swap(lambda m: m.assoc(sym, module))
+s._import_aliases.swap(lambda m: m.assoc(*itertools.chain(existing_aliases + new_aliases)))
+<switch:english>
+[english] Perfect, this makes the dependency injection much cleaner.

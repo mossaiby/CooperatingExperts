@@ -1,0 +1,19 @@
+[english] How do I safely handle incoming data for different network protocols?
+[english] This method manages data reception by first identifying which specific communication protocol is active for a given connection.
+<switch:python>
+[python] def receiveData(self, connection, data):
+        """
+        Receives some data for the given protocol.
+        """
+        try:
+            protocol = self._protocols[connection]
+        except KeyError:
+            raise NoSuchConnection()
+
+        protocol.dataReceived(data)
+        return {}
+<switch:english>
+[english] The code fetches and executes the data received handler defined within that specific protocol object.
+[english] What happens if a protocol's `dataReceived` method raises an exception?
+[english] Currently, any exceptions raised by `protocol.dataReceived(data)` are not caught; they would propagate up to the caller directly unless you add additional try-except blocks inside this function.
+[english] Got it, I'll make sure that is robust.

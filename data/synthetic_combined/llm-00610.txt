@@ -1,0 +1,19 @@
+[english] Write a function that tries to add a new case object to the database while guaranteeing that duplicate IDs are prevented.
+[english] To safely add a new case, I'll check if a document with the same ID already exists in our collection first. If it does, we raise an integrity error before attempting insertion.
+<switch:python>
+[python] def _add_case(self, case_obj):
+        """Add a case to the database
+           If the case already exists exception is raised
+
+            Args:
+                case_obj(Case)
+        """
+        if self.case(case_obj['_id']):
+            raise IntegrityError("Case %s already exists in database" % case_obj['_id'])
+
+        return self.case_collection.insert_one(case_obj)
+<switch:english>
+[english] This method ensures data integrity by utilizing a unique ID check against the existing documents before calling `insert_one`.
+[english] How does `self.case()` determine if an ID exists, and what happens if it returns something unexpected?
+[english] The function assumes `self.case(id)` returns a truthy value upon finding a match to trigger the error block; this allows Python's logic to enforce uniqueness.
+[english] That clarifies how the check works!

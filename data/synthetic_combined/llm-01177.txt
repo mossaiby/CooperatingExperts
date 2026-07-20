@@ -1,0 +1,89 @@
+[english] How can I create temporary, nested configuration contexts for different parts of my application?
+[english] This function acts as a context manager to handle hierarchical configuration scopes. It processes various input types like lists or strings and ensures the active scope stack is correctly updated.
+<switch:python>
+[python] def config_scope(name_or_scope):
+  """Opens a new configuration scope.
+
+  Provides a context manager that opens a new explicit configuration
+  scope. Explicit configuration scopes restrict parameter bindings to only
+  certain sections of code that run within the scope. Scopes can be nested to
+  arbitrary depth; any configurable functions called within a scope inherit
+  parameters defined by higher level scopes.
+
+  For example, suppose a function named `preprocess_images` is called in two
+  places in a codebase: Once when loading data for a training task, and once
+  when loading data for an evaluation task:
+
+      def load_training_data():
+        ...
+        with gin.config_scope('train'):
+          images = preprocess_images(images)
+        ...
+
+
+      def load_eval_data():
+        ...
+        with gin.config_scope('eval'):
+          images = preprocess_images(images)
+        ...
+
+  By using a `config_scope` to wrap each invocation of `preprocess_images` as
+  above, it is possible to use Gin to supply specific parameters to each. Here
+  is a possible configuration for the above example:
+
+      preprocess_images.crop_size = [64, 64]
+      preprocess_images.normalize_image = True
+
+      train/preprocess_images.crop_location = 'random'
+      train/preprocess_images.random_flip_lr = True
+
+      eval/preprocess_images.crop_location = 'center'
+
+  The `crop_size` and `normalize_image` parameters above will be shared by both
+  the `train` and `eval` invocations; only `train` will receive
+  `random_flip_lr`, and the two invocations receive different values for
+  `crop_location`.
+
+  Passing `None` or `''` to `config_scope` will temporarily clear all currently
+  active scopes (within the `with` block; they will be restored afterwards).
+
+  Args:
+    name_or_scope: A name for the config scope, or an existing scope (e.g.,
+      captured from `with gin.config_scope(...) as scope`), or `None` to clear
+      currently active scopes.
+
+  Raises:
+    ValueError: If `name_or_scope` is not a list, string, or None.
+
+  Yields:
+    The resulting config scope (a list of all active scope names, ordered from
+    outermost to innermost).
+  """
+  try:
+    valid_value = True
+    if isinstance(name_or_scope, list):
+      new_scope = name_or_scope
+    elif name_or_scope and isinstance(name_or_scope, six.string_types):
+      new_scope = current_scope()  # Returns a copy.
+      new_scope.extend(name_or_scope.split('/'))
+    else:
+      valid_value = name_or_scope in (None, '')
+      new_scope = []
+
+    # Append new_scope first. It will be popped in the finally block if an
+    # exception is raised below.
+    _ACTIVE_SCOPES.append(new_scope)
+
+    scopes_are_valid = map(config_parser.MODULE_RE.match, new_scope)
+    if not valid_value or not all(scopes_are_valid):
+      err_str = 'Invalid value for `name_or_scope`: {}.'
+      raise ValueError(err_str.format(name_or_scope))
+
+    yield new_scope
+  finally:
+    _ACTIVE_SCOPES.pop()
+<switch:english>
+[english] The use of a `finally` block guarantees that the internal scope tracking list (`_ACTIVE_SCOPES`) is properly popped, even if an error occurs within the scope.
+[english] If I pass `None` to this function, what happens to existing scopes inside the `with` block?
+[english] Passing `None` or `''` temporarily clears all currently active scopes within that specific context, but they are restored once the `with` block is exited.
+[english] That makes sense for dynamic configuration!

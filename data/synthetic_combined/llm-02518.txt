@@ -1,0 +1,67 @@
+[english] How can I dynamically create and configure a complex component or model using a dictionary of parameters?
+[english] This function acts as a sophisticated factory, allowing you to build 'Components' based on various inputs. It first checks if the component should be retrieved by reference or built from an external configuration file path before resorting to direct instantiation. If neither applies, it retrieves and instantiates the class specified in the parameters.
+<switch:python>
+[python] def from_params(params: Dict, mode: str = 'infer', serialized: Any = None, **kwargs) -> Component:
+    """Builds and returns the Component from corresponding dictionary of parameters."""
+    # what is passed in json:
+    config_params = {k: _resolve(v) for k, v in params.items()}
+
+    # get component by reference (if any)
+    if 'ref' in config_params:
+        try:
+            component = _refs[config_params['ref']]
+            if serialized is not None:
+                component.deserialize(serialized)
+            return component
+        except KeyError:
+            e = ConfigError('Component with id "{id}" was referenced but not initialized'
+                            .format(id=config_params['ref']))
+            log.exception(e)
+            raise e
+
+    elif 'config_path' in config_params:
+        from deeppavlov.core.commands.infer import build_model
+        refs = _refs.copy()
+        _refs.clear()
+        config = parse_config(expand_path(config_params['config_path']))
+        model = build_model(config, serialized=serialized)
+        _refs.clear()
+        _refs.update(refs)
+        try:
+            _refs[config_params['id']] = model 
+        except KeyError:
+            pass
+        return model
+
+    cls_name = config_params.pop('class_name', None)
+    if not cls_name:
+        e = ConfigError('Component config has no `class_name` nor `ref` fields')
+        log.exception(e)
+        raise e
+    cls = get_model(cls_name)
+
+    # find the submodels params recursively
+    config_params = {k: _init_param(v, mode) for k, v in config_params.items()}
+
+    try:
+        spec = inspect.getfullargspec(cls)
+        if 'mode' in spec.args+spec.kwonlyargs or spec.varkw is not None:
+            kwargs['mode'] = mode
+
+        component = cls(**dict(config_params, **kwargs))
+        try:
+            _refs[config_params['id']] = component
+        except KeyError:
+            pass
+    except Exception:
+        log.exception("Exception in {}".format(cls))
+        raise
+
+    if serialized is not None:
+        component.deserialize(serialized)
+    return component
+<switch:english>
+[english] The function is highly flexible but relies heavily on state management through `_refs` for tracking initialized components across different execution paths.
+[english] If a component is successfully instantiated via its `class_name`, will it always be added to `_refs`, even if some of the parameter initialization fails?
+[english] It is only added to `_refs` if the instantiation process completes without raising an exception in lines 38-46. If exceptions occur during setup, registration does not happen.
+[english] That clarifies exactly how state changes are handled when building these components.

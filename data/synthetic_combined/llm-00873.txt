@@ -1,0 +1,24 @@
+[english] I need a function that fetches the current status of a specific report from an external API, validating necessary IDs first.
+[english] This utility validates required fields on the report object and constructs the precise REST endpoint URL using account ID and report metadata. It then retrieves the data via our internal resource method to return a structured Report object.
+<switch:python>
+[python] def get_report_status(self, report):
+        """
+        Returns the status of a report.
+
+        https://canvas.instructure.com/doc/api/account_reports.html#method.account_reports.show
+        """
+        if (report.account_id is None or report.type is None or
+                report.report_id is None):
+            raise ReportFailureException(report)
+
+        url = ACCOUNTS_API.format(report.account_id) + "/reports/{}/{}".format(
+            report.type, report.report_id)
+
+        data = self._get_resource(url)
+        data["account_id"] = report.account_id
+        return Report(data=data)
+<switch:english>
+[english] The function carefully re-sets `account_id` in the response data, though this might be redundant depending on how `self._get_resource` operates internally.
+[english] What happens if an API request fails or returns no valid report status at that specific URL?
+[english] The implementation does not show explicit error handling for HTTP failures from the API. If `self._get_resource(url)` raises an exception (like a 404), that will propagate up.
+[english] Thanks, I understand how it manages external data calls.

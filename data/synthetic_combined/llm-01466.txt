@@ -1,0 +1,20 @@
+[english] I need a way to retrieve cache slab configuration details and potentially filter those results by server name.
+[english] This function iterates through slab data retrieved from `mc_client`, parses the server names, and builds a dictionary mapping names to their corresponding slab information. It checks if a specific server is requested before populating the full list.
+<switch:python>
+[python] def _get_cache_slabs(server_name=None):
+    """
+    Get slabs info.
+    """
+    server_info = {}
+    for svr in mc_client.get_slabs():
+        svr_info = svr[0].split(' ')
+        svr_name = svr_info[0]
+        if server_name and server_name == svr_name:
+            return svr[1]
+        server_info[svr_name] = svr[1]
+    return server_info
+<switch:english>
+[english] The function prioritizes an exact match for `server_name` and returns immediately upon finding it. If no name is specified, it aggregates all findings into and returns `server_info`.
+[english] What happens if multiple entries for the same server name exist in the initial data returned by `mc_client.get_slabs()`?
+[english] If duplicate server names are found, the function will overwrite previous entries because it uses them as dictionary keys, meaning only the last one encountered will persist.
+[english] Got it, thanks for explaining how these slabs work.

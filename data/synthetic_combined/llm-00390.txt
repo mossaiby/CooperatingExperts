@@ -1,0 +1,21 @@
+[english] We need a method that retrieves and encapsulates the public key from an existing certificate's SPKI data into a managed object.
+[english] This function leverages external library bindings to fetch the public key. It begins by instantiating a custom PKey object before calling the low-level OpenSSL extraction routine on the internal SPKI data.
+<switch:python>
+[python] def get_pubkey(self):
+        """
+        Get the public key of this certificate.
+
+        :return: The public key.
+        :rtype: :py:class:`PKey`
+        """
+        pkey = PKey.__new__(PKey)
+        pkey._pkey = _lib.NETSCAPE_SPKI_get_pubkey(self._spki)
+        _openssl_assert(pkey._pkey != _ffi.NULL)
+        pkey._pkey = _ffi.gc(pkey._pkey, _lib.EVP_PKEY_free)
+        pkey._only_public = True
+        return pkey
+<switch:english>
+[english] The function meticulously manages memory by setting up FFI garbage collection to free the underlying C pointer afterwards. This ensures that resources allocated in C are properly released when the `pkey` object is destroyed or goes out of scope.
+[english] Since this relies on OpenSSL pointers, what happens if _lib.NETSCAPE_SPKI_get_pubkey returns NULL due to malformed input?
+[english] The function uses _openssl_assert() immediately after retrieval to guarantee the pointer is non-NULL before proceeding. If you wanted explicit error handling instead of asserting, you would wrap the extraction in a try/except block.
+[english] Thank you, that clarifies how memory safety is handled.

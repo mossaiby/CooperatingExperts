@@ -1,0 +1,21 @@
+[english] How do I implement a button that allows users to choose a file name and save the currently displayed figure as a PNG?
+[english] To achieve this, we utilize Qt's `QFileDialog` to open a standard save dialog, giving the user full control over the destination. The function then ensures the chosen path has the correct extension before instructing the canvas object to render and write the image.
+<switch:python>
+[python] def save_figure_as(self):
+        """
+        This function programs the button to save the figure displayed
+        and save it in a png file where you want / with the name you want thanks to a file dialog.
+        """
+        self.file_name = QtGui.QFileDialog.getSaveFileName()
+        self.file_name = self.file_name + ".png"
+        self.ui.graphic_widget.canvas.print_figure(str(self.file_name))
+<switch:english>
+[english] This method successfully triggers an external file save operation using the provided path in `print_figure`. It's important that the underlying canvas method correctly handles writing the data based on the string passed to it.
+[english] What happens if the user hits 'Cancel' on the dialog, and should I add validation?
+[english] If the dialog is canceled, `self.file_name` will be an empty string or null depending on the environment,
+so you might want to wrap the saving code in a check:
+<switch:python>
+[python] if self.file_name: 
+    self.ui.graphic_widget.canvas.print_figure(str(self.file_name))
+<switch:english>
+[english] Thanks for pointing out that potential failure case.

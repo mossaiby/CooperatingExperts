@@ -1,0 +1,14 @@
+[english] I need a reliable way to clear or delete all database entries associated with my current user ID.
+[english] To ensure data integrity, this function uses a connection context manager that wraps the entire operation in an automatic transaction. It then calls an internal utility, `purge_user`, passing along the specific identifier needed for deletion.
+<switch:python>
+[python] def purge_db(self):
+        """
+        Clear all matching our user_id.
+        """
+        with self.engine.begin() as db:
+            purge_user(db, self.user_id)
+<switch:english>
+[english] The core logic is delegated to `purge_user`. You should verify that this helper function correctly executes a bulk DELETE query based on the provided user ID.
+[english] If an exception interrupts the execution inside the `with` block, how does it affect the database changes?
+[english] Because `self.engine.begin()` initiates a transaction context manager, any unhandled exception automatically causes Python to roll back all changes made within that context.
+[english] That makes sense; I appreciate the brief explanation of the transactional safety.

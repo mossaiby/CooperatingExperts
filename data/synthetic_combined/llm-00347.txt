@@ -1,0 +1,15 @@
+[english] How do I retrieve full metadata objects for all tables within a database when only partial table names are known?
+[english] This approach utilizes the metastore client to first locate tables matching a provided pattern in the database. After finding those base names, it then fetches detailed object representations using the `client.get_table_objects_by_name` method.
+<switch:python>
+[python] def get_tables(self, db, pattern='*'):
+        """
+        Get a metastore table object
+        """
+        with self.metastore as client:
+            tables = client.get_tables(db_name=db, pattern=pattern)
+            return client.get_table_objects_by_name(db, tables)
+<switch:english>
+[english] The function returns a list of detailed table objects keyed to the database name and matched patterns. Be aware that passing 'tables' as both arguments might lead to redundancy or unexpected behavior depending on how `get_table_objects_by_name` processes its inputs.
+[english] What happens if one of the entries in the returned tables fails to fetch a complete object during the second step?
+[english] The function will typically return None for that specific entry or skip it entirely. For robustness, you should implement error handling around the `get_table_objects_by_name` call.
+[english] Thanks for clarifying how these components interact and potential pitfalls!

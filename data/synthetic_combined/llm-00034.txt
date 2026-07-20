@@ -1,0 +1,41 @@
+[english] How can I implement an automatic reconnection strategy that intelligently increases wait times after a connection failure?
+[english] This function manages the reconnect process by transitioning the status and calculating a dynamic delay. It uses exponential backoff combined with random jitter to ensure the system doesn't overwhelm the server during outages.
+<switch:python>
+[python] def __reconnect(self):
+        """This is called when a connection is lost - it attempts to reconnect to the server"""
+        self.status = "reconnecting"
+
+        # Reset the disconnect time after 15 minutes
+        if self.disconnected_time - self.connected_time > 15 * 60:
+            self.reconnect_time = self.reconnect_time_starting_seconds
+        else:
+            self.reconnect_time *= self.reconnect_time_backoff_multiplier
+
+        if self.reconnect_time > self.reconnect_time_max_seconds:
+            self.reconnect_time = self.reconnect_time_max_seconds
+
+        # We want to add some randomness to the reconnect rate - necessary so that we don't pound the server
+        # if it goes down
+        self.reconnect_time *= 1 + random.uniform(-0.2, 0.2)
+
+        if self.reconnect_time < self.reconnect_time_starting_seconds:
+            self.reconnect_time = self.reconnect_time_starting_seconds
+
+        logging.warn("ConnectorDB:WS: Attempting to reconnect in %fs",
+                     self.reconnect_time)
+
+        self.reconnector = threading.Timer(self.reconnect_time,
+                                           self.__reconnect_fnc)
+        self.reconnector.daemon = True
+        self.reconnector.start()
+<switch:english>
+[english] The method schedules itself using `threading.Timer` to execute again after the calculated interval, allowing reconnection attempts to happen asynchronously while keeping the main thread responsive.
+[english] Does this logic ever reset the wait time if the connection is lost for a very long period?
+[english] Yes, it resets the timer if the duration since disconnection exceeds 15 minutes. The code block handling this check is:
+<switch:python>
+[python] if self.disconnected_time - self.connected_time > 15 * 60:
+            self.reconnect_time = self.reconnect_time_starting_seconds
+        else:
+            self.reconnect_time *= self.reconnect_time_backoff_multiplier
+<switch:english>
+[english] That clear explanation about the reset is helpful!

@@ -1,0 +1,26 @@
+[english] I need a function that retrieves the Python source code for a specific DAG using its unique identifier.
+[english] This approach first queries the database to locate the `DagModel` entry corresponding to the provided ID. Once found, it uses utility functions to safely read the file located at the stored path.
+<switch:python>
+[python] def get_code(dag_id):
+    """Return python code of a given dag_id."""
+    session = settings.Session()
+    DM = models.DagModel
+    dag = session.query(DM).filter(DM.dag_id == dag_id).first()
+    session.close()
+    # Check DAG exists.
+    if dag is None:
+        error_message = "Dag id {} not found".format(dag_id)
+        raise DagNotFound(error_message)
+
+    try:
+        with wwwutils.open_maybe_zipped(dag.fileloc, 'r') as f:
+            code = f.read()
+            return code
+    except IOError as e:
+        error_message = "Error {} while reading Dag id {} Code".format(str(e), dag_id)
+        raise AirflowException(error_message)
+<switch:english>
+[english] The function provides robust error handling by differentiating between missing DAG entries and failures during actual file reading via IO exceptions.
+[english] If a valid `dag_id` is passed but that specific file location turns out to be inaccessible, how exactly does the code handle that failure?
+[english] The code handles this scenario using a try-except block around the file read operation. If an IOError occurs at any point during reading, it captures the error and raises an `AirflowException` with detailed information.
+[english] That makes sense; knowing how I/O errors are addressed is helpful.

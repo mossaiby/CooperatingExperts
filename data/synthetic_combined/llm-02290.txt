@@ -1,0 +1,26 @@
+[english] I need to implement a method that sets or clears a specific bit at a given memory address in my class.
+[english] This function handles the logic for modifying individual bits within a byte. It first generates a mask corresponding to the desired bit and then uses read/write operations combined with standard bitwise logic (OR for setting, AND-NOT for clearing).
+<switch:python>
+[python] def write_bit(self, value, bit_num, address):
+        """Writes the value given to the bit in the address specified.
+
+        :param value: The value to write.
+        :type value: int
+        :param bit_num: The bit number to write to.
+        :type bit_num: int
+        :param address: The address to write to.
+        :type address: int
+        """
+        bit_mask = get_bit_mask(bit_num)
+        old_byte = self.read(address)
+         # generate the new byte
+        if value:
+            new_byte = old_byte | bit_mask
+        else:
+            new_byte = old_byte & ~bit_mask
+        self.write(new_byte, address)
+<switch:english>
+[english] The function efficiently toggles the specified bit using boolean logic on the `value` parameter. Note that this method assumes `get_bit_mask` correctly returns a mask for handling up to 8 bits.
+[english] What happens if I call this with a value of -1 or an unsigned integer larger than what a single byte can hold?
+[english] If `-1` is passed, the `if value:` check will evaluate to True (since it's non-zero), effectively setting all bits defined by the mask; however, handling values outside typical 0 or 1 behavior might require explicit clamping before calling this method.
+[english] This makes sense, but how do I ensure that `get_bit_mask` works correctly when `bit_num` is negative?

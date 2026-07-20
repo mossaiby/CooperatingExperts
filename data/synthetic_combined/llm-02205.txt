@@ -1,0 +1,20 @@
+[english] How do I test if a private key load fails when an incorrect passphrase is provided via callback?
+[english] This method simulates a failed attempt to initialize a cryptographic object by providing intentionally wrong credentials.
+<switch:python>
+[python] def check_load_privatekey_callback_incorrect(self):
+        """
+        Call the function with an encrypted PEM and a passphrase callback which
+        returns the wrong passphrase.
+        """
+        for i in xrange(self.iterations * 10):
+            try:
+                load_privatekey(
+                    FILETYPE_PEM, self.ENCRYPTED_PEM,
+                    lambda *args: "hello, public")
+            except Error:
+                pass
+<switch:english>
+[english] The loop ensures the loading process is repeatedly tested, allowing the function to catch and potentially handle errors during repeated failures.
+[english] What does `xrange` do here in Python 2 contexts?
+[english] In Python 2, `xrange(N)` generates an iterator up to N but without generating all numbers at once; however, this specific code is iterating over a range multiplied by ten iterations for testing purposes.
+[english] Got it! Thanks for the help.

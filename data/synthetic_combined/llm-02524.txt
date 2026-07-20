@@ -1,0 +1,46 @@
+[english] I need to securely pass a security context between different processes on my system.
+[english] This method handles transferring an active local security context into an interprocess token that can be passed to another process for import and re-use. It essentially serializes the current secure state of the object.
+<switch:python>
+[python] def export(self):
+        """
+        This method deactivates the security context for the calling process and returns an
+        interprocess token which, when passed to :meth:`imprt` in another process, will re-activate
+        the context in the second process. Only a single instantiation of a given context may be
+        active at any one time; attempting to access this security context after calling
+        :meth:`export` will fail. This method can only be used on a valid context where
+        :attr:`is_transferable` is True.
+
+        :returns: a token which represents this security context
+        :rtype: bytes
+        """
+        if not (self.flags & C.GSS_C_TRANS_FLAG):
+            raise GSSException("Context is not transferable.")
+        if not self._ctx:
+            raise GSSException("Can't export empty/invalid context.")
+
+        minor_status = ffi.new('OM_uint32[1]')
+        output_token_buffer = ffi.new('gss_buffer_desc[1]')
+        retval = C.gss_export_sec_context(
+            minor_status,
+            self._ctx,
+            output_token_buffer
+        )
+        try:
+            if GSS_ERROR(retval):
+                if minor_status[0] and self.mech_type:
+                    raise _exception_for_status(retval, minor_status[0], self.mech_type)
+                else:
+                    raise _exception_for_status(retval, minor_status[0])
+
+            exported_token = _buf_to_str(output_token_buffer[0])
+            # Set our context to a 'blank' context
+            self._ctx = ffi.new('gss_ctx_id_t[1]')
+            return exported_token
+        finally:
+            if output_token_buffer[0].length != 0:
+                C.gss_release_buffer(minor_status, output_token_buffer)
+<switch:english>
+[english] After successfully exporting, the function sets the internal context state (`self._ctx`) to blank. This ensures that the original instance cannot be used again after this export operation completes.
+[english] If an underlying GSS operation fails during the export (like unsupported mechanisms), how does the code identify and report that specific failure?
+[english] The function uses `GSS_ERROR(retval)` to check for failures. If errors occur, it raises a detailed `GSSException` using status codes retrieved from the minor status structure.
+[english] That makes perfect sense!

@@ -1,0 +1,39 @@
+[english] How do I decode the unique identifier from an encoded GetAttributeList request payload?
+[english] This function reads data from the input buffer up to its defined length. It then checks for the specific UNIQUE_IDENTIFIER tag before attempting any decoding.
+<switch:python>
+[python] def read(self, input_buffer, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Read the data encoding the GetAttributeList request payload and decode
+        it into its constituent parts.
+
+        Args:
+            input_buffer (stream): A data stream containing encoded object
+                data, supporting a read method; usually a BytearrayStream
+                object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be decoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        super(GetAttributeListRequestPayload, self).read(
+            input_buffer,
+            kmip_version=kmip_version
+        )
+        local_buffer = utils.BytearrayStream(input_buffer.read(self.length))
+
+        if self.is_tag_next(enums.Tags.UNIQUE_IDENTIFIER, local_buffer):
+            self._unique_identifier = primitives.TextString(
+                tag=enums.Tags.UNIQUE_IDENTIFIER
+            )
+            self._unique_identifier.read(
+                local_buffer,
+                kmip_version=kmip_version
+            )
+        else:
+            self._unique_identifier = None
+
+        self.is_oversized(local_buffer)
+<switch:english>
+[english] The method concludes by calling `self.is_oversized`, which provides a safety check to ensure that all provided data was correctly consumed and no extraneous bytes remain in the stream.
+[english] What specifically happens if there are other recognized tags in the payload besides UNIQUE_IDENTIFIER?
+[english] This function only checks for one tag. Any other tags present would likely be ignored unless `GetAttributeListRequestPayload` is updated to iterate over all expected attributes.
+[english] Thanks, that makes sense.

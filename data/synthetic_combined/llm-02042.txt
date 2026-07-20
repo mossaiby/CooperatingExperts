@@ -1,0 +1,39 @@
+[english] How can I correctly serialize a specific RevokeRequestPayload object into a KMIP-encoded binary stream?
+[english] This function uses an internal `BytearrayStream` (`tstream`) to build the raw data payload step-by-step. It conditionally writes required fields like the identifier and reason before wrapping the complete buffer.
+<switch:python>
+[python] def write(self, ostream, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the RevokeRequestPayload object to a stream.
+        Args:
+            ostream (Stream): A data stream in which to encode object data,
+                supporting a write method; usually a BytearrayStream object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        tstream = BytearrayStream()
+
+        # Write the contents of the request payload
+        if self.unique_identifier is not None:
+            self.unique_identifier.write(tstream, kmip_version=kmip_version)
+
+        self.revocation_reason.write(tstream, kmip_version=kmip_version)
+
+        if self.compromise_occurrence_date is not None:
+            self.compromise_occurrence_date.write(
+                tstream,
+                kmip_version=kmip_version
+            )
+
+        # Write the length and value of the request payload
+        self.length = tstream.length()
+        super(RevokeRequestPayload, self).write(
+            ostream,
+            kmip_version=kmip_version
+        )
+        ostream.write(tstream.buffer)
+<switch:english>
+[english] The logic successfully accumulates all request components into the temporary stream, allowing the parent class method to then write the final length header and the entire serialized buffer to the main output.
+[english] If `self.unique_identifier` is None, does the function skip that field entirely or write a specific null value?
+[english] The code checks explicitly for `None`. If found, it skips writing that attribute completely, ensuring only valid data contributors are serialized into `tstream`.
+[english] That explanation makes sense regarding the optional fields.

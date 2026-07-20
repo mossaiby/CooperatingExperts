@@ -1,0 +1,26 @@
+[english] I need a method that safely shuts down my job manager so it stops accepting new work and cancels any currently running or queued jobs.
+[english] This function ensures the shutdown process is safe by first checking if the manager is already closed. It then sets a closure flag and systematically cancels all active and pending job sets before exiting.
+<switch:python>
+[python] def close(self):
+        """
+        Closes the job manager. No more jobs will be assigned, no more job sets
+        will be added, and any queued or active job sets will be cancelled.
+        """
+
+        if self._closed:
+            return
+
+        self._closed = True
+        if self._active_js is not None:
+            self._active_js.cancel()
+        for js in self._js_queue:
+            js.cancel()
+<switch:english>
+[english] By explicitly iterating through `self._js_queue` and calling `.cancel()` on existing references, the function provides a comprehensive cleanup mechanism. Note that successful shutdown depends on individual job sets implementing cancellation handlers correctly.
+[english] What is the behavior if `self._active_js` happens to be None when this method is invoked?
+[english] The function handles this gracefully because it only attempts cancellation if a reference exists:
+<switch:python>
+[python] if self._active_js is not None:
+            self._active_js.cancel()
+<switch:english>
+[english] That covers all the necessary safety checks for closing down.

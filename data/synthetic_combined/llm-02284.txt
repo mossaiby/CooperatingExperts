@@ -1,0 +1,13 @@
+[english] How can I create a method to automatically handle updates when the user navigates to a new file?
+[english] This method handles path changes by extracting just the filename and reloading the content from the input source into the graph structure. It uses `basename` to ensure only the relevant name is stored.
+<switch:python>
+[python] def on_path(self, new):
+        """ Handle the file path changing.
+        """
+        self.name = basename(new)
+        self.graph = self.editor_input.load()
+<switch:english>
+[english] After the attributes are updated, the object now reflects the state of the new file without needing manual intervention.
+[english] What if 'new' is a directory path instead of a file?
+[english] The function currently expects a file path because it relies on `basename` and assumes the input can be loaded into `self.graph`. If 'new' were a folder, you would need to add logic to list and load multiple files within that directory.
+[english] That makes sense!

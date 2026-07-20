@@ -1,0 +1,53 @@
+[english] I need a robust way to instantiate an application class using configuration data loaded from a YAML file.
+[english] This function handles initialization by securely reading settings from a specified YAML file, extracting relevant parameters based on predefined sections, and applying any user overrides.
+<switch:python>
+[python] def from_conf(cls, path=None, **overrides):
+		'''Initialize instance from YAML configuration file,
+			writing updates (only to keys, specified by "conf_update_keys") back to it.'''
+		from onedrive import portalocker
+		import yaml
+
+		if path is None:
+			path = cls.conf_path_default
+			log.debug('Using default state-file path: %r', path)
+		path = os.path.expanduser(path)
+		with open(path, 'rb') as src:
+			portalocker.lock(src, portalocker.LOCK_SH)
+			yaml_str = src.read()
+			portalocker.unlock(src)
+		conf = yaml.safe_load(yaml_str)
+		conf.setdefault('conf_save', path)
+
+		conf_cls = dict()
+		for ns, keys in cls.conf_update_keys.viewitems():
+			for k in keys:
+				try:
+					v = conf.get(ns, dict()).get(k)
+				except AttributeError:
+					if not cls.conf_raise_structure_errors: raise
+					raise KeyError((
+						'Unable to get value for configuration parameter'
+							' "{k}" in section "{ns}", check configuration file (path: {path}) syntax'
+							' near the aforementioned section/value.' ).format(ns=ns, k=k, path=path))
+				if v is not None: conf_cls['{}_{}'.format(ns, k)] = conf[ns][k]
+		conf_cls.update(overrides)
+
+		# Hack to work around YAML parsing client_id of e.g. 000123 as an octal int
+		if isinstance(conf.get('client', dict()).get('id'), (int, long)):
+			log.warn( 'Detected client_id being parsed as an integer (as per yaml), trying to un-mangle it.'
+				' If requests will still fail afterwards, please replace it in the configuration file (path: %r),'
+					' also putting single or double quotes (either one should work) around the value.', path )
+			cid = conf['client']['id']
+			if not re.search(r'\b(0*)?{:d}\b'.format(cid), yaml_str)\
+					and re.search(r'\b(0*)?{:o}\b'.format(cid), yaml_str):
+				cid = int('{:0}'.format(cid))
+			conf['client']['id'] = '{:016d}'.format(cid)
+
+		self = cls(**conf_cls)
+		self.conf_save = conf['conf_save']
+		return self
+<switch:english>
+[english] The function ensures atomic file access using locking while also including specific logic to handle potential YAML parsing quirks related to integer IDs.
+[english] If a configuration parameter required by `conf_update_keys` is missing entirely from the file, what happens?
+[english] The function raises a KeyError if it cannot find the expected value in the hierarchy (i.e., 'k' in section 'ns'), provided that structural error checking is enabled via `cls.conf_raise_structure_errors`.
+[english] Got it, thanks for the breakdown.

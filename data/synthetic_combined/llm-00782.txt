@@ -1,0 +1,26 @@
+[english] How can I group my data by specific columns and then perform an aggregated statistical calculation?
+[english] This method initiates a grouping process using `BinBy` based on the keys provided in `by`. It conditionally executes the aggregation if an operation is passed.
+<switch:python>
+[python] def binby(self, by=None, agg=None):
+        """Return a :class:`BinBy` or :class:`DataArray` object when agg is not None
+
+        The binby operations does not return a 'flat' DataFrame, instead it returns an N-d grid
+        in the form of an xarray.
+
+
+        :param dict, list or agg agg: Aggregate operation in the form of a string, vaex.agg object, a dictionary
+            where the keys indicate the target column names, and the values the operations, or the a list of aggregates.
+            When not given, it will return the binby object.
+        :return: :class:`DataArray` or :class:`BinBy` object.
+        """
+        from .groupby import BinBy
+        binby = BinBy(self, by=by)
+        if agg is None:
+            return binby
+        else:
+            return binby.agg(agg)
+<switch:english>
+[english] The function ensures that when aggregations are supplied, the returned result maintains its structure as a multi-dimensional grid rather than flattening it into a single record.
+[english] If I don't specify any grouping columns in `by`, will the binby operation still execute correctly?
+[english] Yes, if `by` is not provided or is empty, the function simply initializes a `BinBy` object over the entire dataset. {}
+[english] That makes sense, thanks for explaining.

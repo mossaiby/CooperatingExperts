@@ -1,0 +1,19 @@
+[english] Write a function that checks if the current shell input history entry ends with a semicolon, indicating it should suppress display hooks.
+[english] This approach looks up the currently processed command in the internal history list. It then safely extracts and verifies whether this input string terminates with a semi-colon using exception handling for potential indexing errors.
+<switch:python>
+[python] def quiet(self):
+        """Should we silence the display hook because of ';'?"""
+        # do not print output if input ends in ';'
+        try:
+            cell = self.shell.history_manager.input_hist_parsed[self.prompt_count]
+            if cell.rstrip().endswith(';'):
+                return True
+        except IndexError:
+            # some uses of ipshellembed may fail here
+            pass
+        return False
+<switch:english>
+[english] The function returns True if it detects a trailing semicolon, signaling that output should be silenced. However, the logic relies on `self.prompt_count` to accurately point to the correct history entry at runtime.
+[english] What happens if the command in the history has leading or trailing spaces before the semicolon?
+[english] The function uses `cell.rstrip()`, which removes all trailing whitespace before checking for the semi-colon, ensuring that inputs like "command ; " are correctly handled as true.
+[english] Got it, this makes sense now!

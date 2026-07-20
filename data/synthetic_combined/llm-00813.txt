@@ -1,0 +1,17 @@
+[english] I need an efficient way to implement the core logic for the RMSProp optimization algorithm in Python.
+[english] This function implements a custom update rule using RMSProp, which adapts the learning rate based on a moving average of recent squared gradients rather than applying a fixed global rate. It iterates through parameters and calculates two values: rms_ (the running gradient magnitude) and the parameter update vector.
+<switch:python>
+[python] def rmsprop_core(params, gradients, momentum=0.9, learning_rate=0.01):
+    """
+    RMSPROP optimization core.
+    """
+    for param, grad in zip(params, gradients):
+            rms_ = theano.shared(np.zeros_like(param.get_value()), name=param.name + '_rms')
+            rms = momentum * rms_ + (1 - momentum) * grad * grad
+            yield rms_, rms
+            yield param, param - learning_rate * grad / T.sqrt(rms + 1e-8)
+<switch:english>
+[english] The `yield` statements allow this function to be used as a generator, which is memory-efficient when processing large model parameter sets in training loops. Note that it relies on external objects like `theano.shared` and assumes access to a tensor utility named `T` for the square root operation.
+[english] What happens if the gradients are consistently zero?
+[english] If gradients are zero, the RMS values will decay according to the momentum factor (`momentum * rms_`), preventing division by zero, while the parameter updates will become zero because `grad` is zero.
+[english] Got it, this makes much more sense now.

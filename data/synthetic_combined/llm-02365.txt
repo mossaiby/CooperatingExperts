@@ -1,0 +1,33 @@
+[english] How can I determine the Fitch ancestral state profile for a given character position within an internal node?
+[english] This function implements the core logic of Fitch's algorithm by first attempting to find the intersection of all descendant states. It then falls back to using the union if no common ancestor exists across all child profiles.
+<switch:python>
+[python] def _fitch_state(self, node, pos):
+        """
+        Determine the Fitch profile for a single character of the node's sequence.
+        The profile is essentially the intersection between the children's
+        profiles or, if the former is empty, the union of the profiles.
+
+        Parameters
+        ----------
+
+         node : PhyloTree.Clade:
+            Internal node which the profiles are to be determined
+
+         pos : int
+            Position in the node's sequence which the profiles should
+            be determinedf for.
+
+        Returns
+        -------
+         state : numpy.array
+            Fitch profile for the character at position pos of the given node.
+        """
+        state = self._fitch_intersect([k.state[pos] for k in node.clades])
+        if len(state) == 0:
+            state = np.concatenate([k.state[pos] for k in node.clades])
+        return state
+<switch:english>
+[english] The function relies on NumPy arrays to handle the state sets, which is efficient but requires that `numpy` be consistently used throughout the class implementation.
+[english] What happens if a clade only has one child? Does the intersection logic still work?
+[english] If there is only one child, the list passed to `_fitch_intersect` will contain only one state profile. The intersection of a single set is that set itself, so it correctly returns the single child's state.
+[english] Got it, thanks for clearing that up!

@@ -1,0 +1,21 @@
+[english] How can I efficiently convert my feature array 'x' and target array 'y' into a Spark RDD of samples?
+[english] To handle large datasets, we first leverage Spark to parallelize both input arrays. Then, we combine them using `.zip` into one distributed structure, which is finally transformed into the desired Sample objects.
+<switch:python>
+[python] def to_sample_rdd(x, y, numSlices=None):
+    """
+    Conver x and y into RDD[Sample]
+    :param x: ndarray and the first dimension should be batch
+    :param y: ndarray and the first dimension should be batch
+    :param numSlices:
+    :return:
+    """
+    sc = get_spark_context()
+    from bigdl.util.common import Sample
+    x_rdd = sc.parallelize(x, numSlices)
+    y_rdd = sc.parallelize(y, numSlices)
+    return x_rdd.zip(y_rdd).map(lambda item: Sample.from_ndarray(item[0], item[1]))
+<switch:english>
+[english] The function assumes that `x` and `y` have matching batch dimensions; if they don't align perfectly, the zipping operation will truncate to the shortest input array.
+[english] What happens if I call this function with `numSlices=None`?
+[english] If `numSlices` is None, it defaults to Spark choosing an optimal number of partitions based on internal heuristics, which is generally good practice:
+[english] Got it, that clarifies the implementation details.

@@ -1,0 +1,39 @@
+[english] How can I programmatically create a new AAAA DNS record within a hosted zone while specifying options like TTL and weighting?
+[english] This method provides a high-level abstraction for creating AAAA records. It uses internal helper functions to manage the necessary state checks before attempting to add the resource record.
+<switch:python>
+[python] def create_aaaa_record(self, name, values, ttl=60, weight=None, region=None,
+                        set_identifier=None):
+        """
+        Creates an AAAA record attached to this hosted zone.
+
+        :param str name: The fully qualified name of the record to add.
+        :param list values: A list of value strings for the record.
+        :keyword int ttl: The time-to-live of the record (in seconds).
+        :keyword int weight: *For weighted record sets only*. Among resource record
+            sets that have the same combination of DNS name and type, a value
+            that determines what portion of traffic for the current resource
+            record set is routed to the associated location. Ranges from 0-255.
+        :keyword str region: *For latency-based record sets*. The Amazon EC2 region
+            where the resource that is specified in this resource record set
+            resides.
+        :keyword str set_identifier: *For weighted and latency resource record
+            sets only*. An identifier that differentiates among multiple
+            resource record sets that have the same combination of DNS name
+            and type. 1-128 chars.
+        :rtype: tuple
+        :returns: A tuple in the form of ``(rrset, change_info)``, where
+            ``rrset`` is the newly created AAAAResourceRecordSet instance.
+        """
+
+        self._halt_if_already_deleted()
+
+        # Grab the params/kwargs here for brevity's sake.
+        values = locals()
+        del values['self']
+
+        return self._add_record(AAAAResourceRecordSet, **values)
+<switch:english>
+[english] The core logic efficiently bundles all input arguments into the `values` dictionary using `locals()`, allowing it to pass everything to the standardized `_add_record` method.
+[english] What is the risk of relying on `locals()` and deleting 'self' to gather parameters in that manner?
+[english] While concise, this approach relies heavily on implicit parameter gathering. If a required field is missing or if an unexpected variable exists, it could lead to runtime errors during the unpacking phase.
+[english] Got it, so internal type checking must handle those arguments robustly.

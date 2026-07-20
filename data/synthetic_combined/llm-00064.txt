@@ -1,0 +1,22 @@
+[english] How do I automatically pull necessary environment configuration files from S3 into local section directories?
+[english] This function handles the process of initializing configurations for a specific section, creating the target directory locally, and then downloading the required environment file from AWS S3.
+<switch:python>
+[python] def downsync(section, map_files):
+    """
+    For each section defined in the local config file, creates a folder inside the local config folder
+    named after the section. Downloads the environemnt file defined by the S3CONF variable for this section
+    to this folder.
+    """
+    try:
+        settings = config.Settings(section=section)
+        storage = STORAGES['s3'](settings=settings)
+        conf = s3conf.S3Conf(storage=storage, settings=settings)
+        local_root = os.path.join(config.LOCAL_CONFIG_FOLDER, section)
+        conf.downsync(local_root, map_files=map_files)
+    except exceptions.EnvfilePathNotDefinedError:
+        raise exceptions.EnvfilePathNotDefinedUsageError()
+<switch:english>
+[english] If the system cannot locate an expected environment file path during this process, the function raises a usage error instead of failing silently. This ensures clear diagnostics when configuration is missing.
+[english] What happens if the section name contains special characters or spaces?
+[english] The code uses `os.path.join` to construct `local_root`, which handles various operating system path conventions correctly, accommodating spaces and other standard file names.
+[english] That makes sense, thanks for explaining it.

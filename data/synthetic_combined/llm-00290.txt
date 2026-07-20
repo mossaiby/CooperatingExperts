@@ -1,0 +1,19 @@
+[english] How do I write a specific command register and then send an arbitrary byte value to it on the device?
+[english] This function handles writing two bytes of data—a command and a value—to a target register after verifying that the underlying bus connection is established.
+<switch:python>
+[python] def write_byte_data(self, addr, cmd, val):
+        """Write a byte of data to the specified cmd register of the device.
+        """
+        assert self._device is not None, 'Bus must be opened before operations are made against it!'
+        # Construct a string of data to send with the command register and byte value.
+        data = bytearray(2)
+        data[0] = cmd & 0xFF
+        data[1] = val & 0xFF
+        # Send the data to the device.
+        self._select_device(addr)
+        self._device.write(data)
+<switch:english>
+[english] It's important to note that the bitwise AND operation (`& 0xFF`) guarantees that only the lowest eight bits of `cmd` and `val` are written.
+[english] What happens if I try to call this function before the device has been opened?
+[english] If called without being initialized, it immediately raises an `AssertionError: Bus must be opened before operations are made against it!` because of the initial assertion check.
+[english] Thanks for the clarification!

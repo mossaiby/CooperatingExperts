@@ -1,0 +1,45 @@
+[english] I need a Python function that converts an SVG file into a PDF using the rsvg-convert utility.
+[english] This function relies on calling the external `rsvg-convert` command to perform the conversion. It starts by checking if the required input file exists before setting up the arguments for the process.
+<switch:python>
+[python] def rsvg_export(input_file, output_file, dpi=90, rsvg_binpath=None):
+    """ Calls the `rsvg-convert` command, to convert a svg to a PDF (with unicode).
+
+    Parameters
+    ----------
+
+    rsvg_binpath: str
+        Path to `rsvg-convert` command
+
+    input_file: str
+        Path to the input file
+
+    output_file: str
+        Path to the output file
+
+    Returns
+    -------
+    return_value
+        Command call return value
+
+    """
+    if not os.path.exists(input_file):
+        log.error('File {} not found.'.format(input_file))
+        raise IOError((0, 'File not found.', input_file))
+
+    if rsvg_binpath is None:
+        rsvg_binpath = which('rsvg-convert')
+        check_command(rsvg_binpath)
+
+    args_strings = []
+    args_strings += ["-f pdf"]
+    args_strings += ["-o {}".format(output_file)]
+    args_strings += ["--dpi-x {}".format(dpi)]
+    args_strings += ["--dpi-y {}".format(dpi)]
+    args_strings += [input_file]
+
+    return call_command(rsvg_binpath, args_strings)
+<switch:english>
+[english] Note that this approach depends heavily on the `rsvg-binpath` variable being correctly set, as it assumes the operating system can execute external commands reliably.
+[english] If I needed to add a specific quality flag like --quality 95, where would I modify the code?
+[english] You would need to edit how the list of arguments is built. You can simply append it to `args_strings` before calling the command:
+[english] Great, that makes sense!

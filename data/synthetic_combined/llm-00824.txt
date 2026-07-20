@@ -1,0 +1,51 @@
+[english] How can I handle the application closing event and prompt the user to close all open tabs/kernels before exiting?
+[english] This method handles the OS-level close request by first checking if any tabs are present. If they are, it presents a confirmation dialog asking whether the user wants to quit or cancel.
+<switch:python>
+[python] def closeEvent(self, event):
+        """ Forward the close event to every tabs contained by the windows
+        """
+        if self.tab_widget.count() == 0:
+            # no tabs, just close
+            event.accept()
+            return
+        # Do Not loop on the widget count as it change while closing
+        title = self.window().windowTitle()
+        cancel = QtGui.QMessageBox.Cancel
+        okay = QtGui.QMessageBox.Ok
+        
+        if self.confirm_exit:
+            if self.tab_widget.count() > 1:
+                msg = "Close all tabs, stop all kernels, and Quit?"
+            else:
+                msg = "Close console, stop kernel, and Quit?"
+            info = "Kernels not started here (e.g. notebooks) will be left alone."
+            closeall = QtGui.QPushButton("&Quit", self)
+            closeall.setShortcut('Q')
+            box = QtGui.QMessageBox(QtGui.QMessageBox.Question,
+                                    title, msg)
+            box.setInformativeText(info)
+            box.addButton(cancel)
+            box.addButton(closeall, QtGui.QMessageBox.YesRole)
+            box.setDefaultButton(closeall)
+            box.setEscapeButton(cancel)
+            pixmap = QtGui.QPixmap(self._app.icon.pixmap(QtCore.QSize(64,64)))
+            box.setIconPixmap(pixmap)
+            reply = box.exec_()
+        else:
+            reply = okay
+        
+        if reply == cancel:
+            event.ignore()
+            return
+        if reply == okay:
+            while self.tab_widget.count() >= 1:
+                # prevent further confirmations:
+                widget = self.active_frontend
+                widget._confirm_exit = False
+                self.close_tab(widget)
+            event.accept()
+<switch:english>
+[english] If the user selects 'Quit', the function iteratively closes all active widgets and then accepts the event to terminate the application safely.
+[english] What happens if the `closeEvent` is called multiple times quickly while the tab widget is closing?
+[english] The loop condition `while self.tab_widget.count() >= 1:` ensures that as long as a tab exists, it will be processed and closed before the event acceptance.
+[english] That makes sense. Thanks for explaining!

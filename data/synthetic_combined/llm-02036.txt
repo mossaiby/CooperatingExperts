@@ -1,0 +1,19 @@
+[english] How do I extract and parse an X.509 certificate from a given socket connection?
+[english] This function safely attempts to retrieve the peer's certificate in binary format first. It then uses standard libraries like `x509` to transform that raw data into a usable Python object.
+<switch:python>
+[python] def get_certificate_from_connection(connection):
+    """
+    Extract an X.509 certificate from a socket connection.
+    """
+    certificate = connection.getpeercert(binary_form=True)
+    if certificate:
+        return x509.load_der_x509_certificate(
+            certificate,
+            backends.default_backend()
+        )
+    return None
+<switch:english>
+[english] The code handles cases where no certificate is successfully retrieved by returning None, making it safe for connection failures or non-secure connections. Note that the use of `binary_form=True` ensures minimal overhead during extraction.
+[english] What happens if the function receives a connection object that isn't fully configured to have client certificates available?
+[english] If the connection is not configured correctly, `connection.getpeercert()` will return None. In this case, the `if certificate:` check ensures the function immediately returns None instead of raising an error.
+[english] That makes sense.

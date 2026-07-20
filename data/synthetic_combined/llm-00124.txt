@@ -1,0 +1,16 @@
+[english] How can I programmatically update a single configuration setting within my application's backend?
+[english] This function handles updating a specific setting by first checking if a value has been provided. If the value is valid, it packages the name and value into an updates dictionary before calling the external client function.
+<switch:python>
+[python] def update_setting(self, name, value):
+    '''Just update a setting, doesn't need to be returned.
+    ''' 
+
+    if value is not None:
+        updates = {name : value}
+        update_client_secrets(backend=self.client_name, 
+                              updates=updates)
+<switch:english>
+[english] The core logic relies on the `update_client_secrets` utility to perform the actual side effect, ensuring that only meaningful values trigger an API call.
+[english] Does this function handle cases where a user explicitly wants to clear or remove a setting?
+[english] No, because the condition checks if `value is not None`, calling the update logic would require handling null or special deletion tokens, which are currently unsupported.
+[english] Got it, I'll make sure to pass actual values next time.

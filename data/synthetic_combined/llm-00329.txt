@@ -1,0 +1,23 @@
+[english] How can I create a simple conversational agent that recognizes specific user inputs like greetings or farewell
+[english] This function initializes an intelligent bot by defining several specialized skills for handling different conversation patterns. It then combines these skills into a DefaultAgent, using HighestConfidenceSelector to manage decision-making.
+<switch:python>
+[python] def make_hello_bot_agent() -> DefaultAgent:
+    """Builds agent based on PatternMatchingSkill and HighestConfidenceSelector.
+
+    This is agent building tutorial. You can use this .py file to check how hello-bot agent works.
+
+    Returns:
+        agent: Agent capable of handling several simple greetings.
+    """
+    skill_hello = PatternMatchingSkill(['Hello world'], patterns=['hi', 'hello', 'good day'])
+    skill_bye = PatternMatchingSkill(['Goodbye world', 'See you around'], patterns=['bye', 'chao', 'see you'])
+    skill_fallback = PatternMatchingSkill(['I don\'t understand, sorry', 'I can say "Hello world"'])
+
+    agent = DefaultAgent([skill_hello, skill_bye, skill_fallback], skills_processor=HighestConfidenceSelector())
+
+    return agent
+<switch:english>
+[english] The agent uses the HighestConfidenceSelector to ensure that when multiple skills might match, it always executes the one with the clearest recognition score. The fallback skill acts as a necessary safety net for any unexpected user input.
+[english] If the 'hi' pattern matches both Skill A and Skill B with equal confidence, how does the agent decide which response to provide?
+[english] In case of identical confidence scores, the agent prioritizes skills based on their initial position in the list provided to the DefaultAgent. The order matters for tie-breaking.
+[english] That makes sense; I'll keep that prioritization logic in mind when structuring my skills.

@@ -1,0 +1,12 @@
+[english] How can I implement a custom method to load byte arrays given specific context and page parameters?
+[english] This method serves as an abstract placeholder, indicating that any inheriting class must provide its own logic for handling the data loading process.
+<switch:python>
+[python] def loadByteArray(self, context, page, resultLen, resultData, returnError):
+        """please override"""
+        returnError.contents.value = self.IllegalStateError
+        raise NotImplementedError("You must override this method.")
+<switch:english>
+[english] The function deliberately raises a NotImplementedError, forcing subclasses to override it for proper functionality. It also sets an error state before exiting.
+[english] What does setting `returnError.contents.value = self.IllegalStateError` actually achieve in terms of flow control?
+[english] It explicitly populates the designated error object with a predefined illegal state error, which subsequent code can check to handle input validation failure or unexpected conditions during loading.
+[english] Got it, so this class essentially enforces implementation.

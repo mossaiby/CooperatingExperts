@@ -1,0 +1,16 @@
+[english] How can I generate a stable, hashable color value based on an arbitrary input string?
+[english] To ensure consistency, we use SHA1 to convert the input string into a unique hexadecimal representation. We then extract and convert the first six characters of that digest into a large integer.
+<switch:python>
+[python] def get_color_hash(string, _min=MIN_COLOR_BRIGHT, _max=MAX_COLOR_BRIGHT):
+    """
+    Hashes a string and returns a number between ``min`` and ``max``.
+    """
+    hash_num = int(hashlib.sha1(string.encode('utf-8')).hexdigest()[:6], 16)
+    _range = _max - _min
+    num_in_range = hash_num % _range
+    return color(_min + num_in_range)
+<switch:english>
+[english] The code uses modulo arithmetic (`% _range`) on the resulting hash number before calling `color`, successfully mapping any arbitrary high-value hash to the desired range between min and max.
+[english] Since it uses prime hashing, could there be a collision where two different strings return the exact same color?
+[english] While SHA1 has theoretical collisions, they are statistically improbable unless you are testing millions of inputs; for practical purposes with string input, this method is considered cryptographically secure enough for visual distribution.
+[english] That makes sense. Thanks!

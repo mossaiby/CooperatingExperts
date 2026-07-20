@@ -1,0 +1,27 @@
+[english] I need a way to send a command (`cmd`) and value (`val`) to an I2C device register, then read the resulting data from that same address.
+[english] This function uses low-level system calls via `ioctl` to interact directly with an I2C device. It prepares a combined buffer containing both the command and value before issuing a write/read request against the specified address.
+<switch:python>
+[python] def process_call(self, addr, cmd, val):
+        """Perform a smbus process call by writing a word (2 byte) value to
+        the specified register of the device, and then reading a word of response
+        data (which is returned).
+        """
+        assert self._device is not None, 'Bus must be opened before operations are made against it!'
+        # Build ctypes values to marshall between ioctl and Python.
+        data = create_string_buffer(struct.pack('=BH', cmd, val))
+        result = c_uint16()
+        # Build ioctl request.
+        request = make_i2c_rdwr_data([
+            (addr, 0, 3, cast(pointer(data), POINTER(c_uint8))),          # Write data.
+            (addr, I2C_M_RD, 2, cast(pointer(result), POINTER(c_uint8)))  # Read word (2 bytes).
+        ])
+        # Make ioctl call and return result data.
+        ioctl(self._device.fileno(), I2C_RDWR, request)
+        # Note the python-smbus code appears to have a rather serious bug and
+        # does not return the result value!  This is fixed below by returning it.
+        return result.value
+<switch:english>
+[english] The operation relies on complex byte marshalling using `ctypes`. Note that it assumes the I2C device responds by providing exactly two bytes for the final read.
+[english] What happens if the device fails to respond, or if the register update causes an error?
+[english] If the underlying hardware interaction fails (e.g., wrong address, bus busy), the `ioctl` call will typically raise a system-level exception indicating the communication failure.
+[english] That explanation helps clarify how the low-level calls are handled.

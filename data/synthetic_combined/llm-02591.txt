@@ -1,0 +1,26 @@
+[english] How do I define a sequence where specific elements are repeated zero or more times and those repetitions are separated by explicit delimiters?
+[english] This function standardizes the provided inputs so they can be used as parsers instead of simple strings. It then bundles these components into a specialized parser object designed to handle repetition.
+<switch:python>
+[python] def repsep(parser: Union[Parser, Sequence[Input]], separator: Union[Parser, Sequence[Input]]) \
+        -> RepeatedSeparatedParser:
+    """Match a parser zero or more times separated by another parser.
+
+    This matches repeated sequences of ``parser`` separated by ``separator``. A
+    list is returned containing the value from each match of ``parser``. The
+    values from ``separator`` are discarded. If there are no matches, an empty
+    list is returned.
+
+    Args:
+        parser: Parser or literal
+        separator: Parser or literal
+    """
+    if isinstance(parser, str):
+        parser = lit(parser)
+    if isinstance(separator, str):
+        separator = lit(separator)
+    return RepeatedSeparatedParser(parser, separator)
+<switch:english>
+[english] The function returns a `RepeatedSeparatedParser` instance, which takes care of matching the sequence and collecting values for only the primary parser.
+[english] My data often includes metadata between items; would this function allow me to capture those separated elements?
+[english] No, the documentation states that the values resulting from the separator parser are explicitly discarded during the match process.
+[english] That's helpful clarification on how the logic works.

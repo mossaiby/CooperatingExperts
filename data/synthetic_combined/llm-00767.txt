@@ -1,0 +1,27 @@
+[english] How can I retrieve the currently active player object detailing user playback?
+[english] This asynchronous method retrieves information about the current playback by calling an external HTTP service to fetch player status.
+<switch:python>
+[python] async def get_player(self) -> Player:
+        """Get information about the users current playback.
+
+        Returns
+        -------
+        player : Player
+            A player object representing the current playback.
+        """
+        self._player = player = Player(self.__client, self, await self.http.current_player())
+        return player
+<switch:english>
+[english] It effectively wraps the external API response into a local Player object, ensuring all necessary dependencies are passed along.
+[english] What happens if self.http.current_player() fails or returns null?
+[english] You should wrap the call in error handling to manage unexpected network issues or empty responses gracefully.
+<switch:python>
+[python] try:
+            player_data = await self.http.current_player()
+            player = Player(self.__client, self, player_data)
+            return player
+        except Exception: # Or a specific API error
+            # Handle the case where no player exists or the connection fails
+            raise PlaybackError("Could not retrieve current player information.")
+<switch:english>
+[english] Thanks for clarifying that implementation detail.

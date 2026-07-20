@@ -1,0 +1,18 @@
+[english] How do I add a new workspace entry to my application's configuration file?
+[english] This method first checks if the provided path actually exists using `os.path.exists(path)`. It then ensures that no other workspace is already using the given name before updating and saving the configuration.
+<switch:python>
+[python] def add(self, name, path):
+        """Add a workspace entry in user config file."""
+        if not (os.path.exists(path)):
+            raise ValueError("Workspace path `%s` doesn't exists." % path)
+
+        if (self.exists(name)):
+            raise ValueError("Workspace `%s` already exists." % name)
+
+        self.config["workspaces"][name] = {"path": path, "repositories": {}}
+        self.config.write()
+<switch:english>
+[english] It successfully adds a new key-value pair to the `workspaces` dictionary in the config object, and finally calls `self.config.write()` to persist the changes.
+[english] What happens if I try to add two workspaces with the same name?
+[english] The function checks for existing keys using `if (self.exists(name)):`. If a match is found, it will raise a ValueError directly rather than overwriting the entry.
+[english] That makes perfect sense, thanks for clarifying!

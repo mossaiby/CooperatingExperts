@@ -1,0 +1,11 @@
+[english] I need a way to neatly format internal system messages as JSON and output them to a specific log stream.
+[english] We can use Python's built-in `json` module to serialize your structured message dictionary. This ensures that the data is properly formatted, making it ideal for consistent logging regardless of where the output goes.
+<switch:python>
+[python] def display_messages(self, layout):
+        """Launch layouts display"""
+        print(json.dumps(self.messages, indent=4), file=self.out)
+<switch:english>
+[english] The function uses `print(..., file=self.out)` to bypass standard out and write directly to a specified stream. Since `json.dumps` handles indentation automatically, this provides very readable output even in log files.
+[english] What occurs if the messages stored in `self.messages` contain custom objects that aren't natively serializable by JSON?
+[english] Python will raise a TypeError because it doesn't know how to represent complex types like classes. You need to define a custom encoder and pass it to json.dumps to handle serialization for non-standard attributes.
+[english] That makes sense; I should implement a custom serializer.

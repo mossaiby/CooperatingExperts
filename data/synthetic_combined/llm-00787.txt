@@ -1,0 +1,30 @@
+[english] How can I programmatically iterate over all Python source files associated with every module currently loaded in my system?
+[english] This function systematically checks every module loaded into `sys.modules`. For each, it retrieves the file path and walks up the directory hierarchy until it identifies a relevant source or compiled code.
+<switch:python>
+[python] def _iter_module_files():
+    """This iterates over all relevant Python files.  It goes through all
+    loaded files from modules, all files in folders of already loaded modules
+    as well as all files reachable through a package.
+    """
+    # The list call is necessary on Python 3 in case the module
+    # dictionary modifies during iteration.
+    for module in list(sys.modules.values()):
+        if module is None:
+            continue
+        filename = getattr(module, '__file__', None)
+        if filename:
+            old = None
+            while not os.path.isfile(filename):
+                old = filename
+                filename = os.path.dirname(filename)
+                if filename == old:
+                    break
+            else:
+                if filename[-4:] in ('.pyc', '.pyo'):
+                    filename = filename[:-1]
+                yield filename
+<switch:english>
+[english] The logic handles both standard modules and packages by traversing parent directories of paths found in loaded modules. Note that it specifically targets files ending in '.pyc' or '.pyo' if no direct file match is found during upward traversal.
+[english] What happens if a module resides on a mount point (e.g., network share) where `os.path.isfile` might behave unexpectedly?
+[english] The function relies on standard `os.path` checks, which may return false negatives or positives depending on the filesystem's caching and permissions. To handle potential inconsistencies, you could add a try-except block around file system operations.
+[english] This is very helpful for discovery tasks.

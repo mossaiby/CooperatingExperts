@@ -1,0 +1,85 @@
+[english] How do I reliably post content to an NNTP server while handling required headers and validating the response?
+[english] This `post` method sends a POST command and handles body formatting according to protocol rules. It verifies initial success, formats the provided data, validates character legality, increments status checks, and attempts to extract a message ID from the final reply.
+<switch:python>
+[python] def post(self, headers={}, body=""):
+        """POST command.
+
+        Args:
+            headers: A dictionary of headers.
+            body: A string or file like object containing the post content.
+
+        Raises:
+            NNTPDataError: If binary characters are detected in the message
+                body.
+
+        Returns:
+            A value that evaluates to true if posting the message succeeded.
+            (See note for further details)
+
+        Note:
+            '\\n' line terminators are converted to '\\r\\n'
+
+        Note:
+            Though not part of any specification it is common for usenet servers
+            to return the message-id for a successfully posted message. If a
+            message-id is identified in the response from the server then that
+            message-id will be returned by the function, otherwise True will be
+            returned.
+
+        Note:
+            Due to protocol issues if illegal characters are found in the body
+            the message will still be posted but will be truncated as soon as
+            an illegal character is detected. No illegal characters will be sent
+            to the server. For information illegal characters include embedded
+            carriage returns '\\r' and null characters '\\0' (because this
+            function converts line feeds to CRLF, embedded line feeds are not an
+            issue)
+        """
+        code, message = self.command("POST")
+        if code != 340:
+            raise NNTPReplyError(code, message)
+
+        # send headers
+        hdrs = utils.unparse_headers(headers)
+        self.socket.sendall(hdrs)
+
+        if isinstance(body, basestring):
+            body = cStringIO.StringIO(body)
+
+        # send body
+        illegal = False
+        for line in body:
+            if line.startswith("."):
+                line = "." + line
+            if line.endswith("\r\n"):
+                line = line[:-2]
+            elif line.endswith("\n"):
+                line = line[:-1]
+            if any(c in line for c in "\0\r"):
+                illegal = True
+                break
+            self.socket.sendall(line + "\r\n")
+        self.socket.sendall(".\r\n")
+
+        # get status
+        code, message = self.status()
+
+        # check if illegal characters were detected
+        if illegal:
+            raise NNTPDataError("Illegal characters found")
+
+        # check status
+        if code != 240:
+            raise NNTPReplyError(code, message)
+
+        # return message-id possible
+        message_id = message.split(None, 1)[0]
+        if message_id.startswith("<") and message_id.endswith(">"):
+            return message_id
+
+        return True
+<switch:english>
+[english] The function successfully posts the content but will raise an NNTPDataError if illegal characters are detected in the body during processing. If no specific ID is found in the response, it defaults to returning True.
+[english] What happens if the server returns a status code other than 240 after the message is sent?
+[english] If the final command sequence does not result in a successful code of 240, the function raises an NNTPReplyError with the received status and message.
+[english] That makes the posting process much clearer.

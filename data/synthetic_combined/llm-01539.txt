@@ -1,0 +1,34 @@
+[english] I need a function that generates a temporary, unauthenticated URL to allow users to download file content without needing long-term access tokens.
+[english] To fulfill this request, the method first validates the input `file_id` to ensure it is a proper UUID. Once validated, it makes an authenticated internal API call to retrieve the specific signed URL from the storage service.
+<switch:python>
+[python] def get_signed_url(self, file_id):
+        '''Get a signed unauthenticated URL.
+
+        It can be used to download the file content without the need for a
+        token. The signed URL expires after 5 seconds.
+
+        Args:
+            file_id (str): The UUID of the file to get the link for.
+
+        Returns:
+            The signed url as a string
+
+        Raises:
+            StorageArgumentException: Invalid arguments
+            StorageForbiddenException: Server response code 403
+            StorageNotFoundException: Server response code 404
+            StorageException: other 400-600 error codes
+        '''
+        if not is_valid_uuid(file_id):
+            raise StorageArgumentException(
+                'Invalid UUID for file_id: {0}'.format(file_id))
+
+        return self._authenticated_request \
+            .to_endpoint('file/{}/content/secure_link/'.format(file_id)) \
+            .return_body() \
+            .get()['signed_url']
+<switch:english>
+[english] The primary function of the resulting `signed_url` is that it grants unauthenticated download access but is strictly temporary, expiring after 5 seconds for security purposes.
+[english] If the server responds with a 404 error because the specified file does not exist, which specific exception does this method raise?
+[english] The method raises `StorageNotFoundException`. This custom exception handles the 404 server response code to clearly signal that the resource identified by `file_id` could not be found in storage.
+[english] That makes sense; so I know how to handle invalid or missing files.

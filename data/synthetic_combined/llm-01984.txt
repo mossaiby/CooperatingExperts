@@ -1,0 +1,49 @@
+[english] How can I write a Python function that calculates a new date by adding or subtracting a specific number of days from an existing YYYY-MM-DD date string?
+[english] The most reliable way to perform date arithmetic in Python is using the `datetime` module. This approach first parses your input string into a datetime object, applies a `timedelta`, and then formats it back into the required standard string format.
+<switch:python>
+[python] def ds_add(ds, days):
+    ""
+    Add or subtract days from a YYYY-MM-DD
+
+    :param ds: anchor date in ``YYYY-MM-DD`` format to add to
+    :type ds: str
+    :param days: number of days to add to the ds, you can use negative values
+    :type days: int
+
+    >>> ds_add('2015-01-01', 5)
+    '2015-01-06'
+    >>> ds_add('2015-01-06', -5)
+    '2015-01-01'
+    ""
+
+    ds = datetime.strptime(ds, '%Y-%m-%d')
+    if days:
+        ds = ds + timedelta(days)
+    return ds.isoformat()[:10]
+<switch:english>
+[english] python
+def ds_add(ds, days):
+    """
+    Add or subtract days from a YYYY-MM-DD
+
+    :param ds: anchor date in ``YYYY-MM-DD`` format to add to
+    :type ds: str
+    :param days: number of days to add to the ds, you can use negative values
+    :type days: int
+
+    >>> ds_add('2015-01-01', 5)
+    '2015-01-06'
+    >>> ds_add('2015-01-06', -5)
+    '2015-01-01'
+    """
+
+    ds = datetime.strptime(ds, '%Y-%m-%d')
+    if days:
+        ds = ds + timedelta(days)
+    return ds.isoformat()[:10]
+```
+
+The function returns a truncated ISO format string by slicing the output of `isoformat()` to ensure it strictly adheres to YYYY-MM-DD.
+[english] What happens if I pass a date that doesn't actually exist, like February 30th?
+[english] This implementation will raise a `ValueError` because Python's standard timedelta calculation only works on valid calendar dates. To handle this, you would need to implement custom boundary checking logic before arithmetic.
+[english] That clarifies how potential errors are handled.

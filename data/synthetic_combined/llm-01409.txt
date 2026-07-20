@@ -1,0 +1,15 @@
+[english] How can I dynamically add nested child elements to an existing XML structure using Python?
+[english] To implement this, the function converts the input name into bytes and uses a library method (`lsl_append_child`) to create and attach a new element.
+<switch:python>
+[python] def append_child(self, name):
+        """Append a child element with the specified name."""
+        return XMLElement(lib.lsl_append_child(self.e, str.encode(name)))
+<switch:english>
+[english] The function creates an `XMLElement` and relies on bitwise operations within the underlying library to perform the actual tree modification.
+[english] Does this method handle Unicode characters correctly in Python 3?
+[english] Since it uses `str.encode`, it depends on the default encoding (usually UTF-8). To ensure compatibility, you could explicitly encode the string like this:
+<switch:python>
+[python] def append_child(self, name):
+        return XMLElement(lib.lsl_append_child(self.e, str.encode(name, 'utf-8')))
+<switch:english>
+[english] That makes sense, thank you for the clarification.

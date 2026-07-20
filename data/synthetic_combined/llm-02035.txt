@@ -1,0 +1,16 @@
+[english] How can I retrieve remote data from a specific URL and convert it into a standardized package format?
+[english] To handle this, we first use an HTTP client to fetch the raw content from the provided URL. We then wrap that fetched raw data inside our Package object.
+<switch:python>
+[python] def from_url(url):
+        """
+        Given a URL, return a package
+        :param url:
+        :return:
+        """
+        package_data = HTTPClient().http_request(url=url, decode=None)
+        return Package(raw_data=package_data)
+<switch:english>
+[english] This function successfully imports remote resources but assumes both `HTTPClient` and `Package` classes are defined elsewhere in your system.
+[english] If the HTTP request fails (e.g., 404), will this function raise an error, or does it handle the failure gracefully?
+[english] The current implementation does not explicitly check for HTTP status codes; it relies on `HTTPClient().http_request` to either succeed or raise an exception based on its internal logic.
+[english] Okay, so I should wrap this in a try-except block then.

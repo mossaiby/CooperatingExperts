@@ -1,0 +1,39 @@
+[english] How can I implement a function that asynchronously waits for a specific command and optional value in a stream of incoming data before hitting a timeout?
+[english] This implementation uses an asynchronous loop managed by `async_timeout` to poll messages. It continuously calls `self.receive()` and checks if the received message matches our desired command using `check_messages`.
+<switch:python>
+[python] async def wait_for(self, cmd, value=None, timeout=60):
+        """Hang until command is received.
+
+        If value is supplied, it will hang until ``cmd:value`` is received.
+
+        Parameters
+        ----------
+        cmd : string
+            Command to wait for in bytestring from microscope CAM interface. If
+            ``value`` is falsey, value of received command does not matter.
+        value : string
+            Wait until ``cmd:value`` is received.
+        timeout : int
+            Minutes to wait for command. If timeout is reached, an empty
+            OrderedDict will be returned.
+
+        Returns
+        -------
+        collections.OrderedDict
+            Last received messsage or empty message if timeout is reached.
+
+        """
+        try:
+            async with async_timeout(timeout * 60):
+                while True:
+                    msgs = await self.receive()
+                    msg = check_messages(msgs, cmd, value=value)
+                    if msg:
+                        return msg
+        except asyncio.TimeoutError:
+            return OrderedDict()
+<switch:english>
+[english] The function handles timeouts by catching `asyncio.TimeoutError` and gracefully returning an empty `OrderedDict()` instead of crashing.
+[english] If multiple matching commands arrive during the wait period, should this function process all of them or just return the first one it finds?
+[english] As written, the code returns immediately upon finding any match because the message check and return are inside a simple `if msg: return msg` block.
+[english] That makes sense; I'll adjust the loop if batch processing is required.

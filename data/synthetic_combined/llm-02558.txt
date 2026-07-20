@@ -1,0 +1,53 @@
+[english] How do we implement stream processing logic to parse and understand a complete Brotli data input?
+[english] This function systematically reads the metadata from a continuous Brotli input stream. It iterates through successive stream blocks until it encounters the end marker, setting up necessary context maps for decoding.
+<switch:python>
+[python] def processStream(self):
+        """Process a brotli stream.
+        """
+        print('addr  hex{:{}s}binary context explanation'.format(
+            '', self.width-10))
+        print('Stream header'.center(60, '-'))
+        self.windowSize = self.verboseRead(WindowSizeAlphabet())
+        print('Metablock header'.center(60, '='))
+        self.ISLAST = False
+        self.output = bytearray()
+        while not self.ISLAST:
+            self.ISLAST = self.verboseRead(
+                BoolCode('LAST', description="Last block"))
+            if self.ISLAST:
+                if self.verboseRead(
+                    BoolCode('EMPTY', description="Empty block")): break
+            if self.metablockLength(): continue
+            if not self.ISLAST and self.uncompressed(): continue
+            print('Block type descriptors'.center(60, '-'))
+            self.numberOfBlockTypes = {}
+            self.currentBlockCounts = {}
+            self.blockTypeCodes = {}
+            self.blockCountCodes = {}
+            for blockType in (L,I,D): self.blockType(blockType)
+            print('Distance code parameters'.center(60, '-'))
+            self.NPOSTFIX, self.NDIRECT = self.verboseRead(DistanceParamAlphabet())
+            self.readLiteralContextModes()
+            print('Context maps'.center(60, '-'))
+            self.cmaps = {}
+            #keep the number of each kind of prefix tree for the last loop
+            numberOfTrees = {I: self.numberOfBlockTypes[I]}
+            for blockType in (L,D):
+                numberOfTrees[blockType] = self.contextMap(blockType)
+            print('Prefix code lists'.center(60, '-'))
+            self.prefixCodes = {}
+            for blockType in (L,I,D):
+                self.readPrefixArray(blockType, numberOfTrees[blockType])
+            self.metablock()
+<switch:english>
+[english] The function relies heavily on various predefined alphabets and helper methods to manage the complex structure of Brotli blocks internally. It manages the entire state until self.ISLAST is true.
+[english] What happens if a required metadata read fails mid-loop, specifically when reading block types?
+[english] While not shown directly in this snippet, robust stream handlers should wrap calls like `self.verboseRead()` in dedicated try-except blocks to handle corrupted data or premature stream termination gracefully.
+<switch:python>
+[python] try:
+    # ... critical reads ...
+xcept IOError as e: 
+    print(f"Stream error encountered: {e}")
+    break
+<switch:english>
+[english] That makes perfect sense, thank you for the detailed explanation.

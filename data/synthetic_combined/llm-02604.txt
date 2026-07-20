@@ -1,0 +1,43 @@
+[english] I need a Python function that reads an image file name and returns the corresponding constant for its type in wxPython based on the extension.
+[english] This function uses os.path.splitext to separate the filename from its extension, then checks the standardized uppercase version against a series of conditional branches to map it to the correct wxPython bitmap type constant.
+<switch:python>
+[python] def bitmap_type(filename):
+    """
+    Get the type of an image from the file's extension ( .jpg, etc. )
+    """
+
+    if filename == '':
+        return None
+
+    name, ext = os.path.splitext(filename)
+    ext = ext[1:].upper()
+    if ext == 'BMP':
+        return wx.BITMAP_TYPE_BMP
+    elif ext == 'GIF':
+        return wx.BITMAP_TYPE_GIF
+    elif ext == 'JPG' or ext == 'JPEG':
+        return wx.BITMAP_TYPE_JPEG
+    elif ext == 'PCX':
+        return wx.BITMAP_TYPE_PCX
+    elif ext == 'PICT':
+        return wx.BITMAP_TYPE_PICT
+    elif ext == 'PNG':
+        return wx.BITMAP_TYPE_PNG
+    elif ext == 'PNM':
+        return wx.BITMAP_TYPE_PNM
+    elif ext == 'TIF' or ext == 'TIFF':
+        return wx.BITMAP_TYPE_TIF
+    elif ext == 'XBM':
+        return wx.BITMAP_TYPE_XBM
+    elif ext == 'XPM':
+        return wx.BITMAP_TYPE_XPM
+    else:
+        # KEA 2001-10-10
+        # rather than throw an exception, we could try and have wxPython figure out the image
+        # type by returning wxBITMAP_TYPE_ANY
+        raise RuntimeErro('invalid graphics format')
+<switch:english>
+[english] The use of .upper() ensures case insensitivity for extensions like image.png or image.PNG, and unrecognized formats result in a RuntimeError.
+[english] How does the function handle filenames that have multiple dots, such as 'archive.v3.jpeg'?
+[english] Because it utilizes os.path.splitext, which only splits at the last period, it will correctly identify '.JPEG' as the extension for any filename formatted this way.
+[english] That makes sense; thanks for explaining how that logic works.

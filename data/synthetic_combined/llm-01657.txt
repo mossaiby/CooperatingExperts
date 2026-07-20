@@ -1,0 +1,54 @@
+[english] I need a function that allows an interactive terminal session with a spawned child process, handling both user input and child output seamlessly.
+[english] This method first flushes any pending buffer data. It then sets the standard input to 'raw' mode using `tty.setraw` to capture keystrokes immediately rather than waiting for Enter.
+<switch:python>
+[python] def interact(self, escape_character = b'\x1d', input_filter = None, output_filter = None):
+
+        """This gives control of the child process to the interactive user (the
+        human at the keyboard). Keystrokes are sent to the child process, and
+        the stdout and stderr output of the child process is printed. This
+        simply echos the child stdout and child stderr to the real stdout and
+        it echos the real stdin to the child stdin. When the user types the
+        escape_character this method will stop. The default for
+        escape_character is ^]. This should not be confused with ASCII 27 --
+        the ESC character. ASCII 29 was chosen for historical merit because
+        this is the character used by 'telnet' as the escape character. The
+        escape_character will not be sent to the child process.
+
+        You may pass in optional input and output filter functions. These
+        functions should take a string and return a string. The output_filter
+        will be passed all the output from the child process. The input_filter
+        will be passed all the keyboard input from the user. The input_filter
+        is run BEFORE the check for the escape_character.
+
+        Note that if you change the window size of the parent the SIGWINCH
+        signal will not be passed through to the child. If you want the child
+        window size to change when the parent's window size changes then do
+        something like the following example::
+
+            import pexpect, struct, fcntl, termios, signal, sys
+            def sigwinch_passthrough (sig, data):
+                s = struct.pack("HHHH", 0, 0, 0, 0)
+                a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ , s))
+                global p
+                p.setwinsize(a[0],a[1])
+            p = pexpect.spawn('/bin/bash') # Note this is global and used in sigwinch_passthrough.
+            signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+            p.interact()
+        """
+
+        # Flush the buffer.
+        if PY3: self.stdout.write(_cast_unicode(self.buffer, self.encoding))
+        else:   self.stdout.write(self.buffer)
+        self.stdout.flush()
+        self.buffer = self._empty_buffer
+        mode = tty.tcgetattr(self.STDIN_FILENO)
+        tty.setraw(self.STDIN_FILENO)
+        try:
+            self.__interact_copy(escape_character, input_filter, output_filter)
+        finally:
+            tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
+<switch:english>
+[english] Crucially, the method wraps the core interaction in a `try...finally` block to ensure that terminal settings are restored even if an exception occurs during operation.
+[english] The docstring mentions SIGWINCH doesn't pass through by default; should I manually handle signal forwarding for window resizing?
+[english] Yes, you can achieve this by binding the parent process's SIGWINCH handler to adjust the child process terminal dimensions using `fcntl.ioctl` and passing it into the interaction setup.
+[english] That clarifies how to maintain interactive shell consistency across different window sizes.

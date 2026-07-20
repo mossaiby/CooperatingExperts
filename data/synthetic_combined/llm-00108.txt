@@ -1,0 +1,30 @@
+[english] I need a function that can take structured documentation lines and parse them into a key-value dictionary where sections or references are mapped correctly.
+[english] This approach first defines an inner helper to clean up whitespace, then it handles any initial 'default' indexing specified in the section header before iterating over content lines. For each line, it uses aggressive splitting to identify keys and values within the string structure.
+<switch:python>
+[python] def _parse_index(self, section, content):
+        """
+        .. index: default
+           :refguide: something, else, and more
+
+        """
+        def strip_each_in(lst):
+            return [s.strip() for s in lst]
+
+        out = {}
+        section = section.split('::')
+        if len(section) > 1:
+            out['default'] = strip_each_in(section[1].split(','))[0]
+        for line in content:
+            line = line.split(':')
+            if len(line) > 2:
+                out[line[1]] = strip_each_in(line[2].split(','))
+        return out
+<switch:english>
+[english] The function successfully extracts structured data, ensuring that both default parameters and subsequent list items are cleaned of excess whitespace using strip_each_in.
+[english] What happens if a line only has one colon (meaning two parts) instead of three or more?
+[english] If the line contains fewer than three parts after splitting by ':', it is skipped entirely inside the loop, ensuring that `out[line[1]] = ...` does not cause an error because the condition `len(line) > 2:` prevents processing those lines.
+<switch:python>
+[python] def _parse_index(self, section, content):
+        # function body remains the same
+<switch:english>
+[english] That makes sense; I'll test that scenario now.

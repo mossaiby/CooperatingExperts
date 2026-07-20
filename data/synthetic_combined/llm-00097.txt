@@ -1,0 +1,59 @@
+[english] How can I determine if a dependency requirement already satisfies another installed package and whether we should skip installation?
+[english] This method determines if an existing requirement is satisfied. It checks the current requirement status and validates user flags like upgrade settings before deciding to skip or proceed.
+<switch:python>
+[python] def _check_skip_installed(self, req_to_install, finder):
+        """Check if req_to_install should be skipped.
+
+        This will check if the req is installed, and whether we should upgrade
+        or reinstall it, taking into account all the relevant user options.
+
+        After calling this req_to_install will only have satisfied_by set to
+        None if the req_to_install is to be upgraded/reinstalled etc. Any
+        other value will be a dist recording the current thing installed that
+        satisfies the requirement.
+
+        Note that for vcs urls and the like we can't assess skipping in this
+        routine - we simply identify that we need to pull the thing down,
+        then later on it is pulled down and introspected to assess upgrade/
+        reinstalls etc.
+
+        :return: A text reason for why it was skipped, or None.
+        """
+        # Check whether to upgrade/reinstall this req or not.
+        req_to_install.check_if_exists()
+        if req_to_install.satisfied_by:
+            skip_reason = 'satisfied (use --upgrade to upgrade)'
+            if self.upgrade:
+                best_installed = False
+                # For link based requirements we have to pull the
+                # tree down and inspect to assess the version #, so
+                # its handled way down.
+                if not (self.force_reinstall or req_to_install.link):
+                    try:
+                        finder.find_requirement(req_to_install, self.upgrade)
+                    except BestVersionAlreadyInstalled:
+                        skip_reason = 'up-to-date'
+                        best_installed = True
+                    except DistributionNotFound:
+                        # No distribution found, so we squash the
+                        # error - it will be raised later when we
+                        # re-try later to do the install.
+                        # Why don't we just raise here?
+                        pass
+
+                if not best_installed:
+                    # don't uninstall conflict if user install and
+                    # conflict is not user install
+                    if not (self.use_user_site and not
+                            dist_in_usersite(req_to_install.satisfied_by)):
+                        req_to_install.conflicts_with = \
+                            req_to_install.satisfied_by
+                    req_to_install.satisfied_by = None
+            return skip_reason
+        else:
+            return None
+<switch:english>
+[english] If the logic dictates a skip, the return value provides a textual reason; otherwise, it's `None`, meaning installation should continue.
+[english] Does this function handle VCS (version control system) requirements correctly during the skipping process?
+[english] No. The function notes that for VCS URLs we cannot assess skips in this routine and will rely on future introspection after pulling the source tree to determine install status.
+[english] Got it, so skip logic is handled differently than regular distributions.

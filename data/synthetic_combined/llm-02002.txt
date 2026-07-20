@@ -1,0 +1,24 @@
+[english] How do I retrieve all X.509 extensions from a certificate signing request object?
+[english] This function manually iterates through raw C structures to extract and convert them into usable Python `X509Extension` objects.
+<switch:python>
+[python] def get_extensions(self):
+        """
+        Get X.509 extensions in the certificate signing request.
+
+        :return: The X.509 extensions in this request.
+        :rtype: :py:class:`list` of :py:class:`X509Extension` objects.
+
+        .. versionadded:: 0.15
+        """
+        exts = []
+        native_exts_obj = _lib.X509_REQ_get_extensions(self._req)
+        for i in range(_lib.sk_X509_EXTENSION_num(native_exts_obj)):
+            ext = X509Extension.__new__(X509Extension)
+            ext._extension = _lib.sk_X509_EXTENSION_value(native_exts_obj, i)
+            exts.append(ext)
+        return exts
+<switch:english>
+[english] The code manually instantiates and wraps each native extension object obtained from the request structure.
+[english] What happens if the certificate signing request contains no extensions?
+[english] If there are no extensions, `sk_X509_EXTENSION_num` will return 0, and the function will simply return an empty list: `[]`.
+[english] That makes sense; I should check for an empty list before processing.

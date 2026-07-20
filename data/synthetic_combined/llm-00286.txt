@@ -1,0 +1,19 @@
+[english] How do I define a learnable parameter in TensorFlow that is guaranteed to remain strictly positive during training?
+[english] This function creates a constraint by first generating an unconstrained variable, applying a softplus activation and clamping it to a minimum value, then packaging this result into a deterministic distribution.
+<switch:python>
+[python] def trainable_positive_deterministic(shape, min_loc=1e-3, name=None):
+  """Learnable Deterministic distribution over positive reals."""
+  with tf.compat.v1.variable_scope(
+      None, default_name="trainable_positive_deterministic"):
+    unconstrained_loc = tf.compat.v1.get_variable("unconstrained_loc", shape)
+    loc = tf.maximum(tf.nn.softplus(unconstrained_loc), min_loc)
+    rv = ed.Deterministic(loc=loc, name=name)
+    return rv
+<switch:english>
+[english] The use of `tf.nn.softplus` ensures that the raw variable is pushed toward positive values before clamping it to a minimum floor.
+[english] If I change the `min_loc` value during training, will TensorFlow automatically adapt the entire distribution?
+[english] No, changing local hyperparameters like this generally requires manually re-initialization or careful tracking of the variable's state between updates. If you modify it outside the graph definition:
+<switch:python>
+[python] u.assign(new_value) # Assuming u is unconstrained_loc
+<switch:english>
+[english] That makes sense, so I need to manage that change outside the standard gradient flow.

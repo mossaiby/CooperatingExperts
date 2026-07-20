@@ -1,0 +1,28 @@
+[english] How can I take a complex gate node object and convert it into a standardized dictionary format suitable for processed execution?
+[english] This function standardizes the representation of a gate by iterating over its attributes and children, storing all necessary metadata in the self.gates structure.
+<switch:python>
+[python] def _process_gate(self, node, opaque=False):
+        """Process a gate node.
+
+        If opaque is True, process the node as an opaque gate node.
+        """
+        self.gates[node.name] = {}
+        de_gate = self.gates[node.name]
+        de_gate["print"] = True  # default
+        de_gate["opaque"] = opaque
+        de_gate["n_args"] = node.n_args()
+        de_gate["n_bits"] = node.n_bits()
+        if node.n_args() > 0:
+            de_gate["args"] = [element.name for element in node.arguments.children]
+        else:
+            de_gate["args"] = []
+        de_gate["bits"] = [c.name for c in node.bitlist.children]
+        if opaque:
+            de_gate["body"] = None
+        else:
+            de_gate["body"] = node.body
+<switch:english>
+[english] By transforming the node properties into this structured dictionary, downstream processes can consistently retrieve information without needing direct access to the original object type.
+[english] What is the functional difference between a gate where `opaque` is True versus one where it is False?
+[english] When `opaque` is True, the function sets 'body' to None because opaque gates are treated as black boxes that do not require an internal implementation. In contrast, when false, `de_gate[“body”]` stores the runnable content of the node.
+[english] I understand how the body is handled now.

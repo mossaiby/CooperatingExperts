@@ -1,0 +1,24 @@
+[english] How can I return an Azure Service Bus message to the queue so it can be reprocessed if my current handler fails?
+[english] This function implements a custom 'abandon' logic. It modifies the message state by calling `self.message.modify` within an executor to safely handle asynchronous operations.
+<switch:python>
+[python] async def abandon(self):
+        """Abandon the message.
+
+        This message will be returned to the queue to be reprocessed.
+
+        :raises: ~azure.servicebus.common.errors.MessageAlreadySettled if the message has been settled.
+        :raises: ~azure.servicebus.common.errors.MessageLockExpired if message lock has already expired.
+        :raises: ~azure.servicebus.common.errors.SessionLockExpired if session lock has already expired.
+        :raises: ~azure.servicebus.common.errors.MessageSettleFailed if message settle operation fails.
+        """
+        self._is_live('abandon')
+        try:
+            modify = functools.partial(self.message.modify, True, False)
+            await self._loop.run_in_executor(None, modify)
+        except Exception as e:
+            raise MessageSettleFailed("abandon", e)
+<switch:english>
+[english] The core logic uses `functools.partial` to wrap the message modification method so that it can be executed safely in a thread pool via `run_in_executor`. This ensures the message is set to be abandoned (True) without being deleted.
+[english] Why does this function catch all exceptions and raise a specific MessageSettleFailed status?
+[english] It catches general exceptions during modification inside the `try...except` block to ensure that if the underlying service call fails, the operation is wrapped and reported as a dedicated `MessageSettleFailed` error.
+[english] That makes sense. Thanks for clarifying how this handles exceptions!

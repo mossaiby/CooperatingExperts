@@ -1,0 +1,19 @@
+[english] How can I reliably check for a specific token in the request arguments, validate its authenticity, and store it in the user's session if it is valid?
+[english] This function safely attempts to retrieve a 'token' from the incoming request arguments. It then uses your `SecretLink` model method to verify the token's integrity before saving it to the active session.
+<switch:python>
+[python] def verify_token():
+    """Verify token and save in session if it's valid."""
+    try:
+        from .models import SecretLink
+        token = request.args['token']
+        # if the token is valid
+        if token and SecretLink.validate_token(token, {}):
+            # then save in session the token
+            session['accessrequests-secret-token'] = token
+    except KeyError:
+        pass
+<switch:english>
+[english] The surrounding try/except block is crucial here, as it ensures that the entire verification process remains robust and doesn't raise an error if the 'token' argument is missing from the URL.
+[english] What specific action or warning should I log if `SecretLink.validate_token` returns False for a token that was provided?
+[english] Currently, the function is silent upon validation failure. To log it, you would add an 'else' block after the conditional check:
+[english] That makes sense; adding logging is important for auditing.

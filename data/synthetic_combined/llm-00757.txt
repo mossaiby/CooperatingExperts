@@ -1,0 +1,25 @@
+[english] How do I load and filter specific feature images from a dataset while applying any necessary internal masks?
+[english] This method loads all available feature names from the dataset first. It then filters these features based on what is requested, before using metaprocessors to generate the actual image data.
+<switch:python>
+[python] def _load_features_from_dataset(self, features=None, image_type=None,
+                                    threshold=0.001):
+        """ Load feature image data from the current Dataset instance. See
+        load_features() for documentation.
+        """
+        self.feature_names = self.dataset.feature_table.feature_names
+        if features is not None:
+            self.feature_names = [f for f in features
+                                  if f in self.feature_names]
+        from neurosynth.analysis import meta
+        self.feature_images = meta.analyze_features(
+            self.dataset, self.feature_names, image_type=image_type,
+            threshold=threshold)
+        # Apply a mask if one was originally passed
+        if self.masker.layers:
+            in_mask = self.masker.get_mask(in_global_mask=True)
+            self.feature_images = self.feature_images[in_mask, :]
+<switch:english>
+[english] Finally, it applies an existing mask if configured in `self.masker`. This ensures that any filtering defined by the masker object is correctly applied to the loaded feature images.
+[english] What happens if we pass a list of features that are not present in the dataset's original feature table?
+[english] The function handles this gracefully using a list comprehension (`if f in self.feature_names`), meaning only matching features will be added to `self.feature_names`, preventing errors.
+[english] That makes sense, thanks for clarifying.

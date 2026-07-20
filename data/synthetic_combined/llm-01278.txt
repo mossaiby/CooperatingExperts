@@ -1,0 +1,17 @@
+[english] How can I set up a testing environment for an Invenio 2 app?
+[english] This function sets up the necessary application context and preloads the request cycle required by Invenio to run tests correctly.
+<switch:python>
+[python] def init_app_context():
+    """Initialize app context for Invenio 2.x."""
+    try:
+        from invenio.base.factory import create_app
+        app = create_app()
+        app.test_request_context('/').push()
+        app.preprocess_request()
+    except ImportError:
+        pass
+<switch:english>
+[english] It's important to note that using `create_app` in this way might hide configuration issues until a real test runs.
+[english] What happens if I call init_app_context() more than once?
+[english] If called twice, the app context is likely re-initialized or modified without careful state management, potentially leading to unexpected behavior. The function doesn't check for existing contexts before proceeding.
+[english] Got it, thanks!

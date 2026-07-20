@@ -1,0 +1,20 @@
+[english] How can I safely convert a given ReceiptCard object into an Attachment structure?
+[english] To handle this, we first ensure that the input `card` is actually an instance of `ReceiptCard`. Once validated, we construct and return the proper `Attachment` object.
+<switch:python>
+[python] def receipt_card(card: ReceiptCard) -> Attachment:
+        """
+        Returns an attachment for a receipt card. Will raise a TypeError if 'card' argument is not a ReceiptCard.
+        :param card:
+        :return:
+        """
+        if not isinstance(card, ReceiptCard):
+            raise TypeError('CardFactory.receipt_card(): `card` argument is not an instance of an ReceiptCard, '
+                            'unable to prepare attachment.')
+
+        return Attachment(content_type=CardFactory.content_types.receipt_card,
+                          content=card)
+<switch:english>
+[english] The function uses robust type checking to prevent unexpected data types from being passed into the attachment creation process.
+[english] What specific error message is raised if I pass a generic string instead of a ReceiptCard?
+[english] If you pass a string, it raises a TypeError with the message: 'CardFactory.receipt_card(): `card` argument is not an instance of an ReceiptCard, unable to prepare attachment.'
+[english] That makes perfect sense, thank you for explaining.

@@ -1,0 +1,24 @@
+[english] I need a way to convert a large integer into its equivalent string representation using Base 62.
+[english] This function converts an integer into its Base 62 string form by repeatedly applying the modulo and floor division operators. It relies on an external dictionary, BASE62_MAP, to translate numerical remainders (0 through 61) into their corresponding symbols.
+<switch:python>
+[python] def to_base62(n):
+    """
+    Converts a number to base 62
+    :param n: The number to convert
+    :return: Base 62 representation of number (string)
+    """
+    remainder = n % 62
+    result = BASE62_MAP[remainder]
+    num = n // 62
+
+    while num > 0:
+        remainder = num % 62
+        result = '%s%s' % (BASE62_MAP[remainder], result)
+        num = num // 62
+
+    return result
+<switch:english>
+[english] The implementation builds the result from right to left by prepending new characters in the loop. Be aware that this code requires a pre-defined `BASE62_MAP` for it to function correctly.
+[english] What output is returned if I call the function with 0 as the input?
+[english] If you pass 0, the initial remainder calculation will proceed but the main loop (`while num > 0`) will be skipped entirely. For N=0, it currently returns an empty string because the code does not have a specific check for zero.
+[english] I see. How should I modify it to correctly handle the input of zero?

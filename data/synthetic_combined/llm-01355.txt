@@ -1,0 +1,41 @@
+[english] I need to run a given transition operator multiple times, keeping track of its intermediate states at each step.
+[english] This function executes the initial state through the `fn` transition operator once and then uses a recursive scan utility for subsequent steps. It also wraps both the main function (`fn`) and tracer (`trace_fn`) to ensure all their outputs are converted into TensorFlow tensors before processing them.
+<switch:python>
+[python] def trace(state: State, fn: TransitionOperator, num_steps: IntTensor,
+          trace_fn: Callable[[State, TensorNest], TensorNest]
+         ) -> Tuple[State, TensorNest]:
+  """`TransitionOperator` that runs `fn` repeatedly and traces its outputs.
+
+  Args:
+    state: A nest of `Tensor`s or None.
+    fn: A `TransitionOperator`.
+    num_steps: Number of steps to run the function for. Must be greater than 1.
+    trace_fn: Callable that the unpacked outputs of `fn` and returns a nest of
+      `Tensor`s. These will be stacked and returned.
+
+  Returns:
+    state: The final state returned by `fn`.
+    traces: Stacked outputs of `trace_fn`.
+  """
+
+  def fn_wrapper(args, _):
+    return tf.nest.map_structure(tf.convert_to_tensor, call_fn(fn, args[0]))
+
+  def trace_fn_wrapper(args):
+    return tf.nest.map_structure(tf.convert_to_tensor, call_fn(trace_fn, args))
+
+  state = call_fn(fn, state)
+  first_trace = trace_fn_wrapper(state)
+
+  state, full_trace = mcmc_util.trace_scan(
+      fn_wrapper, state, tf.ones(num_steps - 1), trace_fn=trace_fn_wrapper)
+
+  prepend = lambda x, y: tf.concat(  # pylint: disable=g-long-lambda
+      [tf.convert_to_tensor(value=x)[tf.newaxis], y], 0)
+
+  return state, tf.nest.map_structure(prepend, first_trace, full_trace)
+<switch:english>
+[english] Finally, it prepends the results of the very first step's trace to the rest of the collected traces to provide a complete history from time zero.
+[english] What happens if `num_steps` is exactly 1?
+[english] If `num_steps` is 1, the logic relies on the initial call and does not execute the scan. However, the docstring specifies that this function requires `num_steps > 1`, so input validation would be necessary.
+[english] Thanks for clarifying how it handles the boundary conditions.

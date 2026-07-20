@@ -1,0 +1,21 @@
+[english] How do I safely queue a file write operation so it is handled asynchronously by a dedicated IO worker?
+[english] This method manages the submission of an asynchronous IO write job. It delegates the actual work creation to get_io_write_task and then submits that task package through the transfer coordinator for execution.
+<switch:python>
+[python] def queue_file_io_task(self, fileobj, data, offset):
+        """Queue IO write for submission to the IO executor.
+
+        This method accepts an IO executor and information about the
+        downloaded data, and handles submitting this to the IO executor.
+
+        This method may defer submission to the IO executor if necessary.
+
+        """
+        self._transfer_coordinator.submit(
+            self._io_executor,
+            self.get_io_write_task(fileobj, data, offset)
+         )
+<switch:english>
+[english] The method relies on `self.get_io_write_task` to package the necessary parameters before the IO executor receives them.
+[english] If submitting to the coordinator fails or is deferred, what should happen with the original data?
+[english] Currently, there is no explicit error handling shown for submission failures in this code snippet. In a production environment, you might consider adding try...except blocks around `self._transfer_coordinator.submit` to handle temporary unavailability of the executor.
+[english] That makes sense, I'll add that logging.

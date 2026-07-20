@@ -1,0 +1,33 @@
+[english] I need a way to find segments of an onset front and an offset front that share common frequency channels while ensuring those matched segments are consecutive in time.
+[english] This function systematically searches for overlapping spectral activity by first isolating the specific onset and offset fronts using provided IDs. It then iterates through all consecutive portions of the onset front, checking each against the available parts of the offset front.
+<switch:python>
+[python] def _get_consecutive_and_overlapping_fronts(onset_fronts, offset_fronts, onset_front_id, offset_front_id):
+    """
+    Gets an onset_front and an offset_front such that they both occupy at least some of the same
+    frequency channels, then returns the portion of each that overlaps with the other.
+    """
+    # Get the onset front of interest
+    onset_front = _get_front_idxs_from_id(onset_fronts, onset_front_id)
+
+    # Get the offset front of interest
+    offset_front = _get_front_idxs_from_id(offset_fronts, offset_front_id)
+
+    # Keep trying consecutive portions of this onset front until we find a consecutive portion
+    # that overlaps with part of the offset front
+    consecutive_portions_of_onset_front = [c for c in _get_consecutive_portions_of_front(onset_front)]
+    for consecutive_portion_of_onset_front in consecutive_portions_of_onset_front:
+        # Only get the segment of this front that overlaps in frequencies with the onset front of interest
+        onset_front_frequency_indexes = [f for f, _ in consecutive_portion_of_onset_front]
+        overlapping_offset_front = [(f, s) for f, s in offset_front if f in onset_front_frequency_indexes]
+
+        # Only get as much of this overlapping portion as is actually consecutive
+        for consecutive_portion_of_offset_front in _get_consecutive_portions_of_front(overlapping_offset_front):
+            if consecutive_portion_of_offset_front:
+                # Just return the first one we get - if we get any it means we found a portion of overlap
+                return consecutive_portion_of_onset_front, consecutive_portion_of_offset_front
+    return [], []
+<switch:english>
+[english] The logic prioritizes finding *any* valid overlap, meaning it will return immediately upon identifying the first suitable pair without further examination.
+[english] If multiple overlapping segments exist for a given ID pair, which one does the function guarantee to return?
+[english] Since the function returns the very first match encountered during its loop iteration, the returned segment is whichever overlap happens earliest in the processing order defined by the internal lists.
+[english] This process makes perfect sense, thank you!

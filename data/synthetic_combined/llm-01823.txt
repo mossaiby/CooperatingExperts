@@ -1,0 +1,26 @@
+[english] How can I capture the current exception traceback as an object without triggering system exits?
+[english] This function is designed to safely retrieve the traceback information even when dealing with different types of Python exceptions and unwanted frames.
+<switch:python>
+[python] def get_current_traceback(ignore_system_exceptions=False,
+                          show_hidden_frames=False, skip=0):
+    """Get the current exception info as `Traceback` object.  Per default
+    calling this method will reraise system exceptions such as generator exit,
+    system exit or others.  This behavior can be disabled by passing `False`
+    to the function as first parameter.
+    """
+    exc_type, exc_value, tb = sys.exc_info()
+    if ignore_system_exceptions and exc_type in system_exceptions:
+        raise
+    for x in range_type(skip):
+        if tb.tb_next is None:
+            break
+        tb = tb.tb_next
+    tb = Traceback(exc_type, exc_value, tb)
+    if not show_hidden_frames:
+        tb.filter_hidden_frames()
+    return tb
+<switch:english>
+[english] It converts the raw `sys.exc_info()` tuple into a fully constructed Traceback object, allowing for inspection or controlled re-raising.
+[english] What is happening in this section: if not show_hidden_frames:
+[english] The line tb.filter_hidden_frames() removes internal frames that usually belong to the Python interpreter itself, ensuring only relevant application code appears in the traceback._
+[english] That makes sense! Thanks for clarifying.

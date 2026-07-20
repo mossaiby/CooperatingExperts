@@ -1,0 +1,20 @@
+[english] I need a way to configure additional settings on my SSL context using predefined bitmask constants without accidentally overriding the options I've already set.
+[english] This function adds new configuration options to an existing SSL context. It first ensures that the input is a valid integer before passing it along to the underlying system call.
+<switch:python>
+[python] def set_options(self, options):
+        """
+        Add options. Options set before are not cleared!
+        This method should be used with the :const:`OP_*` constants.
+
+        :param options: The options to add.
+        :return: The new option bitmask.
+        """
+        if not isinstance(options, integer_types):
+            raise TypeError("options must be an integer")
+
+        return _lib.SSL_CTX_set_options(self._context, options)
+<switch:english>
+[english] By calling `SSL_CTX_set_options`, this method accumulates settings rather than replacing them, which is often useful when layering configurations.
+[english] If I call this function multiple times with different bitmask constants, how can I tell if any operations failed during execution?
+[english] The code doesn't explicitly check for failures in the return value from `_lib.SSL_CTX_set_options`. You should verify the documentation or handle potential error codes returned by that underlying library function.
+[english] That makes sense, thanks for clarifying!

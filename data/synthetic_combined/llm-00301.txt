@@ -1,0 +1,17 @@
+[english] How can I initialize and import customer service modules based on a configuration file?
+[english] This function ensures necessary setup by first verifying the configuration data exists, raising an error if it is missing. If configured, it tracks progress via debug logging before instantiating and triggering the module imports.
+<switch:python>
+[python] def init_modules(self):
+        """Import customer's service modules."""
+        if not self.config:
+            raise ValueError("please read your config file.")
+
+        log.debug("begin to import customer's service modules.")
+        modules = ServiceModules(self.config)
+        modules.import_modules()
+        log.debug("end to import customer's service modules.")
+<switch:english>
+[english] The method relies on a custom class `ServiceModules` to handle the actual importing logic, ensuring that dependencies are managed by passing `self.config` during initialization.
+[english] What happens if my configuration file is present but effectively empty or invalid?
+[english] The immediate check will pass, but subsequent errors may occur within the imported services when they try to access missing keys in the config data. You should validate the structure of `self.config` before calling `modules.import_modules()`.
+[english] That makes sense; I'll add a validation step then.

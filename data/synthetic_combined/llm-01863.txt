@@ -1,0 +1,41 @@
+[english] How can I write a Python endpoint that allows users to modify the status, start time, or end time of a specific recorded event using its unique ID?
+[english] This function processes incoming request data, validates the structure and allowed attributes, and then ensures the specified recorded event is found in the database before applying any changes.
+<switch:python>
+[python] def modify_event(uid):
+    '''Modify an event specified by its uid. The modifications for the event
+    are expected as JSON with the content type correctly set in the request.
+
+    Note that this method works for recorded events only. Upcoming events part
+    of the scheduler cache cannot be modified.
+    '''
+    try:
+        data = request.get_json()['data'][0]
+        if data['type'] != 'event' or data['id'] != uid:
+            return make_error_response('Invalid data', 400)
+        # Check attributes
+        for key in data['attributes'].keys():
+            if key not in ('status', 'start', 'end'):
+                return make_error_response('Invalid data', 400)
+        # Check new status
+        new_status = data['attributes'].get('status')
+        if new_status:
+            new_status = new_status.upper().replace(' ', '_')
+            data['attributes']['status'] = int(getattr(Status, new_status))
+    except Exception:
+        return make_error_response('Invalid data', 400)
+
+    db = get_session()
+    event = db.query(RecordedEvent).filter(RecordedEvent.uid == uid).first()
+    if not event:
+        return make_error_response('No event with specified uid', 404)
+    event.start = data['attributes'].get('start', event.start)
+    event.end = data['attributes'].get('end', event.end)
+    event.status = data['attributes'].get('status', event.status)
+    logger.debug('Updating event %s via api', uid)
+    db.commit()
+    return make_data_response(event.serialize())
+<switch:english>
+[english] The code specifically restricts modification to 'recorded' events and handles status updates by converting string inputs into uppercase enum integers for system integrity.
+[english] If I try to modify a field that isn't explicitly listed (like a description), will the entire request be rejected?
+[english] Yes, the code iterates over all keys in `data['attributes']` and rejects any key unless it is one of 'status', 'start', or 'end'.
+[english] That makes sense; I appreciate the strict data validation!

@@ -1,0 +1,48 @@
+[english] I need a function to categorize all existing cases by their status (e.g., active, resolved) using MongoDB aggregation.
+[english] This function uses MongoDB aggregation to efficiently group all records in a collection based on their status. It dynamically builds the necessary filters based on any provided institute or query parameters before calculating both counts and percentages for each status.
+<switch:python>
+[python] def get_case_groups(adapter, total_cases, institute_id=None, slice_query=None):
+    """Return the information about case groups
+
+    Args:
+        store(adapter.MongoAdapter)
+        total_cases(int): Total number of cases
+        slice_query(str): Query to filter cases to obtain statistics for.
+
+    Returns:
+        cases(dict):
+    """
+    # Create a group with all cases in the database
+    cases = [{'status': 'all', 'count': total_cases, 'percent': 1}]
+    # Group the cases based on their status
+    pipeline = []
+    group = {'$group' : {'_id': '$status', 'count': {'$sum': 1}}}
+
+    subquery = {}
+    if institute_id and slice_query:
+        subquery = adapter.cases(owner=institute_id, name_query=slice_query,
+                              yield_query=True)
+    elif institute_id:
+        subquery = adapter.cases(owner=institute_id, yield_query=True)
+    elif slice_query:
+        subquery = adapter.cases(name_query=slice_query, yield_query=True)
+
+    query = {'$match': subquery} if subquery else {}
+
+    if query:
+        pipeline.append(query)
+
+    pipeline.append(group)
+    res = adapter.case_collection.aggregate(pipeline)
+
+    for status_group in res:
+        cases.append({'status': status_group['_id'],
+                      'count': status_group['count'],
+                      'percent': status_group['count'] / total_cases})
+
+    return cases
+<switch:english>
+[english] The result always includes an initial 'all' status entry, which is manually calculated so that every returned data point has a corresponding percentage relative to the total case count.
+[english] If I pass no filters (neither `institute_id` nor `slice_query`), how does the function ensure it retrieves all records from the database?
+[english] When no filters are provided, the `subquery` remains empty. Consequently, the function skips the `$match` stage in the pipeline, causing MongoDB to process every record by default.
+[english] This structure makes it easy to get a complete overview of case distribution.

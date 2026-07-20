@@ -1,0 +1,22 @@
+[english] How can I asynchronously connect to an EternalEgypt modem, log in with provided system arguments, retrieve its SMS data, and ensure proper resource cleanup?
+[english] This function establishes a connection using asynchronous HTTP client sessions. It initializes cookie handlers and then uses the modem client to handle login, fetching data, and final disconnection.
+<switch:python>
+[python] async def get_information():
+    """Example of printing the inbox."""
+    jar = aiohttp.CookieJar(unsafe=True)
+    websession = aiohttp.ClientSession(cookie_jar=jar)
+
+    modem = eternalegypt.Modem(hostname=sys.argv[1], websession=websession)
+    await modem.login(password=sys.argv[2])
+
+    result = await modem.information()
+    for sms in result.sms:
+        pprint.pprint(sms)
+
+    await modem.logout()
+    await websession.close()
+<switch:english>
+[english] The process is self-contained but requires that the entire function be run within an `asyncio` runtime environment. Always ensure robust error handling for network failures.
+[english] If the hostname argument provided in sys.argv[1] leads to a connection refusal, how can I gracefully handle that exception?
+[english] You should wrap the modem initialization and operation in a try...except block targeting common exceptions like `aiohttp.ClientConnectorError` to manage network failures.
+[english] That explanation about error handling is very helpful.

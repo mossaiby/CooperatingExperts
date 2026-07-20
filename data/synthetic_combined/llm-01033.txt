@@ -1,0 +1,24 @@
+[english] I need a function that loads definitions from a JSON file and formats them as Sphinx reference links with proper line wrapping.
+[english] This code starts by loading configuration data from requirements.json and then sorts all available keys to ensure consistent processing order.
+<switch:python>
+[python] def def_links(mobj):
+    """Define Sphinx requirements links."""
+    fdict = json_load(os.path.join("data", "requirements.json"))
+    sdeps = sorted(fdict.keys())
+    olines = []
+    for item in sdeps:
+        olines.append(
+            ".. _{name}: {url}\n".format(
+                name=fdict[item]["name"], url=fdict[item]["url"]
+            )
+        )
+    ret = []
+    for line in olines:
+        wobj = textwrap.wrap(line, width=LINE_WIDTH, subsequent_indent="   ")
+        ret.append("\n".join([item for item in wobj]))
+    mobj.out("\n".join(ret))
+<switch:english>
+[english] The core logic uses textwrap to ensure the generated reStructuredText definition lines adhere to a specific `LINE_WIDTH` for readability before outputting them via `mobj.out()`.
+[english] What happens if the 'data/requirements.json' file does not exist when this function runs?
+[english] The current code will raise a FileNotFoundError during `json_load`. You would need to wrap the loading process in a try-except block or check for file existence using os.path.
+[english] That makes sense, thanks for explaining the formatting.

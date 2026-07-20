@@ -1,0 +1,16 @@
+[english] I need a way to list all potential namespace dictionaries where objects created by a user in an IPython session might currently be stored.
+[english] This function is designed for introspection, gathering every known location within the IPython environment that references namespaces. It compiles these locations into a single list of dictionary references.
+<switch:python>
+[python] def all_ns_refs(self):
+        """Get a list of references to all the namespace dictionaries in which
+        IPython might store a user-created object.
+        
+        Note that this does not include the displayhook, which also caches
+        objects from the output."""
+        return [self.user_ns, self.user_global_ns,
+                self._user_main_module.__dict__] + self._main_ns_cache.values()
+<switch:english>
+[english] The returned list provides direct access to all current namespace dict objects used by IPython while running the session.
+[english] If I use this function in an interactive shell, will it include variables defined inside functions or class methods?
+[english] No, this function only tracks top-level and globally accessible namespaces. Variables created within scopes like local functions or classes are not captured by these direct references.
+[english] That makes sense; I just wanted to check the scope boundaries.

@@ -1,0 +1,24 @@
+[english] How do I visualize the frequency distribution of single digits found within pi's sequence?
+[english] We need to create a simple line plot using Matplotlib to represent the relationship between the digit values and their corresponding counts. The function uses `plt.plot(f1, 'bo-')` to generate this visual representation.
+<switch:python>
+[python] def plot_one_digit_freqs(f1):
+    """
+    Plot one digit frequency counts using matplotlib.
+    """
+    ax = plt.plot(f1,'bo-')
+    plt.title('Single digit counts in pi')
+    plt.xlabel('Digit')
+    plt.ylabel('Count')
+    return ax
+<switch:english>
+[english] The function sets the title, labels the axes with 'Digit' and 'Count', and returns the plot object `ax` for further modification.
+[english] If I wanted to plot multiple frequency counts on the same graph, how would I modify this list?
+[english] You can call `plt.plot()` multiple times within the function, providing unique lists of frequencies or colors for each series.
+<switch:python>
+[python] def plot_multiple_freq(f1, f2):
+    ax = plt.subplot(1, 1, 1)
+    ax.plot(f1, 'bo-') # First line
+    ax.plot(f2, 'ro--') # Second line
+    plt.show()
+<switch:english>
+[english] That makes sense; I'll try that with my data.

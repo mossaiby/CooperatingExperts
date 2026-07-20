@@ -1,0 +1,42 @@
+[english] How can I securely store results from one task so that subsequent downstream tasks can access them later, possibly on a future date?
+[english] This function allows you to share data across different tasks by registering it with the XCom system. Before storing the data, it validates the provided execution date against the current run time to prevent scheduling items into the past.
+<switch:python>
+[python] def xcom_push(
+            self,
+            key,
+            value,
+            execution_date=None):
+        """
+        Make an XCom available for tasks to pull.
+
+        :param key: A key for the XCom
+        :type key: str
+        :param value: A value for the XCom. The value is pickled and stored
+            in the database.
+        :type value: any pickleable object
+        :param execution_date: if provided, the XCom will not be visible until
+            this date. This can be used, for example, to send a message to a
+            task on a future date without it being immediately visible.
+        :type execution_date: datetime
+        """
+
+        if execution_date and execution_date < self.execution_date:
+            raise ValueError(
+                'execution_date can not be in the past (current '
+                'execution_date is {}; received {})'.format(
+                    self.execution_date, execution_date))
+
+        XCom.set(
+            key=key,
+            value=value,
+            task_id=self.task_id,
+            dag_id=self.dag_id,
+            execution_date=execution_date or self.execution_date)
+<switch:english>
+[english] The process relies on the external `XCom.set` method to handle the actual pickling and persistent storage of your task's output. This ensures visibility using your specific DAG and Task IDs.
+[english] If I call this function multiple times within the same parent task, will it overwrite previous values for the same key?
+[english] When calling `XCom.set`, if a record already exists for that combination of task context, the new value will typically overwrite the old one. Here is how the core storage is initiated:
+<switch:python>
+[python] XCom.set(key=key, value=value, task_id=self.task_id, dag_id=self.dag_id)
+<switch:english>
+[english] This makes sense; it's important to be aware of how repeated calls handle data persistence.

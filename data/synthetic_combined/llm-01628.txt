@@ -1,0 +1,23 @@
+[english] I need a way to find which file extensions in my configuration are not recognized as known compilers or MIME types by the current environment settings.
+[english] This function iterates through all defined extensions and checks if they are present in either the compiler list or the mime-types registry for the specific environment. It collects any extension that matches neither criteria into a list of 'unknown' assets.
+<switch:python>
+[python] def unknown_extensions(self):
+        """The list of unknown extensions, which are actually parts of asset
+        filename. Example::
+
+            >>> attrs = AssetAttributes(environment, 'js/lib-2.0.min.js')
+            >>> attrs.suffix
+            ['.0', '.min']
+        """
+        unknown_extensions = []
+        for extension in self.extensions:
+            compiler = self.environment.compilers.get(extension)
+            if compiler or self.environment.mimetypes.get(extension):
+                return unknown_extensions
+            unknown_extensions.append(extension)
+        return unknown_extensions
+<switch:english>
+[english] The returned list contains all extension strings deemed unrecognized by your current configuration, which helps identify potential asset filename parts rather than pure file types.
+[english] What happens if the environment object or its attributes aren't properly initialized?
+[english] If `self.extensions` is empty or the environment setup fails to provide compilers/mimetypes, the function will either return an empty list immediately or raise an attribute error when trying to access properties like `.compilers`.
+[english] Thanks for clarifying how this works!

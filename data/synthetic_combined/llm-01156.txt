@@ -1,0 +1,25 @@
+[english] How can I define diagram generation logic for an entire project within a visitor pattern?
+[english] This method acts as a visitor for a Project node, determining which diagrams are relevant depending on the project's structure and configuration.
+<switch:python>
+[python] def visit_project(self, node):
+        """visit a pyreverse.utils.Project node
+
+        create a diagram definition for packages
+        """
+        mode = self.config.mode
+        if len(node.modules) > 1:
+            self.pkgdiagram = PackageDiagram("packages %s" % node.name, mode)
+        else:
+            self.pkgdiagram = None
+        self.classdiagram = ClassDiagram("classes %s" % node.name, mode)
+<switch:english>
+[english] The code conditionally creates a `PackageDiagram` only if the project contains more than one module to avoid unnecessary artifacts.
+[english] What happens if the class definition should also be conditional based on available modules?
+[english] If you wanted to hide class diagrams when there are few classes, you could wrap the initialization in an 'if' check similar to how the package diagram is handled. For example:
+<switch:python>
+[python] if len(node.classes) > 0:
+            self.classdiagram = ClassDiagram("classes %s" % node.name, mode)
+        else:
+            self.classdiagram = None
+<switch:english>
+[english] Got it, that makes sense for controlling complexity.

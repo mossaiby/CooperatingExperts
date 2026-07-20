@@ -1,0 +1,17 @@
+[english] How can I define a custom fetch method that logs API calls and extracts only the text content from the response?
+[english] This method wraps the parent's fetching logic to add logging capabilities. It first records the request details before delegating the actual HTTP call using `super().fetch`. Once the full response object is received, it isolates and returns the textual content.
+<switch:python>
+[python] def fetch(self, url, params):
+        """Return the textual content associated to the Response object"""
+
+        logger.debug("Kitsune client calls API: %s params: %s",
+                     url, str(params))
+
+        response = super().fetch(url, payload=params)
+
+        return response.text
+<switch:english>
+[english] The method successfully delegates the request to its parent implementation via `super()` and ensures only the string content of the `Response` object is returned.
+[english] What happens if the API returns a non-text response like an image or JSON structure?
+[english] If the response contains binary data (e.g., images), accessing `.text` may fail or return garbage depending on how the underlying HTTP client handles encoding errors. If you expect structured JSON, you should convert it using `response.json()` instead of relying on attribute access to `.text`.
+[english] That helps me understand error handling better!

@@ -1,0 +1,25 @@
+[english] How can I read a 2-byte register value (word) from a device exposed via an I2C bus?
+[english] This function reads a word by first defining the command and result buffers using `ctypes`, then packaging them into an `ioctl` request to perform a write/read sequence over the I2C interface.
+<switch:python>
+[python] def read_word_data(self, addr, cmd):
+        """Read a word (2 bytes) from the specified cmd register of the device.
+        Note that this will interpret data using the endianness of the processor
+        running Python (typically little endian)!
+        """
+        assert self._device is not None, 'Bus must be opened before operations are made against it!'
+        # Build ctypes values to marshall between ioctl and Python.
+        reg = c_uint8(cmd)
+        result = c_uint16()
+        # Build ioctl request.
+        request = make_i2c_rdwr_data([
+            (addr, 0, 1, pointer(reg)),             # Write cmd register.
+            (addr, I2C_M_RD, 2, cast(pointer(result), POINTER(c_uint8)))   # Read word (2 bytes).
+        ])
+        # Make ioctl call and return result data.
+        ioctl(self._device.fileno(), I2C_RDWR, request)
+        return result.value
+<switch:english>
+[english] The returned value is decoded from the C-type buffer after the low-level hardware operation completes. Note that data interpretation relies on the processor's native endianness, as indicated in the docstring.
+[english] If we wanted to ensure the word was always read in big-endian format regardless of the running system architecture, how would I modify this function?
+[english] You would need to implement manual byte swapping or use a specific helper function to convert the `c_uint8` sequence into the correct `c_uint16` representation based on big-endian logic.
+[english] Thanks for the help!

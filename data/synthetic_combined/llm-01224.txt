@@ -1,0 +1,30 @@
+[english] How can I create a method that plays an audio file as a one-shot while allowing dynamic adjustments to volume, stereo panning, or pitch?
+[english] By implementing sensible defaults, the function first checks if any modification parameters were provided. If not, it triggers a simple direct playback; otherwise, it initializes a dedicated Voice object for granular control.
+<switch:python>
+[python] def play(self, gain=None, pan=None, pitch=None):
+        '''Play the sound as a `one-shot`.
+
+        The sound will be played to completion.  If the sound is played more than once at a time, it will mix
+        with all previous instances of itself.  If you need more control over the playback of sounds, see
+        :class:`Voice`.
+
+        :param gain: optional volume level to play the sound back at, between 0.0 and 1.0 (defaults to 1.0)
+        :param pan: optional stereo pan, between -1.0 (left) and 1.0 (right)
+        :param pitch: optional sampling rate modification, between 0.4 and 16.0, where 1.0 represents the original pitch
+        '''
+        if gain is None and pan is None and pitch is None:
+            lib.PlaySound(self._handle)
+        else:
+            voice = Voice(self)
+            if gain is not None:
+                voice.gain = gain
+            if pan is not None:
+                voice.pan = pan
+            if pitch is not None:
+                voice.pitch = pitch
+            voice.play()
+<switch:english>
+[english] When parameters are missing, the function bypasses the complex Voice object configuration for a simpler one-shot playback. Note that repeated calls will automatically mix sounds.
+[english] What happens if I pass only one argument, say `gain=0.5`, and then call this method again?
+[english] Since other parameters are None by default, the function creates a new Voice for the updated settings but maintains the current voice/sound instance until it finishes playing.
+[english] That makes perfect sense; using the Voice object seems flexible.

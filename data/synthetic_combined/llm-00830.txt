@@ -1,0 +1,19 @@
+[english] How do I flatten complex, nested dictionaries (like objects within objects) into a single dictionary where keys use dot notation?
+[english] This function is designed to convert deeply hierarchical data structures defined in a schema into a flat dictionary using path-based keys. It iterates through the schema definition and extracts relevant metadata alongside values.
+<switch:python>
+[python] def _flatten_field(self, field, schema, path):
+        """Reduce dicts of dicts to dot separated keys."""
+        flat = {}
+        for field_schema, fields, path in iterate_schema(field, schema, path):
+            name = field_schema['name']
+            typ = field_schema['type']
+            label = field_schema['label']
+            value = fields[name] if name in fields else None
+            flat[path] = {'name': name, 'value': value, 'type': typ, 'label': label}
+
+        return flat
+<switch:english>
+[english] The logic relies on `iterate_schema` to manage recursion, successfully mapping every field name onto its corresponding structured path within the input data.
+[english] If an expected value for a key is missing from the original fields dictionary, what will the value be?
+[english] If a value derived from the schema is not present in the input `fields`, the function assigns it a default value of `None` to maintain a consistent structure across all paths.
+[english] This seems like an effective way to standardize complex data!

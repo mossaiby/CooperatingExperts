@@ -1,0 +1,38 @@
+[english] I need to create a new queue resource on a service bus using its name and configuration.
+[english] This function builds a PUT request designed to instruct the remote API to provision a new queue based on your inputs. It serializes the provided queue object into XML before adding necessary host information and security headers.
+<switch:python>
+[python] def create_queue(self, queue_name, queue=None, fail_on_exist=False):
+        '''
+        Creates a new queue. Once created, this queue's resource manifest is
+        immutable.
+
+        queue_name:
+            Name of the queue to create.
+        queue:
+            Queue object to create.
+        fail_on_exist:
+            Specify whether to throw an exception when the queue exists.
+        '''
+        _validate_not_none('queue_name', queue_name)
+        request = HTTPRequest()
+        request.method = 'PUT'
+        request.host = self._get_host()
+        request.path = '/' + _str(queue_name) + ''
+        request.body = _get_request_body(_convert_queue_to_xml(queue))
+        request.path, request.query = self._httpclient._update_request_uri_query(request)  # pylint: disable=protected-access
+        request.headers = self._update_service_bus_header(request)
+        if not fail_on_exist:
+            try:
+                self._perform_request(request)
+                return True
+            except AzureHttpError as ex:
+                _dont_fail_on_exist(ex)
+                return False
+        else:
+            self._perform_request(request)
+            return True
+<switch:english>
+[english] The approach allows for flexible error handling; specifically, setting fail_on_exist=False lets it return gracefully if the resource already exists rather than throwing an exception.
+[english] If I run this function with fail_on_exist=True, what happens if the queue fails to create due to insufficient permissions?
+[english] If it lacks permission, the underlying request will raise an AzureHttpError during _perform_request, and since fail_on_exist is True, that exception will propagate up rather than being handled by this function.
+[english] Thanks for clarifying how error propagation works here.

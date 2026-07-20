@@ -1,0 +1,28 @@
+[english] How do I retrieve the raw ASN.1 byte representation of an X509 extension from my object?
+[english] This function retrieves data that is internally stored as a C structure (X509_EXTENSION). It accesses the underlying octet array and then serializes it into standard Python bytes.
+<switch:python>
+[python] def get_data(self):
+        """
+        Returns the data of the X509 extension, encoded as ASN.1.
+
+        :return: The ASN.1 encoded data of this X509 extension.
+        :rtype: :py:data:`bytes`
+
+        .. versionadded:: 0.12
+        """
+        octet_result = _lib.X509_EXTENSION_get_data(self._extension)
+        string_result = _ffi.cast('ASN1_STRING*', octet_result)
+        char_result = _lib.ASN1_STRING_data(string_result)
+        result_length = _lib.ASN1_STRING_length(string_result)
+        return _ffi.buffer(char_result, result_length)[:]
+<switch:english>
+[english] The function converts the internal C pointers used by FFI/CTypes back into a standard, usable Python byte string for external processing. The slicing operation `[:]` ensures we return a copy of the buffer data.
+[english] If the extension data is empty or None, what specific error handling should I assume?
+[english] The current implementation relies on internal library functions that might raise errors if the extension structure (`self._extension`) is missing or invalid. For robustness, you could check for existence before proceeding:
+<switch:python>
+[python] def get_data(self):
+    if not self._extension:
+        raise ValueError("X509 extension data is unavailable.")
+    # ... original logic follows ...
+<switch:english>
+[english] That makes more sense!

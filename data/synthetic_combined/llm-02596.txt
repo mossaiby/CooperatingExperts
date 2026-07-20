@@ -1,0 +1,25 @@
+[english] I need a way to execute multiple Data Manipulation Language (DML) queries against a Google Cloud Spanner database.
+[english] This method facilitates DML execution by first obtaining a configured GCP client, then directing it to the specified instance and database. It utilizes `run_in_transaction` to ensure all provided queries are processed atomically.
+<switch:python>
+[python] def execute_dml(self, instance_id, database_id, queries, project_id=None):
+        """
+        Executes an arbitrary DML query (INSERT, UPDATE, DELETE).
+
+        :param instance_id: The ID of the Cloud Spanner instance.
+        :type instance_id: str
+        :param database_id: The ID of the database in Cloud Spanner.
+        :type database_id: str
+        :param queries: The queries to execute.
+        :type queries: str
+        :param project_id: Optional, the ID of the  GCP project that owns the Cloud Spanner
+            database. If set to None or missing, the default project_id from the GCP connection is used.
+        :type project_id: str
+        """
+        self._get_client(project_id=project_id).instance(instance_id=instance_id).\
+            database(database_id=database_id).run_in_transaction(
+            lambda transaction: self._execute_sql_in_transaction(transaction, queries))
+<switch:english>
+[english] By wrapping the execution in a lambda passed to `run_in_transaction`, the function guarantees that all DML operations succeed or fail together.
+[english] If any single query fails during this transaction, what is the outcome for the overall database state?
+[english] If an error occurs within `self._execute_sql_in_transaction(transaction, queries)`, Spanner automatically rolls back the transaction. This ensures data integrity by preventing partial updates.
+[english] This clarifies how transactional safety is handled.

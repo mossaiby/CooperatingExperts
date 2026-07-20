@@ -1,0 +1,24 @@
+[english] How can I persistently store my current authentication tokens and connection settings so that a program can quickly re-authenticate later?
+[english] This method securely saves all necessary account identifiers, API tokens, and expiry timestamps into a local file using low-level operating system calls.
+<switch:python>
+[python] def writeToken(self):
+        """
+        Store details of the current connection in the named file.
+
+        This can be used by :meth:`readToken` to re-authenticate at a later time.
+        """
+        # Write token file privately.
+        with os.fdopen(os.open(self.tokenFile, os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
+            # When opening files via os, truncation must be done manually.
+            f.truncate()
+            f.write(self.userId + "\n")
+            f.write(self.tokens["skype"] + "\n")
+            f.write(str(int(time.mktime(self.tokenExpiry["skype"].timetuple()))) + "\n")
+            f.write(self.tokens["reg"] + "\n")
+            f.write(str(int(time.mktime(self.tokenExpiry["reg"].timetuple()))) + "\n")
+            f.write(self.msgsHost + "\n")
+<switch:english>
+[english] The function uses `os.fdopen(os.open(...))` to create the token file privately with strict permissions (0o600) and manually truncates it before writing data.
+[english] What happens if I run this function multiple times; does it safely overwrite previous outdated tokens?
+[english] Yes, because `f.truncate()` is called immediately after opening the file descriptor, it ensures that any previously existing content in the token file is completely erased and replaced by the new details written.
+[english] Okay, thanks for clarifying how those OS operations work.

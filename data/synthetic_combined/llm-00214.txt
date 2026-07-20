@@ -1,0 +1,27 @@
+[english] How can I fetch transaction details for a list of hashes and convert the raw tryte data into usable Transaction Python objects?
+[english] This function first executes a command to find transactions based on provided filters, retrieving a list of unique hash identifiers.
+<switch:python>
+[python] def find_transaction_objects(adapter, **kwargs):
+    # type: (BaseAdapter, **Iterable) -> List[Transaction]
+    """
+    Finds transactions matching the specified criteria, fetches the
+    corresponding trytes and converts them into Transaction objects.
+    """
+    ft_response = FindTransactionsCommand(adapter)(**kwargs)
+
+    hashes = ft_response['hashes']
+
+    if hashes:
+        gt_response = GetTrytesCommand(adapter)(hashes=hashes)
+
+        return list(map(
+            Transaction.from_tryte_string,
+            gt_response.get('trytes') or [],
+        ))  # type: List[Transaction]
+
+    return []
+<switch:english>
+[english] After obtaining the tryte data corresponding to those hashes, the code uses the `map` function with the `from_tryte_string` class method to transform them into Transaction objects.
+[english] What happens if no transactions match the initial search criteria and there are no hashes returned?
+[english] If the hashes list is empty or missing, the function immediately returns an empty list (`[]`) without attempting to call any other commands, ensuring clean handling of zero results. This can be confirmed in line 15.
+[english] Thanks for clarifying how failure cases are handled!

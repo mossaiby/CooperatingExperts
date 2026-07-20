@@ -1,0 +1,16 @@
+[english] I need a way to check if a distribution can be added and keep track of it in a categorized list without adding duplicates.
+[english] This function first validates that the item is allowed by calling `self.can_add`. If valid, it retrieves or initializes a list corresponding to the distribution's unique key and ensures that the specific instance hasn't already been recorded before appending it.
+<switch:python>
+[python] def add(self,dist):
+        """Add `dist` if we ``can_add()`` it and it isn't already added"""
+        if self.can_add(dist) and dist.has_version():
+            dists = self._distmap.setdefault(dist.key,[])
+            if dist not in dists:
+                dists.append(dist)
+                if dist.key in self._cache:
+                    _sort_dists(self._cache[dist.key])
+<switch:english>
+[english] The function prioritizes preventing duplicates within its list mappings while also ensuring that associated caches are sorted immediately after an addition.
+[english] What happens if the distribution is added, but `self._cache` does not contain the corresponding key for sorting?
+[english] If `dist.key` isn't in `self._cache`, nothing further happens regarding caching or sorting, as indicated by the conditional statement.
+[english] Got it, that makes sense.

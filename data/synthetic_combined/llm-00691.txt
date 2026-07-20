@@ -1,0 +1,13 @@
+[english] I need a function that renders a Jinja template given its context and then dispatches an event with rendering results.
+[english] This approach handles two main steps: first, it uses the `template` object's render method to generate the output string based on the provided data. Then, it uses the signal name 'template_rendered' to trigger a corresponding app event without interfering with the function's return flow.
+<switch:python>
+[python] def _render(template, context, app):
+    """Renders the template and fires the signal"""
+    rv = template.render(context)
+    template_rendered.send(app, template=template, context=context)
+    return rv
+<switch:english>
+[english] The function successfully executes the rendering and triggers the signal, but notice that `rv` (the rendered value) is returned after the asynchronous signal has been sent. Because signals are often non-blocking, this structure ensures both operations complete sequentially from a caller's perspective.
+[english] What happens if you try to access attributes on 'context' inside the template during rendering?
+[english] The `template.render(context)` call handles attribute lookups directly. Since standard Jinja templates are designed to receive context dictionaries, accessing an unknown key will typically result in a TemplateError or KeyErrors unless explicitly handled within the template logic.
+[english] That makes sense.

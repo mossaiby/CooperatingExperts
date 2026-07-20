@@ -1,0 +1,20 @@
+[english] I need a function that can handle model inference flexibly across both local datasets and those provided in a distributed format like RDDs.
+[english] This function serves as a router for model prediction. It uses Python's isinstance check to determine if the input data (`features`) is coming from a distributed source (like an RDD) or is available locally, then delegates the work accordingly.
+<switch:python>
+[python] def predict(self, features, batch_size = -1):
+        """
+        Model inference base on the given data.
+        :param features: it can be a ndarray or list of ndarray for locally inference
+                         or RDD[Sample] for running in distributed fashion
+        :param batch_size: total batch size of prediction.
+        :return: ndarray or RDD[Sample] depend on the the type of features.
+        """
+        if isinstance(features, RDD):
+            return self.predict_distributed(features, batch_size)
+        else:
+            return self.predict_local(features, batch_size)
+<switch:english>
+[english] By checking for the `RDD` type first, the function ensures that processing scales appropriately across clusters when distributed features are provided versus standard local arrays.
+[english] What specific behavior would happen if I passed a standard Python list of numpy arrays, given the docstring mentions both ndarray and lists?
+[english] If you pass a list of arrays, the `isinstance(features, RDD)` check will fail, causing it to execute the `predict_local` path. This method would then need to iterate through the list internally to perform predictions on each element.
+[english] That makes sense; I'll structure my input based on whether I need localized or distributed processing.

@@ -1,0 +1,27 @@
+[english] How can I start an asynchronous spider implementation, customizing its behavior with middleware and event loop settings?
+[english] This function sets up required dependencies like the event loop before initializing the provided class (`cls`) as a spider instance. It then delegates the actual startup process to the instance's internal methods.
+<switch:python>
+[python] async def async_start(
+            cls,
+            middleware: typing.Union[typing.Iterable, Middleware] = None,
+            loop=None,
+            after_start=None,
+            before_stop=None,
+            **kwargs):
+        """
+        Start an async spider
+        :param middleware: customize middleware or a list of middleware
+        :param loop:
+        :param after_start: hook
+        :param before_stop: hook
+        :return:
+        """
+        loop = loop or asyncio.get_event_loop()
+        spider_ins = cls(middleware=middleware, loop=loop, is_async_start=True)
+        await spider_ins._start(
+            after_start=after_start, before_stop=before_stop)
+<switch:english>
+[english] This implementation assumes that the class `cls` has an internal protected method named `_start` capable of handling startup hooks. It effectively acts as a configurable wrapper.
+[english] If I pass arguments via the `**kwargs`, will they be passed directly to the spider instance?
+[english] No, only specific keywords like `middleware` and `loop` are currently explicitly handled during initialization (`cls(...)`); other arbitrary keyword arguments would need explicit inclusion in the call.
+[english] That makes sense, thanks for clarifying how those arguments are processed.

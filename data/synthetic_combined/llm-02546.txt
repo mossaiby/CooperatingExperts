@@ -1,0 +1,44 @@
+[english] I need a single script that can handle common tasks like listing, retrieving, adding, updating, or deleting resources from a backend service based on command-line arguments.
+[english] This function serves as the main dispatch logic for a CLI tool. It initializes the `BackendUpdate` object and then uses conditional statements to route the request—whether it is a list operation, a specific record retrieval, or a write action (add/update)—to the appropriate backend method based on the configured actions.
+<switch:python>
+[python] def main():
+    """
+    Main function
+    """
+    bc = BackendUpdate()
+    bc.initialize()
+    logger.info("backend_client, version: %s", __version__)
+    logger.debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+    success = False
+    if bc.item_type and bc.action == 'list':
+        success = bc.get_resource_list(bc.item_type, bc.item)
+
+    if bc.item_type and bc.action == 'get':
+        if bc.list:
+            success = bc.get_resource_list(bc.item_type, bc.item)
+        else:
+            if not bc.item:
+                logger.error("Can not %s a %s with no name!", bc.action, bc.item_type)
+                logger.error("Perharps you missed some parameters, run 'alignak-backend-cli -h'")
+                exit(64)
+            success = bc.get_resource(bc.item_type, bc.item)
+
+    if bc.action in ['add', 'update']:
+        success = bc.create_update_resource(bc.item_type, bc.item, bc.action == 'update')
+
+    if bc.action == 'delete':
+        success = bc.delete_resource(bc.item_type, bc.item)
+
+    if not success:
+        logger.error("%s '%s' %s failed", bc.item_type, bc.item, bc.action)
+        if not bc.verbose:
+            logger.warning("Set verbose mode to have more information (-v)")
+        exit(2)
+
+    exit(0)
+<switch:english>
+[english] The function handles state changes by checking if operations succeeded. It ensures robust error handling for failed requests and exits with an informative status code to simplify calling this tool from other scripts.
+[english] How does the 'get' action differentiate between needing a list of resources versus fetching a single specific resource?
+[english] The logic checks `if bc.list:` first. If that flag is true, it uses get_resource_list; otherwise, it proceeds to check for and fetch the specific item using `bc.get_resource(bc.item_type, bc.item)`.
+[english] Got it, this structure makes sense for managing backend operations.

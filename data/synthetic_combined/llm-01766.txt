@@ -1,0 +1,74 @@
+[english] Can you create a utility to reliably parse specific sports URLs into their corresponding unique machine IDs based on the content type?
+[english] This approach uses a structured dictionary of regular expressions, where each pattern is tailored for handling different data types like players or box scores. The function iterates through this list sequentially until it finds a match that can extract a relevant ID.
+<switch:python>
+[python] def rel_url_to_id(url):
+    """Converts a relative URL to a unique ID.
+
+    Here, 'ID' refers generally to the unique ID for a given 'type' that a
+    given datum has. For example, 'BradTo00' is Tom Brady's player ID - this
+    corresponds to his relative URL, '/players/B/BradTo00.htm'. Similarly,
+    '201409070dal' refers to the boxscore of the SF @ DAL game on 09/07/14.
+
+    Supported types:
+    * player/...
+    * boxscores/...
+    * teams/...
+    * years/...
+    * leagues/...
+    * awards/...
+    * coaches/...
+    * officials/...
+    * schools/...
+    * schools/high_schools.cgi?id=...
+
+    :returns: ID associated with the given relative URL.
+    """
+    yearRegex = r'.*/years/(\d{4}).*|.*/gamelog/(\d{4}).*'
+    playerRegex = r'.*/players/(?:\w/)?(.+?)(?:/|\.html?)'
+    boxscoresRegex = r'.*/boxscores/(.+?)\.html?'
+    teamRegex = r'.*/teams/(\w{3})/.*'
+    coachRegex = r'.*/coaches/(.+?)\.html?'
+    stadiumRegex = r'.*/stadiums/(.+?)\.html?'
+    refRegex = r'.*/officials/(.+?r)\.html?'
+    collegeRegex = r'.*/schools/(\S+?)/.*|.*college=([^&]+)'
+    hsRegex = r'.*/schools/high_schools\.cgi\?id=([^\&]{8})'
+    bsDateRegex = r'.*/boxscores/index\.f?cgi\?(month=\d+&day=\d+&year=\d+)'
+    leagueRegex = r'.*/leagues/(.*_\d{4}).*'
+    awardRegex = r'.*/awards/(.+)\.htm'
+
+    regexes = [
+        yearRegex,
+        playerRegex,
+        boxscoresRegex,
+        teamRegex,
+        coachRegex,
+        stadiumRegex,
+        refRegex,
+        collegeRegex,
+        hsRegex,
+        bsDateRegex,
+        leagueRegex,
+        awardRegex,
+    ]
+
+    for regex in regexes:
+        match = re.match(regex, url, re.I)
+        if match:
+            return [_f for _f in match.groups() if _f][0]
+
+    # things we don't want to match but don't want to print a WARNING
+    if any(
+        url.startswith(s) for s in
+        (
+            '/play-index/',
+        )
+    ):
+        return url
+
+    print('WARNING. NO MATCH WAS FOUND FOR "{}"'.format(url))
+    return url
+<switch:english>
+[english] The function prioritizes matches based on the order defined in its internal list of regex patterns. If no patterns are found, it returns the original URL after logging a warning if necessary.
+[english] If a single URL could technically satisfy multiple regex patterns, which one takes precedence?
+[english] Precedence is determined by the iteration order of the `regexes` list; the function returns immediately upon finding any match, meaning it prioritizes the types defined earlier in that array. If you want to ensure player IDs are always matched before box scores, you must place 'playerRegex' ahead of 'boxscoresRegex'.
+[english] That makes sense how the prioritization works.

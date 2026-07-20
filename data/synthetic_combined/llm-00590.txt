@@ -1,0 +1,18 @@
+[english] How do I add one or more blank lines while ensuring my content doesn't overflow the current page?
+[english] This method intelligently manages document flow by attempting to insert specified newlines, but it includes robust internal logic to handle layout failures.
+<switch:python>
+[python] def add_newline(self, number=1):
+        """ Starts over again at the new line. If number is specified,
+            it will leave multiple lines."""
+        if isinstance(number, int):
+            try:
+                self.page._add_newline(self.font, number, self.double_spacing)
+            except ValueError:
+                self.add_page()
+        else:
+            raise TypeError("Number of newlines must be an integer.")
+<switch:english>
+[english] If the internal page layout fails to accommodate the requested newlines via a `ValueError`, it automatically moves to starting on a brand-new physical page.
+[english] Wait, what happens if I accidentally pass something that isn't an integer for `number`?
+[english] The function explicitly checks data types. If you provide floats or strings instead of an integer, the code raises a TypeError to prevent invalid formatting attempts.
+[english] Got it, that's very clear about the validation process!

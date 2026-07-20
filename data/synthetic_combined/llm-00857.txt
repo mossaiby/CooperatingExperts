@@ -1,0 +1,40 @@
+[english] how do I write a versatile decorator factory that records metadata for methods, supporting both `@decorator` and `@decorator('name')` call styles?
+[english] This function is designed as a decorator factory that dynamically handles method registration. It uses a closure to capture the target magic type while defining an inner decorator (`magic_deco`) capable of distinguishing between simple or parameterized calls.
+<switch:python>
+[python] def _method_magic_marker(magic_kind):
+    """Decorator factory for methods in Magics subclasses.
+    """
+
+    validate_type(magic_kind)
+
+    # This is a closure to capture the magic_kind.  We could also use a class,
+    # but it's overkill for just that one bit of state.
+    def magic_deco(arg):
+        call = lambda f, *a, **k: f(*a, **k)
+
+        if callable(arg):
+            # "Naked" decorator call (just @foo, no args)
+            func = arg
+            name = func.func_name
+            retval = decorator(call, func)
+            record_magic(magics, magic_kind, name, name)
+        elif isinstance(arg, basestring):
+            # Decorator called with arguments (@foo('bar'))
+            name = arg
+            def mark(func, *a, **kw):
+                record_magic(magics, magic_kind, name, func.func_name)
+                return decorator(call, func)
+            retval = mark
+        else:
+            raise TypeError("Decorator can only be called with "
+                            "string or function")
+        return retval
+
+    # Ensure the resulting decorator has a usable docstring
+    magic_deco.__doc__ = _docstring_template.format('method', magic_kind)
+    return magic_deco
+<switch:english>
+[english] The implementation checks if the argument passed to it is callable (naked) or a string to determine how metadata should be recorded via `record_magic`. This mechanism effectively attaches static attributes rather than wrapping execution logic.
+[english] Does this function handle methods that are dynamically created, like those defined in further closure scopes?
+[english] Because the decorator structure relies on inspecting the argument (`arg`) at definition time, it would need modification if intended to catch entirely dynamic method creation outside of standard function assignments. The current implementation is designed for statically defined methods.
+[english] That helps explain the limitations of this specific design!

@@ -1,0 +1,45 @@
+[english] How can I ensure that an input shape tensor conforms to strict constraints like integer type, rank limits, and valid dimensions (allowing only a single -1)?
+[english] This utility function rigorously verifies the properties of the given shape tensor. It handles both static checks using TensorFlow's ability to infer values and dynamic runtime assertions.
+<switch:python>
+[python] def _maybe_check_valid_shape(shape, validate_args):
+  """Check that a shape Tensor is int-type and otherwise sane."""
+  if not dtype_util.is_integer(shape.dtype):
+    raise TypeError('{} dtype ({}) should be `int`-like.'.format(
+        shape, dtype_util.name(shape.dtype)))
+
+  assertions = []
+
+  message = '`{}` rank should be <= 1.'
+  if tensorshape_util.rank(shape.shape) is not None:
+    if tensorshape_util.rank(shape.shape) > 1:
+      raise ValueError(message.format(shape))
+  elif validate_args:
+    assertions.append(assert_util.assert_less(
+        tf.rank(shape), 2, message=message.format(shape)))
+
+  shape_ = tf.get_static_value(shape)
+
+  message = '`{}` elements must have at most one `-1`.'
+  if shape_ is not None:
+    if sum(shape_ == -1) > 1:
+      raise ValueError(message.format(shape))
+  elif validate_args:
+    assertions.append(assert_util.assert_less(
+        tf.reduce_sum(input_tensor=tf.cast(tf.equal(shape, -1), tf.int32)),
+        2,
+        message=message.format(shape)))
+
+  message = '`{}` elements must be either positive integers or `-1`.'
+  if shape_ is not None:
+    if np.any(shape_ < -1):
+      raise ValueError(message.format(shape))
+  elif validate_args:
+    assertions.append(assert_util.assert_greater(
+        shape, -2, message=message.format(shape)))
+
+  return assertions
+<switch:english>
+[english] The function relies on auxiliary utilities (`dtype_util`, `tensorshape_util`) and TensorFlow's static/dynamic analysis to provide robustness.
+[english] Wait, if I pass a 3D shape like [10, 20, -1], will it hit the rank check, or is that only relevant for dimensions?
+[english] The function checks `tensorshape_util.rank(shape.shape)` first. If this evaluates to greater than 1 (which 3 dimensions would), a `ValueError` is immediately raised before checking for `-1` counts.
+[english] Got it, so the rank check happens early.

@@ -1,0 +1,12 @@
+[english] How do I calculate the specific directory path where filtered images associated with an object are expected to be saved?
+[english] This function determines the storage location by first breaking down the current instance's full name into its folder and filename components using `os.path.split`. It then reconstruct a new, dedicated path by joining that original folder with a predefined constant directory.
+<switch:python>
+[python] def get_filtered_root_folder(self):
+        """Return the location where filtered images are stored."""
+        folder, filename = os.path.split(self.name)
+        return os.path.join(folder, VERSATILEIMAGEFIELD_FILTERED_DIRNAME, '')
+<switch:english>
+[english] The final result is guaranteed to be a directory string because of how it handles the trailing empty string in `os.path.join`. Always ensure that VERSATILEIMAGEFIELD_FILTERED_DIRNAME is correctly configured.
+[english] Does this function break if self.name contains no path separators?
+[english] It won't, but the behavior depends on how `VERSATILEIMAGEFIELD_FILTERED_DIRNAME` is handled; typically, for a filename like 'image.jpg', the original folder will be an empty string.
+[english] That clarifies how the path construction works.

@@ -1,0 +1,17 @@
+[english] How can I efficiently gather all geometric and statistical properties—like centroids, angles, and edges—into a single unified table?
+[english] To provide a complete overview of mesh quality, this function aggregates data from three distinct internal methods: volume metrics, angle calculations, and edge properties.
+<switch:python>
+[python] def stats(self):
+    """
+    Returns mesh quality and geometric stats.
+    """
+    cv = self.centroids_and_volumes()
+    angles  = self.angles()
+    edges = self.edges()
+    return pd.concat([cv , angles[["stats"]], edges[["stats"]] ], 
+                     axis = 1).sort_index(axis = 1)
+<switch:english>
+[english] This method merges the various datasets using Pandas concatenation along axis 1, ensuring that all key structural indices are correctly preserved and ordered in the final output.
+[english] If the results from angles() or edges() have indexes that don't perfectly match the centroids_and_volumes(), how does pandas handle this inconsistency?
+[english] Pandas aligns DataFrames by their index when using concat. If indices don't match, it will automatically align them and insert a NaN value for any missing data point.
+[english] That makes sense; I need to be careful about ensuring my underlying components share consistent indexing.

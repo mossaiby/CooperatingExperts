@@ -1,0 +1,27 @@
+[english] How can I query a Singularity registry hub for image collections, either by searching for a specific name or simply listing all available items?
+[english] This function determines its behavior based on the `query` argument. If you provide a search term, it delegates the task to a targeted collection search; if `query` is None, it defaults to listing everything.
+<switch:python>
+[python] def search(self, query=None, **kwargs):
+    '''query a Singularity registry for a list of images. 
+     If query is None, collections are listed. 
+
+    EXAMPLE QUERIES:
+
+    [empty]             list all collections in singularity hub
+    vsoch               do a general search for collection "vsoch"
+    vsoch/dinosaur      list details of container vsoch/dinosaur
+                          tag "latest" is used by default, and then the most recent
+    vsoch/dinosaur:tag  list details for specific container
+    
+    '''
+
+    if query is not None:
+        return self._search_collection(query)
+
+    # Search collections across all fields
+    return self.list()
+<switch:english>
+[english] Remember that the function uses an internal helper, `self._search_collection`, when a specific term is provided to execute the search logic.
+[english] If I pass an empty string "" as the query, will it behave like calling self.list()?
+[english] No, because the check is strictly `if query is not None`. Passing an empty string evaluates to True, meaning it would attempt a targeted search with that empty query.
+[english] Understood! That clarifies how non-None values are handled.

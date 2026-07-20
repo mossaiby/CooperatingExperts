@@ -1,0 +1,46 @@
+[english] How do I implement a robust system to load PNG textures based on their name and category, including handling missing files?
+[english] This function manages texture loading by first attempting to load an image from disk; if it fails or the file is not found, it substitutes a placeholder. It then prepares the texture for use with specific OpenGL rendering settings.
+<switch:python>
+[python] def loadTex(self,name,category):
+        """
+        Loads the texture of the given name and category.
+        
+        All textures currently must be PNG files, although support for more formats may be added soon.
+        
+        If the texture cannot be found, a missing texture will instead be returned. See :py:meth:`getMissingTexture()` for more information.
+        
+        Currently, all texture mipmaps will be generated and the filters will be set to
+        :py:const:`GL_NEAREST` for the magnification filter and :py:const:`GL_NEAREST_MIPMAP_LINEAR` for the minification filter.
+        This results in a pixelated texture and not  a blurry one.
+        """
+        try:
+            img = pyglet.image.load(self.resourceNameToPath(name,".png"))
+        except FileNotFoundError:
+            img = self.getMissingTexture()
+        texreg = self.categoriesTexBin[category].add(img)
+        #texreg = texreg.get_transform(True,True) # Mirrors the image due to how pyglets coordinate system works
+        # Strange behavior, sometimes needed and sometimes not
+        self.categories[category][name]=texreg
+        target = texreg.target
+        texid = texreg.id
+        texcoords = texreg.tex_coords
+        # Prevents texture bleeding with texture sizes that are powers of 2, else weird lines may appear at certain angles.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR)
+        glGenerateMipmap(GL_TEXTURE_2D)
+        
+        out = target,texid,texcoords
+        self.categoriesTexCache[category][name]=out
+        self.peng.sendEvent("peng3d:rsrc.tex.load",{"peng":self.peng,"name":name,"category":category})
+        return out
+<switch:english>
+[english] Finally, the method caches the resulting target and ID while sending a notification event (`peng3d:rsrc.tex.load`) to inform other systems that the resource is ready.
+[english] The function uses `GL_NEAREST` for magnification filtering; what effect does this have on the visual appearance of textures, particularly when scaled up?
+[english] Using GL_NEAREST forces a pixelated look by selecting only the closest texel. If you wanted smooth scaling instead of blocky, you would change that line to use linear interpolation:
+<switch:python>
+[python] texlparams = GL_TEXTURE_2D # Assuming target is used here
+texlparams = glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+<switch:english>
+[english] That makes perfect sense; I'll adjust the filtering accordingly.

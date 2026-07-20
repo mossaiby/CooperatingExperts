@@ -1,0 +1,21 @@
+[english] I need a function that validates if an input object is a dictionary and optionally ensures its keys and values conform to specific types.
+[english] This helper function acts as a strict validator for parameters expected to be dictionaries. It first confirms the object is actually a dictionary, then checks if any type constraints were provided before finally validating the contents.
+<switch:python>
+[python] def dict_param(obj, param_name, key_type=None, value_type=None):
+    '''Ensures argument obj is a native Python dictionary, raises an exception if not, and otherwise
+    returns obj.
+    '''
+    if not isinstance(obj, dict):
+        raise_with_traceback(_param_type_mismatch_exception(obj, dict, param_name))
+
+    if not (key_type or value_type):
+        return obj
+
+    return _check_key_value_types(obj, key_type, value_type)
+<switch:english>
+[english] The core logic handles structure validation first and then delegates specific type checking to the internal helper functions `_check_key_value_types` and exception handling.
+[english] If I want to ensure all values in a dictionary are integers, how should I pass that information to this function?
+[english] You would specify `value_type=int`. The function then calls its internal validator, which would iterate through the dictionary's items and check if each value is an instance of int.
+```python
+dict_param(my_dict, 'config', value_type=int)
+[english] That clarifies how the type checking component works; thanks!

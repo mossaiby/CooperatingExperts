@@ -1,0 +1,34 @@
+[english] I want a function that automatically handles GitHub API rate limits so my script doesn't break when too many requests are sent in quick succession.
+[english] To handle rate limiting gracefully, this function first checks how many requests remain using the provided session. If we are under our allowance, it just returns, but if not, it calculates when the limit resets and waits until that time has passed.
+<switch:python>
+[python] def _check_api_limits(gh_session, api_required=250, sleep_time=15):
+    """
+    Simplified check for API limits
+
+    If necessary, spin in place waiting for API to reset before returning.
+
+    See: https://developer.github.com/v3/#rate-limiting
+    """
+    api_rates = gh_session.rate_limit()
+
+    api_remaining = api_rates['rate']['remaining']
+    api_reset = api_rates['rate']['reset']
+    logger.debug('Rate Limit - %d requests remaining', api_remaining)
+
+    if api_remaining > api_required:
+        return
+
+    now_time = time.time()
+    time_to_reset = int(api_reset - now_time)
+    logger.warn('Rate Limit Depleted - Sleeping for %d seconds', time_to_reset)
+
+    while now_time < api_reset:
+        time.sleep(10)
+        now_time = time.time()
+
+    return
+<switch:english>
+[english] The function actively waits until the rate limit resets (`api_reset`), using a busy-wait loop that checks every 10 seconds, which might be slightly inefficient but ensures compliance.
+[english] If this function is called from multiple threads concurrently, could it cause race conditions or incorrect sleeping?
+[english] Yes, since `time.sleep` is not thread-safe for coordinated waiting across different calls, a more robust solution would involve using synchronization primitives like `threading.Lock` or an event queue.
+[english] So I need to integrate locking mechanisms if I plan on multithreading this usage.

@@ -1,0 +1,19 @@
+[english] We need a function that selects the most efficient instruction block from a list, prioritizing packed instructions over a complex count of operations.
+[english] This function iterates through provided blocks to find the 'best' based on several criteria. It first checks if any block contains packed instructions; otherwise, it uses a composite score involving operation counts and register usage.
+<switch:python>
+[python] def select_best_block(blocks):
+    """Return best block selected based on simple heuristic."""
+    # TODO make this cleverer with more stats
+    if not blocks:
+        raise ValueError("No suitable blocks were found in assembly.")
+    best_block = max(blocks, key=lambda b: b[1]['packed_instr'])
+    if best_block[1]['packed_instr'] == 0:
+        best_block = max(blocks,
+                         key=lambda b: (b[1]['ops'] + b[1]['packed_instr'] + b[1]['avx_instr'],
+                                        b[1]['ZMM'], b[1]['YMM'], b[1]['XMM']))
+    return best_block[0]
+<switch:english>
+[english] The code uses the `max` function with a lambda key to implement the heuristic logic, which is effective for quick scoring but might be easily optimized later.
+[english] What happens if two blocks have identical scores in the fallback calculation?
+[english] If two or more blocks yield identical tuples during the max operation's evaluation, `max()` will return the first block it encounters among those tied. This is because Python's comparison rules return the item appearing earliest.
+[english] That makes sense; we might want to sort them consistently later.

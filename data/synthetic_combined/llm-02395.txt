@@ -1,0 +1,43 @@
+[english] How can I automatically discover and register custom blocks defined in specific modules for all installed applications?
+[english] This function iterates through your application list and attempts to dynamically import a `registered_blocks` module within each app.
+<switch:python>
+[python] def find_blocks():
+    """
+    Auto-discover INSTALLED_APPS registered_blocks.py modules and fail
+    silently when not present. This forces an import on them thereby
+    registering their blocks.
+
+    This is a near 1-to-1 copy of how django's admin application registers
+    models.
+    """
+
+    for app in settings.INSTALLED_APPS:
+        mod = import_module(app)
+        # Attempt to import the app's sizedimage module.
+        try:
+            before_import_block_registry = copy.copy(
+                block_registry._registry
+            )
+            import_module('{}.registered_blocks'.format(app))
+        except:
+            # Reset the block_registry to the state before the last
+            # import as this import will have to reoccur on the next request
+            # and this could raise NotRegistered and AlreadyRegistered
+            # exceptions (see django ticket #8245).
+            block_registry._registry = before_import_block_registry
+
+            # Decide whether to bubble up this error. If the app just
+            # doesn't have a stuff module, we can ignore the error
+            # attempting to import it, otherwise we want it to bubble up.
+            if module_has_submodule(mod, 'registered_blocks'):
+                raise
+<switch:english>
+[english] The function safely handles registration failures by rolling back state changes before deciding if an actual configuration error should be raised and propagated.
+[english] What happens if `import_module('{}.registered_blocks'.format(app))` succeeds but triggers a different exception, like a syntax error within the module?
+[english] If another exception occurs during import, it will still trigger the general `except` block. The code rolls back any current state changes and then proceeds to check if further action is needed using `module_has_submodule`.
+<switch:python>
+[python] # ... (Inside except block)
+            if module_has_submodule(mod, 'registered_blocks'): # Check remains the key logic
+                raise # Re-raising based on subclass existence
+<switch:english>
+[english] That clears everything up for my use case!

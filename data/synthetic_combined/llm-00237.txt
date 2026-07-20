@@ -1,0 +1,19 @@
+[english] I need a way to process and reduce a scored PyProphet file to its minimum requirements for global scoring.
+[english] This function first checks if an output path is provided; if not, it defaults to performing the operation in-place. It then delegates the actual data transformation to the `reduce_osw` utility.
+<switch:python>
+[python] def reduce(infile, outfile):
+    """
+    Reduce scored PyProphet file to minimum for global scoring
+    """
+
+    if outfile is None:
+        outfile = infile
+    else:
+        outfile = outfile
+
+    reduce_osw(infile, outfile)
+<switch:english>
+[english] The logic effectively manages input and output paths before invoking the core reduction logic in `reduce_osw`.
+[english] If I pass `None` for both arguments, will it overwrite the original file?
+[english] Yes. By checking if `outfile is None`, Python ensures that `outfile` is set to `infile`, which means the operation happens on or writes back to the input path.
+[english] Got it, thanks for breaking down this routine.

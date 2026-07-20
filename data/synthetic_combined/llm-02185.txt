@@ -1,0 +1,26 @@
+[english] I need a way to search an internal database for specific HPO terms related to a given query.
+[english] To handle the search, this function uses the `store` adapter injected with the necessary connection details and executes the search against that store's terminology index.
+<switch:python>
+[python] def hpo_terms(store, query = None, limit = None):
+    """Retrieves a list of HPO terms from scout database
+
+    Args:
+        store (obj): an adapter to the scout database
+        query (str): the term to search in the database
+        limit (str): the number of desired results
+
+    Returns:
+        hpo_phenotypes (dict): the complete list of HPO objects stored in scout
+
+    """
+    hpo_phenotypes = {}
+    if limit:
+        limit=int(limit)
+
+    hpo_phenotypes['phenotypes'] = list(store.hpo_terms(text=query, limit=limit))
+    return hpo_phenotypes
+<switch:english>
+[english] The function returns a dictionary containing the results under the 'phenotypes' key, ensuring that the retrieved HPO list is properly structured.
+[english] What happens if I pass a very large `limit` value to this function?
+[english] If you provide a string limit like '100', it safely converts it to an integer. If no query is provided, the behavior depends on the underlying implementation of `store.hpo_terms`, which may return an empty list or all results.
+[english] Thanks! That makes sense.

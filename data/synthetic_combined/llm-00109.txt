@@ -1,0 +1,23 @@
+[english] I need a function that identifies which model parameters should be optimized during training while ensuring certain layers remain frozen.
+[english] This approach retrieves all network weights and then filters them based on a configuration provided by the user. We use list comprehension to efficiently exclude any parameter listed in the fixed set if freezing is enabled.
+<switch:python>
+[python] def training_params(self):
+        """
+        Get parameters to be optimized.
+        """
+        params = self.network.parameters
+        # Freeze parameters
+        if self.config.fixed_parameters:
+            logging.info("fixed parameters: %s" % ", ".join(map(str, self.config.fixed_parameters)))
+            params = [p for p in params if p not in self.config.fixed_parameters]
+        return params
+<switch:english>
+[english] This method guarantees that only mutable, trainable parameters are passed forward. Be aware that this assumes `self.network.parameters` is an iterable object.
+[english] What happens if I forget to include a parameter in the list but actually want it frozen?
+[english] The function will optimize any missing parameter by default because it is not explicitly excluded. You must ensure every desired fixed parameter is included in `self.config.fixed_parameters` for proper freezing.
+<switch:python>
+[python] # Example of how to check if a parameter P needs fixing:
+if P not in self.config.fixed_parameters:  # It will be optimized
+    pass
+<switch:english>
+[english] Got it, thanks for clarifying that detail!

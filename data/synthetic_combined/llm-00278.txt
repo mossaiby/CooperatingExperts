@@ -1,0 +1,38 @@
+[english] I need a function that can reliably parse an entry point string structured like 'name = module:attrs [extra1, extra2]'.
+[english] This function breaks down the input string by sequentially splitting it at '=', then checking for and extracting optional attributes (after ':') and extras (enclosed in brackets). The parsing is encapsulated within a `try...except` block to handle malformed inputs.
+<switch:python>
+[python] def parse(cls, src, dist=None):
+        """Parse a single entry point from string `src`
+
+        Entry point syntax follows the form::
+
+            name = some.module:some.attr [extra1,extra2]
+
+        The entry name and module name are required, but the ``:attrs`` and
+        ``[extras]`` parts are optional
+        """
+        try:
+            attrs = extras = ()
+            name,value = src.split('=',1)
+            if '[' in value:
+                value,extras = value.split('[',1)
+                req = Requirement.parse("x["+extras)
+                if req.specs: raise ValueError
+                extras = req.extras
+            if ':' in value:
+                value,attrs = value.split(':',1)
+                if not MODULE(attrs.rstrip()):
+                    raise ValueError
+                attrs = attrs.rstrip().split('.')
+        except ValueError:
+            raise ValueError(
+                "EntryPoint must be in 'name=module:attrs [extras]' format",
+                src
+            )
+        else:
+            return cls(name.strip(), value.strip(), attrs, extras, dist)
+<switch:english>
+[english] The function relies on helper functions like `Requirement` and `MODULE`, which must be defined elsewhere for the parsing logic to work correctly.
+[english] How is it handled if a user provides the simplest possible valid string, such as 'my_app=module.name'?
+[english] If only the mandatory name and value parts are provided, the optional attributes (`attrs`) and extras (`extras`) default to empty tuples `()` because they are initialized that way at the start of the function.
+[english] That makes sense. Thanks for clarifying.

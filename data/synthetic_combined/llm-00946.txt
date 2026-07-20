@@ -1,0 +1,19 @@
+[english] How can I generate a random string of a specific length using only characters from a given alphabet?
+[english] To create this function, we need to pick a random character repeatedly until the desired length is reached. By iterating through a range up to `length` and using a choice mechanism on the provided `alphabet`, we can build the sequence.
+<switch:python>
+[python] def random_string(self, length, alphabet):
+        """Return string of `length` elements chosen from `alphabet`."""
+        return ''.join(
+            self.choice(alphabet) for n in range(length)
+        )
+<switch:english>
+[english] The use of a generator expression combined with ''.join() efficiently builds the final string. Note that this assumes the existence of a method named `choice` on the class instance, likely imported from the `random` module.
+[english] What happens if I pass an empty list as the 'alphabet'?
+[english] If you pass an empty alphabet, the function will raise an error (like IndexError) because there are no characters available to be chosen.
+<switch:python>
+[python] def random_string(self, length, alphabet):
+    return ''.join(
+        self.choice(alphabet) for n in range(length)
+    )
+<switch:english>
+[english] Got it, thanks!

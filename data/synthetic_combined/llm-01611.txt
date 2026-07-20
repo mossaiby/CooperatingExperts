@@ -1,0 +1,19 @@
+[english] How do I check if a given Choi matrix represents a trace-preserving quantum channel?
+[english] This helper function checks for trace preservation by calculating the partial trace of the Choi matrix and ensuring the result is an identity matrix within specified numerical tolerances.
+<switch:python>
+[python] def _is_tp_helper(self, choi, atol, rtol):
+        """Test if Choi-matrix is trace-preserving (TP)"""
+        if atol is None:
+            atol = self._atol
+        if rtol is None:
+            rtol = self._rtol
+        # Check if the partial trace is the identity matrix
+        d_in, d_out = self.dim
+        mat = np.trace(
+            np.reshape(choi, (d_in, d_out, d_in, d_out)), axis1=1, axis2=3)
+        return is_identity_matrix(mat, rtol=rtol, atol=atol)
+<switch:english>
+[english] The core logic relies on verifying that the calculated partial trace yields a matrix close enough to the desired identity operator, using both absolute (atol) and relative (rtol) error margins.
+[english] What happens if the input `choi` matrix has dimensions incompatible with the expected structure?
+[english] The function relies heavily on NumPy's broadcasting and reshaping; an incompatible Choi matrix will likely raise a ValueError during the reshape or trace operations, which should be handled upstream.
+[english] Thanks for clarifying how the error margins are applied!

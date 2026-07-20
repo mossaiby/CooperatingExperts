@@ -1,0 +1,31 @@
+[english] I need a way to completely replace an existing user document in MongoDB using their unique ID.
+[english] This method handles updating existing users by logging the action and then replacing the full document in the database. It uses `find_one_and_replace` targeting the specific user ID provided in the object.
+<switch:python>
+[python] def update_user(self, user_obj):
+        """Update an existing user.
+        
+        
+            Args:
+                user_obj(dict)
+        
+            Returns:
+                updated_user(dict)
+        """
+        LOG.info("Updating user %s", user_obj['_id'])
+        updated_user = self.user_collection.find_one_and_replace(
+            {'_id': user_obj['_id']},
+            user_obj,
+            return_document=pymongo.ReturnDocument.AFTER
+        )
+        return updated_user
+<switch:english>
+[english] Remember that because it uses `find_one_and_replace`, this operation completely overwrites the existing record with the provided data, including removing any fields not included in the input.
+[english] What if I only want to update one or two specific fields (like email) without touching all the other data on that user's profile?
+[english] To perform a partial update instead of a full replacement, you should use an operation like `update_one` with the `$set` operator.
+<switch:python>
+[python] self.user_collection.update_one(
+    {'_id': user_obj['_id']},
+    {'$set': {**user_obj}}
+)
+<switch:english>
+[english] That makes sense, thanks for clarifying!

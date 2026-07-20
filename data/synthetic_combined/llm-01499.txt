@@ -1,0 +1,19 @@
+[english] I need a way to clear all existing breakpoints that are set on a specific line number within a certain file.
+[english] This method begins by checking if any breakpoints exist for the given filename and lineno in self.bplist. If they do, it retrieves the list of matching breakpoint objects.
+<switch:python>
+[python] def delete_breakpoints_by_lineno(self, filename, lineno):
+        """Removes all breakpoints at a give filename and line number.
+        Returns a list of breakpoints numbers deleted.
+        """
+        if (filename, lineno) not in self.bplist:
+            return []
+        breakpoints = self.bplist[(filename, lineno)]
+        bpnums = [bp.number for bp in breakpoints]
+        for bp in list(breakpoints):
+            self.delete_breakpoint(bp)
+        return bpnums
+<switch:english>
+[english] The code iterates over a copy of the list to safely delete each breakpoint using self.delete_breakpoint. It then returns the numbers of all deleted breakpoints to track the operation.
+[english] What happens if someone tries to call this function with inputs that don't match any existing breakpoints?
+[english] The method uses an initial check, `if (filename, lineno) not in self.bplist:`, which ensures it returns an empty list (`[]`) safely without attempting to access non-existent data.
+[english] That makes sense! Thanks for clarifying.

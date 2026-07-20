@@ -1,0 +1,32 @@
+[english] How can I write a function that downloads a compressed archive, verifies its integrity, and then individually fetches external URLs listed inside it?
+[english] This method first checks if the dataset is already intact. If not, it performs a bulk download of the tarball, extracts it to the specified root directory, and finally loops through a list of individual photo URLs found within the extracted files.
+<switch:python>
+[python] def download(self):
+        """Download and extract the tarball, and download each individual photo."""
+        import tarfile
+
+        if self._check_integrity():
+            print('Files already downloaded and verified')
+            return
+
+        download_url(self.url, self.root, self.filename, self.md5_checksum)
+
+        # Extract file
+        with tarfile.open(os.path.join(self.root, self.filename), 'r:gz') as tar:
+            tar.extractall(path=self.root)
+
+        # Download individual photos
+        with open(os.path.join(self.root, 'dataset', 'SBU_captioned_photo_dataset_urls.txt')) as fh:
+            for line in fh:
+                url = line.rstrip()
+                try:
+                    download_url(url, os.path.join(self.root, 'dataset'))
+                except OSError:
+                    # The images point to public images on Flickr.
+                    # Note: Images might be removed by users at anytime.
+                    pass
+<switch:english>
+[english] The function uses robust error handling when downloading individual photos from the URL list, which is important since external links (like those on Flickr) may occasionally become unavailable.
+[english] If the file 'SBU_captioned_photo_dataset_urls.txt' is missing inside the archive after extraction, what happens?
+[english] The current code would raise a FileNotFoundError when trying to open the text file. You should add a try/except block around the 'with open(...)' statement to gracefully handle this scenario.
+[english] That makes sense; I'll implement that check.

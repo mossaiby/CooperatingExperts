@@ -1,0 +1,26 @@
+[english] How can I create a structured text message activity and optionally include a speech parameter?
+[english] To generate a basic text message using this function, we initialize an `Activity` object with the primary text content and input options.
+<switch:python>
+[python] def text(text: str, speak: str = None, input_hint: Union[InputHints, str] = InputHints.accepting_input) -> Activity:
+        """
+        Returns a simple text message.
+
+        :Example:
+        message = MessageFactory.text('Greetings from example message')
+        await context.send_activity(message)
+
+        :param text:
+        :param speak:
+        :param input_hint:
+        :return:
+        """
+        message = Activity(type=ActivityTypes.message, text=text, input_hint=input_hint)
+        if speak:
+            message.speak = speak
+
+        return message
+<switch:english>
+[english] If the optional `speak` argument is supplied, the resulting message object will be enhanced with instructions for speech synthesis.
+[english] What happens if I pass a value to both `speak` and `input_hint`?
+[english] The function applies both parameters independently; it sets the text and hint first, and then conditionally assigns the speak parameter if provided. The code handles this with an explicit check:
+[english] That makes sense, I will try that out now.

@@ -1,0 +1,39 @@
+[english] How do I reliably start a server instance if it hasn't been booted yet, without blocking the main execution flow?
+[english] The `boot` method ensures asynchronous booting by checking if the server is already running and then launching the required initial logic in a separate thread.
+<switch:python>
+[python] def boot(self):
+        """
+        Boots a server for the app, if it isn't already booted.
+
+        Returns:
+            Server: This server.
+        """
+
+        if not self.responsive:
+            # Remember the port so we can reuse it if we try to serve this same app again.
+            type(self)._ports[self.port_key] = self.port
+
+            init_func = capybara.servers[capybara.server_name]
+            init_args = (self.middleware, self.port, self.host)
+
+            self.server_thread = Thread(target=init_func, args=init_args)
+
+            # Inform Python that it shouldn't wait for this thread to terminate before
+            # exiting. (It will still be appropriately terminated when the process exits.)
+            self.server_thread.daemon = True
+
+            self.server_thread.start()
+
+            # Make sure the server actually starts and becomes responsive.
+            timer = Timer(60)
+            while not self.responsive:
+                if timer.expired:
+                    raise RuntimeError("WSGI application timed out during boot")
+                self.server_thread.join(0.1)
+
+        return self
+<switch:english>
+[english] By setting `self.server_thread.daemon = True`, we ensure the process can exit cleanly even if the background server thread hasn't finished its work.
+[english] Since this uses threads, what happens to the internal state of 'type(self)._ports' once a boot finishes?
+[english] The function saves the port mapping in `type(self)._ports[self.port_key]` right before starting the thread, ensuring the application remembers which port was successfully used.
+[english] Thanks for clarifying how resource allocation is handled during startup.

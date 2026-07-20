@@ -1,0 +1,17 @@
+[english] I need a function that can parse Veoh video URLs to extract the item ID, and then use that ID to initiate a download or retrieve information.
+[english] This function determines if a provided URL matches one of the two supported Veoh formats. It uses regular expressions with `re.match` to safely extract the unique identifier from the string before passing it along for processing.
+<switch:python>
+[python] def veoh_download(url, output_dir = '.', merge = False, info_only = False, **kwargs):
+    '''Get item_id'''
+    if re.match(r'http://www.veoh.com/watch/\w+', url):
+        item_id = match1(url, r'http://www.veoh.com/watch/(\w+)')
+    elif re.match(r'http://www.veoh.com/m/watch.php\?v=\.*', url):
+        item_id = match1(url, r'http://www.veoh.com/m/watch.php\?v=(\w+)')
+    else:
+        raise NotImplementedError('Cannot find item ID')
+    veoh_download_by_id(item_id, output_dir = '.', merge = False, info_only = info_only, **kwargs)
+<switch:english>
+[english] The function successfully extracts the `item_id` but relies entirely on the external helper functions like `match1` and `veoh_download_by_id` to complete the actual download task.
+[english] What happens if I pass a Veoh URL that has additional query parameters beyond what the regex currently expects?
+[english] Since it relies on specific patterns, unexpected parameters might cause the initial `re.match` or subsequent extraction in `match1` to fail. To support more varied formats, you would need to update the regular expressions.
+[english] This helps clarify how the ID is pulled out of those different links!

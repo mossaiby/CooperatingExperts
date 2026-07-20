@@ -1,0 +1,21 @@
+[english] I need a way to efficiently load a large collection of exon objects into the database.
+[english] This method performs bulk insertions using `insert_many` for efficiency. It wraps common MongoDB write errors like duplicates or general bulk failures into a custom IntegrityError so that upstream handlers can catch them easily.
+<switch:python>
+[python] def load_exon_bulk(self, exon_objs):
+        """Load a bulk of exon objects to the database
+
+        Arguments:
+            exon_objs(iterable(scout.models.hgnc_exon))
+
+        """
+        try:
+            result = self.exon_collection.insert_many(transcript_objs)
+        except (DuplicateKeyError, BulkWriteError) as err:
+            raise IntegrityError(err)
+        
+        return result
+<switch:english>
+[english] The function relies on catching specific exceptions (`DuplicateKeyError`, `BulkWriteError`) during the insertion process to ensure data integrity is handled predictably, rather than crashing unexpectedly.
+[english] If one record in the list fails to insert due to a duplicate key error, will that cause all other records in the bulk operation to fail?
+[english] Generally, MongoDB's `insert_many` attempts to process the entire batch; however, depending on the specific database driver version and error type, encountering an error might stop the transaction entirely.
+[english] Got it, I will keep that limitation in mind.

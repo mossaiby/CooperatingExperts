@@ -1,0 +1,22 @@
+[english] How can I programmatically retrieve the complete issuer's identity from a Certificate Revocation List (CRL) object?
+[english] This function safely extracts the CRL's signing authority by leveraging OpenSSL bindings. It first fetches and duplicates the raw C structure of the issuer name before wrapping it in a Python-compatible class.
+<switch:python>
+[python] def get_issuer(self):
+        """
+        Get the CRL's issuer.
+
+        .. versionadded:: 16.1.0
+
+        :rtype: X509Name
+        """
+        _issuer = _lib.X509_NAME_dup(_lib.X509_CRL_get_issuer(self._crl))
+        _openssl_assert(_issuer != _ffi.NULL)
+        _issuer = _ffi.gc(_issuer, _lib.X509_NAME_free)
+        issuer = X509Name.__new__(X509Name)
+        issuer._name = _issuer
+        return issuer
+<switch:english>
+[english] Crucially, memory management is handled explicitly via `X509_NAME_free` to ensure that the underlying native data allocated by the C library is properly released.
+[english] What happens if the CRL object (`self._crl`) doesn't contain any issuer information?
+[english] The code uses `_openssl_assert(_issuer != _ffi.NULL)` to immediately halt execution and raise an error if the OpenSSL function fails to return a valid pointer for the issuer name.
+[english] That makes sense; explicit checks are always good practice.

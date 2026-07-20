@@ -1,0 +1,34 @@
+[english] How do I programmatically generate a signed Certificate Signing Request (CSR) that includes custom subject details?
+[english] This function dynamically constructs an X509Req object by first initializing it and then iterating through all provided key-value pairs in the `name` dictionary to build the subject attributes.
+<switch:python>
+[python] def createCertRequest(pkey, digest="sha256", **name):
+    """
+    Create a certificate request.
+
+    Arguments: pkey   - The key to associate with the request
+               digest - Digestion method to use for signing, default is sha256
+               **name - The name of the subject of the request, possible
+                        arguments are:
+                          C     - Country name
+                          ST    - State or province name
+                          L     - Locality name
+                          O     - Organization name
+                          OU    - Organizational unit name
+                          CN    - Common name
+                          emailAddress - E-mail address
+    Returns:   The certificate request in an X509Req object
+    """
+    req = crypto.X509Req()
+    subj = req.get_subject()
+
+    for key, value in name.items():
+        setattr(subj, key, value)
+
+    req.set_pubkey(pkey)
+    req.sign(pkey, digest)
+    return req
+<switch:english>
+[english] After setting the subject and public key using `setattr` and `set_pubkey`, the function signs the request by calling `req.sign(pkey, digest)`, finalizing the CSR.
+[english] If I omit a standard required field like 'C' or 'CN', will the resulting X509Req object be parsable by certificate authorities?
+[english] While the code allows omitting fields via `**name`, the final validity depends on the crypto library; if mandatory fields are missing, subsequent validation checks during signing or issuance may fail.
+[english] That makes sense. Thanks for clarifying how these dynamic attributes work!

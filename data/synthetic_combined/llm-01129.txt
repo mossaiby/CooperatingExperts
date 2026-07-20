@@ -1,0 +1,34 @@
+[english] I need to determine if a non-registered user should be blocked from viewing specific ticket categories because they are sold out.
+[english] This function first checks if the current user has completed registration; if so, it returns None as requested. Otherwise, it evaluates whether the target ticket category is present among the currently available options for this context.
+<switch:python>
+[python] def sold_out_and_unregistered(context):
+    ''' If the current user is unregistered, returns True if there are no
+    products in the TICKET_PRODUCT_CATEGORY that are available to that user.
+
+    If there *are* products available, the return False.
+
+    If the current user *is* registered, then return None (it's not a
+    pertinent question for people who already have a ticket).
+
+    '''
+
+    user = user_for_context(context)
+    if hasattr(user, "attendee") and user.attendee.completed_registration:
+        # This user has completed registration, and so we don't need to answer
+        # whether they have sold out yet.
+
+        # TODO: what if a user has got to the review phase?
+        # currently that user will hit the review page, click "Check out and
+        # pay", and that will fail. Probably good enough for now.
+
+        return None
+
+    ticket_category = settings.TICKET_PRODUCT_CATEGORY
+    categories = available_categories(context)
+
+    return ticket_category not in [cat.id for cat in categories]
+<switch:english>
+[english] The final return statement uses a set difference (implicitly) to check if the designated `TICKET_PRODUCT_CATEGORY` ID is missing from the list of categories accessible by the user.
+[english] What happens when a user has not completed registration but might be in a pending or 'review' state?
+[english] Currently, users who have started registration but haven't finalized it are treated as unregistered. If you needed to distinguish between different stages of incomplete registration, you would need an additional check on the `user.attendee` status.
+[english] That makes sense; I will test this behavior next.

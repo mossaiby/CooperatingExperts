@@ -1,0 +1,23 @@
+[english] I need to ensure that a specific function can only be called by one thread at a time, preventing concurrency issues.
+[english] We use the `atomize` decorator which applies a reentrant lock (`RLock`) to your target function. This guarantees that even if multiple threads try to enter simultaneously, only one will proceed through the protected code block per execution path.
+<switch:python>
+[python] def atomize(f, lock=None):
+	"""
+	Decorate a function with a reentrant lock to prevent multiple
+	threads from calling said thread simultaneously.
+	"""
+	lock = lock or threading.RLock()
+
+	@functools.wraps(f)
+	def exec_atomic(*args, **kwargs):
+		lock.acquire()
+		try:
+			return f(*args, **kwargs)
+		finally:
+			lock.release()
+	return exec_atomic
+<switch:english>
+[english] The implementation uses a lock acquisition within a `try...finally` block. This ensures that the lock is always properly released, preventing deadlocks if exceptions occur during function execution.
+[english] If I pass my own pre-initialized threading Lock instance to atomize(), will it use that specific object instead of creating its own default RLock?
+[english] Yes, the implementation checks `lock = lock or threading.RLock()`. If a custom lock is passed as an argument, it bypasses the creation of a new internal lock and uses your provided instance for synchronization.
+[english] That makes sense, I appreciate the clear explanation.

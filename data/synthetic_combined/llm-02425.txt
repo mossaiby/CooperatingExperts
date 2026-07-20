@@ -1,0 +1,23 @@
+[english] I need a way to delete a specific member from our organization using their unique ID.
+[english] To remove a member, we use an HTTP DELETE request targeted specifically at that user's resource endpoint. This function constructs the full URI and calls its internal fetch method to handle the API interaction.
+<switch:python>
+[python] def remove_member(self, member_id):
+        '''
+        Remove a member from the organisation.Returns JSON of all members if
+        successful or raises an Unauthorised exception if not.
+        '''
+        return self.fetch_json(
+            uri_path=self.base_uri + '/members/%s' % member_id,
+            http_method='DELETE'
+        )
+<switch:english>
+[english] The method relies on the base implementation of `fetch_json` to handle the response structure. It is designed to return a list of all members upon successful deletion.
+[english] If the member ID provided doesn't exist, how does this function behave?
+[english] Based on its docstring, it will raise an Unauthorised exception if the removal attempt fails or if permission requirements aren't met. You can anticipate a failure scenario by checking:
+<switch:python>
+[python] try:
+    self.remove_member(non_existent_id)
+except UnauthorizedException as e:
+    print("Failed to remove member.")
+<switch:english>
+[english] Got it, that makes much more sense.

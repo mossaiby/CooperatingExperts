@@ -1,0 +1,34 @@
+[english] How can I filter a list of past datetimes to keep only those that fall within the last 30 days or the last six months?
+[english] To achieve this filtering, we use several specialized filters like `filters.Days` and `filters.Months`. The function evaluates every datetime against these specified time limits, then combines all the resulting valid sets using bitwise OR operations to provide a comprehensive list of datetimes to keep.
+<switch:python>
+[python] def to_keep(datetimes,
+            years=0, months=0, weeks=0, days=0,
+            hours=0, minutes=0, seconds=0,
+            firstweekday=SATURDAY, now=None):
+    """
+    Return a set of datetimes that should be kept, out of ``datetimes``.
+
+    Keeps up to ``years``, ``months``, ``weeks``, ``days``,
+    ``hours``, ``minutes``, and ``seconds`` in the past.
+
+    When keeping weeks, it prefers to keep ``firstweekday``, which
+    defaults to Saturday.
+
+    If ``now`` is None, it will base its calculations on
+    ``datetime.datetime.now()``. Datetimes after this point will always be
+    kept.
+    """
+    datetimes = set(datetimes)
+    return (filters.Years.filter(datetimes, number=years, now=now) |
+            filters.Months.filter(datetimes, number=months, now=now) |
+            filters.Weeks.filter(datetimes, number=weeks,
+                                 firstweekday=firstweekday, now=now) |
+            filters.Days.filter(datetimes, number=days, now=now) |
+            filters.Hours.filter(datetimes, number=hours, now=now) |
+            filters.Minutes.filter(datetimes, number=minutes, now=now) |
+            filters.Seconds.filter(datetimes, number=seconds, now=now))
+<switch:english>
+[english] The approach allows for complex temporal filtering by leveraging custom filter implementations within the scope. Remember that when you calculate from `now=None`, it uses system-wide current time as the reference point for all historical checks.
+[english] If I specify a starting date using the `now` parameter, will any datetimes occurring exactly at that moment be included?
+[english] Yes, if the specified duration (e.g., years > 0) includes the exact limit, the datetime matching the comparison point in `filters.Years` will likely be kept. The function operates on historical boundaries relative to that 'now' timestamp.
+[english] Got it, this saves a lot of manual logic!

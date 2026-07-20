@@ -1,0 +1,45 @@
+[english] How can I list all session IDs that currently have pending messages and whose state was updated after a specific time?
+[english] This function is designed to retrieve session identifiers with pending messages by creating a structured request payload. It first validates that the entity being queried requires session tracking before initiating an asynchronous request through a managed handler.
+<switch:python>
+[python] def list_sessions(self, updated_since=None, max_results=100, skip=0, **kwargs):
+        """List session IDs.
+
+        List the Session IDs with pending messages in the queue where the state of the session
+        has been updated since the timestamp provided. If no timestamp is provided, all will be returned.
+        If the state of a session has never been set, it will not be returned regardless of whether
+        there are messages pending.
+
+        :param updated_since: The UTC datetime from which to return updated pending Session IDs.
+        :type updated_since: datetime.datetime
+        :param max_results: The maximum number of Session IDs to return. Default value is 100.
+        :type max_results: int
+        :param skip: The page value to jump to. Default value is 0.
+        :type skip: int
+        :rtype: list[str]
+
+        Example:
+            .. literalinclude:: ../examples/test_examples.py
+                :start-after: [START list_sessions_service_bus]
+                :end-before: [END list_sessions_service_bus]
+                :language: python
+                :dedent: 4
+                :caption: Get the Ids of session which have messages pending in the queue
+
+        """
+        if self.entity and not self.requires_session:
+            raise ValueError("This is not a sessionful entity.")
+        message = {
+            'last-updated-time': updated_since or datetime.datetime.utcfromtimestamp(0),
+            'skip': types.AMQPInt(skip),
+            'top': types.AMQPInt(max_results),
+        }
+        with BaseHandler(self.entity_uri, self.auth_config, debug=self.debug, **kwargs) as handler:
+            return handler._mgmt_request_response(  # pylint: disable=protected-access
+                REQUEST_RESPONSE_GET_MESSAGE_SESSIONS_OPERATION,
+                message,
+                mgmt_handlers.list_sessions_op)
+<switch:english>
+[english] The method handles pagination using `skip` and `max_results`. Note that if no update time is provided, it defaults to checking all sessions from the Unix epoch (time 0).
+[english] If I call this function without providing an argument for `updated_since`, what effective timestamp does the request use?
+[english] If `updated_since` is not provided, the code uses `datetime.datetime.utcfromtimestamp(0)`, which translates to the earliest possible moment (the Unix epoch) ensuring all sessions are returned.
+[english] That makes sense, thanks for clarifying how the default time handling works.

@@ -1,0 +1,23 @@
+[english] How do I proportionally rescale the dimensions of an image given a scaling factor?
+[english] To rescale size, we first unpack the width and height from the input tuple. We then multiply each dimension by the provided scale and convert the result to an integer.
+<switch:python>
+[python] def _scale_size(size, scale):
+    """Rescale a size by a ratio.
+
+    Args:
+        size (tuple): w, h.
+        scale (float): Scaling factor.
+
+    Returns:
+        tuple[int]: scaled size.
+    """
+    w, h = size
+    return int(w * float(scale) + 0.5), int(h * float(scale) + 0.5)
+<switch:english>
+[english] The function uses `+ 0.5` inside the conversion to ensure standard mathematical rounding is applied when converting floating-point results back into integers.
+[english] If I provide a negative scaling factor, what behavior should I expect?
+[english] A negative scale will negate both dimensions; for instance,
+<switch:python>
+[python] _scale_size((100, 50), -2) == (-200, -100)
+<switch:english>
+[english] That clarifies the mathematical behavior of that function.

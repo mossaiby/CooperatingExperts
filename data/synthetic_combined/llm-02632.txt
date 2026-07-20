@@ -1,0 +1,15 @@
+[english] How can I implement a synchronization mechanism that allows multiple processes to wait for each other across different phases without reusing the same barrier object?
+[english] To coordinate arrival in cyclic or multi-phase barriers, we need mechanisms that manage state transitions efficiently. This function utilizes two distinct barriers and strategically swaps their roles after completion.
+<switch:python>
+[python] def wait(self):
+        """Wait until all processes have reached the barrier."""
+        self.barrier_A.wait()
+        # The current barrier (barrier_A) is switched with the reserve barrier.
+        # This is because the current barrier cannot be safely reset until the reserve barrier has been passed.
+        self.barrier_A, self.barrier_B = self.barrier_B, self.barrier_A
+        self.barrier_A.reset()
+<switch:english>
+[english] The swapping of `barrier_A` and `barrier_B` handles the barrier reset safely, ensuring subsequent phases use a fresh synchronization point without issues from premature resetting.
+[english] If one process finishes significantly later than others in a phase, does this implementation handle that gracefully?
+[english] Yes, since it waits on `self.barrier_A.wait()`, any slow processes naturally block until all participants arrive at the barrier before the switch and reset occurs for the next phase.
+[english] This makes sense; thanks for clarifying how the barriers manage state.

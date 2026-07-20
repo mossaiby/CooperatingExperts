@@ -1,0 +1,19 @@
+[english] How do I instantiate an operation client for managing OpenShift clusters when the required API version changes?
+[english] This function handles dynamic API version routing by first checking which backend is needed using `self._get_api_version`. Based on this, it imports and constructs the correct operations class.
+<switch:python>
+[python] def open_shift_managed_clusters(self):
+        """Instance depends on the API version:
+
+           * 2018-09-30-preview: :class:`OpenShiftManagedClustersOperations<azure.mgmt.containerservice.v2018_09_30_preview.operations.OpenShiftManagedClustersOperations>`
+        """
+        api_version = self._get_api_version('open_shift_managed_clusters')
+        if api_version == '2018-09-30-preview':
+            from .v2018_09_30_preview.operations import OpenShiftManagedClustersOperations as OperationClass
+        else:
+            raise NotImplementedError("APIVersion {} is not available".format(api_version))
+        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+<switch:english>
+[english] The selected `OperationClass` is then instantiated, passing the necessary client, configuration, and generated models to ensure proper communication with Azure APIs.
+[english] What happens if I try to use an API version that has not been implemented or configured?
+[english] If the requested API version does not match supported ones, the code raises a `NotImplementedError` using the string formatting function in line 9. This prevents attempts to initialize invalid operations classes.
+[english] Understood, thanks for clarifying the error handling.

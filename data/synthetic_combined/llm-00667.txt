@@ -1,0 +1,30 @@
+[english] I need a utility method that merges field definitions from multiple protocol versions, specifically V3 and V4.
+[english] This function combines data fields drawn from both V3 and V4 meter protocol definition objects. It retrieves the read buffers for each version and iterates through them to populate `self.m_all_fields`.
+<switch:python>
+[python] def combineAB(self):
+        """ Use the serial block definitions in V3 and V4 to create one field list. """
+        v4definition_meter = V4Meter()
+        v4definition_meter.makeAB()
+        defv4 = v4definition_meter.getReadBuffer()
+
+        v3definition_meter = V3Meter()
+        v3definition_meter.makeReturnFormat()
+        defv3 = v3definition_meter.getReadBuffer()
+
+        for fld in defv3:
+            if fld not in self.m_all_fields:
+                compare_fld = fld.upper()
+                if not "RESERVED" in compare_fld and not "CRC" in compare_fld:
+                    self.m_all_fields[fld] = defv3[fld]
+
+        for fld in defv4:
+            if fld not in self.m_all_fields:
+                compare_fld = fld.upper()
+                if not "RESERVED" in compare_fld and not "CRC" in compare_fld:
+                    self.m_all_fields[fld] = defv4[fld]
+        pass
+<switch:english>
+[english] The implementation ensures that only non-reserved or CRC related fields are added to the list, prioritizing definitions encountered earlier.
+[english] What if a field definition already exists in self.m_all_fields before this method combines V3 and V4?
+[english] The checks use `if fld not in self.m_all_fields:`, which prevents existing entries from being overwritten or added again, preserving pre-existing definitions.
+[english] Perfect, I understand the precedence logic now.

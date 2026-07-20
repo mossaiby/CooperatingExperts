@@ -1,0 +1,26 @@
+[english] How can I automatically decode all base64-encoded PNG and JPEG images stored in my notebook outputs?
+[english] To restore image data, this function traverses every worksheet and cell within the notebook. It specifically looks for encoded strings associated with PNG or JPEG file types and processes them byte by byte.
+<switch:python>
+[python] def base64_decode(nb):
+    """Restore all bytes objects in the notebook from base64-encoded strings.
+    
+    Note: This is never used
+    """
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            if cell.cell_type == 'code':
+                for output in cell.outputs:
+                    if 'png' in output:
+                        if isinstance(output.png, unicode):
+                            output.png = output.png.encode('ascii')
+                        output.png = decodestring(output.png)
+                    if 'jpeg' in output:
+                        if isinstance(output.jpeg, unicode):
+                            output.jpeg = output.jpeg.encode('ascii')
+                        output.jpeg = decodestring(output.jpeg)
+    return nb
+<switch:english>
+[english] This function modifies the original notebook object in place after successful decoding. Note that it relies on 'decodestring', which was common in older Python 2 environments.
+[english] Does this code handle cases where an output might contain both PNG and JPEG data simultaneously?
+[english] The current implementation checks for and processes them separately using two distinct `if` blocks, so it handles either format if they exist within the same cell's outputs.
+[english] That makes sense; I appreciate the detailed analysis!

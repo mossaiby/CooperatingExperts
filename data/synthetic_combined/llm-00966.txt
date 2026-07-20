@@ -1,0 +1,26 @@
+[english] I need a utility to guarantee that only one process modifies a specific database entity at any given time.
+[english] To enforce exclusive access across multiple writers, this function constructs a lock object by targeting the current database connection and using the entity's unique primary key as the resource identifier. It then incorporates your specified acquisition and timeout parameters into that locking mechanism to manage concurrency safely.
+<switch:python>
+[python] def EntityLock(entity, acquire_timeout, lock_timeout):
+    '''
+    Useful when you want exclusive access to an entity across all writers.::
+
+        # example
+        import rom
+
+        class Document(rom.Model):
+            owner = rom.ManyToOne('User', on_delete='restrict')
+            ...
+
+        def change_owner(document, new_owner):
+            with rom.util.EntityLock(document, 5, 90):
+                document.owner = new_owner
+                document.save()
+
+    '''
+    return Lock(entity._connection, entity._pk, acquire_timeout, lock_timeout)
+<switch:english>
+[english] This method efficiently uses the entity's internal connection details and primary key (`entity._pk`) to ensure uniqueness, though it relies on the underlying `Lock` implementation for actual atomic operation handling.
+[english] What happens if two processes try to initialize EntityLock on different instances of the same document simultaneously?
+[english] The lock attempts to operate on a single resource defined by (`connection`, `pk`). The first process acquires it, and subsequent calls wait for the specified timeout duration. If the timeout expires, they will raise an exception.
+[english] Got it, this makes handling state changes much more reliable.

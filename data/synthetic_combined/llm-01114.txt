@@ -1,0 +1,27 @@
+[english] How can I write a function that reliably fetches concept information from our internal knowledge base using a given ID and language code?
+[english] This method handles fetching data by first constructing the precise endpoint URL. It then sends an HTTP GET request to the configured service, passing the desired language as a parameter.
+<switch:python>
+[python] def get_concept(self, conceptId, lang='en'):
+        """ Fetch the concept from the Knowledge base
+
+        Args:
+              id (str): The concept id to be fetched, it can be Wikipedia
+                page id or Wikiedata id.
+
+        Returns:
+            dict, int: A dict containing the concept information; an integer
+                representing the response code.
+        """
+        url = urljoin(self.concept_service + '/', conceptId)
+
+        res, status_code = self.get(url, params={'lang': lang})
+
+        if status_code != 200:
+            logger.debug('Fetch concept failed.')
+
+        return self.decode(res), status_code
+<switch:english>
+[english] The function is robust as it explicitly checks the returned `status_code`. If the service responds with anything other than a successful 200 OK, it logs the failure.
+[english] If the API returns a non-200 status code (like 404), what values are actually returned to the caller?
+[english] The function will still return both the response body decoded by `self.decode(res)` and the error `status_code`. This allows the calling code to inspect the failure reason.
+[english] I see, so I can check the status_code before trusting the data.

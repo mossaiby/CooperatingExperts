@@ -1,0 +1,25 @@
+[english] I need a way to programmatically retrieve a list of all available dashboards shared with my account or owned by me.
+[english] This function retrieves the list of available dashboards by making a GET request to the API endpoint configured in the class. It automatically includes necessary authentication headers and handles SSL verification before processing the result.
+<switch:python>
+[python] def get_dashboards(self):
+        '''**Description**
+            Return the list of dashboards available under the given user account. This includes the dashboards created by the user and the ones shared with her by other users.
+
+        **Success Return Value**
+            A dictionary containing the list of available sampling intervals.
+
+        **Example**
+            `examples/list_dashboards.py <https://github.com/draios/python-sdc-client/blob/master/examples/list_dashboards.py>`_
+        '''
+        res = requests.get(self.url + self._dashboards_api_endpoint, headers=self.hdrs, verify=self.ssl_verify)
+        return self._request_result(res)
+<switch:english>
+[english] The method relies on `self._request_result` to parse the raw HTTP response into a usable data format. Remember that successful execution depends heavily on correct setup of your client's base URL and credentials.
+[english] If the API returns an error status code (like 401 or 500), how does the function handle it?
+[english] The internal `self._request_result` method is responsible for handling HTTP errors. It should check the response status before returning data; a robust implementation would look something like this:
+<switch:python>
+[python] if res.status_code != 200:
+    raise Exception(f"API call failed with {res.status_code}: {res.text}")
+# (rest of successful parsing logic)
+<switch:english>
+[english] Perfect, that gives me a clear picture of the error handling strategy.

@@ -1,0 +1,12 @@
+[english] How can I safely send structured commands as a JSON string over my websocket connection?
+[english] To handle serialization and ensure thread safety, we convert the command dictionary into a JSON string and wrap the sending operation in a lock.
+<switch:python>
+[python] def send(self, cmd):
+        """Send the given command thru the websocket"""
+        with self.ws_sendlock:
+            self.ws.send(json.dumps(cmd))
+<switch:english>
+[english] The `with self.ws_sendlock` block ensures that even if multiple parts of your program try to send data simultaneously, only one can access the websocket at any given moment.
+[english] What potential performance overhead might this locking mechanism introduce?
+[english] Using a lock forces message serialization; threads must wait for each other to complete their sends, which limits throughput but guarantees data integrity.
+[english] Thanks for explaining the concurrency considerations.

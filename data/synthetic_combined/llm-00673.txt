@@ -1,0 +1,17 @@
+[english] I need to implement logic that deletes all associated buckets when a specific record is processed.
+[english] This function first gathers all file entries from the provided record and extracts every unique bucket identifier into a set for efficiency.
+<switch:python>
+[python] def delete_buckets(cls, record):
+        """Delete the bucket."""
+        files = record.get('_files', [])
+        buckets = set()
+        for f in files:
+            buckets.add(f.get('bucket'))
+        for b_id in buckets:
+            b = Bucket.get(b_id)
+            b.deleted = True
+<switch:english>
+[english] The code then iterates through the collected bucket IDs and sets their `deleted` attribute to true, assuming a global or accessible `Bucket` store.
+[english] What happens if one of the buckets referenced in the files doesn't exist?
+[english] If a bucket ID is not found via `Bucket.get(b_id)`, that line will likely raise an attribute error when trying to access it, which could be handled with a check like {@code b = Bucket.get(b_id) if Bucket.exists(b_id) else None}.
+[english] Got it. I'll make sure to handle missing buckets gracefully.

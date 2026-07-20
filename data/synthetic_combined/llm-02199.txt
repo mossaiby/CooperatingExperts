@@ -1,0 +1,29 @@
+[english] I have a TSV file containing HGNC gene data, and I need a function that reads it line-by-line and turns each row into a structured Python dictionary.
+[english] This function is designed as a generator that processes large files efficiently. It first detects the column names from the initial line to use as keys for the resulting dictionaries.
+<switch:python>
+[python] def parse_hgnc_genes(lines):
+    """Parse lines with hgnc formated genes
+
+        This is designed to take a dump with genes from HGNC.
+        This is downloaded from:
+        ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt
+
+        Args:
+            lines(iterable(str)): An iterable with HGNC formated genes
+        Yields:
+            hgnc_gene(dict): A dictionary with the relevant information
+    """
+    header = []
+    logger.info("Parsing hgnc genes...")
+    for index, line in enumerate(lines):
+        if index == 0:
+            header = line.split('\t')
+        elif len(line) > 1:
+            hgnc_gene = parse_hgnc_line(line=line, header=header)
+            if hgnc_gene:
+                yield hgnc_gene
+<switch:english>
+[english] The code relies on an external `parse_hgnc_line` helper, and it safely ignores any lines with fewer than two columns after skipping the header.
+[english] If a line in the input iterable is completely empty or consists only of whitespace, will that cause an error?
+[english] No, the conditional check 'elif len(line) > 1:' ensures that the parsing logic only runs on lines with content. If a line is empty, it simply skips the record.
+[english] That makes sense, thank you for clarifying!

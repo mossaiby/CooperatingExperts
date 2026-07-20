@@ -1,0 +1,22 @@
+[english] I need a way to calculate the total value remaining from all unclaimed credit notes for a specific user within my current context.
+[english] To determine the available credit, we first query the system for any unclaimed CreditNote records linked to the provided user. We then aggregate these amounts into a single sum.
+<switch:python>
+[python] def available_credit(context):
+    ''' Calculates the sum of unclaimed credit from this user's credit notes.
+
+    Returns:
+        Decimal: the sum of the values of unclaimed credit notes for the
+            current user.
+
+    '''
+
+    notes = commerce.CreditNote.unclaimed().filter(
+        invoice__user=user_for_context(context),
+    )
+    ret = notes.values("amount").aggregate(Sum("amount"))["amount__sum"] or 0
+    return 0 - ret
+<switch:english>
+[english] The function calculates the total unclaimed credit and returns that value negated, representing a debt owed to the customer.
+[english] If I change how the code is structured so it doesn't negate the sum at the end, what would the returned value represent?
+[english] It would return the actual positive numerical amount of money available as credit in the system. The final negation (`0 - ret`) converts that positive balance into a negative number.
+[english] Thanks for the detailed breakdown.

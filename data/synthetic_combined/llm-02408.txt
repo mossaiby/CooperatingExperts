@@ -1,0 +1,19 @@
+[english] Write a script to check if 'SREGISTRY_CLIENT' is configured and print its status.
+[english] This function checks the backend configuration by first reading all client secrets. It then specifically looks for an active SREGISTRY_CLIENT, printing status or handling missing clients.
+<switch:python>
+[python] def status(backend):
+    '''print the status for all or one of the backends.
+    '''
+    print('[backend status]')
+    settings = read_client_secrets()
+    print('There are %s clients found in secrets.' %len(settings))
+    if 'SREGISTRY_CLIENT' in settings:
+        print('active: %s' %settings['SREGISTRY_CLIENT'])
+        update_secrets(settings)
+    else:
+        print('There is no active client.')
+<switch:english>
+[english] The `update_secrets` call modifies the underlying settings object in place, which is good to note when considering side effects of this function.
+[english] What happens if there are multiple backends, and should the logic support checking only one specific backend?
+[english] Currently, the function treats 'backend' as a placeholder and operates on global secrets; it doesn't distinguish between multiple backends. You would need to modify the signature to pass the list of active backends you want checked.
+[english] That makes sense.

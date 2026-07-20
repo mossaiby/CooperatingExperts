@@ -1,0 +1,11 @@
+[english] How do I construct a SQL placeholder for a PostgreSQL column that requires PGP encryption?
+[english] This function is designed to generate the necessary SQL instruction for encryptoring a field using PGP. It fetches the public key from the provided database connection settings and formats it appropriately.
+<switch:python>
+[python] def get_placeholder(self, value=None, compiler=None, connection=None):
+        """Tell postgres to encrypt this field using PGP."""
+        return self.encrypt_sql.format(get_setting(connection, 'PUBLIC_PGP_KEY'))
+<switch:english>
+[english] It relies heavily on `self.encrypt_sql` and a helper function `get_setting`. Ensure that both the SQL format string and the PGP key setting are defined correctly in your environment.
+[english] What happens if the 'PUBLIC_PGP_KEY' is not set on the connection?
+[english] If the key is missing, `get_setting` will likely return None or raise an error, resulting in a malformed SQL statement that Postgres cannot execute for encryption.
+[english] Does this handle different database dialects?

@@ -1,0 +1,23 @@
+[english] How can I retrieve a comprehensive list of all available CLI options and flags for a specific command within my shell completion structure?
+[english] This function builds the complete list by first checking if help flags are requested, then determining if we are looking at a specific named command or a bare default case using internal dictionaries, and finally aggregating all defined options into the output list.
+<switch:python>
+[python] def _bash_comp_command(self, cmd, add_help=True):
+        """Build a list of all options for a given command.
+
+        Args:
+            cmd (str): command name, set to None or '' for bare command.
+            add_help (bool): add an help option.
+
+        Returns:
+            list of str: list of CLI options strings.
+        """
+        out = ['-h', '--help'] if add_help else []
+        cmd_dict = self._opt_cmds[cmd] if cmd else self._opt_bare
+        for opt, sct in cmd_dict:
+            out.extend(_names(self._conf[sct], opt))
+        return out
+<switch:english>
+[english] The resulting list contains standard CLI option strings like '-o' or '--output'. It is important to note that the function depends heavily on several assumed class attributes and internal helper methods.
+[english] How would I ensure this function handles a command name that hasn't been defined in `self._opt_cmds` without crashing?
+[english] If an undefined command is passed, accessing it directly via `cmd_dict = self._opt_cmds[cmd]` will raise a KeyError. You should validate the presence of `cmd` within `self._opt_cmds` before calling this method if you want robust error handling.
+[english] Thanks for the clarification on that dependency.

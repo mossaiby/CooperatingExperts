@@ -1,0 +1,11 @@
+[english] How do I compute a new mean after applying a linear operator, while also accounting for an offset derived from a Gaussian distribution?
+[english] This function propagates an existing mean through a matrix multiplication and then incorporates an additional bias. It uses the linear operation to transform the input vector before adding the specified distributional mean.
+<switch:python>
+[python] def _propagate_mean(mean, linop, dist):
+  """Propagate a mean through linear Gaussian transformation."""
+  return linop.matmul(mean) + dist.mean()[..., tf.newaxis]
+<switch:english>
+[english] By utilizing `linop` and broadcasting logic, this method cleanly updates the central value of your distribution for a Gaussian transformation.
+[english] If I want to ignore the offset entirely because my noise has zero mean, what modifications would I need?
+[english] The current structure inherently handles a zero-mean case. If `dist.mean()` is zero, the addition becomes effectively null:
+[english] Perfect, this makes sense now.

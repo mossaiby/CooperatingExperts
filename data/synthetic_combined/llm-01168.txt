@@ -1,0 +1,27 @@
+[english] I need a way to convert input strings that use newline characters into properly formatted HTML breaks for display.
+[english] This function handles the conversion by first splitting the text at every newline character and sanitizing all carriage returns. It then loops through these parts, replacing newlines with escaped content and inserting a <br> tag between each section.
+<switch:python>
+[python] def format_multiline_html(text):
+    """
+    Turns a string like 'a\nb\nc' into 'a<br>b<br>c' and marks as Markup
+
+    Note: Will remove all \r characters from output (if present)
+    """
+    if text is None:
+        return None
+
+    if '\n' not in text:
+        return text.replace('\r', '')
+
+    parts = text.replace('\r', '').split('\n')
+    out = flask.Markup()
+    for part in parts:
+        if out:
+            out += flask.Markup('<br>')
+        out += flask.escape(part)
+    return out
+<switch:english>
+[english] The implementation uses Flask's `Markup` object to ensure that the generated HTML is treated as safe content by the application, but note its dependency on an imported 'flask' module.
+[english] What happens if the input string has multiple empty lines or leading/trailing newlines?
+[english] If there are consecutive newlines, this function will insert repeated '<br>' tags. For example, 'a\n\n' results in 'a<br><br>'.
+[english] That makes sense.

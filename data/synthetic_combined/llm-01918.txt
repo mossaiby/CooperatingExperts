@@ -1,0 +1,12 @@
+[english] How do I create a user interface function in Python that allows a user to visually select a specific directory on their system?
+[english] This function acts as a wrapper around a graphical dialog component. It accepts configuration details like a default path and a prompt message, then triggers the native folder picker.
+<switch:python>
+[python] def choose_directory(message='Choose a directory', path="", parent=None):
+    "Show a dialog to choose a directory"
+    result = dialogs.directoryDialog(parent, message, path)
+    return result.path
+<switch:english>
+[english] The implementation assumes that an external 'dialog' module has been initialized and is available in the scope of this code.
+[english] What value will `result.path` hold if the user closes the dialog without making a selection?
+[english] If the user cancels or dismisses the window, the path attribute returned by the dialog system usually returns an empty string or None to signify no valid directory was chosen.
+[english] Thanks for clarifying; I'll need to add proper error handling for that case.

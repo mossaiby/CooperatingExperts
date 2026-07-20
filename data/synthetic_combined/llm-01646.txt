@@ -1,0 +1,16 @@
+[english] How can I calculate the Shannon entropy for a series of distributions, ensuring they are independent if necessary?
+[english] This function calculates the Shannon entropy in nats using `sum` to aggregate individual distribution entropies. It first verifies independence by checking if any arguments exist in `self._dist_fn_args`. If dependencies are detected, it raises a ValueError before proceeding.
+<switch:python>
+[python] def _entropy(self):
+    """Shannon entropy in nats."""
+    if any(self._dist_fn_args):
+      raise ValueError(
+          'Can only compute entropy when all distributions are independent.')
+    return sum(joint_distribution_lib.maybe_check_wont_broadcast(
+        (d().entropy() for d in self._dist_fn_wrapped),
+        self.validate_args))
+<switch:english>
+[english] The method uses a generator expression within `joint_distribution_lib.maybe_check_wont_broadcast` to efficiently compute and sum the entropy of wrapped distributions while validating arguments.
+[english] What happens if one of the distribution calls inside `self._dist_fn_wrapped` fails or returns None?
+[english] If a call within `d().entropy()` raises an exception, it will immediately stop execution. The structure also suggests that failure to receive a valid value from the generator might lead to errors during the summation process.
+[english] That clarification is very helpful.

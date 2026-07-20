@@ -1,0 +1,24 @@
+[english] How can I implement a method to safely transition all internal cluster nodes to a specific new code version?
+[english] This method ensures that any requested version change is valid before attempting deployment. It validates the input type and verifies that the proposed version respects current limits.
+<switch:python>
+[python] def setCodeVersion(self, newVersion, callback = None):
+        """Switch to a new code version on all cluster nodes. You
+        should ensure that cluster nodes are updated, otherwise they
+        won't be able to apply commands.
+
+        :param newVersion: new code version
+        :type int
+        :param callback: will be called on cussess or fail
+        :type callback: function(`FAIL_REASON <#pysyncobj.FAIL_REASON>`_, None)
+        """
+        assert isinstance(newVersion, int)
+        if newVersion > self.__selfCodeVersion:
+            raise Exception('wrong version, current version is %d, requested version is %d' % (self.__selfCodeVersion, newVersion))
+        if newVersion < self.__enabledCodeVersion:
+            raise Exception('wrong version, enabled version is %d, requested version is %d' % (self.__enabledCodeVersion, newVersion))
+        self._applyCommand(pickle.dumps(newVersion), callback, _COMMAND_TYPE.VERSION)
+<switch:english>
+[english] If validation passes, the function uses `pickle.dumps` to serialize the version and pushes the command asynchronously via an internal method.
+[english] What happens if I pass a newVersion smaller than self.__enabledCodeVersion?
+[english] The code immediately raises an Exception indicating that the requested version is too low relative to the currently enabled version, preventing potentially unsafe downgrades.
+[english] Thanks for clarifying how the logic handles version safety!

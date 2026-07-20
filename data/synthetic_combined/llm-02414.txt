@@ -1,0 +1,18 @@
+[english] How do I get my current Python application to use a quick, built-in web server so I can test it locally?
+[english] To start up an application that follows the WSGI standard, we use `wsgiref` from the standard library. This function uses the configured host and port to initialize and continuously serve requests.
+<switch:python>
+[python] def run(self, host='127.0.0.1', port=8080):
+        """Run the application using a simple WSGI server.
+
+        Arguments:
+          host (str, optional): Host on which to listen.
+          port (int, optional): Port number on which to listen.
+        """
+        from wsgiref import simple_server
+        self._server = simple_server.make_server(host, port, self)
+        self._server.serve_forever()
+<switch:english>
+[english] This server is perfect for simple testing or prototyping since it requires no external dependencies, although it's not suitable for production traffic due to performance limits.
+[english] If I wanted this server to be accessible only from my local network instead of just localhost, which arguments would I need to change and why?
+[english] You would modify the `host` argument. Setting `host='0.0.0.0'` tells the server to listen on all available network interfaces, making it accessible across your LAN.
+[english] Does this mean there's a recommended way to handle error logging when the host is unavailable or port already in use?

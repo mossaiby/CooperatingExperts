@@ -1,0 +1,28 @@
+[english] How can I transform sequence files stored in HDFS into an ImageFrame using Spark?
+[english] This function acts as a wrapper to invoke another Big Data Library function, `callBigDlFunc`. It prepares and passes several key parameters like the URL of the data path and Spark context.
+<switch:python>
+[python] def files_to_image_frame(cls,
+                             url,
+                             sc,
+                             class_num,
+                             partition_num=-1,
+                             bigdl_type="float"):
+        """
+        Extract hadoop sequence files from an HDFS path as ImageFrame
+        :param url: sequence files folder path
+        :param sc: spark context
+        :param class_num: class number of data
+        :param partition_num: partition number, default: Engine.nodeNumber() * Engine.coreNumber()
+        """
+        jvalue = callBigDlFunc(bigdl_type,
+                               "seqFilesToImageFrame",
+                               url,
+                               sc,
+                               class_num,
+                               partition_num)
+        return ImageFrame(jvalue=jvalue)
+<switch:english>
+[english] The primary role here is delegating the complex file parsing logic to an external framework while ensuring the result is packaged correctly into a standard ImageFrame object.
+[english] What happens if I don't provide a partition number, though what does it default to?
+[english] If `partition_num` is not supplied, it defaults to calculating the product of `Engine.nodeNumber()` and `Engine.coreNumber()`, which typically dictates how processing tasks are distributed.
+[english] That clarifies the parameter handling, thank you!

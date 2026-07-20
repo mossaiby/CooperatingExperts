@@ -1,0 +1,22 @@
+[english] How can I implement a function to asynchronously send a message to a user via an API endpoint while handling optional parameters?
+[english] To handle sending messages correctly, we first construct the target API URL. We then dynamically build a dictionary of arguments by checking if `to` or `msg` were provided before finally executing the query.
+<switch:python>
+[python] def send_message(self, to=None, msg=None):
+        """ method to send a message to a user
+
+            Parameters:
+                to -> recipient
+                msg -> message to send
+        """
+        url = self.root_url + "send_message"
+        values = {}
+        if to is not None:
+            values["to"] = to
+        if msg is not None:
+            values["msg"] = msg
+        return self._query(url, values)
+<switch:english>
+[english] This method relies on the private `self._query` dependency to perform the actual HTTP request, ensuring that only parameters with values are included in the payload.
+[english] What happens when I call this function without providing either the `to` or the `msg`?
+[english] If both arguments are omitted (i.e., they remain None), the `values` dictionary will be empty and the function will attempt to execute a query with no parameters sent.
+[english] That clarifies how the parameter validation works, thanks!

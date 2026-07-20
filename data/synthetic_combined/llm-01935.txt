@@ -1,0 +1,13 @@
+[english] Given two lists of tree nodes, find all nodes in the second list whose parent belongs to any set of parents found within the first list.
+[english] We start by gathering all parent references from every node in `lhs`. Then we use a list comprehension to filter `rhs`, keeping only those nodes whose individual parent appears in our collected group of `parents`.
+<switch:python>
+[python] def siblings(self, lhs, rhs):
+        """Find nodes in rhs having common parents in lhs."""
+        parents = [node.parent for node in lhs]
+
+        return [node for node in rhs if node.parent in parents]
+<switch:english>
+[english] This method is straightforward for finding shared lineage, but since it uses a list for parents rather than a set, the time complexity might be slightly higher if `lhs` is very large.
+[english] What if the parent relationship in the node structure can be null or missing?
+[english] If a node's parent attribute is None, it will be included in both lists (if present) and will correctly fail to match unless another node in `lhs` also has None as its parent.
+[english] Good point regarding potential edge cases!

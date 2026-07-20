@@ -1,0 +1,25 @@
+[english] I need a function that can fetch data from a given URL and structure the returned content as a list of individual lines.
+[english] The approach involves using an external utility to retrieve the raw data from the URL. Once the data is acquired, we use Python's split method on newline characters to organize the content into a list.
+<switch:python>
+[python] def fetch_resource(url):
+    """Fetch a resource and return the resulting lines in a list
+    Send file_name to get more clean log messages
+    
+    Args:
+        url(str)
+    
+    Returns:
+        lines(list(str))
+    """
+    try:
+        data = get_request(url)
+        lines = data.split('\n')
+    except Exception as err:
+        raise err
+    
+    return lines
+<switch:english>
+[english] This function successfully converts the raw response into structured data, but it relies entirely on the `get_request` method for network functionality.
+[english] What will happen if the URL returns an empty string or null content?
+[english] If the input is an empty string (`''`), splitting by newline still produces a list containing one empty string: `['']`. To avoid this, you could check if data is truthy before processing.
+[english] That helps clarify how it handles edge cases.

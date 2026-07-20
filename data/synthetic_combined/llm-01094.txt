@@ -1,0 +1,25 @@
+[english] How do I securely validate a refresh token and ensure it belongs to the correct client before proceeding with an OAuth request?
+[english] This function serves as the core validation routine. It first attempts to retrieve all metadata associated with the provided token, then rigorously checks that the identified client ID matches the expected one.
+<switch:python>
+[python] def validate_refresh_token(self, refresh_token, client, request,
+                               *args, **kwargs):
+        """Ensure the token is valid and belongs to the client
+
+        This method is used by the authorization code grant indirectly by
+        issuing refresh tokens, resource owner password credentials grant
+        (also indirectly) and the refresh token grant.
+        """
+
+        token = self._tokengetter(refresh_token=refresh_token)
+
+        if token and token.client_id == client.client_id:
+            # Make sure the request object contains user and client_id
+            request.client_id = token.client_id
+            request.user = token.user
+            return True
+        return False
+<switch:english>
+[english] If validation succeeds, the function securely injectS the verified user and client identities into the request object for later use in authorization.
+[english] What does the function specifically do if the refresh token is valid but issued to a different client ID?
+[english] The code checks `token.client_id == client.client_id`. If they don't match, the condition fails and the function returns False, preventing unauthorized access.
+[english] Got it; that makes sense for security.

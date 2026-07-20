@@ -1,0 +1,27 @@
+[english] I need to write a function that serializes a Certificate object into a stream using the KMIP 1.0 protocol.
+[english] The strategy here is to first gather all internal components of the certificate (type and value) into a temporary buffer called `tstream`. This ensures the data structure is complete before it's committed to the final output stream (`ostream`).
+<switch:python>
+[python] def write(self, ostream, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the Certificate object to a stream.
+
+        Args:
+            ostream (Stream): A data stream in which to encode object data,
+                supporting a write method; usually a BytearrayStream object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        tstream = BytearrayStream()
+
+        self.certificate_type.write(tstream, kmip_version=kmip_version)
+        self.certificate_value.write(tstream, kmip_version=kmip_version)
+
+        self.length = tstream.length()
+        super(Certificate, self).write(ostream, kmip_version=kmip_version)
+        ostream.write(tstream.buffer)
+<switch:english>
+[english] The function calculates the total payload length and then uses a superclass method to write this metadata before writing the actual serialized data buffer.
+[english] If certificate_value were None, would it break the serialization process?
+[english] Since `self.certificate_value` is expected to be an object with a `.write()` method, passing it directly when null could raise an AttributeError or TypeError depending on implementation.
+[english] That makes sense; thanks for the clarification!

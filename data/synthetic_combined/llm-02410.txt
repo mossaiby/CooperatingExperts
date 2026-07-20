@@ -1,0 +1,26 @@
+[english] How do I start and initialize an asynchronous job management master server?
+[english] This function sets up a new HighFive master by leveraging Python's asyncio library for non-blocking network operations.
+<switch:python>
+[python] async def start_master(host="", port=48484, *, loop=None):
+    """
+    Starts a new HighFive master at the given host and port, and returns it.
+    """
+
+    loop = loop if loop is not None else asyncio.get_event_loop()
+
+    manager = jobs.JobManager(loop=loop)
+    workers = set()
+    server = await loop.create_server(
+            lambda: WorkerProtocol(manager, workers), host, port)
+    return Master(server, manager, workers, loop=loop)
+<switch:english>
+[english] The function constructs a centralized master object that holds the server instance and the job manager lifecycle.
+[english] What happens if one of the workers fails after being created by this master?
+[english] Current implementation doesn't handle worker failures; you would need to add error handling or monitoring logic around `WorkerProtocol` instantiation to detect and restart failed workers.
+<switch:python>
+[python] # Example check:
+if not self.is_worker_healthy():
+    print("Restarting failing worker")
+    workers.remove(self)
+<switch:english>
+[english] Got it, so internal logic needs modification for resiliency.

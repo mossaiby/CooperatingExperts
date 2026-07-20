@@ -1,0 +1,22 @@
+[english] How can I create a reusable connection session for an API client that needs to dynamically determine its base URL and apply custom headers?
+[english] This function establishes an HTTP connection by first retrieving connection details from the class instance, then sets the base URL, and finally configures a new `requests.Session` object optimized with any provided headers.
+<switch:python>
+[python] def get_conn(self, headers=None):
+        """
+        Overwrite HttpHook get_conn because this hook just needs base_url
+        and headers, and does not need generic params
+
+        :param headers: additional headers to be passed through as a dictionary
+        :type headers: dict
+        """
+        conn = self.get_connection(self.http_conn_id)
+        self.base_url = conn.host if conn.host else 'https://api.opsgenie.com'
+        session = requests.Session()
+        if headers:
+            session.headers.update(headers)
+        return session
+<switch:english>
+[english] The function is flexible, allowing it to fall back to a default API URL if the connection host isn't explicitly set during initialization.
+[english] If `self.http_conn_id` fails or returns an unusable object, how does this method behave?
+[english] Currently, if `get_connection` fails, the code might raise an exception before reaching the default URL logic since it relies on `conn.host`. A safer implementation would include a try-except block around the connection retrieval.
+[english] This makes perfect sense for handling connection initialization!

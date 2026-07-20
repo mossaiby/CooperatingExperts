@@ -1,0 +1,26 @@
+[english] How can I check if any specific name provided in a target list appears anywhere within a collection of other text segments?
+[english] This function systematically checks every requested mention against all available chain mentions using nested loops, returning True as soon as it finds the first match.
+<switch:python>
+[python] def ANY_mentions(target_mentions, chain_mentions):
+    '''
+    For each name string in the target_mentions list, searches through
+    all chain_mentions looking for any cleansed Token.token that
+    contains the name.  Returns True if any of the target_mention
+    strings appeared as substrings of any cleansed Token.token.
+    Otherwise, returns False.
+
+    :type target_mentions: list of basestring
+    :type chain_mentions: list of basestring
+
+    :returns bool:
+    '''
+    for name in target_mentions:
+        for chain_ment in chain_mentions:
+            if name in chain_ment:
+                return True
+    return False
+<switch:english>
+[english] This approach is optimized to short-circuit; if any mention is found early in the lists, the function immediately returns True without checking further elements.
+[english] Is this search case-sensitive, and would it correctly handle an empty list of target names?
+[english] The internal string comparison is case-sensitive. If `target_mentions` is an empty list, the outer loop never runs, so the function correctly returns False.
+[english] Perfect, that clarifies how it handles edge cases.

@@ -1,0 +1,20 @@
+[english] How do I programmatically update an existing data stream within my IoT device management system?
+[english] This method leverages a common pattern to handle resource updates. It delegates the heavy lifting of making the API call and handling parameters to a dedicated helper method.
+<switch:python>
+[python] def update_stream(self, name, **params):
+        """ Method for `Create/Update Data Stream <https://m2x.att.com/developer/documentation/v2/device#Create-Update-Data-Stream>`_ endpoint.
+
+        :param name: Name of the stream to be updated
+        :param params: Query parameters passed as keyword arguments. View M2X API Docs for listing of available parameters.
+
+        :return: The Stream being updated
+        :rtype: Stream
+
+        :raises: :class:`~requests.exceptions.HTTPError` if an error occurs when sending the HTTP request
+        """
+        return Stream.item_update(self.api, self, name, **params)
+<switch:english>
+[english] The function safely passes all incoming keyword arguments directly to the internal update logic, ensuring full flexibility during stream modification and returning the updated object for confirmation.
+[english] What happens if I try to update a stream name that doesn't exist in the system?
+[english] If the stream does not exist, `Stream.item_update` will likely throw an HTTP error (as documented), preventing further execution unless caught by the caller.
+[english] Understood! Thanks for clarifying how status errors are handled.

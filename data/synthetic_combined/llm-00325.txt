@@ -1,0 +1,55 @@
+[english] Given a compiled Python lambda function object, how can I extract its original definition from a large source code string?
+[english] The function uses the `tokenize` module to iteratively search through the provided source string for potential lambda patterns. It extracts and validates these candidates by comparing their bytecode against the target function's fingerprint.
+<switch:python>
+[python] def _get_lambda_source_code(lambda_fn, src):
+    """Attempt to find the source code of the ``lambda_fn`` within the string ``src``."""
+    def gen_lambdas():
+        def gen():
+            yield src + "\n"
+
+        g = gen()
+        step = 0
+        tokens = []
+        for tok in tokenize.generate_tokens(getattr(g, "next", getattr(g, "__next__", None))):
+            if step == 0:
+                if tok[0] == tokenize.NAME and tok[1] == "lambda":
+                    step = 1
+                    tokens = [tok]
+                    level = 0
+            elif step == 1:
+                if tok[0] == tokenize.NAME:
+                    tokens.append(tok)
+                    step = 2
+                else:
+                    step = 0
+            elif step == 2:
+                if tok[0] == tokenize.OP and tok[1] == ":":
+                    tokens.append(tok)
+                    step = 3
+                else:
+                    step = 0
+            elif step == 3:
+                if level == 0 and (tok[0] == tokenize.OP and tok[1] in ",)" or tok[0] == tokenize.ENDMARKER):
+                    yield tokenize.untokenize(tokens).strip()
+                    step = 0
+                else:
+                    tokens.append(tok)
+                    if tok[0] == tokenize.OP:
+                        if tok[1] in "[({": level += 1
+                        if tok[1] in "])}": level -= 1
+        assert not tokens
+
+    actual_code = lambda_fn.__code__.co_code
+    for lambda_src in gen_lambdas():
+        try:
+            fn = eval(lambda_src, globals(), locals())
+            if fn.__code__.co_code == actual_code:
+                return lambda_src.split(":", 1)[1].strip()
+        except Exception:
+            pass
+    return "<lambda>"
+<switch:english>
+[english] Because it relies on matching exact compiled bytecode, this technique is highly specific and might not work if minor syntax differences change how Python compiles the expression.
+[english] What happens if the input string contains multiple valid lambda expressions that match the target?
+[english] The function returns the first lambda source code found within `src` whose evaluated version produces matching bytecode. Since it uses a generator, subsequent matches are not checked.
+[english] I appreciate the detailed breakdown of how this functionality works.

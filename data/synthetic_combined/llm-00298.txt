@@ -1,0 +1,19 @@
+[english] How can I programmatically delete a specific event type using its unique ID?
+[english] This function handles the removal of an event type by constructing a specific API endpoint URL and sending an HTTP DELETE request.
+<switch:python>
+[python] def deleteEventType(self, eventTypeId):
+        """
+        Deletes an event type.  Parameters: eventTypeId (string). Throws APIException on failure.
+        """
+        req = ApiClient.oneEventTypeUrl % (self.host, "/draft", eventTypeId)
+        resp = requests.delete(req, auth=self.credentials, verify=self.verify)
+        if resp.status_code == 204:
+            self.logger.debug("event type deleted")
+        else:
+            raise ibmiotf.APIException(resp.status_code, "HTTP error deleting an event type", resp)
+        return resp
+<switch:english>
+[english] Note that if the deletion is successful, it returns a 204 status and logs the action; otherwise, it raises an APIException.
+[english] What specific HTTP error code would I get if the `eventTypeId` was invalid or already deleted?
+[english] If the ID is not found on the server side, the API typically returns a 404 status code, which this function captures and raises as an `APIException`.
+[english] Thanks for clarifying how error handling works here!

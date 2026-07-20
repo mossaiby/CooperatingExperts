@@ -1,0 +1,25 @@
+[english] How can I gracefully shut down and close the resources of an external process managed by my class?
+[english] This method is designed for clean resource management after a task finishes. It attempts to gracefully terminate the underlying subprocess and ensures all associated standard streams are closed.
+<switch:python>
+[python] def close(self):
+        """
+        Terminate the newly created process
+        """
+        try:
+            self.process.terminate()
+            self.return_code = self.process.returncode
+        except OSError:
+            pass
+        self.process.stdin.close()
+        self.process.stdout.close()
+        self.process.stderr.close()
+        self.logger.debug("[{0}] - PJFExecutor successfully completed".format(time.strftime("%H:%M:%S")))
+<switch:english>
+[english] The function prioritizes cleanup, closing I/O pipes regardless of whether the process termination itself was successful or failed due to an OS error.
+[english] What happens if `self.process` hasn't been initialized yet when this close method is called?
+[english] If `self.process` is None, calling `.terminate()` will raise an AttributeError. You should add a check like the following:
+<switch:python>
+[python] if not hasattr(self, 'process') or self.process is None:
+    return
+<switch:english>
+[english] That makes sense; initializing checks are important for robust cleanup.

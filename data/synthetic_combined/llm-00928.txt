@@ -1,0 +1,52 @@
+[english] How do I programmatically create a new access request in our system, ensuring all required details are present?
+[english] This function handles the creation of new access requests while enforcing input validation. It checks for mandatory fields and then determines whether to set the initial status to 'PENDING' or require an email verification step.
+<switch:python>
+[python] def create(cls, recid=None, receiver=None, sender_full_name=None,
+               sender_email=None, justification=None, sender=None):
+        """Create a new access request.
+
+        :param recid: Record id (required).
+        :param receiver: User object of receiver (required).
+        :param sender_full_name: Full name of sender (required).
+        :param sender_email: Email address of sender (required).
+        :param justification: Justification message (required).
+        :param sender: User object of sender (optional).
+        """
+        sender_user_id = None if sender is None else sender.id
+
+        assert recid
+        assert receiver
+        assert sender_full_name
+        assert sender_email
+        assert justification
+
+        # Determine status
+        status = RequestStatus.EMAIL_VALIDATION
+        if sender and sender.confirmed_at:
+            status = RequestStatus.PENDING
+
+        with db.session.begin_nested():
+            # Create object
+            obj = cls(
+                status=status,
+                recid=recid,
+                receiver_user_id=receiver.id,
+                sender_user_id=sender_user_id,
+                sender_full_name=sender_full_name,
+                sender_email=sender_email,
+                justification=justification
+            )
+
+            db.session.add(obj)
+
+        # Send signal
+        if obj.status == RequestStatus.EMAIL_VALIDATION:
+            request_created.send(obj)
+        else:
+            request_confirmed.send(obj)
+        return obj
+<switch:english>
+[english] The implementation uses `db.session.begin_nested()` to create the object within a transaction block, ensuring data integrity before dispatching confirmation signals.
+[english] What happens internally if I provide a sender user object but their 'confirmed_at' attribute is still null?
+[english] If the `sender` user exists but lacks a confirmed timestamp (`sender.confirmed_at`), the function will default to setting the status to `RequestStatus.EMAIL_VALIDATION`, requiring external confirmation.
+[english] Great, so I know exactly when an email validation signal should be sent.

@@ -1,0 +1,20 @@
+[english] I need to standardize how my library displays its full name, combining the project name and version number into a single string.
+[english] This function constructs the distribution's unique identifier by safely retrieving and formatting both the base name and the current version before joining them with an underscore. It relies on helper functions to sanitize any problematic characters in the metadata provided by the object.
+<switch:python>
+[python] def wheel_dist_name(self):
+        """Return distribution full name with - replaced with _"""
+        return '-'.join((safer_name(self.distribution.get_name()),
+                         safer_version(self.distribution.get_version())))
+<switch:english>
+[english] The use of `safer_name` and `safer_version` is a good way to prevent invalid characters, like slashes or colons, from appearing in the resulting identifier across different package ecosystems.
+[english] What happens if `self.distribution.get_name()` returns an empty string?
+[english] If the project name is missing, it will be treated as an empty string during the join operation, so you would receive just the sanitized version number instead.
+<switch:python>
+[python] def wheel_dist_name(self):
+        """Return distribution full name with - replaced with _"""
+        components = (safer_name(self.distribution.get_name()), 
+                       safer_version(self.distribution.get_version())) 
+        # Filter out empty strings before joining to avoid excessive hyphens
+        return '-'.join([comp for comp in components if comp]) # Returns only version if name is empty
+<switch:english>
+[english] That makes much more sense!

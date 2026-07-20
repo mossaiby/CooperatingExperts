@@ -1,0 +1,22 @@
+[english] How can I create a mechanism to send users a confirmation message, indicating whether an operation was successful or failed?
+[english] This method handles sending status updates via a configured service. It ensures the input message is cleaned and only proceeds if a confirmation handler has been set up.
+<switch:python>
+[python] def send_confirmation(self, message, success=True):
+        """Send success or error message to configured confirmation
+
+        :param str message: Body message to send
+        :param bool success: Device executed successfully to personalize message
+        :return: None
+        """
+        message = message.strip()
+        if not self.confirmation:
+            return
+        try:
+            self.confirmation.send(message, success)
+        except Exception as e:
+            logger.warning('Error sending confirmation on device {}: {}'.format(self.name, e))
+<switch:english>
+[english] The function includes basic error handling using a logger to prevent crashes if sending fails, but it does not retry the operation.
+[english] What happens if the `self.confirmation` service object provided doesn't have an explicit `.send()` method?
+[english] If the service lacks a `.send()` method, accessing it will raise an AttributeError, which is caught by the generic `except Exception as e:` block and logged instead.
+[english] Thanks for clarifying how errors are managed here.

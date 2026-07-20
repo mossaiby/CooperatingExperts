@@ -1,0 +1,14 @@
+[english] I need a helper method to cleanly retrieve a specific configuration value from my internal options dictionary.
+[english] This function is designed as a simple utility wrapper. It retrieves the setting corresponding to the given option name from `self.cfg` and records it using debug logging before returning the result.
+<switch:python>
+[python] def get_option(self, option, param2=None):
+        ''' get_option wrapper'''
+        result = self.cfg[option]
+        self.log.debug(
+            "Option %s = %s", option, result)
+        return result
+<switch:english>
+[english] It provides straightforward access to configuration values, but since it uses direct dictionary indexing, accessing an unknown key will immediately raise a KeyError.
+[english] What happens when a developer passes an option that has not been defined in `self.cfg`?
+[english] If the option is missing from `self.cfg`, the function will raise a `KeyError`. To prevent this, you should use the `.get()` method instead of direct indexing.
+[english] Using `.get()` seems like a safer way to handle missing configurations.

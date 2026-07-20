@@ -1,0 +1,20 @@
+[english] I need a way to find suggestions or fuzzy matches for a given search word by checking their occurrence in an existing index.
+[english] This function starts by robustly preprocessing the input before generating various token neighbors. It then calculates how often each neighbor appears in the database and sorts them so the most frequent matches are considered first.
+<switch:python>
+[python] def do_fuzzyindex(self, word):
+    """Compute fuzzy extensions of word that exist in index.
+    FUZZYINDEX lilas"""
+    word = list(preprocess_query(word))[0]
+    token = Token(word)
+    neighbors = make_fuzzy(token)
+    neighbors = [(n, DB.zcard(dbkeys.token_key(n))) for n in neighbors]
+    neighbors.sort(key=lambda n: n[1], reverse=True)
+    for token, freq in neighbors:
+        if freq == 0:
+            break
+        print(white(token), blue(freq))
+<switch:english>
+[english] The logic ensures that only relevant, non-zero frequency tokens are printed, providing a ranked list of fuzzy matches for the user.
+[english] How is 'fuzziness' determined when `make_fuzzy` generates the neighbors?
+[english] In this implementation, fuzziness is controlled externally by the `make_fuzzy` function. It likely uses algorithms like Levenshtein distance to generate variations around the original token.
+[english] Got it, thanks for explaining how that ranking works!

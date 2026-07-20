@@ -1,0 +1,38 @@
+[english] I have a large raw text document containing various formats like markdown or HTML, and I need to extract it into clean sentences without any markup or non-textual elements.
+[english] This function processes messy input by stripping common elements before tokenizing it into clean sentence chunks. It systematically applies several helper functions to remove things like tables, Wikipedia links, and HTML tags throughout the text.
+<switch:python>
+[python] def to_raw_text_pairings(text, keep_whitespace=False, normalize_ascii=True):
+    """
+    A generator to convert raw text segments, with xml, and other
+    non-textual content to a list of words without any markup.
+    Additionally dates are replaced by `7777` for normalization,
+    along with wikipedia anchors kept.
+
+    Arguments
+    ---------
+       text: str, input text to tokenize, strip of markup.
+       keep_whitespace : bool, should the output retain the
+          whitespace of the input (so that char offsets in the
+          output correspond to those in the input).
+
+    Returns
+    -------
+        generator<list<list<str>>>, a generator for sentences, with
+            within each sentence a list of the words separated.
+    """
+    out = text
+    out = _remove_mvar(out)
+    out = _remove_squiggly_bracket(out)
+    out = _remove_table(out)
+    out = remove_markup(out)
+    out = remove_wikipedia_link.sub(anchor_replacer, out)
+    out = remove_bullets_nbsps.sub(empty_space, out)
+    out = remove_math_sections(out)
+    out = remove_html(out)
+    for sentence in sent_tokenize(out, keep_whitespace, normalize_ascii):
+        yield sentence
+<switch:english>
+[english] The function uses a generator pattern to yield sentences one by one rather than returning a single large list. Note that it relies on several external functions (like `remove_markup` and `sent_tokenize`) which handle the specific cleaning steps.
+[english] What happens if the input text contains accented characters like 'é' and I want them removed completely?
+[english] If you set `normalize_ascii` to True when calling this function, it will attempt to convert non-ASCII characters (like 'é') into basic ASCII equivalents before tokenization.
+[english] That clarifies how the normalization works.

@@ -1,0 +1,31 @@
+[english] How can I process all available data items from a source, transforming them into structured model instances?
+[english] This method acts as a complete parser lifecycle by first ensuring the source is loaded and then iterating through every available item.
+<switch:python>
+[python] def parse(self):
+        """
+        Parses all data from the source, saving model instances.
+        """
+        # Checks if the source is loaded
+        if not self.loaded:
+            self.load(self.source)
+        
+        for item in self.get_items():
+            # Parse the fields from the source into a dict
+            data = self.parse_item(item)
+            # Get the instance from the DB, or a new one
+            instance = self.get_instance(data)
+            # Feed instance with data
+            self.feed_instance(data, instance)
+            # Try to save the instance or keep the error
+            try:
+                self.save_item(item, data, instance)
+            except Exception as e:
+                self.save_error(data, sys.exc_info())
+
+        # Unload the source
+        self.unload()
+<switch:english>
+[english] The use of a try-except block around save_item ensures that even if individual records fail to save, the overall parsing process continues without halting.
+[english] What happens if get_instance returns None or throws an error for a given data packet?
+[english] If `get_instance` fails unexpectedly, you might want to wrap it in its own try-except block before trying to call feed_instance.
+[english] That makes the process much more robust.

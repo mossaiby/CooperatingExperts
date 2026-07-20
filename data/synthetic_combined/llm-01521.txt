@@ -1,0 +1,31 @@
+[english] How can I reliably standardize and report incoming message status updates within my messaging integration?
+[english] This private method standardizes an incoming status object by assigning a provider name to it. It then broadcasts this standardized information through the system's event hook.
+<switch:python>
+[python] def _receive_status(self, status):
+        """ Incoming status callback
+
+            Calls Gateway.onStatus event hook
+
+            Providers are required to:
+            * Cast phone numbers to digits-only
+            * Use proper MessageStatus subclasses
+            * Populate `status.msgid` and `status.meta` fields
+            * If this method fails with an exception, the provider is required to respond with an error to the service
+
+            :type status: MessageStatus
+            :param status: The received status
+            :rtype: MessageStatus
+        """
+        # Populate fields
+        status.provider = self.name
+
+        # Fire the event hook
+        self.gateway.onStatus(status)
+
+        # Finish
+        return status
+<switch:english>
+[english] Essentially, this function acts as a mandatory wrapper that ensures all external statuses are mapped and relayed internally before returning them.
+[english] Does the method handle errors if self.gateway is None or if onStatus fails?
+[english] It relies on proper structure; unhandled exceptions here require the provider to respond with an error, as dictated by the docstring requirements.
+[english] Got it, I understand its role in the lifecycle.

@@ -1,0 +1,48 @@
+[english] I need to write a function that finds the cytoband coordinate for a given genomic position on a specified chromosome.
+[english] This function checks if the provided chromosome is listed as having defined cytobands, then iterates through all intervals found at the specific position.
+<switch:python>
+[python] def get_cytoband_coordinates(chrom, pos):
+    """
+    Get the cytoband coordinate for a position
+
+    Args:
+        chrom(str)
+        pos(int)
+
+    Returns:
+        coordinate(str)
+    """
+    coordinate = ""
+
+    if chrom in CYTOBANDS:
+        for interval in CYTOBANDS[chrom][pos]:
+            coordinate = interval.data
+
+    return coordinate
+[python] def get_cytoband_coordinates(chrom, pos):
+    """Get the cytoband coordinate for a position
+
+    Args:
+        chrom(str)
+        pos(int)
+
+    Returns:
+        coordinate(str)
+    """
+    coordinate = ""
+
+    if chrom in CYTOBANDS:
+        for interval in CYTOBANDS[chrom][pos]:
+            coordinate = interval.data
+
+    return coordinate
+<switch:english>
+[english] The function assumes a global dictionary `CYTOBANDS` exists and populates the result by iterating over intervals found at that position. This means it only returns the data from the last (or only) interval processed.
+[english] What would happen if multiple cytobands overlap at the same position?
+[english] Currently, the function will overwrite the `coordinate` variable with each subsequent interval in the loop.
+<switch:python>
+[python] def get_cytoband_coordinates(chrom, pos):
+    # Return a list of all overlapping coordinates instead of the last one
+    return [interval.data for interval in CYTOBANDS[chrom][pos]] if chrom in CYTOBANDS and pos in CYTOBANDS[chrom] else []
+<switch:english>
+[english] Thanks for clarifying how that logic works!

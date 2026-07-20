@@ -1,0 +1,14 @@
+[english] How can I ensure that both inherited world rendering logic and my specific batch of 3D objects are displayed in sequence?
+[english] In this method, we first call the parent's render function using `super()` to handle general scene drawing. Then, we explicitly invoke a draw command on the custom object batch.
+<switch:python>
+[python] def render3d(self,view=None):
+        """
+        Renders the world.
+        """
+        super(StaticWorld,self).render3d(view)
+        self.batch3d.draw()
+<switch:english>
+[english] By calling both super and batch3d.draw(), you ensure a layered rendering process where inherited objects are drawn before your static geometry batch is rendered.
+[english] If `self.batch3d` failed to initialize, would this call cause an error?
+[english] Yes, calling it without checking initialization can raise an AttributeError or similar exception. You should ideally add a check like: if self.batch3d: self.batch3d.draw()
+[english] That makes sense for robust implementation.

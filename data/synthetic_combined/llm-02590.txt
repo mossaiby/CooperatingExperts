@@ -1,0 +1,24 @@
+[english] How can I safely update a progress tracker, adding some units worked while ensuring it never exceeds the total goal?
+[english] This function first validates that tracking has been initialized using `self.total` before proceeding. If setup is complete, the core logic increments `self.worked` by `units`, but uses `min()` to guarantee it doesn't overshoot `self.total`.
+<switch:python>
+[python] def update(self, units: int=1, message: str=None):
+        """Increment the monitor with N units worked and an optional message"""
+        if self.total is None:
+            raise Exception("Cannot call progressmonitor.update before calling begin")
+        self.worked = min(self.total, self.worked+units)
+        if message:
+            self.message = message
+        for listener in self.listeners:
+            listener(self)
+<switch:english>
+[english] The method adds an optional message and then iterates through all registered listeners in `self.listeners` to notify them of the progress update.
+[english] If a user passes a negative value for units, how is that handled?
+[english] By default, the use of `min(self.total, self.worked+units)` allows the tracker to decrement past its total if units are negative:
+<switch:python>
+[python] def update(self, units: int=1, message: str=None):
+        if self.total is None:
+            raise Exception("Cannot call progressmonitor.update before calling begin") 
+        self.worked = min(self.total, self.worked+units)
+        # ... rest of function
+<switch:english>
+[english] That makes the bounds clearer; thank you.

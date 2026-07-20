@@ -1,0 +1,15 @@
+[english] I need a way to output specific fields from my stored dataset while specifying which ones are date types.
+[english] This function sets up the data printing process. It takes field names and uses `datemap` to flag any essential date fields before passing everything along to the cursor handler.
+<switch:python>
+[python] def output(self, fieldNames=None, datemap=None, time_format=None):
+        '''
+        Output all fields using the fieldNames list. for fields in the list datemap indicates the field must
+        be date
+        '''
+
+        count = self.printCursor(self._cursor, fieldNames, datemap, time_format)
+<switch:english>
+[english] The method delegates all heavy lifting to `self.printCursor`, ensuring that only configured fields are processed and returned as a count.
+[english] Does this function process all data if fieldNames is left at its default of None?
+[english] If `fieldNames` is not provided, the underlying implementation of `printCursor` likely processes all available fields. However, checking the class documentation for the internal logic of `self.printCursor` would confirm that behavior.
+[english] Got it, thanks for clearing that up.

@@ -1,0 +1,27 @@
+[english] How do I set up a command-line tool that requires users to provide an RSS feed URL?
+[english] This helper function initializes and configures an argument parser tailored for backend commands, specifically requiring one mandatory positional argument.
+<switch:python>
+[python] def setup_cmd_parser(cls):
+        """Returns the RSS argument parser."""
+
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              archive=True)
+
+        # Required arguments
+        parser.parser.add_argument('url',
+                                   help="URL of the RSS feed")
+
+        return parser
+<switch:english>
+[english] The setup dictates that any instance using this must supply a 'url' argument when running commands.
+[english] What if I wanted the URL to be an optional argument instead?
+[english] To make it optional, change how you add the argument and set a default value:
+<switch:python>
+[python] def setup_cmd_parser(cls):
+        # ... initialization code for parser ...
+        parser.parser.add_argument('url', 
+                                   default=None,
+                                   help="URL of the RSS feed (optional)")
+        return parser
+<switch:english>
+[english] Got it, thanks for clarifying how to handle optional inputs.

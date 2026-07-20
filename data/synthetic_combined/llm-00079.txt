@@ -1,0 +1,97 @@
+[english] How can I convert a simple 1D array of log values into a structured Striplog object, accounting for depth and component definitions?
+[english] This function takes raw logarithmic data and transforms it into a specialized striplog structure. It first validates that components (or legend/field identifiers) are provided and then determines if the data should be binned using an optional cutoff.
+<switch:python>
+[python] def from_log(cls, log,
+                 cutoff=None,
+                 components=None,
+                 legend=None,
+                 legend_field=None,
+                 field=None,
+                 right=False,
+                 basis=None,
+                 source='Log'):
+        """
+        Turn a 1D array into a striplog, given a cutoff.
+
+        Args:
+            log (array-like): A 1D array or a list of integers.
+            cutoff (number or array-like): The log value(s) at which to bin
+                the log. Optional.
+            components (array-like): A list of components. Use this or
+                ``legend``.
+            legend (``Legend``): A legend object. Use this or ``components``.
+            legend_field ('str'): If you're not trying to match against
+                components, then you can match the log values to this field in
+                the Decors.
+            field (str): The field in the Interval's ``data`` to store the log
+                values as.
+            right (bool): Which side of the cutoff to send things that are
+                equal to, i.e. right on, the cutoff.
+            basis (array-like): A depth basis for the log, so striplog knows
+                where to put the boundaries.
+            source (str): The source of the data. Default 'Log'.
+
+        Returns:
+            Striplog: The ``striplog`` object.
+        """
+        if (components is None) and (legend is None) and (field is None):
+            m = 'You must provide a list of components, and legend, or a field.'
+            raise StriplogError(m)
+
+        if (legend is not None) and (legend_field is None):
+            try:  # To treat it like a legend.
+                components = [deepcopy(decor.component) for decor in legend]
+            except AttributeError:  # It's just a list of components.
+                pass
+
+        if legend_field is not None:
+            field_values = [getattr(d, legend_field, 0) for d in legend]
+            components = [Component() for i in range(int(max(field_values)+1))]
+            for i, decor in enumerate(legend):
+                components[i] = deepcopy(decor.component)
+
+        if cutoff is not None:
+
+            # First make sure we have enough components.
+            try:
+                n = len(cutoff)
+            except TypeError:
+                n = 1
+            if len(components) < n+1:
+                m = 'For n cutoffs, you need to provide at least'
+                m += 'n+1 components.'
+                raise StriplogError(m)
+
+            # Digitize.
+            try:  # To use cutoff as a list.
+                a = np.digitize(log, cutoff, right)
+            except ValueError:  # It's just a number.
+                a = np.digitize(log, [cutoff], right)
+
+        else:
+            a = np.copy(log)
+
+        tops, values = utils.tops_from_loglike(a)
+
+        if basis is None:
+            m = 'You must provide a depth or elevation basis.'
+            raise StriplogError(m)
+
+        list_of_Intervals = cls.__intervals_from_tops(tops,
+                                                      values,
+                                                      basis,
+                                                      components,
+                                                      field=field
+                                                      )
+
+        return cls(list_of_Intervals, source=source)
+<switch:english>
+[english] The core logic relies on `np.digitize` for binning when cutoffs exist, followed by generating intervals based on a required depth basis and component definitions.
+[english] If I pass an empty list to 'log', will the function handle it gracefully or raise an error?
+[english] It handles empty input gracefully; since `numpy` operations like `digitize` on empty arrays return empty results, no intervals will be generated. If we trace the flow:
+<switch:python>
+[python] p.digitize([], [10], right=True) # returns array([], dtype=int64)
+tops, values = utils.tops_from_loglike(a) # tops and values will be empty
+# result is an empty Striplog object with no intervals
+<switch:english>
+[english] That makes sense, I'll proceed with the full integration now.

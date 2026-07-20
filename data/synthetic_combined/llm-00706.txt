@@ -1,0 +1,94 @@
+[english] How can I programmatically save updated ID3 metadata tags (like artist or title) into an audio file while managing whether to update or delete existing v1 and v2.4 tags?
+[english] This function handles the complex task of rewriting an entire audio file header, replacing obsolete tags with new ones using Python.
+<switch:python>
+[python] def save(self, filename=None, v1=1, v2_version=4, v23_sep='/'):
+        """Save changes to a file.
+
+        If no filename is given, the one most recently loaded is used.
+
+        Keyword arguments:
+        v1 -- if 0, ID3v1 tags will be removed
+              if 1, ID3v1 tags will be updated but not added
+              if 2, ID3v1 tags will be created and/or updated
+        v2 -- version of ID3v2 tags (3 or 4).
+
+        By default Mutagen saves ID3v2.4 tags. If you want to save ID3v2.3
+        tags, you must call method update_to_v23 before saving the file.
+
+        v23_sep -- the separator used to join multiple text values
+                   if v2_version == 3. Defaults to '/' but if it's None
+                   will be the ID3v2v2.4 null separator.
+
+        The lack of a way to update only an ID3v1 tag is intentional.
+        """
+
+        framedata = self._prepare_framedata(v2_version, v23_sep)
+        framesize = len(framedata)
+
+        if not framedata:
+            try:
+                self.delete(filename)
+            except EnvironmentError as err:
+                from errno import ENOENT
+                if err.errno != ENOENT:
+                    raise
+            return
+
+        if filename is None:
+            filename = self.filename
+        try:
+            f = open(filename, 'rb+')
+        except IOError as err:
+            from errno import ENOENT
+            if err.errno != ENOENT:
+                raise
+            f = open(filename, 'ab')  # create, then reopen
+            f = open(filename, 'rb+')
+        try:
+            idata = f.read(10)
+
+            header = self._prepare_id3_header(idata, framesize, v2_version)
+            header, outsize, insize = header
+
+            data = header + framedata + (b'\x00' * (outsize - framesize))
+
+            if (insize < outsize):
+                insert_bytes(f, outsize-insize, insize+10)
+            f.seek(0)
+            f.write(data)
+
+            try:
+                f.seek(-128, 2)
+            except IOError as err:
+                # If the file is too small, that's OK - it just means
+                # we're certain it doesn't have a v1 tag.
+                from errno import EINVAL
+                if err.errno != EINVAL:
+                    # If we failed to see for some other reason, bail out.
+                    raise
+                # Since we're sure this isn't a v1 tag, don't read it.
+                f.seek(0, 2)
+
+            data = f.read(128)
+            try:
+                idx = data.index(b"TAG")
+            except ValueError:
+                offset = 0
+                has_v1 = False
+            else:
+                offset = idx - len(data)
+                has_v1 = True
+
+            f.seek(offset, 2)
+            if v1 == 1 and has_v1 or v1 == 2:
+                f.write(MakeID3v1(self))
+            else:
+                f.truncate()
+
+        finally:
+            f.close()
+<switch:english>
+[english] The logic meticulously checks for existing ID3v1 tags before deciding whether to write new content or simply truncate them. Remember that this method modifies the file in place.
+[english] What happens if I set `v1` to 0? Does it completely erase any v1 metadata?
+[english] Setting `v1=0` causes the function to call `f.truncate()` after locating the old v1 tag area, effectively deleting those tags without overwriting them with new ones.
+[english] That makes sense; I will adjust my save parameters accordingly.

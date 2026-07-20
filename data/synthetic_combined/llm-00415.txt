@@ -1,0 +1,74 @@
+[english] I need a reliable way to update various profile details, like names or roles, for an existing user in our system.
+[english] To manage this update request, the function first validates all provided parameters against specific expected types. It then aggregates all incoming data into a single dictionary called `put_data` before initiating the API call.
+<switch:python>
+[python] def update(self, personId, emails=None, displayName=None, firstName=None,
+               lastName=None, avatar=None, orgId=None, roles=None,
+               licenses=None, **request_parameters):
+        """Update details for a person, by ID.
+
+        Only an admin can update a person's details.
+
+        Email addresses for a person cannot be changed via the Webex Teams API.
+
+        Include all details for the person. This action expects all user
+        details to be present in the request. A common approach is to first GET
+        the person's details, make changes, then PUT both the changed and
+        unchanged values.
+
+        Args:
+            personId(basestring): The person ID.
+            emails(`list`): Email address(es) of the person (list of strings).
+            displayName(basestring): Full name of the person.
+            firstName(basestring): First name of the person.
+            lastName(basestring): Last name of the person.
+            avatar(basestring): URL to the person's avatar in PNG format.
+            orgId(basestring): ID of the organization to which this
+                person belongs.
+            roles(`list`): Roles of the person (list of strings containing
+                the role IDs to be assigned to the person).
+            licenses(`list`): Licenses allocated to the person (list of
+                strings - containing the license IDs to be allocated to the
+                person).
+            **request_parameters: Additional request parameters (provides
+                support for parameters that may be added in the future).
+
+        Returns:
+            Person: A Person object with the updated details.
+
+        Raises:
+            TypeError: If the parameter types are incorrect.
+            ApiError: If the Webex Teams cloud returns an error.
+
+        """
+        check_type(emails, list)
+        check_type(displayName, basestring)
+        check_type(firstName, basestring)
+        check_type(lastName, basestring)
+        check_type(avatar, basestring)
+        check_type(orgId, basestring)
+        check_type(roles, list)
+        check_type(licenses, list)
+
+        put_data = dict_from_items_with_values(
+            request_parameters,
+            emails=emails,
+            displayName=displayName,
+            firstName=firstName,
+            lastName=lastName,
+            avatar=avatar,
+            orgId=orgId,
+            roles=roles,
+            licenses=licenses,
+        )
+
+        # API request
+        json_data = self._session.put(API_ENDPOINT + '/' + personId,
+                                      json=put_data)
+
+        # Return a person object created from the returned JSON object
+        return self._object_factory(OBJECT_TYPE, json_data)
+<switch:english>
+[english] This function relies on making a PUT request to an external API endpoint to persist changes after validation. Developers should be cautious of documented limitations, such as those regarding email address modification.
+[english] The docstring notes that email addresses cannot be changed via this API; how would I ensure my code doesn't attempt to overwrite them?
+[english] You must respect the documented constraints of the external API. In your implementation, you could prevent an update by checking if `emails` were passed and then raising a specific error message.
+[english] Understood, thank you for clarifying that restriction.

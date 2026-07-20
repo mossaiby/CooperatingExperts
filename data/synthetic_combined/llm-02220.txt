@@ -1,0 +1,42 @@
+[english] How can I remove all associated database records for a specific DAG ID from the system?
+[english] This function provides a comprehensive way to completely purge all metadata and logs related to a specified DAG identity. It first verifies the DAG's existence before iteratively deleting linked objects across numerous model types.
+<switch:python>
+[python] def delete_dag(dag_id, keep_records_in_log=True, session=None):
+    """
+    :param dag_id: the dag_id of the DAG to delete
+    :type dag_id: str
+    :param keep_records_in_log: whether keep records of the given dag_id
+        in the Log table in the backend database (for reasons like auditing).
+        The default value is True.
+    :type keep_records_in_log: bool
+    """
+    DM = models.DagModel
+    dag = session.query(DM).filter(DM.dag_id == dag_id).first()
+    if dag is None:
+        raise DagNotFound("Dag id {} not found".format(dag_id))
+
+    if dag.fileloc and os.path.exists(dag.fileloc):
+        raise DagFileExists("Dag id {} is still in DagBag. "
+                            "Remove the DAG file first: {}".format(dag_id, dag.fileloc))
+
+    count = 0
+
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    for m in models.base.Base._decl_class_registry.values():
+        if hasattr(m, "dag_id"):
+            if keep_records_in_log and m.__name__ == 'Log':
+                continue
+            cond = or_(m.dag_id == dag_id, m.dag_id.like(dag_id + ".%"))
+            count += session.query(m).filter(cond).delete(synchronize_session='fetch')
+
+    if dag.is_subdag:
+        p, c = dag_id.rsplit(".", 1)
+        for m in models.DagRun, TaskFail, models.TaskInstance:
+            count += session.query(m).filter(m.dag_id == p, m.task_id == c).delete()
+
+    return count
+<switch:english>
+[english] The function handles general deletion but includes special logic for sub-DAG structures, ensuring thorough cleanup of parent/child relationships.
+[english] What happens if the DAG is marked as a 'subdag,' and it has specific file locations?
+[english] If `is_subdag` is True, the function performs targeted deletion for `DagRun`, `TaskFail`, and `TaskInstance` by splitting the ID into parent and child components. This ensures related execution logs are removed.
+[english] That makes sense.

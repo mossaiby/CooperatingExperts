@@ -1,0 +1,12 @@
+[english] How can I dynamically create a comprehensive regular expression by reading multiple individual patterns from a configuration file?
+[english] To fulfill this request, we read all lines from a specified filename and treat each line as an individual pattern. We then combine these individual patterns into one large regex using the OR operator ('|') before compiling it.
+<switch:python>
+[python] def _regexp(filename):
+    """Get a list of patterns from a file and make a regular expression."""
+    lines = _get_resource_content(filename).decode('utf-8').splitlines()
+    return re.compile('|'.join(lines))
+<switch:english>
+[english] This function relies on every line in the input file being a valid regular expression fragment; otherwise, `re.compile` will fail with a syntax error.
+[english] What happens if the configuration file is completely empty?
+[english] If the file is blank, `lines` will be an empty list. Joining an empty list results in an empty string (`''`), which compiles into a regex that matches every position between characters rather than specific patterns.
+[english] That makes sense; I'll make sure to handle the case where the input file might be missing or blank.

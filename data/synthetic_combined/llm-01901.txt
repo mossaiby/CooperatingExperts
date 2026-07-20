@@ -1,0 +1,24 @@
+[english] I need a utility to serialize provided data into a JSON file path.
+[english] This function ensures that files are permitted via configuration and validates the input format. If the content isn't already a dictionary, it defaults to an empty one before saving.
+<switch:python>
+[python] def _write_content(cls, content, file):
+        """
+        Write the content into the given file.
+
+        :param content: The dict to write.
+        :type content: dict
+
+        :param file: The file to write.
+        :type file: str
+        """
+
+        if not PyFunceble.CONFIGURATION["no_files"]:
+            if not isinstance(content, dict):
+                content = {}
+
+            Dict(content).to_json(file)
+<switch:english>
+[english] The function relies heavily on external dependencies like `PyFunceble` and the custom `Dict` class to handle the file writing process.
+[english] If I pass a list of settings instead of a dictionary, how does the content be processed?
+[english] Currently, if you pass a non-dict object, it is explicitly caught by the type check and replaced with an empty dictionary `{}`.
+[english] Got it. Thanks for the clarification.

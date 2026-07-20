@@ -1,0 +1,43 @@
+[english] I need a way to split an ordered dictionary into three pieces based on the position of a specific key.
+[english] This implementation uses Python iterators combined with `itertools.takewhile` to efficiently segment the input data without creating unnecessary copies of the entire dictionary upfront.
+<switch:python>
+[python] def partition_dict(items, key):
+	"""
+	Given an ordered dictionary of items and a key in that dict,
+	return an ordered dict of items before, the keyed item, and
+	an ordered dict of items after.
+
+	>>> od = collections.OrderedDict(zip(range(5), 'abcde'))
+	>>> before, item, after = partition_dict(od, 3)
+	>>> before
+	OrderedDict([(0, 'a'), (1, 'b'), (2, 'c')])
+	>>> item
+	'd'
+	>>> after
+	OrderedDict([(4, 'e')])
+
+	Like string.partition, if the key is not found in the items,
+	the before will contain all items, item will be None, and
+	after will be an empty iterable.
+
+	>>> before, item, after = partition_dict(od, -1)
+	>>> before
+	OrderedDict([(0, 'a'), ..., (4, 'e')])
+	>>> item
+	>>> list(after)
+	[]
+	"""
+	def unmatched(pair):
+		test_key, item, = pair
+		return test_key != key
+
+	items_iter = iter(items.items())
+	item = items.get(key)
+	left = collections.OrderedDict(itertools.takewhile(unmatched, items_iter))
+	right = collections.OrderedDict(items_iter)
+	return left, item, right
+<switch:english>
+[english] The function relies heavily on iterator state management, meaning once `items_iter` is partially consumed by 'left', it continues from that exact point for 'right'.
+[english] What happens if I call this function with a key that doesn't actually exist in the dictionary?
+[english] If the key isn't found, the entire original dictionary becomes the `before` list, and both `item` (None) and `after` (empty) are returned. This is handled by how dictionary lookups interact with iterator consumption.
+[english] That makes sense; so it never raises a KeyError even if the item isn't there?

@@ -1,0 +1,18 @@
+[english] How do I safely delete either a specific file or an entire directory using my custom storage system?
+[english] This function handles deletion by first checking if the provided path exists. It then uses branching logic to determine if the entity is a simple file or a complex directory structure.
+<switch:python>
+[python] def delete_file(self, path):
+        """
+        Delete object corresponding to path.
+        """
+        if self.file_exists(path):
+            self._delete_non_directory(path)
+        elif self.dir_exists(path):
+            self._delete_directory(path)
+        else:
+            self.no_such_entity(path)
+<switch:english>
+[english] The code ensures that files use one internal method while directories utilize another, which keeps the deletion process segmented and safe.
+[english] If I try to delete an empty folder using this function, does it still call the general directory deletion logic?
+[english] Yes. The existence check routes the request through `self.dir_exists(path)`, triggering the dedicated file cleanup methods provided by your system.
+[english] That makes sense; keeping the file and directory operations separate is smart.

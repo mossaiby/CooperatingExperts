@@ -1,0 +1,29 @@
+[english] I need a way to split a string, typically from a CSV line, into clean elements while automatically removing any surrounding whitespace and discarding empty entries.
+[english] We can solve this efficiently using Python's `split()` method combined with a highly concise list comprehension. The approach ensures that after splitting the input string by the given separator, we apply the `.strip()` method to each component before adding it to our final result.
+<switch:python>
+[python] def _splitstrip(string, sep=","):
+    """return a list of stripped string by splitting the string given as
+    argument on `sep` (',' by default). Empty string are discarded.
+
+    >>> _splitstrip('a, b, c   ,  4,,')
+    ['a', 'b', 'c', '4']
+    >>> _splitstrip('a')
+    ['a']
+    >>> _splitstrip('a,\nb,\nc,')
+    ['a', 'b', 'c']
+
+    :type string: str or unicode
+    :param string: a csv line
+
+    :type sep: str or unicode
+    :param sep: field separator, default to the comma (',')
+
+    :rtype: str or unicode
+    :return: the unquoted string (or the input string if it wasn't quoted)
+    """
+    return [word.strip() for word in string.split(sep) if word.strip()]
+<switch:english>
+[english] This solution is remarkably efficient as it handles both whitespace removal and empty element filtering within a single line of code using list comprehension.
+[english] What happens if I pass `None` as the input string instead of an actual string?
+[english] The function will raise a TypeError because the `.split()` method is only defined for string objects in Python. You would need to add type checking at the start of the function.
+[english] Got it, thanks for clarifying how edge cases work!

@@ -1,0 +1,46 @@
+[english] How can I automate the processing of a given URL by matching it against available service plugins, even if it first requires following HTTP redirects?
+[english] This function systematically attempts to match a URL against available plugins, prioritizing them based on relevance. If no plugin handles the initial request, it checks for and follows standard HTTP status code redirects before failing.
+<switch:python>
+[python] def resolve_url(self, url, follow_redirect=True):
+        """Attempts to find a plugin that can use this URL.
+
+        The default protocol (http) will be prefixed to the URL if
+        not specified.
+
+        Raises :exc:`NoPluginError` on failure.
+
+        :param url: a URL to match against loaded plugins
+        :param follow_redirect: follow redirects
+
+        """
+        url = update_scheme("http://", url)
+
+        available_plugins = []
+        for name, plugin in self.plugins.items():
+            if plugin.can_handle_url(url):
+                available_plugins.append(plugin)
+
+        available_plugins.sort(key=lambda x: x.priority(url), reverse=True)
+        if available_plugins:
+            return available_plugins[0](url)
+
+        if follow_redirect:
+            # Attempt to handle a redirect URL
+            try:
+                res = self.http.head(url, allow_redirects=True, acceptable_status=[501])
+
+                # Fall back to GET request if server doesn't handle HEAD.
+                if res.status_code == 501:
+                    res = self.http.get(url, stream=True)
+
+                if res.url != url:
+                    return self.resolve_url(res.url, follow_redirect=follow_redirect)
+            except PluginError:
+                pass
+
+        raise NoPluginError
+<switch:english>
+[english] The core logic involves sorting plugins by priority, but if redirect handling is required, the function uses a conditional HEAD request which may trigger a recursive call to resolve the new URL.
+[english] What prevents this redirect resolution from causing an infinite loop if the server keeps cycling between two URLs?
+[english] The current implementation lacks explicit cycle detection. To prevent infinite loops, you would need to track already visited URLs and stop recursion when a duplicate is encountered.
+[english] That makes sense; cycle detection seems like an essential enhancement.

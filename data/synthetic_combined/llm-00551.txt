@@ -1,0 +1,38 @@
+[english] How can I parse the parameters used in a custom sitetree_menu template tag to dynamically render nested navigation elements?
+[english] I've analyzed the function, and it parses the input token string by splitting it into individual components and checking for required syntax clauses.
+<switch:python>
+[python] def sitetree_menu(parser, token):
+    """Parses sitetree_menu tag parameters.
+
+        {% sitetree_menu from "mytree" include "trunk,1,level3" %}
+        Used to render trunk, branch with id 1 and branch aliased 'level3'
+        elements from "mytree" site tree as a menu.
+
+        These are reserved aliases:
+            * 'trunk' - items without parents
+            * 'this-children' - items under item resolved as current for the current page
+            * 'this-siblings' - items under parent of item resolved as current for
+              the current page (current item included)
+            * 'this-ancestor-children' - items under grandparent item (closest to root)
+              for the item resolved as current for the current page
+
+        {% sitetree_menu from "mytree" include "trunk,1,level3" template "sitetree/mymenu.html" %}
+
+    """
+    tokens = token.split_contents()
+    use_template = detect_clause(parser, 'template', tokens)
+    tokens_num = len(tokens)
+
+    if tokens_num == 5 and tokens[3] == 'include':
+        tree_alias = parser.compile_filter(tokens[2])
+        tree_branches = parser.compile_filter(tokens[4])
+        return sitetree_menuNode(tree_alias, tree_branches, use_template)
+    else:
+        raise template.TemplateSyntaxError(
+            '%r tag requires four arguments. '
+            'E.g. {%% sitetree_menu from "mytree" include "trunk,1,level3" %%}.' % tokens[0])
+<switch:english>
+[english] This logic strictly enforces argument order and count, raising a TemplateSyntaxError if the expected structure of the menu definition is violated.
+[english] What specific exceptions are handled if the `from` or `include` arguments are grammatically missing from the tag?
+[english] The function expects exactly 5 tokens for successful parsing when using 'include'; otherwise, it immediately raises a TemplateSyntaxError referencing the first token.
+[english] Thanks for clarifying how the input arguments are validated!

@@ -1,0 +1,20 @@
+[english] Write a method that determines if two input values are considered of the same type, handling special cases for matrices.
+[english] To determine compatibility, we first check if both inputs meet the criteria of being a supported matrix. If this specific condition is met, we override standard type checks and assume they match.
+<switch:python>
+[python] def _values_of_same_type(self, val1, val2):
+        """Checks if two values agree in type.
+
+        The sparse parameter is less restrictive than the parameter. If both values
+        are sparse matrices they are considered to be of same type
+        regardless of their size and values they contain.
+
+        """
+        if self._is_supported_matrix(val1) and self._is_supported_matrix(val2):
+            return True
+        else:
+            return super(SparseParameter, self)._values_of_same_type(val1, val2)
+<switch:english>
+[english] This implementation guarantees that any two recognized sparse matrices are treated as compatible types, regardless of their actual size or internal data values.
+[english] What happens if one value is a supported matrix but the other is a simple integer?
+[english] If only one input is a supported matrix, the initial `if` check fails. The function then delegates the type checking to the parent class's implementation of this method.
+[english] Thank you for clarifying how specialized types interact in this parameter.

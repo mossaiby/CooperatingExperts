@@ -1,0 +1,26 @@
+[english] How do I retrieve all available posters and image metadata for a specifically requested TV season?
+[english] This method is designed to fetch seasonal images by first calculating the appropriate API path using internal series ID logic. It then performs a GET request, passing any optional language parameters provided via kwargs.
+<switch:python>
+[python] def images(self, **kwargs):
+        """
+        Get the images (posters) that we have stored for a TV season by season
+        number.
+
+        Args:
+            language: (optional) ISO 639 code.
+            include_image_language: (optional) Comma separated, a valid
+                                    ISO 69-1.
+
+        Returns:
+            A dict respresentation of the JSON returned from the API.
+        """
+        path = self._get_series_id_season_number_path('images')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] After receiving the data from the server, the function maps response fields to object attributes before returning the raw JSON result for further processing.
+[english] What happens if an error occurs during the `self._GET` call?
+[english] If a request fails and returns an error, the method currently passes that failed API response dictionary back directly without handling exceptions or logging errors internally.
+[english] That makes perfect sense.

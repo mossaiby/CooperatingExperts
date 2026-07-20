@@ -1,0 +1,28 @@
+[english] I'm building a validation system and need a robust method to load complex schema definitions from files, ensuring I don't repeatedly read or parse them if they are requested multiple times.
+[english] This function implements a memoization pattern for schemas by checking an internal cache before performing disk I/O. If the schema is missing, it loads and stores it in a module-level dictionary (`_SCHEMAS`).
+<switch:python>
+[python] def _load_schema(file_path, name=None):
+    """Loads the QObj schema for use in future validations.
+
+   Caches schema in _SCHEMAS module attribute.
+
+   Args:
+        file_path(str): Path to schema.
+        name(str): Given name for schema. Defaults to file_path filename
+            without schema.
+   Return:
+        schema(dict): Loaded schema.
+    """
+    if name is None:
+        # filename without extension
+        name = os.path.splitext(os.path.basename(file_path))[0]
+    if name not in _SCHEMAS:
+        with open(file_path, 'r') as schema_file:
+            _SCHEMAS[name] = json.load(schema_file)
+
+    return _SCHEMAS[name]
+<switch:english>
+[english] The function handles the logic for identifying and retrieving schemas using a cache. It relies on external imports (`os` and `json`) to perform file operations.
+[english] If I pass a file path that is not valid or does not exist, how does the function behave?
+[english] Currently, it will raise an exception (like os.error), as there is no explicit check for file existence before attempting to open it. You might want to add validation like `if not os.path.exists(file_path):`.
+[english] I understand; I'll make sure to handle the file path validity manually.

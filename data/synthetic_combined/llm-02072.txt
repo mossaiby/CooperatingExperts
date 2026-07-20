@@ -1,0 +1,34 @@
+[english] I need to write code that adds a new repeater element to an existing sequence structure while ensuring that certain lookahead modifiers aren't repeated.
+[english] This function handles adding a repeater (`pt`) onto an existing `sequence`. Before making the addition, it checks if the modifier (`mod`) is '!' or '!!' and raises specific errors if those rules are being repeated.
+<switch:python>
+[python] def add_rpt(self, sequence, mod, pt):
+    """Add a repeater to the previous sequence"""
+    modstr = self.value(mod)
+    if modstr == '!!':
+        # cursor on the REPEATER
+        self._stream.restore_context()
+        # log the error
+        self.diagnostic.notify(
+            error.Severity.ERROR,
+            "Cannot repeat a lookahead rule",
+            error.LocationInfo.from_stream(self._stream, is_error=True)
+        )
+        raise self.diagnostic
+    if modstr == '!':
+        # cursor on the REPEATER
+        self._stream.restore_context()
+        # log the error
+        self.diagnostic.notify(
+            error.Severity.ERROR,
+            "Cannot repeat a negated rule",
+            error.LocationInfo.from_stream(self._stream, is_error=True)
+        )
+        raise self.diagnostic
+    oldnode = sequence
+    sequence.parser_tree = pt.functor(oldnode.parser_tree)
+    return True
+<switch:english>
+[english] If the modifier passes validation, the function updates the sequence's internal parser tree. Otherwise, it logs an error using `self.diagnostic` and halts execution with a custom exception.
+[english] Does this function handle other types of modifiers besides '!' or '!!', or is it limited to these negation/lookahead rules?
+[english] Based on the provided code, it only implements specific checks for `modstr == '!!'` and `if modstr == '!'`. Handling other modifier types would require adding more conditional logic.
+[english] Thanks for clarifying how this rule validation works.

@@ -1,0 +1,17 @@
+[english] How can I retrieve posts from raw data while ensuring they are returned in a specific sequence?
+[english] This function parses the raw input and uses an 'order' list to determine which post IDs to output. It iterates through that provided order, retrieving and yielding each associated post.
+<switch:python>
+[python] def _parse_posts(self, raw_posts):
+        """Parse posts and returns in order."""
+
+        parsed_posts = self.parse_json(raw_posts)
+
+        # Posts are not sorted. The order is provided by
+        # 'order' key.
+        for post_id in parsed_posts['order']:
+            yield parsed_posts['posts'][post_id]
+<switch:english>
+[english] The function relies entirely on the integrity of the `parsed_posts['order']` list. If this list is missing or contains invalid keys, the process will fail.
+[english] What happens if an ID in the 'order' key does not exist in the main post collection?
+[english] If a specified post ID is missing from the post collection, the function will raise a KeyError when trying to access `parsed_posts['posts'][post_id]` within the loop.
+[english] Is there any performance concern with always yielding instead of returning a list?

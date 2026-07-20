@@ -1,0 +1,15 @@
+[english] I need a way to reliably access the security repository configured for my current session.
+[english] This function implements lazy loading, ensuring that the SecurityRepository is only created the first time it is needed. It checks if an instance already exists before initializing one with the current session.
+<switch:python>
+[python] def get_security_repository(self):
+        """ Security repository """
+        from .repositories import SecurityRepository
+
+        if not self.security_repo:
+            self.security_repo = SecurityRepository(self.session)
+        return self.security_repo
+<switch:english>
+[english] By checking `self.security_repo` first, this method guarantees that only a single repository object exists for each instance of the class, improving efficiency and consistency.
+[english] What happens if multiple threads call this method simultaneously?
+[english] In its current form, simultaneous calls could lead to race conditions where two separate instances might be created. For thread safety, consider using a lock around the initialization block.
+[english] That makes sense thank you for clarifying.

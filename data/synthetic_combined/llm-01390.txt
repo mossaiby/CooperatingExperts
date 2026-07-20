@@ -1,0 +1,18 @@
+[english] I need a way to extract all common names listed within an X.509 certificate.
+[english] This function leverages cryptography libraries to look at the certificate's subject section and specifically asks for attributes that match the Commonwealth Name Object Identifier (OID).
+It then filters these attributes into a simple list of strings.
+<switch:python>
+[python] def get_common_names_from_certificate(certificate):
+    """
+    Given an X.509 certificate, extract and return all common names.
+    """
+
+    common_names = certificate.subject.get_attributes_for_oid(
+        x509.oid.NameOID.COMMON_NAME
+    )
+    return [common_name.value for common_name in common_names]
+<switch:english>
+[english] The code uses a list comprehension over the retrieved attribute objects. This means it will correctly handle cases where multiple common names are defined in the certificate, returning them all rather than just one.
+[english] What should I assume happens if the input certificate does not contain any 'Common Name' attributes whatsoever?
+[english] The function uses `.get_attributes_for_oid()`, which handles missing OIDs gracefully by returning an empty list. Since a list comprehension is used on that result, it will return an empty list [] instead of raising an error.
+[english] That makes sense; this was exactly the utility I needed to verify my certificate data.

@@ -1,0 +1,41 @@
+[english] How can I easily capture all relevant operational context and environment variables into a structured dictionary when running command-line tasks?
+[english] This function standardizes the collection of environmental and execution data. It gathers necessary system infos like host name and user, then integrates Airflow's specific task metadata from the provided `Namespace` instance.
+<switch:python>
+[python] def _build_metrics(func_name, namespace):
+    """
+    Builds metrics dict from function args
+    It assumes that function arguments is from airflow.bin.cli module's function
+    and has Namespace instance where it optionally contains "dag_id", "task_id",
+    and "execution_date".
+
+    :param func_name: name of function
+    :param namespace: Namespace instance from argparse
+    :return: dict with metrics
+    """
+
+    metrics = {'sub_command': func_name, 'start_datetime': datetime.utcnow(),
+               'full_command': '{}'.format(list(sys.argv)), 'user': getpass.getuser()}
+
+    assert isinstance(namespace, Namespace)
+    tmp_dic = vars(namespace)
+    metrics['dag_id'] = tmp_dic.get('dag_id')
+    metrics['task_id'] = tmp_dic.get('task_id')
+    metrics['execution_date'] = tmp_dic.get('execution_date')
+    metrics['host_name'] = socket.gethostname()
+
+    extra = json.dumps(dict((k, metrics[k]) for k in ('host_name', 'full_command')))
+    log = Log(
+        event='cli_{}'.format(func_name),
+        task_instance=None,
+        owner=metrics['user'],
+        extra=extra,
+        task_id=metrics.get('task_id'),
+        dag_id=metrics.get('dag_id'),
+        execution_date=metrics.get('execution_date'))
+    metrics['log'] = log
+    return metrics
+<switch:english>
+[english] The result is a comprehensive dictionary that includes structured logging via the `metrics['log']` field. Keep in mind this relies on external imports like `datetime`, `sys`, `getpass`, and `socket` to function correctly.
+[english] What happens if the `namespace` object doesn't contain any of the expected keys like dag_id or task_id?
+[english] The function safely handles missing data. Since it uses `.get()` for 'dag_id', 'task_id', and 'execution_date', they will be set to None in the resulting metrics dictionary instead of raising a KeyError.
+[english] That makes sense, thanks for clarifying!

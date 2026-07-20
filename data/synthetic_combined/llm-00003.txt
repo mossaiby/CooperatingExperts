@@ -1,0 +1,28 @@
+[english] How do I programmatically determine the address of a contract that will be deployed using CREATE2 given its creation method details?
+[english] This function implements the standard ERC-1271 address derivation logic used in Solidity to calculate a future contract's address before deployment.
+<switch:python>
+[python] def generate_address_2(from_: Union[str, bytes], salt: Union[str, bytes], init_code: [str, bytes]) -> str:
+    """
+    Generates an address for a contract created using CREATE2.
+    :param from_: The address which is creating this new address (need to be 20 bytes)
+    :param salt: A salt (32 bytes)
+    :param init_code: A init code of the contract being created
+    :return: Address of the new contract
+    """
+
+    from_ = HexBytes(from_)
+    salt = HexBytes(salt)
+    init_code = HexBytes(init_code)
+
+    assert len(from_) == 20, "Address %s is not valid. Must be 20 bytes" % from_
+    assert len(salt) == 32, "Salt %s is not valid. Must be 32 bytes" % salt
+    assert len(init_code) > 0, "Init code %s is not valid" % init_code
+
+    init_code_hash = Web3.sha3(init_code)
+    contract_address = Web3.sha3(HexBytes('ff') + from_ + salt + init_code_hash)
+    return Web3.toChecksumAddress(contract_address[12:])
+<switch:english>
+[english] The calculation relies on hashing the concatenation of 'ff', the creator, salt, and the initializer hash. Ensure all input types match Ethereum byte specifications for accuracy.
+[english] What happens if the initial `from_` address provided is longer than 20 bytes?
+[english] The function will immediately raise an assertion error because the code explicitly checks that `len(from_) == 20`. This enforces the standard requirement for creator addresses.
+[english] That makes sense now, thanks!

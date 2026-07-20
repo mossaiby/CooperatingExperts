@@ -1,0 +1,27 @@
+[english] How can I remove a specific accelerator entry from a control associated with its unique key?
+[english] This function modifies global state by checking if an accelerator matching the provided key is present in the control's list. It converts the input and iterates through the stored accelerators to find a match.
+<switch:python>
+[python] def remove_accelerator(control, key):
+ """
+ Removes an accelerator from control.
+ 
+ control: The control to affect.
+ key: The key to remove.
+ """
+ key = str_to_key(key)
+ t = _tables.get(control, [])
+ for a in t:
+  if a[:2] == key:
+   t.remove(a)
+   if t:
+    _tables[control] = t
+   else:
+    del _tables[control]
+   update_accelerators(control)
+   return True
+ return False
+<switch:english>
+[english] After removing an item, the function ensures that _tables is correctly updated or cleared. If multiple items matched the prefix, only the first one found will be removed due to the early return.
+[english] Since it uses slicing `a[:2]`, what happens if I pass a key longer than two characters?
+[english] The function currently treats the key as a prefix check. If you pass 'ABC', the condition `a[:2] == 'ABC'` will never be true unless the target accelerator starts with exactly 'AB'. It's safer to use a key that is exactly two characters long.
+[english] That makes sense, so I should stick to short keys for this system.

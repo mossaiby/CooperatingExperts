@@ -1,0 +1,47 @@
+[english] I need a way to serialize a dictionary of structured values into packed bit words where I can also track which bits are valid data.
+[english] The function iterates through the required word structures, mapping fields from your input data to specific bit ranges. For each part, it determines if the value is present or padding before constructing the final raw data and its corresponding validity mask.
+<switch:python>
+[python] def packData(self, data):
+        """
+        Pack data into list of BitsVal of specified dataWidth
+
+        :param data: dict of values for struct fields {fieldName: value}
+
+        :return: list of BitsVal which are representing values of words
+        """
+        typeOfWord = simBitsT(self.wordWidth, None)
+        fieldToVal = self._fieldToTPart
+        if fieldToVal is None:
+            fieldToVal = self._fieldToTPart = self.fieldToDataDict(
+                self.origin.dtype,
+                data,
+                {})
+
+        for _, transParts in self.walkWords(showPadding=True):
+            actualVldMask = 0
+            actualVal = 0
+            for tPart in transParts:
+                high, low = tPart.getBusWordBitRange()
+                fhigh, flow = tPart.getFieldBitRange()
+                if not tPart.isPadding:
+                    val = fieldToVal.get(tPart.tmpl.origin, None)
+                else:
+                    val = None
+
+                if val is None:
+                    newBits = 0
+                    vld = 0
+                else:
+                    newBits = selectBitRange(val, flow, fhigh - flow)
+                    vld = mask(high - low) << low
+
+                actualVal = setBitRange(actualVal, low, high - low, newBits)
+                actualVldMask = setBitRange(actualVal, low, high - low, vld)
+
+            yield typeOfWord.getValueCls()(actualVal, typeOfWord,
+                                           actualVldMask, -1)
+<switch:english>
+[english] It's important that `actualVldMask` accurately tracks which bits in the combined words contain meaningful data versus padded zeros.
+[english] If a required field exists in the structure but is completely missing from the input dictionary, how does it handle extraction?
+[english] If an expected value (`val`) cannot be found in `fieldToVal`, both `newBits` and the validity mask component are initialized to zero. This means those bits will be packed as zeros but marked as invalid.
+[english] That makes sense; I appreciate the clarification!

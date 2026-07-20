@@ -1,0 +1,23 @@
+[english] I need a way to identify and count specific internal object types that contribute unnecessary overhead in my profiling system.
+[english] This function identifies key attributes of an instance that are considered profiler overhead. It collects these reference objects into a list and uses a helper function to tally the frequency of each object type present.
+<switch:python>
+[python] def obj_overhead(self):
+        """Returns all objects that are considered a profiler overhead.
+        Objects are hardcoded for convenience.
+        """
+        overhead = [
+            self,
+            self._resulting_events,
+            self._events_list,
+            self._process
+        ]
+        overhead_count = _get_object_count_by_type(overhead)
+        # One for reference to __dict__ and one for reference to
+        # the current module.
+        overhead_count[dict] += 2
+        return overhead_count
+<switch:english>
+[english] The method returns the count dictionary, but note that it manually adjusts the recorded count for the 'dict' type by two for internal bookkeeping purposes.
+[english] What happens if I want to dynamically add new objects to this overhead list without modifying the function body?
+[english] You would typically modify the 'overhead' list initialization within the function definition to include your new object references or attributes there.
+[english] Does that cover how these hardcoded references are counted?

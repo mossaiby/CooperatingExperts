@@ -1,0 +1,18 @@
+[english] I need a way to derive clean, standard module names from a stream of potentially messy filesystem paths.
+[english] This function processes potential module paths by strictly enforcing Python naming conventions and filtering out private or compiled file extensions. It iterates through provided paths and checks them against strict rules for package name formatting.
+<switch:python>
+[python] def standard_package_names():
+    """Yield standard module names."""
+    for name in standard_paths():
+        if name.startswith('_') or '-' in name:
+            continue
+
+        if '.' in name and name.rsplit('.')[-1] not in ['so', 'py', 'pyc']:
+            continue
+
+        yield name.split('.')[0]
+<switch:english>
+[english] The function ensures basic readability by limiting the output to only the top-level component of a package path.
+[english] If a path is structured like `my_lib.submodule.py`, what exactly does the generator yield?
+[english] It yields only the first part, 'my_lib', because it uses `name.split('.')[0]` to extract only the string before the first dot, regardless of subsequent dots.
+[english] That makes perfect sense; thanks for clarifying!

@@ -1,0 +1,19 @@
+[english] How can I find all page numbers in a document object that require an orientation change?
+[english] We iterate through each page within the document and check its `orientation_change` property.
+If this property is set to True, we store the index of that page.
+<switch:python>
+[python] def _get_orientation_changes(self):
+        """ Returns a list of the pages that have
+            orientation changes."""
+        self.orientation_changes = []
+        for page in self.pages:
+            if page.orientation_change is True:
+                self.orientation_changes.append(page.index)
+            else:
+                pass
+        return self.orientation_changes
+<switch:english>
+[english] The function effectively gathers all relevant indices into a list while initializing it first. The 'else: pass' block is redundant but harmless as written.
+[english] What would happen if a page object lacked the `index` attribute?
+[english] If a `page` object lacks an `index`, attempting to access `page.index` would raise an AttributeError, causing the function to fail when processing that specific element in self.pages.
+[english] That makes sense; I should probably add robust error handling for missing attributes.

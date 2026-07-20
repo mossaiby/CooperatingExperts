@@ -1,0 +1,82 @@
+[english] I have a raw template name string, like '{{ en : tEmPlAtE : <!-- comment --> t_1 # anchor }}. How can I normalize this into a clean, consistent display form?
+[english] This function normalizes complex template names by systematically stripping unwanted prefixes and suffixes. It cleans up comments, removes language codes based on the `code` argument, and eliminates specific namespaces like 'Template:' while handling capitalization.
+<switch:python>
+[python] def normal_name(
+        self,
+        rm_namespaces=('Template',),
+        capital_links=False,
+        _code: str = None,
+        *,
+        code: str = None,
+        capitalize=False
+    ) -> str:
+        """Return normal form of self.name.
+
+        - Remove comments.
+        - Remove language code.
+        - Remove namespace ("template:" or any of `localized_namespaces`.
+        - Use space instead of underscore.
+        - Remove consecutive spaces.
+        - Use uppercase for the first letter if `capitalize`.
+        - Remove #anchor.
+
+        :param rm_namespaces: is used to provide additional localized
+            namespaces for the template namespace. They will be removed from
+            the result. Default is ('Template',).
+        :param capitalize: If True, convert the first letter of the
+            template's name to a capital letter. See
+            [[mw:Manual:$wgCapitalLinks]] for more info.
+        :param code: is the language code.
+        :param capital_links: deprecated.
+        :param _code: deprecated.
+
+        Example:
+            >>> Template(
+            ...     '{{ eN : tEmPlAtE : <!-- c --> t_1 # b | a }}'
+            ... ).normal_name(code='en')
+            'T 1'
+        """
+        if capital_links:
+            warn('`capital_links` argument is deprecated,'
+                 ' use `capitalize` instead', DeprecationWarning)
+            capitalize = capital_links
+        if _code:
+            warn('`positional_code` argument is deprecated,'
+                 ' use `code` instead', DeprecationWarning)
+            code = _code
+        # Remove comments
+        name = COMMENT_SUB('', self.name).strip(WS)
+        # Remove code
+        if code:
+            head, sep, tail = name.partition(':')
+            if not head and sep:
+                name = tail.strip(' ')
+                head, sep, tail = name.partition(':')
+            if code.lower() == head.strip(' ').lower():
+                name = tail.strip(' ')
+        # Remove namespace
+        head, sep, tail = name.partition(':')
+        if not head and sep:
+            name = tail.strip(' ')
+            head, sep, tail = name.partition(':')
+        if head:
+            ns = head.strip(' ').lower()
+            for namespace in rm_namespaces:
+                if namespace.lower() == ns:
+                    name = tail.strip(' ')
+                    break
+        # Use space instead of underscore
+        name = name.replace('_', ' ')
+        if capitalize:
+            # Use uppercase for the first letter
+            n0 = name[0]
+            if n0.islower():
+                name = n0.upper() + name[1:]
+        # Remove #anchor
+        name, sep, tail = name.partition('#')
+        return ' '.join(name.split())
+<switch:english>
+[english] The normalization process is robust but relies heavily on predefined constants (like `COMMENT_SUB`, `WS`). Note that if multiple namespaces match, only the first found in `rm_namespaces` will be removed.
+[english] If a template name has both an underscore and an uppercase letter at the start (e.g., 'my_template'), does it guarantee proper capitalization after all replacements?
+[english] Yes, because the replacement of underscores with spaces happens before the conditional capitalization logic is applied.
+[english] That makes sense, thank you!

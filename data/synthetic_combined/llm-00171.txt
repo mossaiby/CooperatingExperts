@@ -1,0 +1,42 @@
+[english] How do I pass an external asynchronous token to an existing security context without using the standard initialization flow?
+[english] This function uses Python's C Foreign Function Interface (ctypes or ffi) to bridge a raw byte token into the underlying GSSAPI C structure. It sets up necessary buffer descriptions and calls `gss_process_context_token` directly on the security context object.
+<switch:python>
+[python] def process_context_token(self, context_token):
+        """
+        Provides a way to pass an asynchronous token to the security context, outside of the normal
+        context-establishment token passing flow. This method is not normally used, but some
+        example uses are:
+
+        * when the initiator's context is established successfully but the acceptor's context isn't
+          and the acceptor needs to signal to the initiator that the context shouldn't be used.
+        * if :meth:`delete` on one peer's context returns a final token that can be passed to the
+          other peer to indicate the other peer's context should be torn down as well (though it's
+          recommended that :meth:`delete` should return nothing, i.e. this method should not be
+          used by GSSAPI mechanisms).
+
+        :param context_token: The context token to pass to the security context
+        :type context_token: bytes
+        :raises: :exc:`~gssapi.error.DefectiveToken` if consistency checks on the token failed.
+            :exc:`~gssapi.error.NoContext` if this context is invalid.
+            :exc:`~gssapi.error.GSSException` for any other GSSAPI errors.
+        """
+        minor_status = ffi.new('OM_uint32[1]')
+        context_token_buffer = ffi.new('gss_buffer_desc[1]')
+        context_token_buffer[0].length = len(context_token)
+        c_str_context_token = ffi.new('char[]', context_token)
+        context_token_buffer[0].value = c_str_context_token
+        retval = C.gss_process_context_token(
+            minor_status,
+            self._ctx[0],
+            context_token_buffer
+        )
+        if GSS_ERROR(retval):
+            if minor_status[0] and self.mech_type:
+                raise _exception_for_status(retval, minor_status[0], self.mech_type)
+            else:
+                raise _exception_for_status(retval, minor_status[0])
+<switch:english>
+[english] The code then checks the return value of the low-level C call, raising specific Python exceptions based on internal error codes if the token processing fails.
+[english] If this method is used to pass a new asynchronous token but it's not ultimately accepted by the security context, how does gss_process_context_token signal that rejection?
+[english] The function checks `minor_status[0]`. If this value is set and a mechanism type exists (`self.mech_type`), it raises a descriptive error detailing the failure in the token processing.
+[english] This clarifies how to handle unconventional context token updates.

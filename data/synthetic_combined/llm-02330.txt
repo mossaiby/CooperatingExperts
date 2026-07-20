@@ -1,0 +1,20 @@
+[english] How do I clear a stack of ongoing dialog sessions and properly cancel all active participants?
+[english] This function iterates through the internal state by checking if there are any pending dialog entries in the stack. If items exist, it uses an async loop to sequentially end every active dialog.
+<switch:python>
+[python] async def cancel_all_dialogs(self):
+        """
+        Deletes any existing dialog stack thus cancelling all dialogs on the stack.
+        :param result: (Optional) result to pass to the parent dialogs.
+        :return:
+        """
+        if (len(self.stack) > 0):
+            while (len(self.stack) > 0):
+                await self.end_active_dialog(DialogReason.CancelCalled)
+            return DialogTurnResult(DialogTurnStatus.Cancelled)
+        else:
+            return DialogTurnResult(DialogTurnStatus.Empty)
+<switch:english>
+[english] The method ensures a deterministic exit for each stacked item before returning a final status of 'Cancelled' or 'Empty'.
+[english] If this function is called twice in rapid succession without any new turns being added, how would the second call behave?
+[english] The second call will immediately return `DialogTurnStatus.Empty` because the first execution guarantees that `self.stack` is depleted.
+[english] That makes sense, thanks for clarifying!

@@ -1,0 +1,52 @@
+[english] I need a robust function that attempts to load and initialize Fernet encryption keys from configuration while gracefully handling missing dependencies.
+[english] This helper function ensures that the required cryptography library is available. It checks for pre-existing values, handles potential runtime import errors by substituting null functionality, and initializes a MultiFernet object if configured.
+<switch:python>
+[python] def get_fernet():
+    """
+    Deferred load of Fernet key.
+
+    This function could fail either because Cryptography is not installed
+    or because the Fernet key is invalid.
+
+    :return: Fernet object
+    :raises: airflow.exceptions.AirflowException if there's a problem trying to load Fernet
+    """
+    global _fernet
+    log = LoggingMixin().log
+
+    if _fernet:
+        return _fernet
+    try:
+        from cryptography.fernet import Fernet, MultiFernet, InvalidToken
+        global InvalidFernetToken
+        InvalidFernetToken = InvalidToken
+
+    except BuiltinImportError:
+        log.warning(
+            "cryptography not found - values will not be stored encrypted."
+        )
+        _fernet = NullFernet()
+        return _fernet
+
+    try:
+        fernet_key = configuration.conf.get('core', 'FERNET_KEY')
+        if not fernet_key:
+            log.warning(
+                "empty cryptography key - values will not be stored encrypted."
+            )
+            _fernet = NullFernet()
+        else:
+            _fernet = MultiFernet([
+                Fernet(fernet_part.encode('utf-8'))
+                for fernet_part in fernet_key.split(',')
+            ])
+            _fernet.is_encrypted = True
+    except (ValueError, TypeError) as ve:
+        raise AirflowException("Could not create Fernet object: {}".format(ve))
+
+    return _fernet
+<switch:english>
+[english] The function uses memoization via `global _fernet` to prevent re-initialization on repeated calls. Note that failure during key parsing results in an AirflowException being raised.
+[english] If the user provides an invalid cryptographic key format (e.g., missing components), what specific error is thrown?
+[english] A `ValueError` or `TypeError` during key creation will cause the function to raise a structured `AirflowException` detailing the inability to create the Fernet object and formatting the original exception.
+[english] Perfect, this makes dependency management much cleaner.

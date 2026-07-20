@@ -1,0 +1,18 @@
+[english] How do I determine the maximum character length required for 'title' and 'description' columns based on a list of field definitions?
+[english] This function calculates the necessary column widths by initializing two counters to zero and then iterating through every record in self.fields.
+<switch:python>
+[python] def getFieldsColumnLengths(self):
+        """
+        Gets the maximum length of each column in the field table
+        """
+        nameLen = 0
+        descLen = 0
+        for f in self.fields:
+            nameLen = max(nameLen, len(f['title']))
+            descLen = max(descLen, len(f['description']))
+        return (nameLen, descLen)
+<switch:english>
+[english] The method successfully finds the longest title and description but only returns these two specific metrics, ignoring any other fields that might exist within 'f'.
+[english] What happens if self.fields is empty when this function is called?
+[english] If there are no entries in self.fields, the loop will not run and the method will correctly return (0, 0), indicating zero length needed.
+[english] That makes sense; so it handles an empty list gracefully.

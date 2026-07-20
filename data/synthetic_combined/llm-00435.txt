@@ -1,0 +1,22 @@
+[english] Could you write a function that sanitizes a string by mapping specific characters to spaces or removing them entirely, following certain international standards like SASLprep?
+[english] This function performs in-place modifications on a list of characters. It iterates through the input and checks for special character categories using provided tables before applying replacement or deletion logic.
+<switch:python>
+[python] def _saslprep_do_mapping(chars):
+    """
+    Perform the stringprep mapping step of SASLprep. Operates in-place on a
+    list of unicode characters provided in `chars`.
+    """
+    i = 0
+    while i < len(chars):
+        c = chars[i]
+        if stringprep.in_table_c12(c):
+            chars[i] = "\u0020"
+        elif stringprep.in_table_b1(c):
+            del chars[i]
+            continue
+        i += 1
+<switch:english>
+[english] The loop manages modification by iterating with a `while` statement to correctly handle elements being deleted or replaced in place according to the character categories.
+[english] What happens if there are consecutive characters that both fall under category B1, which causes them all to be removed?
+[english] If two consecutive characters are removed by finding a match for `stringprep.in_table_b1(c)` and executing `del chars[i]`, the subsequent character is immediately shifted into index `i`. The loop's logic ensures that this new character will be checked in the next iteration without incrementing `i` unnecessarily.
+[english] This makes a lot of sense for robust string handling. Thanks!

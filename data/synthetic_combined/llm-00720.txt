@@ -1,0 +1,73 @@
+[english] How can this function automate storing data from a Python dictionary into structured HDF5 formats like tables, arrays, or nested groups?
+[english] This function handles parameter storage by first checking if nested group structures need to be created based on dot-separated keys. It then looks up the designated storage type in `store_flags` and delegates the actual writing process to specific internal helper methods.
+<switch:python>
+[python] def _prm_store_from_dict(self, fullname, store_dict, hdf5_group, store_flags, kwargs):
+        """Stores a `store_dict`"""
+        for key, data_to_store in store_dict.items():
+            # self._logger.log(1, 'SUB-Storing %s [%s]', key, str(store_dict[key]))
+            original_hdf5_group = None
+
+            flag = store_flags[key]
+
+            if '.' in key:
+                original_hdf5_group = hdf5_group
+                split_key = key.split('.')
+                key = split_key.pop()
+                for inner_key in split_key:
+                    hdf5_group, newly_created =  self._all_create_or_get_group(inner_key,
+                                                                                hdf5_group)
+                    if newly_created:
+                        setattr(hdf5_group._v_attrs, HDF5StorageService.STORAGE_TYPE,
+                                HDF5StorageService.NESTED_GROUP)
+                    else:
+                        store_type = self._all_get_from_attrs(hdf5_group, HDF5StorageService.STORAGE_TYPE)
+                        if store_type != HDF5StorageService.NESTED_GROUP:
+                            raise ValueError('You want to nested results but `%s` is already '
+                                             'of type `%s`!' % (hdf5_group._v_name, store_type))
+
+            # Iterate through the data and store according to the storage flags
+            if key in hdf5_group:
+                # We won't change any data that is found on disk
+                self._logger.debug(
+                    'Found %s already in hdf5 node of %s, so I will ignore it.' %
+                    (key, fullname))
+                continue
+
+            if flag == HDF5StorageService.TABLE:
+                # self._logger.log(1, 'SUB-Storing %s TABLE', key)
+                self._prm_write_into_pytable(key, data_to_store, hdf5_group, fullname,
+                                             **kwargs)
+            elif flag == HDF5StorageService.DICT:
+                # self._logger.log(1, 'SUB-Storing %s DICT', key)
+                self._prm_write_dict_as_table(key, data_to_store, hdf5_group, fullname,
+                                              **kwargs)
+            elif flag == HDF5StorageService.ARRAY:
+                # self._logger.log(1, 'SUB-Storing %s ARRAY', key)
+                self._prm_write_into_array(key, data_to_store, hdf5_group, fullname,
+                                           **kwargs)
+            elif flag in (HDF5StorageService.CARRAY,
+                          HDF5StorageService.EARRAY,
+                          HDF5StorageService.VLARRAY):
+                self._prm_write_into_other_array(key, data_to_store,
+                                                 hdf5_group, fullname,
+                                                 flag=flag, **kwargs)
+            elif flag in (HDF5StorageService.SERIES,
+                          HDF5StorageService.FRAME,
+                          #  HDF5StorageService.PANEL
+                          ):
+                # self._logger.log(1, 'SUB-Storing %s PANDAS', key)
+                self._prm_write_pandas_data(key, data_to_store, hdf5_group, fullname,
+                                            flag, **kwargs)
+            elif flag == HDF5StorageService.SHARED_DATA:
+                pass  # Shared data needs to be explicitly created and is not stored on
+                # the fly
+            else:
+                raise RuntimeError('You shall not pass!')
+
+            if original_hdf5_group is not None:
+                hdf5_group = original_hdf5_group
+<switch:english>
+[english] The code efficiently routes data storage while ensuring idempotency by skipping any key that already exists in the target HDF5 node, preventing unwanted overwrites during the write process.
+[english] If a user provides a nested path like 'group.sub', and only 'group' exists but is not configured as a NESTED_GROUP, what happens?
+[english] The code raises a `ValueError` because it checks if an existing group's storage type matches the requirement for nesting before proceeding with creation.
+[english] Got it. Thanks!

@@ -1,0 +1,34 @@
+[english] How can I retrieve messages from a server starting at a specific offset, while limiting results only to certain conversation IDs?
+[english] This method is designed to fetch messages by first ensuring an offset exists and then passing filtering criteria directly to the parent class's fetching mechanism.
+<switch:python>
+[python] def fetch(self, category=CATEGORY_MESSAGE, offset=DEFAULT_OFFSET, chats=None):
+        """Fetch the messages the bot can read from the server.
+
+        The method retrieves, from the Telegram server, the messages
+        sent with an offset equal or greater than the given.
+
+        A list of chats, groups and channels identifiers can be set
+        using the parameter `chats`. When it is set, only those
+        messages sent to any of these will be returned. An empty list
+        will return no messages.
+
+        :param category: the category of items to fetch
+        :param offset: obtain messages from this offset
+        :param chats: list of chat names used to filter messages
+
+        :returns: a generator of messages
+
+        :raises ValueError: when `chats` is an empty list
+        """
+        if not offset:
+            offset = DEFAULT_OFFSET
+
+        kwargs = {"offset": offset, "chats": chats}
+        items = super().fetch(category, **kwargs)
+
+        return items
+<switch:english>
+[english] It constructs keyword arguments dynamically, allowing it to reuse the core logic defined in its superclass for retrieval.
+[english] What is the specific behavior regarding the `chats` parameter based on the documentation?
+[english] If you pass an empty list for `chats`, the function will raise a ValueError as per the docstring requirement.
+[english] Got it, thanks for clarifying.

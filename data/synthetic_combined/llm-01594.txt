@@ -1,0 +1,42 @@
+[english] Can you write a function that checks which available words (like in Scrabble or Wordle) can be formed using my current letters, knowing any required starting or ending characters?
+[english] This function attempts to find possible anagram solutions by first parsing the input tiles for fixed letters and blanks. It then iterates through a list of potential dictionary words to see if they fit within the available character supply.
+<switch:python>
+[python] def anagrams_in_word(word, sowpods=False, start="", end=""):
+    """Finds anagrams in word.
+
+    Args:
+        word: the string to base our search off of
+        sowpods: boolean to declare TWL or SOWPODS words file
+        start: a string of starting characters to find anagrams based on
+        end: a string of ending characters to find anagrams based on
+
+    Yields:
+        a tuple of (word, score) that can be made with the input_word
+    """
+
+    input_letters, blanks, questions = blank_tiles(word)
+
+    for tile in start + end:
+        input_letters.append(tile)
+
+    for word in word_list(sowpods, start, end):
+        lmap = _letter_map(input_letters)
+        used_blanks = 0
+        for letter in word:
+            if letter in lmap:
+                lmap[letter] -= 1
+                if lmap[letter] < 0:
+                    used_blanks += 1
+                    if used_blanks > (blanks + questions):
+                        break
+            else:
+                used_blanks += 1
+                if used_blanks > (blanks + questions):
+                    break
+        else:
+            yield (word, word_score(word, input_letters, questions))
+<switch:english>
+[english] The logic carefully tracks used blanks against the total number of unknown tiles (blanks plus question marks) to ensure validity. Note that success depends on the external helper functions like `blank_tiles` and `word_list` being correctly implemented.
+[english] What happens if a dictionary word requires more of a specific letter than I have, even considering the blanks?
+[english] If a required letter count exceeds the available input letters (and assuming all blanks are used for that letter), the `used_blanks` counter will increment past the total number of unknown tiles (`blanks + questions`), and that word is discarded.
+[english] Got it, thanks for clarifying how the tile usage works!

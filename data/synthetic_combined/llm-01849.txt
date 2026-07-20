@@ -1,0 +1,39 @@
+[english] I need a function to parse Jenkins console output and extract the name of the execution node when it appears in a log line.
+[english] This function checks if the global `g_node_name` exists within an input string (`each_line`). If found, it attempts to isolate and store the associated node name into the global dictionary. It then removes itself from the provided list of handlers.
+<switch:python>
+[python] def find_node_name(each_line,temp_func_list):
+    """
+    Find the slave machine where a Jenkins job was executed on.  It will save this
+    information in g_failed_test_info_dict.  In addition, it will
+    delete this particular function handle off the temp_func_list as we do not need
+    to perform this action again.
+
+    Parameters
+    ----------
+
+    each_line :  str
+        contains a line read in from jenkins console
+    temp_func_list :  list of Python function handles
+        contains a list of functions that we want to invoke to extract information from
+        the Jenkins console text.
+
+    :return: bool to determine if text mining should continue on the jenkins console text
+    """
+    global g_node_name
+    global g_failed_test_info_dict
+
+    if g_node_name in each_line:
+        temp_strings = each_line.split()
+        [start,found,endstr] = each_line.partition(g_node_name)
+
+        if found:
+            temp_strings = endstr.split()
+            g_failed_test_info_dict["6.node_name"] = extract_true_string(temp_strings[1])
+            temp_func_list.remove(find_node_name)
+
+    return True
+<switch:english>
+[english] The code relies heavily on global state modifications (`g_node_name`, `g_failed_test_info_dict`) while processing line by line, which can make tracing data flow difficult outside this function scope.
+[english] What happens if the partition successfully finds the node name but `extract_true_string` fails to extract a valid value?
+[english] If extraction fails within `extract_true_string`, the dictionary entry '6.node_name' will be set to whatever that function returns, potentially leading to inconsistent or erroneous data.
+[english] Thanks, this makes sense!

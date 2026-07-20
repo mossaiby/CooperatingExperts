@@ -1,0 +1,55 @@
+[english] How can I implement a method to update a board state based on a specific move while tracking captures and game history?
+[english] This function manages the core logic of making a move by first incrementing the turn count and recording captured pieces for potential restoration.
+<switch:python>
+[python] def push(self, move):
+        '''
+        Updates the position with the given move and puts it onto a stack.
+        Null moves just increment the move counters, switch turns and forfeit
+        en passant capturing.
+        No validation is performed. For performance moves are assumed to be at
+        least pseudo legal. Otherwise there is no guarantee that the previous
+        board state can be restored. To check it yourself you can use:
+        >>> move in board.pseudo_legal_moves
+        True
+        '''
+        # Increment move number.
+        self.move_number += 1
+
+        # Remember game state.
+        captured_piece = self.piece_type_at(move.to_square) if move else NONE
+        self.captured_piece_stack.append(captured_piece)
+        self.move_stack.append(move)
+
+        # On a null move simply swap turns.
+        if not move:
+            self.turn ^= 1
+            return
+
+        if move.drop_piece_type:
+            # Drops.
+            piece_type = move.drop_piece_type
+            from_hand = True
+        else:
+            # Promotion.
+            piece_type = self.piece_type_at(move.from_square)
+            from_hand = False
+
+            if move.promotion:
+                piece_type = PIECE_PROMOTED[piece_type]
+
+            # Remove piece from target square.
+            self.remove_piece_at(move.from_square, False)
+
+        # Put piece on target square.
+        self.set_piece_at(move.to_square, Piece(piece_type, self.turn), from_hand, True)
+
+        # Swap turn.
+        self.turn ^= 1
+
+        # Update transposition table.
+        self.transpositions.update((self.zobrist_hash(), ))
+<switch:english>
+[english] The function handles different move types (drops vs promotions) and meticulously updates internal state, though the docstring warns that it assumes moves are pseudo-legal for performance reasons.
+[english] How does the code specifically handle a null move according to its documentation?
+[english] When `move` is falsy (a null move), the function skips all piece manipulation logic and simply swaps turns using `self.turn ^= 1`, then returns immediately.
+[english] That clarifies how state changes are managed!

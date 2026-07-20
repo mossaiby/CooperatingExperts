@@ -1,0 +1,19 @@
+[english] I need a robust way to programmatically create a new instance of a distribution object by applying specific slicing rules and parameter overrides.
+[english] This function is designed to generate a modified copy of an existing distribution. It first determines if any explicit slicing logic is needed using helper functions, builds the override dictionary, and then creates a fresh object.
+<switch:python>
+[python] def _apply_single_step(dist, params_event_ndims, slices, params_overrides):
+  """Applies a single slicing step to `dist`, returning a new instance."""
+  if len(slices) == 1 and slices[0] == Ellipsis:
+    # The path used by Distribution.copy: batch_slice(...args..., Ellipsis)
+    override_dict = {}
+  else:
+    override_dict = _slice_params_to_dict(dist, params_event_ndims, slices)
+  override_dict.update(params_overrides)
+  parameters = dict(dist.parameters, **override_dict)
+  new_dist = type(dist)(**parameters)
+  return new_dist
+<switch:english>
+[english] The function ensures the returned object is of the exact same class as the input distribution by using `type(dist)`. This method cleanly combines calculated slices and manual overrides before initialization.
+[english] If I include a parameter in `params_overrides` that doesn't exist in `dist.parameters`, how does the function handle that?
+[english] When merging, parameters in `params_overrides` are added to the new distribution because they are included in the `override_dict` before updating the parameters dictionary.
+[english] Thanks for clarifying how the parameter updates work!

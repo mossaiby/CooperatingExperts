@@ -1,0 +1,36 @@
+[english] I have a PED file and need to extract all necessary family information, including sample IDs, parents, sex, and phenotype into a structured format.
+[english] This function streamlines the parsing process by using an internal `FamilyParser` object. It first enforces that the input stream represents exactly one family before structuring the individual data into a list of dictionaries.
+<switch:python>
+[python] def parse_ped(ped_stream, family_type='ped'):
+    """Parse out minimal family information from a PED file.
+
+    Args:
+        ped_stream(iterable(str))
+        family_type(str): Format of the pedigree information
+
+    Returns:
+        family_id(str), samples(list[dict])
+    """
+    pedigree = FamilyParser(ped_stream, family_type=family_type)
+
+    if len(pedigree.families) != 1:
+        raise PedigreeError("Only one case per ped file is allowed")
+
+    family_id = list(pedigree.families.keys())[0]
+    family = pedigree.families[family_id]
+
+    samples = [{
+        'sample_id': ind_id,
+        'father': individual.father,
+        'mother': individual.mother,
+        # Convert sex to human readable
+        'sex': SEX_MAP[individual.sex],
+        'phenotype': PHENOTYPE_MAP[int(individual.phenotype)],
+    } for ind_id, individual in family.individuals.items()]
+
+    return family_id, samples
+<switch:english>
+[english] The function heavily relies on external mappings (`SEX_MAP`, `PHENOTYPE_MAP`) and assumes the input stream contains correctly formatted data for a single pedigree.
+[english] What happens if the PED file is completely empty or contains no recognized families?
+[english] If the parser finds zero families, it will fail when attempting to access `list(pedigree.families.keys())[0]`. To handle this gracefully, you might check `if not pedigree.families:` before proceeding.
+[english] That makes sense! Thanks for explaining how that works.

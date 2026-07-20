@@ -1,0 +1,14 @@
+[english] How can I parse command-line arguments passed to my script, ensuring support for international characters?
+[english] This function handles argument parsing by first cleaning up the input list to ensure Unicode compatibility across different Python versions.
+<switch:python>
+[python] def _parse_args(self, args):
+        """self.parser->self.parsed_data"""
+        # decode sys.argv to support unicode command-line options
+        enc = DEFAULT_ENCODING
+        uargs = [py3compat.cast_unicode(a, enc) for a in args]
+        self.parsed_data, self.extra_args = self.parser.parse_known_args(uargs)
+<switch:english>
+[english] The function uses `parse_known_args` which separates valid options from any unknown extra inputs.
+[english] What happens if one of the items in `args` is already a unicode object?
+[english] Since it is cast via `py3compat.cast_unicode(a, enc)`, if 'a' is already unicode, this ensures its representation remains consistent with the specified encoding.
+[english] That clarifies how unicode inputs are handled.

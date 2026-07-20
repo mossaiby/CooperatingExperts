@@ -1,0 +1,18 @@
+[english] How do I publish a message with a specific time delay to an NSQ topic using this Python wrapper?
+[english] To ensure efficient publishing, this function wraps the core operation while handling necessary parameters like the target topic and delivery timing.
+<switch:python>
+[python] def dpub(self, topic, delay_ms, msg, callback=None):
+        """
+        publish multiple messages in one command (efficiently)
+
+        :param topic: nsq topic
+        :param delay_ms: tell nsqd to delay delivery for this long (integer milliseconds)
+        :param msg: message body (bytes)
+        :param callback: function which takes (conn, data) (data may be nsq.Error)
+        """
+        self._pub('dpub', topic, msg, delay_ms, callback=callback)
+<switch:english>
+[english] The `dpub` method delegates the actual work to `self._pub`, passing along all message details and callbacks for asynchronous handling.
+[english] If self._pub fails due to a connection issue, how is that error typically handled?
+[english] Connection errors are usually managed by defining an appropriate function in the optional `callback` argument. The callback receives the connection object and any error data if delivery fails.
+[english] Got it! Thanks for clarifying this mechanism.

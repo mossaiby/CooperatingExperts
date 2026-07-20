@@ -1,0 +1,20 @@
+[english] How can I reliably close a connection socket to free up system resources?
+[english] To ensure the socket is closed only once, we first check an internal status flag before calling the actual cleanup method.
+<switch:python>
+[python] def close(self):
+        # type: () -> None
+        """Close the socket to free system resources.
+
+        After the socket is closed, further operations with socket
+        will fail. Multiple calls to close will have no effect.
+        """
+
+        if self._closed:
+            return
+        self._socket.close()
+        self._closed = True
+<switch:english>
+[english] This approach guarantees idempotency and prevents errors from attempting to use or close an already terminated resource.
+[english] What happens if another thread calls this function while it's in the middle of closing?
+[english] Currently, there are no explicit locks. For concurrent access, you might consider using a threading Lock around the entire method body.
+[english] That makes sense for robust network services.

@@ -1,0 +1,24 @@
+[english] I need a way to safely add a specific certificate revocation entry to my Certificate Revocation List (CRL).
+[english] This function adds a revoked entry by creating an explicit copy of the input object before integrating it into the CRL structure.
+<switch:python>
+[python] def add_revoked(self, revoked):
+        """
+        Add a revoked (by value not reference) to the CRL structure
+
+        This revocation will be added by value, not by reference. That
+        means it's okay to mutate it after adding: it won't affect
+        this CRL.
+
+        :param Revoked revoked: The new revocation.
+        :return: ``None``
+        """
+        copy = _lib.Cryptography_X509_REVOKED_dup(revoked._revoked)
+        _openssl_assert(copy != _ffi.NULL)
+
+        add_result = _lib.X509_CRL_add0_revoked(self._crl, copy)
+        _openssl_assert(add_result != 0)
+<switch:english>
+[english] The use of `Cryptography_X509_REVOKED_dup` guarantees that any future changes made to the original revocation object will not alter this specific CRL instance.
+[english] Does this method handle cases where a revocation entry might already exist in the list, or does it always append a duplicate?
+[english] The underlying OpenSSL call `X509_CRL_add0_revoked` typically performs an unconditional addition. If the input is duplicated, both entries will likely remain in the CRL structure.
+[english] Thank you for clarifying that copy mechanism.

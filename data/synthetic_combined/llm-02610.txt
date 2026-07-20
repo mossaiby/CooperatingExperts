@@ -1,0 +1,18 @@
+[english] I need a function that finds a specific mapping class based on hardware identifiers provided by a Controller object.
+[english] This function attempts to look up a required controller mapping within an internal registry using unique vendor and product IDs. If the lookup fails, it handles the error gracefully.
+<switch:python>
+[python] def get(cls, controller):
+        '''Find a mapping that can apply to the given controller.  Returns None if unsuccessful.
+
+        :param controller: :class:`Controller` to look up
+        :return: :class:`ControllerMapping`
+        '''
+        try:
+            return cls._registry[(controller.vendor_id, controller.product_id)]
+        except KeyError:
+            return None
+<switch:english>
+[english] The code uses a try-except block around a dictionary lookup on `cls._registry` to ensure that if no matching ID is found, the function returns None instead of raising a KeyError.
+[english] What specific data types are expected for `controller.vendor_id` and `controller.product_id`?
+[english] They are expected to be hashable immutable types like strings or integers so they can form keys in the dictionary lookup: (int, str), for example.
+[english] Got it, that clarifies how the IDs should be structured.

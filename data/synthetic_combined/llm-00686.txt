@@ -1,0 +1,15 @@
+[english] How can I remove or nullify a specific cached attribute, like 'x' or 'y', while keeping the rest of the data intact?
+[english] To achieve this, we create a new `_Mapping` instance that copies existing data but explicitly nullifies the targeted attribute based on the input field.
+<switch:python>
+[python] def remove(self, field):
+    """To support weak referencing, removes cache key from the cache value."""
+    return _Mapping(
+        x=None if field == "x" else self.x,
+        y=None if field == "y" else self.y,
+        ildj=self.ildj,
+        kwargs=self.kwargs)
+<switch:english>
+[english] This method preserves immutability by constructing and returning an entirely new object. Be aware that it only handles explicit field removals for 'x' or 'y'.
+[english] What would happen if I called this method with a field name that wasn't 'x' or 'y', like 'z'?
+[english] If the provided field does not match 'x' or 'y', the mapping will retain its original value from `self` for that attribute, ensuring only targeted fields are nullified.
+[english] That makes sense; good to know how the default branching works!

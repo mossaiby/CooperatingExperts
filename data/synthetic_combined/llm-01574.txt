@@ -1,0 +1,16 @@
+[english] I need a way to normalize and rename dictionary keys across an entire list of data records using a reference mapping.
+[english] The `transform` method processes the input list of dictionaries by iterating through each record. It leverages two lambda functions: one to perform key renaming based on your predefined names, and another to ensure only relevant fields are processed.
+<switch:python>
+[python] def transform(self, X, y=None):
+        '''
+        :X: list of dict
+        '''
+        return map_dict_list(
+            X,
+            key_func=lambda k, v: self.names[k.lower()],
+            if_func=lambda k, v: k.lower() in self.names)
+<switch:english>
+[english] This transformation relies heavily on the external helper function `map_dict_list`. Be aware that any keys not explicitly listed in `self.names` will be filtered out of the final output.
+[english] If a key present in the input dictionary doesn't exist as a lowercase entry in self.names, does it just get dropped from the record?
+[english] Yes, because the `if_func` checks for the existence of keys within `self.names`. If the check fails, that specific key-value pair is excluded during mapping.
+[english] I see. So filtering happens before renaming?

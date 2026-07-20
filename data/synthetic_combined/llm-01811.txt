@@ -1,0 +1,15 @@
+[english] I need to list all roles associated with a specific account using its SIS ID.
+[english] This method acts as a wrapper, taking an `account_sis_id` and converting it to the system's internal identity before calling the main role retrieval logic. It uses helper methods like `self._sis_id` to ensure correct parameter formatting.
+<switch:python>
+[python] def get_roles_by_account_sis_id(self, account_sis_id, params={}):
+        """
+        List the roles for an account, for the passed account SIS ID.
+        """
+        return self.get_roles_in_account(self._sis_id(account_sis_id,
+                                                      sis_field="account"),
+                                         params)
+<switch:english>
+[english] While concise, this function relies heavily on the proper implementation of `self._sis_id`. If that helper is faulty, the entire lookup will fail even if the ID itself is valid.
+[english] How does this function handle cases where multiple roles might be returned for a single SIS ID?
+[english] Since it calls `get_roles_in_account`, any implementation details regarding role aggregation or pagination are handled within that internal method, not here.
+[english] Got it, thanks for the clarification!

@@ -1,0 +1,23 @@
+[english] How do I safely initialize and retrieve a single, correctly configured default executor instance that persists throughout my application run?
+[english] This function uses a singleton pattern to manage the executor lifecycle. It checks a global cache first; if no instance exists, it fetches configuration details and initializes the necessary object.
+<switch:python>
+[python] def get_default_executor():
+    """Creates a new instance of the configured executor if none exists and returns it"""
+    global DEFAULT_EXECUTOR
+
+    if DEFAULT_EXECUTOR is not None:
+        return DEFAULT_EXECUTOR
+
+    executor_name = configuration.conf.get('core', 'EXECUTOR')
+
+    DEFAULT_EXECUTOR = _get_executor(executor_name)
+
+    log = LoggingMixin().log
+    log.info("Using executor %s", executor_name)
+
+    return DEFAULT_EXECUTOR
+<switch:english>
+[english] By storing the initialized object in `DEFAULT_EXECUTOR`, subsequent calls skip instantiation, which conserves resources and maintains state consistency across the application.
+[english] If another part of my code tries to set a different executor name between my initialization and use, will this function adapt?
+[english] No, once initialized, it returns that specific instance. To allow dynamic changes, you would need logic outside this function to manually clear or re-initialize `DEFAULT_EXECUTOR`.
+[english] I see; I should handle configuration updates by explicitly resetting the executor.

@@ -1,0 +1,26 @@
+[english] How can I programmatically capture and store the generated content for every child element within a layout structure?
+[english] This function iterates over all children in the current layout. For each child, it temporarily swaps out its output stream to capture only that specific child's rendered result.
+<switch:python>
+[python] def compute_content(self, layout):
+        """trick to compute the formatting of children layout before actually
+        writing it
+
+        return an iterator on strings (one for each child element)
+        """
+        # Patch the underlying output stream with a fresh-generated stream,
+        # which is used to store a temporary representation of a child
+        # node.
+        out = self.out
+        try:
+            for child in layout.children:
+                stream = StringIO()
+                self.out = stream
+                child.accept(self)
+                yield stream.getvalue()
+        finally:
+            self.out = out
+<switch:english>
+[english] The use of the finally block is crucial here; it ensures the original state is restored even if a child element fails during rendering.
+[english] What happens to the layout's internal `self.out` attribute after the loop finishes successfully?
+[english] After the loop finishes, the context's output stream will be set back to its initial value (`out`), effectively hiding the temporary streams used for capturing child content.
+[english] Perfect, this clarifies how state management is handled during iteration.

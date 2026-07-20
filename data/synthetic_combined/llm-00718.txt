@@ -1,0 +1,56 @@
+[english] I need a way to reliably parse complex database connection strings, like PostgreSQL or MySQL URLs, into structured configuration fields.
+[english] This function utilizes standard URL parsing utilities to break the input string down into its constituent parts (scheme, host, path). It then systematically extracts information and maps it onto a specific DatabaseInfo structure.
+<switch:python>
+[python] def parse_database_url(url):
+    """
+    Parse a database URL and return a DatabaseInfo named tuple.
+
+    :param url: Database URL
+    :return: DatabaseInfo instance
+
+    Example:
+    >>> conf = parse_database_url(
+    ...     'pgsql://joar:hunter2@5monkeys.se:4242/tweets/tweetschema'
+    ...     '?hello=world')
+    >>> conf  # doctest: +NORMALIZE_WHITESPACE
+    DatabaseInfo(engine='django.db.backends.postgresql_psycopg2',
+                 name='tweets',
+                 schema='tweetschema',
+                 user='joar',
+                 password='hunter2',
+                 host='5monkeys.se',
+                 port=4242,
+                 params={'hello': 'world'})
+    """
+    if url == "sqlite://:memory:":
+        raise Exception(
+            'Your url is "sqlite://:memory:", if you want '
+            'an sqlite memory database, just use "sqlite://"'
+        )
+    url_parts = urlsplit(url)
+
+    engine = get_engine(url_parts.scheme)
+    database, schema = parse_path(url_parts.path)
+    port = url_parts.port
+    host = url_parts.hostname
+    user = url_parts.username
+    password = url_parts.password
+
+    # Take the last element of every parameter list
+    params = {key: val.pop() for key, val in parse_qs(url_parts.query).items()}
+
+    return DatabaseInfo(
+        engine=engine,
+        name=database,
+        schema=schema,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        params=params,
+    )
+<switch:english>
+[english] The implementation relies on helper functions like `get_engine` and `parse_path` to handle database specifics. Be aware that parameter parsing automatically handles multiple values for a single query key.
+[english] What happens if the provided URL contains absolutely no extra information, meaning neither a path nor any query parameters?
+[english] If there are no additional components beyond the basic host and username, the `path` component will likely denote the database name directly. The resulting `params` dictionary will simply be empty.
+[english] That makes sense; relying on standard URL structure helps keep things clean.

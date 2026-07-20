@@ -1,0 +1,45 @@
+[english] I need a function to verify if a signed Metadata Statement request JWT is authentic by using keys contained inside its own body.
+[english] This function verifies that an incoming signed request, SMSReq, is cryptographically sound. It first extracts the issuer and the public signing keys from the token's payload before determining which specific key should be used for validation.
+<switch:python>
+[python] def verify_request_signed_by_signing_keys(smsreq):
+    """
+    Verify that a JWT is signed with a key that is inside the JWT.
+    
+    :param smsreq: Signed Metadata Statement signing request
+    :return: Dictionary containing 'ms' (the signed request) and 'iss' (the
+        issuer of the JWT).
+    """
+
+    _jws = factory(smsreq)
+    _json = _jws.jwt.part[1]
+    _body = json.loads(as_unicode(_json))
+    iss = _body['iss']
+    _jwks = _body['signing_keys']
+
+    _kj = jwks_to_keyjar(_jwks, iss)
+
+    try:
+        _kid = _jws.jwt.headers['kid']
+    except KeyError:
+        _keys = _kj.get_signing_key(owner=iss)
+    else:
+        _keys = _kj.get_signing_key(owner=iss, kid=_kid)
+
+    _ver = _jws.verify_compact(smsreq, _keys)
+    # remove the JWT specific claims
+    for k in JsonWebToken.c_param.keys():
+        try:
+            del _ver[k]
+        except KeyError:
+            pass
+    try:
+        del _ver['kid']
+    except KeyError:
+        pass
+
+    return {'ms': MetadataStatement(**_ver), 'iss': iss}
+<switch:english>
+[english] The verification results are then cleaned of all JWT-specific claims like 'kid' or 'iss'. This ensures that only the core metadata part of the statement is returned in the final object.
+[english] If I pass an SMSReq where the signing keys are valid but none match the kid header, will the function ever find a key to verify the signature?
+[english] The code attempts to use `_kj.get_signing_key(owner=iss)` if the 'kid' is missing or fails. If no key can be found matching the issuer (`iss`) or the specific key ID (`kid`), `jwt.verify` will raise an appropriate cryptographic error.
+[english] Great, that covers my main concerns about key resolution.

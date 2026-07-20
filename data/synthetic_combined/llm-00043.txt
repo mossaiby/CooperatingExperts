@@ -1,0 +1,17 @@
+[english] I need to check if a specific keyboard modifier, like Shift or Ctrl, is currently being held down using a bitmask.
+[english] This function translates a human-readable modifier name into its corresponding integer value and then checks if that specific bit exists within the provided modifiers mask. It uses a lookup dictionary for this conversion to make it easy to use in keyboard listeners.
+<switch:python>
+[python] def mod_is_held(self,modname,modifiers):
+        """
+        Helper method to simplify checking if a modifier is held.
+        
+        :param str modname: Name of the modifier, see :py:data:`MODNAME2MODIFIER`
+        :param int modifiers: Bitmask to check in, same as the modifiers argument of the on_key_press etc. handlers
+        """
+        modifier = MODNAME2MODIFIER[modname.lower()]
+        return modifiers&modifier
+<switch:english>
+[english] The '&' operator performs a bitwise AND between the input mods and the target mod, which returns a non-zero value if at least some of the bits are set in common.
+[english] What happens if `modname` is lowercase but not present as a key in `MODNAME2MODIFIER`?
+[english] If `modname.lower()` is not found in the lookup table, accessing it will raise a KeyError when trying to get the modifier's value.
+[english] That makes sense!

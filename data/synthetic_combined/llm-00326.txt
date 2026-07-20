@@ -1,0 +1,18 @@
+[english] How can I compute a specific filter response for an audio signal using its spectral characteristics?
+[english] This function first applies a Short-Time Fourier Transform (STFT) to convert the time series into a matrix representation. It then projects this STFT data using your custom frequency basis.
+<switch:python>
+[python] def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
+    '''Compute the filter response with a target STFT hop.'''
+
+    # Compute the STFT matrix
+    D = stft(y, n_fft=n_fft, hop_length=hop_length,
+             window='ones',
+             pad_mode=mode)
+
+    # And filter response energy
+    return fft_basis.dot(D)
+<switch:english>
+[english] The result is a filtered representation of the signal's spectrum, allowing you to analyze different frequency bands defined in `fft_basis`.
+[english] If the input signal is very short and shorter than n_fft, how does the padding mode affect the output dimensions?
+[english] The chosen `pad_mode` dictates how boundaries are handled during STFT calculation. If 'zeros' or 'reflect' is used, it ensures the resulting matrix D will have at least one row corresponding to the padded duration.
+[english] Thanks for clarifying how padding works in this context.

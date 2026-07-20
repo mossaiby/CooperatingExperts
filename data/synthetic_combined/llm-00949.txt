@@ -1,0 +1,33 @@
+[english] How do I safely retrieve events from a queue until the associated worker process has finished all its work and terminated?
+[english] This function continuously polls a shared multiprocessing queue. It manages timeouts by checking the status of the child process to determine when it's safe to definitively conclude that no more events are coming.
+<switch:python>
+[python] def get_next_event(process, queue):
+    '''
+    This function polls the process until it returns a valid
+    item or returns PROCESS_DEAD_AND_QUEUE_EMPTY if it is in
+    a state where the process has terminated and the queue is empty
+
+    Warning: if the child process is in an infinite loop. This will
+    also infinitely loop.
+    '''
+    while True:
+        try:
+            return queue.get(block=True, timeout=TICK)
+        except multiprocessing.queues.Empty:
+            if not process.is_alive():
+                # There is a possibility that after the last queue.get the
+                # process created another event and then died. In that case
+                # we want to continue draining the queue.
+                try:
+                    return queue.get(block=False)
+                except multiprocessing.queues.Empty:
+                    # If the queue empty we know that there are no more events
+                    # and that the process has died.
+                    return PROCESS_DEAD_AND_QUEUE_EMPTY
+
+    check.failed('unreachable')
+<switch:english>
+[english] The warning is crucial: since this loop relies on polling, if the represented child process enters an infinite busy-wait loop, this function will also run indefinitely.
+[english] What specific sequence of conditions leads to the `PROCESS_DEAD_AND_QUEUE_EMPTY` return value?
+[english] This state is reached only after two events: first, the primary blocking queue call times out, and second, a subsequent non-blocking check confirms both that the process itself has terminated AND the queue contains no remaining items.
+[english] I understand how the termination condition works now.

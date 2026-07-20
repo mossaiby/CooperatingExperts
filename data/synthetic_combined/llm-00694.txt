@@ -1,0 +1,85 @@
+[english] How do I iteratively refine word transition probabilities (English to foreign) using sentence pairs?
+[english] This function performs Expectation-Maximization (EM) iterations to update translation probabilities $t(e|f)$ over a specified number of cycles. It calculates expected counts and totals based on known sentence pairs and existing transition data.
+<switch:python>
+[python] def iterateEM(self, count):
+        '''
+        Iterate through all transmissions of english to
+        foreign words. keep count of repeated occurences
+         do until convergence
+           set count(e|f) to 0 for all e,f
+           set total(f) to 0 for all f
+           for all sentence pairs (e_s,f_s)
+             set total_s(e) = 0 for all e
+             for all words e in e_s
+               for all words f in f_s
+                 total_s(e) += t(e|f)
+             for all words e in e_s
+               for all words f in f_s
+                 count(e|f) += t(e|f) / total_s(e)
+                 total(f)   += t(e|f) / total_s(e)
+           for all f
+             for all e
+               t(e|f) = count(e|f) / total(f)
+        '''
+
+        for iter in range(count):
+
+            countef = {}
+            totalf = {}
+            # set the count of the words to zero
+            for word in self.en_words:
+                if(word not in self.probs):
+                    continue
+
+                word_probs = self.probs[word]
+
+                count = dict([(w, 0) for w in word_probs])
+                countef[word] = count
+                totalf[word] = 0
+
+            self.countef = countef
+
+            self.totalf = totalf
+
+            # NOW iterate over each word pair
+            for (es, ds) in self.sent_pairs:
+                es_split = es.split()
+                ds_split = ds.split()
+
+                for d in ds_split:
+                    self.totals[d] = 0
+                    for e in es_split:
+
+                        if (e not in self.transmissions):
+                            continue
+
+                        e_trans = self.transmissions[e]
+
+                        if (d not in e_trans):
+                            continue
+
+                        self.totals[d] += e_trans[d]
+
+                    # Get count(e|f) and total(f)
+                    for e in es_split:
+                        if(e not in self.transmissions):
+                            continue
+                        if (d not in self.transmissions[e]):
+                            continue
+                        self.countef[e][
+                            d] += self.transmissions[e][d] / self.totals[d]
+                        self.totalf[
+                            e] += self.transmissions[e][d] / self.totals[d]
+
+            for e in self.en_words:
+                if (e not in self.probs):
+                    continue
+                e_prob = self.probs[e]
+                for d in e_prob:
+                    self.transmissions[e][d] = self.countef[
+                        e][d] / self.totalf[e]
+<switch:english>
+[english] The process refines the probability matrix by normalizing observed transmission counts against total occurrences, improving the estimates over each iteration of `iter`.
+[english] What happens if a word in an English sentence (`es`) doesn't appear as a source word in `self.transmissions`?
+[english] If a word isn't present in `self.transmissions`, it is skipped by the initial checks (e not in self.transmissions or d not in e_trans), meaning its contribution to counts and totals remains zero during that iteration.
+[english] That makes sense, I appreciate the detailed breakdown!

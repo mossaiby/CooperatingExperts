@@ -1,0 +1,13 @@
+[english] How can I repeat a specific tensor $n$ times along a new batch dimension using TensorFlow?
+[english] To replicate the input tensor `tensor` into a larger shape with $n$ copies in the first dimension, we first use tf.expand_dims to introduce that new leading axis. Then, we calculate and apply tiling factors.
+<switch:python>
+[python] def _replicate(n, tensor):
+  """Replicate the input tensor n times along a new (major) dimension."""
+  # TODO(axch) Does this already exist somewhere?  Should it get contributed?
+  multiples = tf.concat([[n], tf.ones_like(tensor.shape)], axis=0)
+  return tf.tile(tf.expand_dims(tensor, axis=0), multiples)
+<switch:english>
+[english] The function returns a newly replicated tensor by merging the replication factor n with the original tensor's dimensions using tf.tile on an expanded version of the input.
+[english] If the input tensor already has multiple leading dimensions, would this function still correctly place $n$ copies at the very front?
+[english] Yes, because it uses tf.expand_dims(tensor, axis=0) to always insert the new dimension as index 0 before calculating the multiples.
+[english] This looks like a useful helper for batch operations.

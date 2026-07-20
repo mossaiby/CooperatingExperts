@@ -1,0 +1,21 @@
+[english] How can I normalize a single test expression from my parsing tree into a consistent list of AST statements?
+[english] This function ensures that we always get back a list of statements, even if the input is just one piece of code. It checks if the input `pt` is already iterable; otherwise, it wraps the expression inside an 'if not' structure.
+<switch:python>
+[python] def _clause(self, pt: parsing.ParserTree) -> [ast.stmt]:
+        """Normalize a test expression into a statements list.
+
+        Statements list are returned as-is.
+        Expression is packaged as:
+        if not expr:
+            return False
+        """
+        if isinstance(pt, list):
+            return pt
+        return [ast.If(ast.UnaryOp(ast.Not(), pt),
+                       [self.__exit_scope()],
+                       [])]
+<switch:english>
+[english] The function guarantees a statement list output. Remember that the resulting AST block will always be conditionally entered based on the truthiness of the initial expression.
+[english] If I pass in multiple statements as a flat list, does the function wrap them in unnecessary 'if not' conditions?
+[english] No, if `pt` is already an instance of `list`, the first line of the function simply returns it immediately without modification.
+[english] Got it. That helps simplify my statement generation process.

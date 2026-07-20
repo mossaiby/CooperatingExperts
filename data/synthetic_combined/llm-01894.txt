@@ -1,0 +1,42 @@
+[english] How can I track the relative magnitude of gradient updates for each trainable variable during training to monitor convergence or stability?
+[english] This function systematically maps all trainable variables and their gradients, then computes a normalized update norm for each one.
+<switch:python>
+[python] def summary_gradient_updates(grads, opt, lr):
+    """get summary ops for the magnitude of gradient updates"""
+
+    # strategy:
+    # make a dict of variable name -> [variable, grad, adagrad slot]
+    vars_grads = {}
+    for v in tf.trainable_variables():
+        vars_grads[v.name] = [v, None, None]
+    for g, v in grads:
+        vars_grads[v.name][1] = g
+        vars_grads[v.name][2] = opt.get_slot(v, 'accumulator')
+
+    # now make summaries
+    ret = []
+    for vname, (v, g, a) in vars_grads.items():
+
+        if g is None:
+            continue
+
+        if isinstance(g, tf.IndexedSlices):
+            # a sparse gradient - only take norm of params that are updated
+            updates = lr * g.values
+            if a is not None:
+                updates /= tf.sqrt(tf.gather(a, g.indices))
+        else:
+            updates = lr * g
+            if a is not None:
+                updates /= tf.sqrt(a)
+
+        values_norm = tf.sqrt(tf.reduce_sum(v * v)) + 1.0e-7
+        updates_norm = tf.sqrt(tf.reduce_sum(updates * updates))
+        ret.append(tf.summary.scalar('UPDATE/' + vname.replace(":", "_"), updates_norm / values_norm))
+
+    return ret
+<switch:english>
+[english] The function calculates the ratio of gradient update norm to parameter value norm (`updates_norm / values_norm`), providing a relative measure of change.
+[english] What happens if an adagrad slot `a` is None, and it's a non-sparse gradient?
+[english] If `a` is `None`, the code executes `updates = lr * g`. This means the update norm calculation will rely solely on the learning rate (`lr`) times the gradient norm, effectively ignoring any adaptive scaling.
+[english] Got it, thanks for clarifying that edge case!

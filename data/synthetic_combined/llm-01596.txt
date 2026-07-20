@@ -1,0 +1,35 @@
+[english] I need to selectively zero out pixels in an image array that fall above or below a certain threshold, and I also want the option to apply this logic via a separate mask.
+[english] This function provides a flexible way to apply thresholds to your data. It checks if a mask is provided; otherwise, it directly modifies the input data by comparing values against the specified threshold.
+<switch:python>
+[python] def threshold_img(data, threshold, mask=None, mask_out='below'):
+    """ Threshold data, setting all values in the array above/below threshold
+    to zero.
+    Args:
+        data (ndarray): The image data to threshold.
+        threshold (float): Numeric threshold to apply to image.
+        mask (ndarray): Optional 1D-array with the same length as the data. If
+            passed, the threshold is first applied to the mask, and the
+            resulting indices are used to threshold the data. This is primarily
+            useful when, e.g., applying a statistical threshold to a z-value
+            image based on a p-value threshold.
+        mask_out (str): Thresholding direction. Can be 'below' the threshold
+            (default) or 'above' the threshold. Note: use 'above' when masking
+            based on p values.
+    """
+    if mask is not None:
+        mask = threshold_img(mask, threshold, mask_out=mask_out)
+        return data * mask.astype(bool)
+    if mask_out.startswith('b'):
+        data[data < threshold] = 0
+    elif mask_out.startswith('a'):
+        data[data > threshold] = 0
+    return data
+<switch:english>
+[english] The function handles the masking logic by either directly setting values to zero or, if a mask is present, it uses boolean multiplication after recursively applying the threshold to the mask itself.
+[english] Does this function modify the original input array in place when no `mask` argument is provided?
+[english] Yes, because assignments like `data[data < threshold] = 0` directly change elements of the passed array object if it's a NumPy array. For safety, you might want to pass a copy:
+<switch:python>
+[python] data_copy = data.copy()
+threshold_img(data_copy, T)
+<switch:english>
+[english] That makes sense; I will ensure I always work on copies of my data!

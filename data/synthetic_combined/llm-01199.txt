@@ -1,0 +1,57 @@
+[english] How can I automate the process of uploading local input files from a task's ports to S3 and replace their paths with S3 URLs?
+[english] This function iterates over all defined input ports. It first filters out any unwanted ports before validating that the port points to an existing directory locally.
+<switch:python>
+[python] def upload_input_ports(self, port_list=None, exclude_list=None):
+        """
+        Takes the workflow value for each port and does the following:
+            * If local filesystem -> Uploads locally files to s3.
+                S3 location will be as follows:
+                    gbd-customer-data/<acct_id>/<workflow_name>/<task_name>/<port_name>/
+            * If S3 url -> do nothing.
+        :returns the update workflow with S3 urls.
+        """
+
+        input_ports = self._task.input_ports
+
+        for port in input_ports:
+
+            # If port list is not None, then only allow port names in the list
+            if port_list and port.name not in port_list:
+                continue
+
+            # Exclude ports as provided
+            if exclude_list and port.name in exclude_list:
+                continue
+
+            # port_value = port.get('value', None)
+
+            # Check if the port value is a valid file system location
+            if not port.value or not os.path.isabs(port.value) or not os.path.isdir(port.value):
+                continue
+
+            # The prefix for each key that is uploaded, not including the the acct id.
+            prefix = '{run_name}/{port}'.format(
+                run_name=self._task.run_name,
+                # task=self._task.name,
+                port=port.name
+            )
+
+            port_files = self._get_port_files(port.value, prefix)
+
+            # Update the port value with an S3 url
+            port.value = '%s/%s' % (self.s3_root, prefix)
+
+            if len(port_files) == 0:
+                printer('Port %s is empty, push to S3 skipped' % port.name)
+            else:
+                self.storage.upload(port_files)
+                printer('Port %s pushed to account storage, %s files' % (port.name, len(port_files)))
+<switch:english>
+[english] If successful, it uploads the files via `self.storage.upload` and updates the port's value to a corresponding S3 path relative to the S3 root.
+[english] What happens if a port value exists but does not point to a directory? Does the function handle that gracefully?
+[english] The initial checks prevent processing non-directory locations; specifically, this block handles invalid paths by skipping them:
+<switch:python>
+[python] if not port.value or not os.path.isabs(port.value) or not os.path.isdir(port.value):
+    continue
+<switch:english>
+[english] That makes sense, thanks for clarifying.

@@ -1,0 +1,38 @@
+[english] How can I extract the dimensional offsets for a potentially multi-dimensional array reference defined using an AST?
+[english] This function recursively traverses the Array Reference object to determine its total dimensionality and associated shifts. It processes nested subscripts and identifies variable dependencies, aiming to map complex structural data into a simple offset tuple.
+<switch:python>
+[python] def _get_offsets(self, aref, dim=0):
+        """
+        Return a tuple of offsets of an ArrayRef object in all dimensions.
+
+        The index order is right to left (c-code order).
+        e.g. c[i+1][j-2] -> (-2, +1)
+
+        If aref is actually a c_ast.ID, None will be returned.
+        """
+        if isinstance(aref, c_ast.ID):
+            return None
+
+        # Check for restrictions
+        assert type(aref.name) in [c_ast.ArrayRef, c_ast.ID], \
+            "array references must only be used with variables or other array references"
+        assert type(aref.subscript) in [c_ast.ID, c_ast.Constant, c_ast.BinaryOp], \
+            'array subscript must only contain variables or binary operations'
+
+        # Convert subscript to sympy and append
+        idxs = [self.conv_ast_to_sym(aref.subscript)]
+
+        # Check for more indices (multi-dimensional access)
+        if type(aref.name) is c_ast.ArrayRef:
+            idxs += self._get_offsets(aref.name, dim=dim+1)
+
+        # Reverse to preserver order (the subscripts in the AST are traversed backwards)
+        if dim == 0:
+            idxs.reverse()
+
+        return tuple(idxs)
+<switch:english>
+[english] By relying on `conv_ast_to_sym`, this method efficiently handles various types of index expressions while managing the specific right-to-left indexing conventions typical in C code.
+[english] If an offset is defined by a constant value (e.g., '5'), will it appear as a raw integer or a symbolic object in the returned tuple?
+[english] It relies on `self.conv_ast_to_sym`, so constants are converted into SymPy objects, ensuring consistent handling across all input types.
+[english] This makes sense; I appreciate the clarification!

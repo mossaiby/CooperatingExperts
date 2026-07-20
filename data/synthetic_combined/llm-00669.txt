@@ -1,0 +1,23 @@
+[english] How do I predict class labels for samples provided as a distributed dataset in Spark?
+[english] This method is designed to handle prediction across large, distributed datasets by taking an RDD of features and passing it directly into the internal predictive mechanism.
+<switch:python>
+[python] def predict(self, X):
+        """Distributed method to predict class labels for samples in X.
+
+        Parameters
+        ----------
+        X : ArrayRDD containing {array-like, sparse matrix}
+            Samples.
+
+        Returns
+        -------
+        C : ArrayRDD
+            Predicted class label per sample.
+        """
+        check_rdd(X, (sp.spmatrix, np.ndarray))
+        return self._spark_predict(SparkSGDClassifier, X)
+<switch:english>
+[english] The function first validates the input data types using `check_rdd` before delegating the prediction task to an specialized internal Spark method.
+[english] What happens if the input RDD contains mixed dense and sparse matrices?
+[english] While `check_rdd` allows both formats, compatibility depends on whether the underlying `SparkSGDClassifier` implementation can handle heterogeneous types efficiently during its distributed processing by `self._spark_predict`.
+[english] Does this approach inherently support fault tolerance across different Spark executors?

@@ -1,0 +1,28 @@
+[english] I have complex raw monitoring data and need a way to transform it into standardized point objects for further processing.
+[english] The method processes the incoming `data` by looping through time slices, then iterating over each host present in that slice. It extracts relevant metadata like timestamps and comments before constructing structured points using an internal helper function.
+<switch:python>
+[python] def decode_monitoring(self, data):
+        """
+        The reason why we have two separate methods for monitoring
+        and aggregates is a strong difference in incoming data.
+        """
+        points = list()
+        for second_data in data:
+            for host, host_data in second_data["data"].iteritems():
+                points.append(
+                    self.__make_points(
+                        "monitoring",
+                        {"host": host, "comment": host_data.get("comment")},
+                        second_data["timestamp"],
+                        {
+                            metric: value
+                            for metric, value in host_data["metrics"].iteritems()
+                        }
+                    )
+                )
+        return points
+<switch:english>
+[english] This method systematically unpack deeply nested monitoring data into a list of simplified point objects based on timestamp and unique metrics.
+[english] What happens if the 'metrics' key is missing for a specific host entry, or what if the overall input 'data' list is empty?
+[english] If 'data' is empty, it returns an empty list. If 'metrics' is missing, accessing `host_data["metrics"]` will raise a KeyError unless explicit error handling is added.
+[english] Got it, thanks for explaining how this data transformation works.

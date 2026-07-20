@@ -1,0 +1,14 @@
+[english] I'm building a lexer and need to ensure that tokens correctly record their ending position in the source file.
+[english] This method is used internally by your tokenizer to finalize token positioning. It calculates the exact end index for the current token (`t`) based on its starting position and length.
+<switch:python>
+[python] def t_MOD(self, t):
+        r"%"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+<switch:english>
+[english] The function modifies the input object in place, setting `endlexpos` to span from `lexpos` up to the end of the token's value.
+[english] If a token has an empty string assigned to `value`, will this correctly update the position?
+[english] Yes. Since Python's `len('')` is zero, the calculation will set the end index equal to the start index without causing errors.
+
+t
+[english] That makes sense; I feel much more confident using this for my lexing pipeline.

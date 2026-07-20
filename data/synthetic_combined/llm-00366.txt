@@ -1,0 +1,19 @@
+[english] I need a robust function that acts as a constructor for template tags by parsing and validating complex arguments.
+[english] This function is designed to process custom syntax within template tags, ensuring the input matches an expected format before constructing the final object. It first splits the provided token into component parts for analysis.
+<switch:python>
+[python] def for_tag(cls, parser, token, preposition, error_hint):
+        """Node constructor to be used in tags."""
+        tokens = token.split_contents()
+
+        if len(tokens) >= 3 and tokens[1] == preposition:
+            as_var = cls.get_as_var(tokens)
+            tree_alias = parser.compile_filter(tokens[2])
+            return cls(tree_alias, as_var)
+
+        raise template.TemplateSyntaxError(
+            '%r tag requires at least two arguments. E.g. {%% %s %%}.' % (tokens[0], error_hint))
+<switch:english>
+[english] The core logic relies on verifying the presence of a specific preposition (`preposition`) at index 1; if this check passes, it dynamically generates arguments and constructs the class instance.
+[english] If the input string contained four or more tokens that matched the required structure, would all extra tokens be ignored by the `for_tag` function?
+[english] Based on the current implementation of `for_tag`, any tokens beyond the third one are not explicitly processed and would therefore be ignored.
+[english] That clarification is very helpful for understanding argument handling.

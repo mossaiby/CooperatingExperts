@@ -1,0 +1,19 @@
+[english] How can I programmatically tell a smart home system to resume a specific scheduled thermostat program?
+[english] This function handles resuming a schedule by constructing a specialized request body. It uses the input `index` to locate a specific thermostat's identifier before sending the command.
+<switch:python>
+[python] def resume_program(self, index, resume_all=False):
+        ''' Resume currently scheduled program '''
+        body = {"selection": {
+                    "selectionType": "thermostats",
+                    "selectionMatch": self.thermostats[index]['identifier']},
+                "functions": [{"type": "resumeProgram", "params": {
+                    "resumeAll": resume_all
+                }}]}
+
+        log_msg_action = "resume program"
+        return self.make_request(body, log_msg_action)
+<switch:english>
+[english] The final call to `self.make_request` executes this defined action, allowing you to either target one device or resume all programs simultaneously via the boolean parameter.
+[english] What happens if I pass an index that is higher than the number of active thermostats in self.thermostats?
+[english] If the provided index is out of bounds for `self.thermostats`, Python will raise an IndexError when trying to access `self.thermostats[index]` within the function.
+[english] Got it, thanks for clarifying that potential issue.

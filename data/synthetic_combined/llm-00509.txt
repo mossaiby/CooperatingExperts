@@ -1,0 +1,28 @@
+[english] How can I efficiently retrieve specific attributes from various parser outputs while preventing the parser from re-running on identical input trees?
+[english] This function manages parser output retrieval by implementing caching (memoization). It generates a unique cache key based on the parser name and the hash of the input tree to determine if parsing needs to occur.
+<switch:python>
+[python] def _getx(self, Parser, ext_attr, tree):
+        """getter for Parser outputs"""
+        # return cached output if possible
+        cache_key = Parser.__name__ + str(hash(tree))
+        if self._parser_cache.get(cache_key):
+            p = self._parser_cache[cache_key]
+        else:
+            # otherwise, run parser over tree
+            p = Parser()
+            # set mappings for parsers that inspect attribute access
+            if ext_attr != "mappings" and Parser in [
+                FunctionParser,
+                ObjectAccessParser,
+            ]:
+                p.mappings = self.context_mappings.copy()
+            # run parser
+            p.visit(tree)
+            # cache
+            self._parser_cache[cache_key] = p
+        return getattr(p, ext_attr)
+<switch:english>
+[english] The code ensures efficient execution by reusing results stored in `self._parser_cache`. However, note that using `hash(tree)` relies heavily on the input structure being immutable for correct caching behavior.
+[english] What happens if the underlying 'tree' object is mutated after it has been successfully cached and returned?
+[english] If the tree mutates, its hash (used as part of the cache key) technically changes. However, since `hash(tree)` is calculated only when checking or creating a cache entry, subsequent lookups using the same reference will still hit the original, potentially inconsistent, cached result.
+[english] I appreciate you detailing those implications for data integrity.

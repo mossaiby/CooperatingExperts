@@ -1,0 +1,11 @@
+[english] I need a standardized way to report specific timing metrics within my class.
+[english] This function reports performance measurements by leveraging an internal logging hook. It takes three pieces of information: what is being measured, the actual value, and optional metadata tags.
+<switch:python>
+[python] def timing(self, stat, value, tags=None):
+        """Report a timing."""
+        self._log('timing', stat, value, tags)
+<switch:english>
+[english] This method relies entirely on the existence of an internal helper method called _log. It acts as a clean interface to pass structured data for analysis.
+[english] If I want multiple related timings, should I put all my related stats into the 'tags' argument?
+[english] The tags parameter is meant for metadata about the timing event itself (e.g., 'operation_type'). For separate measurements, you would typically call this method multiple times.
+[english] Got it; it makes sense to keep them separate.

@@ -1,0 +1,33 @@
+[english] How can I ensure that a list of explored parameters is correctly stored as an HDF5 table within a specific group?
+[english] This function manages persistent exploration data by maintaining an 'explorations' table in an HDF5 structure. It first checks if the existing number of recorded explorations matches the current ones to prevent duplicates or inconsistencies.
+<switch:python>
+[python] def _trj_store_explorations(self, traj):
+        """Stores a all explored parameter names for internal recall"""
+        nexplored = len(traj._explored_parameters)
+        if nexplored > 0:
+            if hasattr(self._overview_group, 'explorations'):
+                explorations_table = self._overview_group._f_get_child('explorations')
+                if len(explorations_table) != nexplored:
+                    self._hdf5file.remove_node(where=self._overview_group,
+                                         name='explorations')
+        if not hasattr(self._overview_group, 'explorations'):
+            explored_list = list(traj._explored_parameters.keys())
+            if explored_list:
+                string_col = self._all_get_table_col('explorations',
+                                                      explored_list,
+                                                      'overview.explorations')
+            else:
+                string_col = pt.StringCol(1)
+            description = {'explorations': string_col}
+            explorations_table = self._hdf5file.create_table(where=self._overview_group,
+                                                       name='explorations',
+                                                       description=description)
+            rows = [(x.encode('utf-8'),) for x in explored_list]
+            if rows:
+                explorations_table.append(rows)
+                explorations_table.flush()
+<switch:english>
+[english] If no corresponding table exists, it creates a new one and populates it with all parameter keys from the trajectory.
+[english] What happens if `traj._explored_parameters` is empty?
+[english] If `traj._explored_parameters` is empty, an 'explorations' table will be created but will remain empty of rows. However, when checking for existing explorations, the logic skips creation and only proceeds if it finds at least one exploration.
+[english] That makes sense, thanks.

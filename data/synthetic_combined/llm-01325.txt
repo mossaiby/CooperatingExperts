@@ -1,0 +1,52 @@
+[english] How can I use this function to identify and mark duplicate reads in a coordinate-sorted BAM file using Picard?
+[english] This function automates running the `MarkDuplicates` step from the Picard toolkit within a containerized environment. It handles downloading the input files, constructing the Docker command, and managing resource allocation.
+<switch:python>
+[python] def picard_mark_duplicates(job, bam, bai, validation_stringency='LENIENT'):
+    """
+    Runs Picard MarkDuplicates on a BAM file. Requires that the BAM file be coordinate sorted.
+
+    :param JobFunctionWrappingJob job: passed automatically by Toil
+    :param str bam: FileStoreID for BAM file
+    :param str bai: FileStoreID for BAM index file
+    :param str validation_stringency: BAM file validation stringency, default is LENIENT
+    :return: FileStoreIDs for BAM and BAI files
+    :rtype: tuple
+    """
+    work_dir = job.fileStore.getLocalTempDir()
+
+    # Retrieve file path
+    job.fileStore.readGlobalFile(bam, os.path.join(work_dir, 'sorted.bam'))
+    job.fileStore.readGlobalFile(bai, os.path.join(work_dir, 'sorted.bai'))
+
+    # Call: picardtools
+    command = ['MarkDuplicates',
+               'INPUT=sorted.bam',
+               'OUTPUT=mkdups.bam',
+               'METRICS_FILE=metrics.txt',
+               'ASSUME_SORTED=true',
+               'CREATE_INDEX=true',
+               'VALIDATION_STRINGENCY=%s' % validation_stringency.upper()]
+
+    # picard-tools container doesn't have JAVA_OPTS variable
+    # Set TMPDIR to /data to prevent writing temporary files to /tmp
+    docker_parameters = ['--rm',
+                         '--log-driver', 'none',
+                         '-e', 'JAVA_OPTIONS=-Djava.io.tmpdir=/data/ -Xmx{}'.format(job.memory),
+                         '-v', '{}:/data'.format(work_dir)]
+
+    start_time = time.time()
+    dockerCall(job=job, workDir=work_dir,
+               parameters=command,
+               tool='quay.io/ucsc_cgl/picardtools:1.95--dd5ac549b95eb3e5d166a5e310417ef13651994e',
+               dockerParameters=docker_parameters)
+    end_time = time.time()
+    _log_runtime(job, start_time, end_time, "Picard MarkDuplicates")
+
+    bam = job.fileStore.writeGlobalFile(os.path.join(work_dir, 'mkdups.bam'))
+    bai = job.fileStore.writeGlobalFile(os.path.join(work_dir, 'mkdups.bai'))
+    return bam, bai
+<switch:english>
+[english] Crucially, this utility relies on the assumption that the input BAM file is already coordinate-sorted for correct processing by Picard.
+[english] The function uses `job.memory` to set Java memory limits; does it dynamically scale based on the expected output size of 'mkdups.bam'?
+[english] No, it directly maps the allocated job memory to `-Xmx`. For large jobs, you would typically need to pre-calculate this value or use a more sophisticated resource estimation method through the `job` object.
+[english] That makes sense for managing containerized workloads!

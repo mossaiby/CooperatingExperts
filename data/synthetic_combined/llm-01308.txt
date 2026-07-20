@@ -1,0 +1,14 @@
+[english] How can a visitor method determine the number of control flow branches for a while loop definition in an Abstract Syntax Tree?
+[english] To assess complexity, we must count how many distinct execution paths exist through the `while` node. This implementation begins by initializes the branch counter to one.
+<switch:python>
+[python] def visit_while(self, node):
+        """increments the branches counter"""
+        branches = 1
+        if node.orelse:
+            branches += 1
+        self._inc_branch(node, branches)
+<switch:english>
+[english] The code checks if `node.orelse` exists; if it does, a second path is added before invoking `self._inc_branch(node, branches)` to finalize the tally.
+[english] If this function were part of a larger traversal, how would we ensure all nested conditions within the loop body are accounted for?
+[english] This method only calculates the top-level structure. To handle nesting, you must recursively call similar visit methods on both `node.body` and `node.orelse`. For instance, if nested logic results in a branch count of $n$ inside the loop body, that complexity would be determined by visiting those child nodes.
+[english] That clarifies how scope should be expanded for deeper analysis.

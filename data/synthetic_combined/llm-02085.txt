@@ -1,0 +1,35 @@
+[english] How can I convert a custom 'throw' operation defined in my internal AST nodes into executable Python code structure?
+[english] This function converts a high-level `THROW` node into a standard Python expression. It sets up a helper function that performs the actual raise and then calls it to simulate the throw action.
+<switch:python>
+[python] def _throw_to_py_ast(ctx: GeneratorContext, node: Throw) -> GeneratedPyAST:
+    """Return a Python AST Node for a `throw` expression."""
+    assert node.op == NodeOp.THROW
+
+    throw_fn = genname(_THROW_PREFIX)
+    exc_ast = gen_py_ast(ctx, node.exception)
+    raise_body = ast.Raise(exc=exc_ast.node, cause=None)
+
+    return GeneratedPyAST(
+        node=ast.Call(func=ast.Name(id=throw_fn, ctx=ast.Load()), args=[], keywords=[]),
+        dependencies=[
+            ast.FunctionDef(
+                name=throw_fn,
+                args=ast.arguments(
+                    args=[],
+                    kwarg=None,
+                    vararg=None,
+                    kwonlyargs=[],
+                    defaults=[],
+                    kw_defaults=[],
+                ),
+                body=list(chain(exc_ast.dependencies, [raise_body])),
+                decorator_list=[],
+                returns=None,
+            )
+        ],
+    )
+<switch:english>
+[english] The function defines and registers a temporary function (`throw_fn`) whose sole purpose is to execute an AST raise statement, making the 'throw' mechanism compatible with Python syntax.
+[english] If I wanted to pass variables into the exception message when calling this generated `throw`, how would I adjust the code?
+[english] You would need to update the arguments passed to the helper function and ensure that the exception initialization (`exc_ast`) uses those supplied values. The call site in your final output must also be modified to include these new variable mappings.
+[english] That makes sense, thanks for the clarification.

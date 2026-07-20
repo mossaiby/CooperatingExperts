@@ -1,0 +1,15 @@
+[english] How can I implement a measurement operation that verifies specific quantum and classical register types are used during execution?
+[english] This method handles the MEASURE instruction by updating the program structure. It first creates a measure node using operands at indices 2 and 4, then calls verification methods to ensure these operands conform to required register types.
+<switch:python>
+[python] def p_measure(self, program):
+        """
+           measure : MEASURE primary ASSIGN primary
+        """
+        program[0] = node.Measure([program[2], program[4]])
+        self.verify_reg(program[2], 'qreg')
+        self.verify_reg(program[4], 'creg')
+<switch:english>
+[english] The function relies entirely on `self.verify_reg` for validation. If either operand is missing or of an incorrect type, the method will raise a validation error during execution.
+[english] If 'program[2]' was neither a qreg nor creg, would this just crash, or does it provide specific feedback?
+[english] The call to `self.verify_reg` likely raises a specific exception if the register is not registered as demanded by the internal checks of that method.
+[english] Good to know how those validations function!

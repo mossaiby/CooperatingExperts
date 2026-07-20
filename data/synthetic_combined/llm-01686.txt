@@ -1,0 +1,57 @@
+[english] How do I ensure that backslashes used for escaping characters in a Python string conform to valid language rules?
+[english] This function inspect a non-raw string's body for potential syntax errors related to backslash usage. It iterates through the string, checking every backslash to see if it follows valid escape patterns defined by Python.
+<switch:python>
+[python] def process_non_raw_string_token(self, prefix, string_body, start_row):
+        """check for bad escapes in a non-raw string.
+
+        prefix: lowercase string of eg 'ur' string prefix markers.
+        string_body: the un-parsed body of the string, not including the quote
+        marks.
+        start_row: integer line number in the source.
+        """
+        # Walk through the string; if we see a backslash then escape the next
+        # character, and skip over it.  If we see a non-escaped character,
+        # alert, and continue.
+        #
+        # Accept a backslash when it escapes a backslash, or a quote, or
+        # end-of-line, or one of the letters that introduce a special escape
+        # sequence <http://docs.python.org/reference/lexical_analysis.html>
+        #
+        # TODO(mbp): Maybe give a separate warning about the rarely-used
+        # \a \b \v \f?
+        #
+        # TODO(mbp): We could give the column of the problem character, but
+        # add_message doesn't seem to have a way to pass it through at present.
+        i = 0
+        while True:
+            i = string_body.find("\\", i)
+            if i == -1:
+                break
+            # There must be a next character; having a backslash at the end
+            # of the string would be a SyntaxError.
+            next_char = string_body[i + 1]
+            match = string_body[i : i + 2]
+            if next_char in self.UNICODE_ESCAPE_CHARACTERS:
+                if "u" in prefix:
+                    pass
+                elif (_PY3K or self._unicode_literals) and "b" not in prefix:
+                    pass  # unicode by default
+                else:
+                    self.add_message(
+                        "anomalous-unicode-escape-in-string",
+                        line=start_row,
+                        args=(match,),
+                    )
+            elif next_char not in self.ESCAPE_CHARACTERS:
+                self.add_message(
+                    "anomalous-backslash-in-string", line=start_row, args=(match,)
+                )
+            # Whether it was a valid escape or not, backslash followed by
+            # another character can always be consumed whole: the second
+            # character can never be the start of a new backslash escape.
+            i += 2
+<switch:english>
+[english] The logic determines if an escape sequence like '\uXXXX' is acceptable based on prefixes and environment flags before flagging invalid sequences with specific error messages.
+[english] If a backslash is followed by a character not in `self.ESCAPE_CHARACTERS`, what does the function do next?
+[english] It immediately calls `self.add_message` to report an "anomalous-backslash-in-string" and skips forward two characters, regardless of whether the sequence was considered a valid escape or not.
+[english] That makes sense.

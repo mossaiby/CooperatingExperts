@@ -1,0 +1,49 @@
+[english] I need to write a script that searches a project collection and finds URLs linking to all successful zip archive artifacts.
+[english] This function starts by making an API call to retrieve job listings from the specified GitLab collection URL. It then iterates through these jobs to filter for specific artifact types.
+<switch:python>
+[python] def search_all(self, collection, job_id=None):
+    '''a "show all" search that doesn't require a query
+       the user is shown URLs to 
+    '''
+
+    results = [['job_id', 'browser']]
+ 
+    url = "%s/projects/%s/jobs" %(self.api_base, 
+                                  quote_plus(collection.strip('/')))
+
+    response = requests.get(url, headers=self.headers) 
+    if response.status_code == 200:
+        jobs = response.json()
+
+        # We can't get a listing of artifacts
+        # https://gitlab.com/gitlab-org/gitlab-ce/issues/51515
+        # Parse through jobs (each can have different tags for a collection):
+        for job in jobs:
+
+            # Only show jobs that are successful
+            if job['status'] == 'success':
+                name = job['name']
+
+                for artifact in job['artifacts']:
+                    if artifact['filename'].endswith('zip'):
+                        
+                        # The user must browse to see the names
+                        artifact_url = ("%s/%s/-/jobs/%s/artifacts/browse/%s" 
+                                        %(self.base , 
+                                          collection, 
+                                          job['id'],
+                                          name))
+                        results.append([str(job['id']), artifact_url])   
+
+    if len(results) == 1:
+        bot.info("No potential archives found in artifacts.")
+        sys.exit(0)
+
+    bot.info("Artifact Browsers (you will need path and job id for pull)")
+    bot.table(results)
+    return results
+<switch:english>
+[english] The code successfully locates ZIP files within 'successful' jobs, but remember this only provides a browse link; you will need additional logic to download the actual file content.
+[english] It currently only processes jobs where status is 'success'. What happens if I wanted it to display artifacts from failed runs too?
+[english] Currently, the line `if job['status'] == 'success':` strictly enforces success. To include all statuses, you would move or remove this condition inside the main loop.
+[english] That clarifies the logic; thanks for explaining.

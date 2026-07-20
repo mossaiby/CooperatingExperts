@@ -1,0 +1,14 @@
+[english] How can I ensure that a load function receives the correct, application-specific JSON decoder class as a default argument?
+[english] This helper injectizes a sensible default value for 'cls' into your keyword arguments. It prioritizes using an app-level decoder if it exists in the global context.
+<switch:python>
+[python] def _load_arg_defaults(kwargs):
+    """Inject default arguments for load functions."""
+    if current_app:
+        kwargs.setdefault('cls', current_app.json_decoder)
+    else:
+        kwargs.setdefault('cls', JSONDecoder)
+<switch:english>
+[english] The use of `kwargs.setdefault` is crucial here, as it ensures the default is only set if 'cls' wasn't provided initially by the caller.
+[english] What happens inside this function if both current_app and JSONDecoder are unexpectedly None?
+[english] In that case, the code would successfully hit the `else` block and attempt to set 'cls' to a global `JSONDecoder`. If even that object was None, it would inject None instead.
+[english] Got it; so the fallback is robust but relies on JSONDecoder existing globally.

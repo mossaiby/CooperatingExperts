@@ -1,0 +1,31 @@
+[english] How can I programmatically extract the last 10 lines from a large log file without loading the entire content into memory?
+[english] The function works by first finding the end of the file, then iteratively seeks backward using helper methods to locate line breaks before reading and processing the relevant chunk.
+<switch:python>
+[python] def tail(self, lines=10):
+        """
+        Return the last lines of the file.
+        """
+        self.file.seek(0, SEEK_END)
+
+        for i in range(lines):
+            if self.seek_previous_line() == -1:
+                break
+
+        data = self.file.read()
+
+        for t in self.LINE_TERMINATORS:
+            if data.endswith(t):
+                # Only terminators _between_ lines should be preserved.
+                # Otherwise terminator of the last line will be treated as separtaing line and empty line.
+                data = data[:-len(t)]
+                break
+
+        if data:
+            return self.splitlines(data)
+        else:
+            return []
+<switch:english>
+[english] The code includes special logic to strip trailing newline characters, ensuring the last line isn't split into an unwanted empty string.
+[english] What happens if the file content consists of a single line without any internal or trailing newlines?
+[english] If there are no terminators like that, the entire content will be read as one block and returned. The logic effectively treats it as a single entry: `[content]`.
+[english] This makes managing file reading much cleaner.

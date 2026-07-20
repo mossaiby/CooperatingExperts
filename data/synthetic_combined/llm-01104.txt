@@ -1,0 +1,16 @@
+[english] How can I safely instantiate a class using keyword arguments, while automatically ignoring any keys that the constructor does not recognize?
+[english] This function automates service creation by first collecting all provided keywords. It then uses an assumed helper function to validate which of those inputs match the required parameters for the target service.
+<switch:python>
+[python] def _create_storage(storage_service, trajectory=None, **kwargs):
+    """Creates a service from a constructor and checks which kwargs are not used"""
+    kwargs_copy = kwargs.copy()
+    kwargs_copy['trajectory'] = trajectory
+    matching_kwargs = get_matching_kwargs(storage_service, kwargs_copy)
+    storage_service = storage_service(**matching_kwargs)
+    unused_kwargs = set(kwargs.keys()) - set(matching_kwargs.keys())
+    return storage_service, unused_kwargs
+<switch:english>
+[english] The function returns the successfully created service object along with a set detailing all original keyword arguments that were not utilized during initialization.
+[english] If I pass an argument to `**kwargs` that isn't recognized by the constructor, how is it guaranteed to be listed in `unused_kwargs`?
+[english] The function guarantees inclusion if your code relies on set subtraction. By comparing all original input keys (`kwargs`) against only the matched keys found during instantiation (`matching_kwargs`), any extraneous input will always appear in the resulting `unused_kwargs` set.
+[english] That provides excellent coverage for error handling!

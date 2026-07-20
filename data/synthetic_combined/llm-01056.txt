@@ -1,0 +1,32 @@
+[english] How can I implement a prediction method for my machine learning model that supports both local inference and distributed processing using RDDs?
+[english] This function manages prediction execution by first validating optional arguments like `batch_size`. It then uses the `is_distributed` flag to determine whether the input data needs to be wrapped in an RDD or if a direct, local prediction call is sufficient.
+<switch:python>
+[python] def predict(self, x, batch_size=None, verbose=None, is_distributed=False):
+        """Generates output predictions for the input samples,
+        processing the samples in a batched way.
+
+        # Arguments
+            x: the input data, as a Numpy array or list of Numpy array for local mode.
+               as RDD[Sample] for distributed mode
+            is_distributed: used to control run in local or cluster. the default value is False
+        # Returns
+            A Numpy array or RDD[Sample] of predictions.
+        """
+        if batch_size or verbose:
+            raise Exception("we don't support batch_size or verbose for now")
+        if is_distributed:
+            if isinstance(x, np.ndarray):
+                input = to_sample_rdd(x, np.zeros([x.shape[0]]))
+            #  np.asarray(self.bmodel.predict(x_rdd).collect())
+            elif isinstance(x, RDD):
+                input = x
+            return self.bmodel.predict(input)
+        else:
+            if isinstance(x, np.ndarray):
+                return self.bmodel.predict_local(x)
+        raise Exception("not supported type: %s" % x)
+<switch:english>
+[english] The implementation currently enforces strict type checking for inputs. If you attempt to use `verbose` or specify a `batch_size`, the function will raise an exception as those features are not yet supported.
+[english] What happens if I pass a standard Python list containing NumPy arrays instead of a single structured input?
+[english] The current logic only explicitly checks for `np.ndarray`. Passing a raw list would likely hit the final 'not supported type' exception, as there is no explicit handling for lists within this block.
+[english] That helps clarify how I should format my data before calling this method.

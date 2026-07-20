@@ -1,0 +1,27 @@
+[english] How can I retrieve and process a complete sports schedule, including win/loss status and game outcomes, for a specific season year?
+[english] This function first fetches the raw data documentation for the specified sport year. It then parses the HTML table representing the games into a pandas DataFrame to allow for easy manipulation of the scheduling information.
+<switch:python>
+[python] def schedule(self, year):
+        """Returns a DataFrame with schedule information for the given year.
+
+        :year: The year for the season in question.
+        :returns: Pandas DataFrame with schedule information.
+        """
+        doc = self.get_year_doc(year)
+        table = doc('table#games')
+        df = sportsref.utils.parse_table(table)
+        if df.empty:
+            return pd.DataFrame()
+        df = df.loc[df['week_num'].notnull()]
+        df['week_num'] = np.arange(len(df)) + 1
+        df['is_win'] = df['game_outcome'] == 'W'
+        df['is_loss'] = df['game_outcome'] == 'L'
+        df['is_tie'] = df['game_outcome'] == 'T'
+        df['is_bye'] = df['game_outcome'].isnull()
+        df['is_ot'] = df['overtime'].notnull()
+        return df
+<switch:english>
+[english] The code transforms the raw games data into boolean helper columns like `is_win` and `is_loss`. However, note that it overwrites the original week numbers with sequential indices starting from 1.
+[english] What behavior does this function exhibit if a year's schedule is incomplete or empty?
+[english] If no games are found in the table after parsing, the code explicitly handles an empty DataFrame and returns an empty pandas Series instead of raising an error. This ensures robustness when dealing with missing data.
+[english] That clarifies everything I needed to know about this function.

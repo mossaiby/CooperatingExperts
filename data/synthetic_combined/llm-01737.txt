@@ -1,0 +1,18 @@
+[english] I need a way to add data entries to my custom header structure, ensuring that if the key already exists I append the new value.
+[english] This function implements logic for adding and managing values in a dictionary-like object. It first normalizes the input name to ensure consistency before checking if the key exists within the instance.
+<switch:python>
+[python] def add(self, name, value):
+        """Adds a new value for the given key."""
+        norm_name = HTTPHeaders._normalize_name(name)
+        self._last_key = norm_name
+        if norm_name in self:
+            # bypass our override of __setitem__ since it modifies _as_list
+            dict.__setitem__(self, norm_name, self[norm_name] + ',' + value)
+            self._as_list[norm_name].append(value)
+        else:
+            self[norm_name] = value
+<switch:english>
+[english] The method carefully handles existing keys by modifying both a comma-separated string and an internal list structure, suggesting this class manages complex data collections like HTTP headers.
+[english] What exactly is happening when the function uses `dict.__setitem__` versus directly assigning to `self[norm_name]`?
+[english] The assignment `self[norm_name] = value` sets a standard key-value pair, but when updating an existing entry inside the `if norm_name in self:` block, it uses `dict.__setitem__`. This is necessary to bypass internal overrides of `__setitem__` that potentially break the structure stored in `self._as_list`.
+[english] That makes sense, thanks!

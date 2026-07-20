@@ -1,0 +1,51 @@
+[english] I need a way to combine several independent multivariate normal distributions into a single joint distribution representation.
+[english] This function constructs the joint MVN by creating a new MultivariateNormalLinearOperator. It concatenates all component means and sets the resulting covariance as block-diagonal, where each block corresponds to an input distribution’s scale operator.
+<switch:python>
+[python] def factored_joint_mvn(distributions):
+  """Combine MultivariateNormals into a factored joint distribution.
+
+   Given a list of multivariate normal distributions
+   `dist[i] = Normal(loc[i], scale[i])`, construct the joint
+   distribution given by concatenating independent samples from these
+   distributions. This is multivariate normal with mean vector given by the
+   concatenation of the component mean vectors, and block-diagonal covariance
+   matrix in which the blocks are the component covariances.
+
+   Note that for computational efficiency, multivariate normals are represented
+   by a 'scale' (factored covariance) linear operator rather than the full
+   covariance matrix.
+
+  Args:
+    distributions: Python `iterable` of MultivariateNormal distribution
+      instances (e.g., `tfd.MultivariateNormalDiag`,
+      `tfd.MultivariateNormalTriL`, etc.). These must be broadcastable to a
+      consistent batch shape, but may have different event shapes
+      (i.e., defined over spaces of different dimension).
+
+  Returns:
+    joint_distribution: An instance of `tfd.MultivariateNormalLinearOperator`
+      representing the joint distribution constructed by concatenating
+      an independent sample from each input distributions.
+  """
+
+  graph_parents = [tensor for distribution in distributions
+                   for tensor in distribution._graph_parents]  # pylint: disable=protected-access
+  with tf.compat.v1.name_scope('factored_joint_mvn', values=graph_parents):
+
+    # We explicitly broadcast the `locs` so that we can concatenate them.
+    # We don't have direct numerical access to the `scales`, which are arbitrary
+    # linear operators, but `LinearOperatorBlockDiag` appears to do the right
+    # thing without further intervention.
+    dtype = tf.debugging.assert_same_float_dtype(distributions)
+    broadcast_ones = tf.ones(broadcast_batch_shape(distributions),
+                             dtype=dtype)[..., tf.newaxis]
+    return MultivariateNormalLinearOperator(
+        loc=tf.concat([mvn.mean() * broadcast_ones for mvn in distributions],
+                      axis=-1),
+        scale=tfl.LinearOperatorBlockDiag([mvn.scale for mvn in distributions],
+                                          is_square=True))
+<switch:english>
+[english] The implementation relies heavily on TensorFlow operations to handle the concatenation and structure the overall scale efficiently using `LinearOperatorBlockDiag`. This approach avoids computing a full dense covariance matrix for performance.
+[english] How does this function handle situations where the input distributions might have different intrinsic dimensions?
+[english] The function relies on the provided distributions being broadcastable to a consistent batch shape. If two components had incompatible underlying event shapes, TensorFlow's concatenation operations would raise an error rather than silently combining them.
+[english] That clarification is helpful for understanding potential input constraints.

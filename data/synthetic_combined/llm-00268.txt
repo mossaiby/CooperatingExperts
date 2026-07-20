@@ -1,0 +1,16 @@
+[english] How can I write a linter check to prevent accidental use of nonexistent increment and decrement operators (like ++ or --)?
+[english] This function is designed to check Abstract Syntax Tree nodes for specific patterns that resemble illegal arithmetic operations.
+<switch:python>
+[python] def visit_unaryop(self, node):
+        """check use of the non-existent ++ and -- operator operator"""
+        if (
+            (node.op in "+-")
+            and isinstance(node.operand, astroid.UnaryOp)
+            and (node.operand.op == node.op)
+        ):
+            self.add_message("nonexistent-operator", node=node, args=node.op * 2)
+<switch:english>
+[english] The code checks if the current operator is '+' or '-' and if its operand mirrors that same operator.
+[english] What happens if a user tries to use `x = --y`? Does this function catch it?
+[english] Since the original check specifically looks for `node.op == node.operand.op`, it would currently miss prefix/postfix decrement (`--y`) because those are handled differently than binary operations.
+[english] That makes sense, I'll adjust the logic to handle that case.

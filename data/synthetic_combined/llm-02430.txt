@@ -1,0 +1,21 @@
+[english] How can I write a utility function that determines if any ancestor node of a given node possesses a specific class type?
+[english] The approach is to iteratively check the current parent and then move up the tree structure. We keep traversing upwards until we find an object of the desired type or reach the end of the hierarchy, using the `statement` object to guide the traversal.
+<switch:python>
+[python] def _has_parent_of_type(node, node_type, statement):
+    """Check if the given node has a parent of the given type."""
+    parent = node.parent
+    while not isinstance(parent, node_type) and statement.parent_of(parent):
+        parent = parent.parent
+    return isinstance(parent, node_type)
+<switch:english>
+[english] This logic successfully checks all ancestors without deep recursion. Note that the function relies on both a `.parent` attribute and the state provided by the external `statement` object.
+[english] If no ancestor matches `node_type`, what does the function return?
+[english] If the loop completes without finding a match, it means the last checked parent (which is not of the desired type) determines the result. The function will return false in that scenario.
+<switch:python>
+[python] def _has_parent_of_type(node, node_type, statement):
+    parent = node.parent
+    while not isinstance(parent, node_type) and statement.parent_of(parent):
+        parent = parent.parent
+    return isinstance(parent, node_type)
+<switch:english>
+[english] Got it! That clarifies the termination condition.

@@ -1,0 +1,39 @@
+[english] How can I safely load a public key into an internal PKey object from a raw buffer?
+[english] This function is responsible for parsing cryptographic keys stored in common formats like PEM or ASN.1 directly from memory buffers. It first standardizes the input data encoding and then uses OpenSSL's specific C library calls based on the provided key type.
+<switch:python>
+[python] def load_publickey(type, buffer):
+    """
+    Load a public key from a buffer.
+
+    :param type: The file type (one of :data:`FILETYPE_PEM`,
+        :data:`FILETYPE_ASN1`).
+    :param buffer: The buffer the key is stored in.
+    :type buffer: A Python string object, either unicode or bytestring.
+    :return: The PKey object.
+    :rtype: :class:`PKey`
+    """
+    if isinstance(buffer, _text_type):
+        buffer = buffer.encode("ascii")
+
+    bio = _new_mem_buf(buffer)
+
+    if type == FILETYPE_PEM:
+        evp_pkey = _lib.PEM_read_bio_PUBKEY(
+            bio, _ffi.NULL, _ffi.NULL, _ffi.NULL)
+    elif type == FILETYPE_ASN1:
+        evp_pkey = _lib.d2i_PUBKEY_bio(bio, _ffi.NULL)
+    else:
+        raise ValueError("type argument must be FILETYPE_PEM or FILETYPE_ASN1")
+
+    if evp_pkey == _ffi.NULL:
+        _raise_current_error()
+
+    pkey = PKey.__new__(PKey)
+    pkey._pkey = _ffi.gc(evp_pkey, _lib.EVP_PKEY_free)
+    pkey._only_public = True
+    return pkey
+<switch:english>
+[english] The implementation manages low-level C pointers (`evp_pkey`) via FFI, which is necessary for using OpenSSL bindings but requires careful setup to ensure memory cleanup happens correctly.
+[english] What steps does the function take to handle a case where the input data itself is corrupted or invalid?
+[english] If OpenSSL fails to parse the key from the buffer (i.e., returns NULL), the function calls `_raise_current_error()` which triggers an assertion or exception, ensuring that only valid keys are processed.
+[english] Got it. I should make sure my input buffers always contain well-formed data.

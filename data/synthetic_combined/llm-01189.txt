@@ -1,0 +1,51 @@
+[english] I need a function to take an existing VCF file and use Oncotator on it to add relevant cancer variant annotations, outputting a new annotated file.
+[english] This function orchestrates the annotation process by first reading your input VCF and the required Oncotator database into local disk space. It handles potential archive formats for the database before setting up and executing the Oncotator tool via Docker.
+<switch:python>
+[python] def run_oncotator(job, vcf_id, oncotator_db):
+    """
+    Uses Oncotator to add cancer relevant variant annotations to a VCF file. Oncotator can accept
+    other genome builds, but the output VCF is based on hg19.
+
+    :param JobFunctionWrappingJob job: passed automatically by Toil
+    :param str vcf_id: FileStoreID for VCF file
+    :param str oncotator_db: FileStoreID for Oncotator database
+    :return: Annotated VCF FileStoreID
+    :rtype: str
+    """
+    job.fileStore.logToMaster('Running Oncotator')
+
+    inputs = {'input.vcf': vcf_id,
+              'oncotator_db': oncotator_db}
+
+    work_dir = job.fileStore.getLocalTempDir()
+    for name, file_store_id in inputs.iteritems():
+        inputs[name] = job.fileStore.readGlobalFile(file_store_id, os.path.join(work_dir, name))
+
+    # The Oncotator database may be tar/gzipped
+    if tarfile.is_tarfile(inputs['oncotator_db']):
+        tar = tarfile.open(inputs['oncotator_db'])
+        tar.extractall(path=work_dir)
+        # Get the extracted database directory name
+        inputs['oncotator_db'] = tar.getmembers()[0].name
+        tar.close()
+
+    command = ['-i', 'VCF',
+               '-o', 'VCF',
+               '--db-dir', inputs['oncotator_db'],
+               'input.vcf',
+               'annotated.vcf',
+               'hg19']  # Oncotator annotations are based on hg19
+
+    docker_parameters = ['--rm', 'log-driver', 'none',
+                         '-e', 'JAVA_OPTS=-Djava.io.tmpdir=/data/ -Xmx{}'.format(job.memory)]
+    dockerCall(job=job, workDir=work_dir,
+               parameters=command,
+               tool='jpfeil/oncotator:1.9--8fffc356981862d50cfacd711b753700b886b605',
+               dockerParameters=docker_parameters)
+
+    return job.fileStore.writeGlobalFile(os.path.join(work_dir, 'annotated.vcf'))
+<switch:english>
+[english] The code ensures that all annotations are mapped to the hg19 genome build, which is fixed within this function's command structure. The final annotated VCF file is then written back to a globally accessible location.
+[english] What happens if the passed database isn't in a compressed tar format? Does the code handle that gracefully?
+[english] The current implementation assumes the Oncotator database might be gzipped or tarred but relies on `tarfile.is_tarfile` to detect and extract archives; otherwise, it passes the file path directly.
+[english] That makes sense! Thanks for explaining how all those pieces fit together.

@@ -1,0 +1,21 @@
+[english] How can I adjust the expiration timestamp (notAfter) of an existing X509 certificate by a specific number of seconds?
+[english] This method first ensures that the provided adjustment value is an integer to prevent unexpected behavior. It then retrieves the current not-after time from the certificate object.
+<switch:python>
+[python] def gmtime_adj_notAfter(self, amount):
+        """
+        Adjust the time stamp on which the certificate stops being valid.
+
+        :param int amount: The number of seconds by which to adjust the
+            timestamp.
+        :return: ``None``
+        """
+        if not isinstance(amount, int):
+            raise TypeError("amount must be an integer")
+
+        notAfter = _lib.X509_get_notAfter(self._x509)
+        _lib.X509_gmtime_adj(notAfter, amount)
+<switch:english>
+[english] The function uses the `X509_gmtime_adj` helper from its library to modify the retrieved timestamp in place.
+[english] What happens if I pass a negative integer as 'amount'?
+[english] Passing a negative number shifts the expiration time backward, effectively making the certificate invalid sooner than planned:
+[english] Got it, thanks for explaining how that adjustment works!

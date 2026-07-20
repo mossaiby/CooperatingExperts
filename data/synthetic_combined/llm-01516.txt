@@ -1,0 +1,34 @@
+[english] How can I automate the final reporting process and save statistical results after a module completes its tasks?
+[english] This method acts as the cleanup phase, first displaying any pending messages to the reporter before checking if persistent data needs loading or saving.
+<switch:python>
+[python] def generate_reports(self):
+        """close the whole package /module, it's time to make reports !
+
+        if persistent run, pickle results for later comparison
+        """
+        # Display whatever messages are left on the reporter.
+        self.reporter.display_messages(report_nodes.Section())
+
+        if self.file_state.base_name is not None:
+            # load previous results if any
+            previous_stats = config.load_results(self.file_state.base_name)
+            # XXX code below needs refactoring to be more reporter agnostic
+            self.reporter.on_close(self.stats, previous_stats)
+            if self.config.reports:
+                sect = self.make_reports(self.stats, previous_stats)
+            else:
+                sect = report_nodes.Section()
+
+            if self.config.reports:
+                self.reporter.display_reports(sect)
+            self._report_evaluation()
+            # save results if persistent run
+            if self.config.persistent:
+                config.save_results(self.stats, self.file_state.base_name)
+        else:
+            self.reporter.on_close(self.stats, {})
+<switch:english>
+[english] The function handles conditional report generation based on configuration, ensuring stats are saved only if persistence is enabled.
+[english] If `file_state.base_name` is None, how does the function treat previous results and handle reporting?
+[english] When there is no base name, it calls `self.reporter.on_close(self.stats, {})`, treating any prior state as an empty dictionary.
+[english] Okay, that makes sense for handling non-persistent runs.

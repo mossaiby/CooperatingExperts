@@ -1,0 +1,46 @@
+[english] How can we automate the generation of complete predecessor and successor maps for all input wires within a circuit transformation?
+[english] This function builds comprehensive predecessor and successor maps by iterating over every wire in the `input_circuit`. It first checks if the wire is already mapped, and if not, it computes new relationships using internal graph methods.
+<switch:python>
+[python] def _full_pred_succ_maps(self, pred_map, succ_map, input_circuit,
+                             wire_map):
+        """Map all wires of the input circuit.
+
+        Map all wires of the input circuit to predecessor and
+        successor nodes in self, keyed on wires in self.
+
+        Args:
+            pred_map (dict): comes from _make_pred_succ_maps
+            succ_map (dict): comes from _make_pred_succ_maps
+            input_circuit (DAGCircuit): the input circuit
+            wire_map (dict): the map from wires of input_circuit to wires of self
+
+        Returns:
+            tuple: full_pred_map, full_succ_map (dict, dict)
+
+        Raises:
+            DAGCircuitError: if more than one predecessor for output nodes
+        """
+        full_pred_map = {}
+        full_succ_map = {}
+        for w in input_circuit.input_map:
+            # If w is wire mapped, find the corresponding predecessor
+            # of the node
+            if w in wire_map:
+                full_pred_map[wire_map[w]] = pred_map[wire_map[w]]
+                full_succ_map[wire_map[w]] = succ_map[wire_map[w]]
+            else:
+                # Otherwise, use the corresponding output nodes of self
+                # and compute the predecessor.
+                full_succ_map[w] = self.output_map[w]
+                full_pred_map[w] = self._multi_graph.predecessors(
+                    self.output_map[w])[0]
+                if len(list(self._multi_graph.predecessors(self.output_map[w]))) != 1:
+                    raise DAGCircuitError("too many predecessors for %s[%d] "
+                                          "output node" % (w[0], w[1]))
+
+        return full_pred_map, full_succ_map
+<switch:english>
+[english] The main operational constraint here is that when generating predecessors for a new output node, the function strictly requires exactly one predecessor to ensure valid DAG structure.
+[english] If an input wire's corresponding output node has more than one predecessor listed in `self._multi_graph.predecessors()`, does the function provide a fallback mechanism?
+[english] No, the function strictly requires a single predecessor to maintain circuit integrity and will raise a `DAGCircuitError` if multiple predecessors are found for an output node.
+[english] That clarifies exactly how dependencies are validated during the mapping process. Thank you!

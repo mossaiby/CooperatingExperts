@@ -1,0 +1,13 @@
+[english] How can I programmatically retrieve all command line arguments used when a specific process started?
+[english] This function begins by confirming the provided PID is still valid using `pid_exists`. If the process exists, it delegates the actual retrieval of the cmdline to the operating system-specific module within psutil.
+<switch:python>
+[python] def get_process_cmdline(self):
+        """Return process cmdline as a list of arguments."""
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
+        return _psutil_osx.get_process_cmdline(self.pid)
+<switch:english>
+[english] The command line is returned as a list directly from the OS layer. Note that because this implementation relies on platform-specific utilities, its use is restricted to systems where those modules are configured.
+[english] What error occurs if the process exists but cannot be read due to permission issues?
+[english] If permissions are insufficient, `psutil` will typically raise a runtime exception, such as AccessDenied, before successfully returning the cmdline arguments. You would need to wrap the call in a try-except block if you expect restricted environments.
+[english] I will add an exception handler for various security errors.

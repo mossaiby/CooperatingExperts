@@ -1,0 +1,19 @@
+[english] I need a robust method to filter my features so that only those which exceed a minimum average importance (threshold) across a specific set of study IDs are retained.
+[english] This function calculates the aggregate value for each feature based on the provided IDs and then filters out any readings that fall below your defined threshold. It handles both returning just the names or the full data Series.
+<switch:python>
+[python] def get_features_by_ids(self, ids=None, threshold=0.0001, func=np.mean,
+                            get_weights=False):
+        ''' Returns features for which the mean loading across all specified
+        studies (in ids) is >= threshold. '''
+        weights = self.data.ix[ids].apply(func, 0)
+        above_thresh = weights[weights >= threshold]
+        return above_thresh if get_weights else list(above_thresh.index)
+<switch:english>
+[english] The function uses the `get_weights` flag to determine if it should return the actual data matching the criteria or just the index (feature name). Note that this relies on NumPy being imported as `np` for default calculations.
+[english] If I call the function with `ids=None`, what will happen, and is there a safe way to ensure it works gracefully?
+[english] If no IDs are provided, `self.data.ix[None]` typically selects all rows/studies in pandas, but if you expect specific filtering, explicitly checking for None ensures proper handling:
+<switch:python>
+[python] os_ids = ids if ids is not None else self.data.index # Example safety check
+weights = self.data.ix[os_ids].apply(func, 0)
+<switch:english>
+[english] That makes sense; I'll incorporate that null-check into my workflow.

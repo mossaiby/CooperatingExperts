@@ -1,0 +1,26 @@
+[english] I need a way to specify which field should be used to sort my database query results.
+[english] This function allows you to define sorting criteria by accepting a column name. It sanitizes the input and performs preliminary checks on the data type before applying the ordering parameter.
+<switch:python>
+[python] def order_by(self, column):
+        '''
+        When provided with a column name, will sort the results of your query::
+
+            # returns all users, ordered by the created_at column in
+            # descending order
+            User.query.order_by('-created_at').execute()
+        '''
+        cname = column.lstrip('-')
+        col = self._check(cname)
+        if type(col).__name__ in ('String', 'Text', 'Json') and col._keygen.__name__ not in _STRING_SORT_KEYGENS:
+            warnings.warn("You are trying to order by a non-numeric column %r. "
+                          "Unless you have provided your own keygen or are using "
+                          "one of the sortable keygens: (%s), this probably won't "
+                          "work the way you expect it to."%(cname, STRING_SORT_KEYGENS_STR),
+                          stacklevel=2)
+
+        return self.replace(order_by=column)
+<switch:english>
+[english] The code includes a safety warning if you try to order a non-numeric field (like Text or JSON) without a defined sorting key, which helps prevent unexpected database behavior.
+[english] What is the function's behavior if I provide a column name with a leading hyphen, such as '-created_at'?
+[english] The function strips any leading hyphen internally to validate the field type but maintains the original input for the final query replacement. This ensures that your specified sorting direction (ASC/DESC) is preserved.
+[english] That clarifies how the ordering works.

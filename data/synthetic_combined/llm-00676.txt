@@ -1,0 +1,25 @@
+[english] How can I ensure my application has a MongoDB connection but only establish it when needed?
+[english] This function implements lazy loading to prevent unnecessary connections. It first checks if a database client is already cached before constructing and configuring a new one.
+<switch:python>
+[python] def get_conn(self):
+        """
+        Fetches PyMongo Client
+        """
+        if self.client is not None:
+            return self.client
+
+        # Mongo Connection Options dict that is unpacked when passed to MongoClient
+        options = self.extras
+
+        # If we are using SSL disable requiring certs from specific hostname
+        if options.get('ssl', False):
+            options.update({'ssl_cert_reqs': CERT_NONE})
+
+        self.client = MongoClient(self.uri, **options)
+
+        return self.client
+<switch:english>
+[english] The method effectively caches the initialized `MongoClient`. Since PyMongo clients are designed to be long-lived, this approach is generally efficient for connection pooling.
+[english] If I use this function in my application's lifecycle, should I actively call a disconnect or close method?
+[english] MongoDB client connections managed by PyMongo often handle connection pooling internally. However, if explicit shutdown is necessary during application teardown, you can call `self.client.close()` to gracefully release resources.
+[english] That makes sense for resource management.

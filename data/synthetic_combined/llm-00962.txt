@@ -1,0 +1,21 @@
+[english] I need a utility function that checks if a given MIME type string is acceptable against a list of allowed types.
+[english] We can implement this by first handling edge cases like null input or empty inclusion lists. Then, we convert the input to lowercase and check against the approved types using a `startswith` approach.
+<switch:python>
+[python] def is_matching_mime_type(self, mime_type):
+        '''This implements the MIME-type matching logic for deciding whether
+        to run `make_clean_html`
+
+        '''
+        if len(self.include_mime_types) == 0:
+            return True
+        if mime_type is None:
+            return False
+        mime_type = mime_type.lower()
+        # NB: startswith is necessary here, because encodings are
+        # often appended to HTTP header Content-Type
+        return any(mime_type.startswith(mt) for mt in self.include_mime_types)
+<switch:english>
+[english] Note that the use of `mime_type.lower()` ensures case insensitivity, while `startswith` handles common trailing encodings often found in HTTP headers.
+[english] Since it uses `startswith`, will this correctly match a type like 'text/html; charset=utf-8' if I only include 'text/html'?
+[english] Yes, because the function converts the full input to lowercase and checks if any included MIME type is a prefix of that string.
+[english] Perfect, thank you for clarifying how this handles encodings.

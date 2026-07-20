@@ -1,0 +1,26 @@
+[english] I need to create a standardized ND JSON string from complex, multi-part dataset information including nested channels.
+[english] This function constructs an organized dictionary representing your scientific data object (ND dict). It initializes fields like 'dataset' and 'project' by calling helper methods on the instance, then iterates through all provided channel names to build a nested structure for each one.
+<switch:python>
+[python] def nd_json(self, dataset, project, channel_list, metadata):
+        """
+        Genarate ND json object.
+        """
+        nd_dict = {}
+        nd_dict['dataset'] = self.dataset_dict(*dataset)
+        nd_dict['project'] = self.project_dict(*project)
+        nd_dict['metadata'] = metadata
+        nd_dict['channels'] = {}
+        for channel_name, value in channel_list.items():
+            nd_dict['channels'][channel_name] = self.channel_dict(*value)
+
+        return json.dumps(nd_dict, sort_keys=True, indent=4)
+<switch:english>
+[english] The function returns the entire structure serialized into a JSON string using `json.dumps`. Using `sort_keys=True` ensures that your resulting JSON documents are consistently ordered regardless of Python dictionary insertion order.
+[english] How should an error be handled if one of the channel lists passed to this function is unexpectedly empty?
+[english] To handle errors, you could add a check before processing:
+<switch:python>
+[python] if not channel_list:
+            raise ValueError("Channel list cannot be empty.")
+        # ... rest of the code"
+<switch:english>
+[english] Thanks for making this process clearer!

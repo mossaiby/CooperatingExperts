@@ -1,0 +1,40 @@
+[english] I need a way to validate if some input data, like lists or numpy arrays, is structurally supported by the system's parameters.
+[english] This function validates if the input `data` conforms to supported types. It first checks for sequences (tuples/lists) and ensures they are non-empty and homogeneous before verifying NumPy compatibility.
+<switch:python>
+[python] def f_supports(self, data):
+        """Checks if input data is supported by the parameter."""
+        dtype = type(data)
+        if dtype is tuple or dtype is list:
+
+            # Parameters cannot handle empty tuples
+            if len(data) == 0:
+                return False
+
+            old_type = None
+
+            # Check if the data in the tuple is homogeneous
+            for item in data:
+                if not type(item) in pypetconstants.PARAMETER_SUPPORTED_DATA:
+                    return False
+                if not old_type is None and old_type != type(item):
+                    return False
+                old_type = type(item)
+            return True
+
+        elif dtype is np.ndarray or dtype is np.matrix:
+
+            if data.size == 0:
+                return False # Parameters cannot handle empty arrays and matrices
+
+            # Numpy has many string types that depend on the length of the string,
+            # We allow all of them
+            dtype = data.dtype
+            if np.issubdtype(dtype, np.str):
+                dtype = np.str
+
+        return dtype in pypetconstants.PARAMETER_SUPPORTED_DATA
+<switch:english>
+[english] The primary role of this check is type safety, ensuring that complex inputs match expected internal parameter formats defined in constants.
+[english] What happens if the input `data` is a list containing objects of different types?
+[english] If the list contains mixed types (e.g., integers and strings), the function will return False because it requires all items to be of the same type (`old_type != type(item)` check).
+[english] That makes sense, thanks for explaining that.

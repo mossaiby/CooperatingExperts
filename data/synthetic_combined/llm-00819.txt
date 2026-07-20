@@ -1,0 +1,21 @@
+[english] How can I create a method to conditionally disable SSL certificate verification when making HTTP requests?
+[english] This function checks an external configuration flag (`DISABLE_SSL_CHECK`) to determine if security should be bypassed.
+<switch:python>
+[python] def verify(self):
+    '''
+       verify will return a True or False to determine to verify the
+       requests call or not. If False, we should the user a warning message,
+       as this should not be done in production!
+
+    '''
+    from sregistry.defaults import DISABLE_SSL_CHECK
+
+    if DISABLE_SSL_CHECK is True:
+        bot.warning('Verify of certificates disabled! ::TESTING USE ONLY::')
+
+    return not DISABLE_SSL_CHECK
+<switch:english>
+[english] The logic ensures that disabling the security check triggers a warning, strongly advising against using this setting in production environments.
+[english] What does the method return if `DISABLE_SSL_CHECK` were set to None instead of True or False?
+[english] Since Python treats None as falsy, the condition `if DISABLE_SSL_CHECK is True:` would evaluate to false, and the function would correctly return True.
+[english] That makes sense. Thanks for clarifying how that check works!

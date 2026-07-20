@@ -1,0 +1,43 @@
+[english] I need a function that systematically breaks specific covalent bonds between certain metals and organic atoms in an RDKit molecule.
+[english] This method targets defined metal-organic pairs using SMARTS patterns, ensuring only designated bonds are removed. It then iterates through the identified pairs to break those connections.
+<switch:python>
+[python] def disconnect(self, mol):
+        """Break covalent bonds between metals and organic atoms under certain conditions.
+
+        The algorithm works as follows:
+
+        - Disconnect N, O, F from any metal.
+        - Disconnect other non-metals from transition metals + Al (but not Hg, Ga, Ge, In, Sn, As, Tl, Pb, Bi, Po).
+        - For every bond broken, adjust the charges of the begin and end atoms accordingly.
+
+        :param mol: The input molecule.
+        :type mol: rdkit.Chem.rdchem.Mol
+        :return: The molecule with metals disconnected.
+        :rtype: rdkit.Chem.rdchem.Mol
+        """
+        log.debug('Running MetalDisconnector')
+        # Remove bonds that match SMARTS
+        for smarts in [self._metal_nof, self._metal_non]:
+            pairs = mol.GetSubstructMatches(smarts)
+            rwmol = Chem.RWMol(mol)
+            orders = []
+            for i, j in pairs:
+                # TODO: Could get the valence contributions of the bond instead of GetBondTypeAsDouble?
+                orders.append(int(mol.GetBondBetweenAtoms(i, j).GetBondTypeAsDouble()))
+                rwmol.RemoveBond(i, j)
+            # Adjust neighbouring charges accordingly
+            mol = rwmol.GetMol()
+            for n, (i, j) in enumerate(pairs):
+                chg = orders[n]
+                atom1 = mol.GetAtomWithIdx(i)
+                atom1.SetFormalCharge(atom1.GetFormalCharge() + chg)
+                atom2 = mol.GetAtomWithIdx(j)
+                atom2.SetFormalCharge(atom2.GetFormalCharge() - chg)
+                log.info('Removed covalent bond between %s and %s', atom1.GetSymbol(), atom2.GetSymbol())
+        Chem.SanitizeMol(mol)
+        return mol
+<switch:english>
+[english] Crucially, for every bond broken, it calculates a charge adjustment based on the original bond type and updates the formal charges of both participating atoms.
+[english] If an atom is involved in multiple metal-organic bonds targeted by the function's SMARTS, how are the resulting formal charges calculated?
+[english] The formal charges are adjusted sequentially within the processing loop. The second modification to an atom will build upon any charge change introduced by previous bond removals.
+[english] Thanks for clarifying how the charge adjustments stack.

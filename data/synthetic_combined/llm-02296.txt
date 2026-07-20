@@ -1,0 +1,50 @@
+[english] I need a function that can reliably extract XML content from various sources like paths, in-memory bytes, or compressed file types (ZIP and GZIP).
+[english] This function starts by checking the input type to handle files on disk via `open()` or in-memory data using `BytesIO`. It then probes the first few bytes for a 'magic' header to determine if it should treat the input as ZIP, GZIP, or raw XML.
+<switch:python>
+[python] def extract_xml(input_):
+    """
+    Extracts xml from a zip or gzip file at the given path, file-like object,
+    or bytes.
+
+    Args:
+        input_: A path to a file, a file like object, or bytes
+
+    Returns:
+        str: The extracted XML
+
+    """
+    if type(input_) == str:
+        file_object = open(input_, "rb")
+    elif type(input_) == bytes:
+        file_object = BytesIO(input_)
+    else:
+        file_object = input_
+    try:
+        header = file_object.read(6)
+        file_object.seek(0)
+        if header.startswith(MAGIC_ZIP):
+            _zip = zipfile.ZipFile(file_object)
+            xml = _zip.open(_zip.namelist()[0]).read().decode()
+        elif header.startswith(MAGIC_GZIP):
+            xml = GzipFile(fileobj=file_object).read().decode()
+        elif header.startswith(MAGIC_XML):
+            xml = file_object.read().decode()
+        else:
+            file_object.close()
+            raise InvalidAggregateReport("Not a valid zip, gzip, or xml file")
+
+        file_object.close()
+
+    except UnicodeDecodeError:
+        raise InvalidAggregateReport("File objects must be opened in binary "
+                                     "(rb) mode")
+    except Exception as error:
+        raise InvalidAggregateReport(
+            "Invalid archive file: {0}".format(error.__str__()))
+
+    return xml
+<switch:english>
+[english] The function uses a try/except block to wrap all operations, ensuring that any I/O errors or unexpected formats are caught and re-raised as an InvalidAggregateReport.
+[english] What happens if the input is an empty string or invalid ZIP file path?
+[english] If the input is an empty string or invalid path, `open(input_, "rb")` will likely raise a FileNotFoundError. The function's general exception handling (`except Exception as error`) would then catch this and re-raise it as a specific InvalidAggregateReport.
+[english] That makes sense, thanks for the detailed breakdown!

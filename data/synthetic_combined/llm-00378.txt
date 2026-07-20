@@ -1,0 +1,17 @@
+[english] How do I create a dictionary that maps all my container keys to the length of their internal value sequences?
+[english] The most Pythonic way to solve this is using a dictionary comprehension. This approach efficiently iterates over the items in `self._dict` and constructs the new mapping dynamically.
+<switch:python>
+[python] def itemcounts(self, **kwargs):
+        '''Returns a dict where the keys are the keys of the container.
+        The values are the *lengths* of the value sequences stored
+        in this container.
+        '''
+        return {k: len(v) for k, v in self._dict.items()}
+<switch:english>
+[english] This function relies on each value stored in `self._dict` being an object with a defined length, like a list or string. If any value is a plain scalar (like an integer), calling len() will raise a TypeError.
+[english] What happens if one of the values in self._dict is None?
+[english] If `v` is None, the code would fail because `len(None)` raises a TypeError. You can handle this by adding an explicit check:
+<switch:python>
+[python] return {k: len(v) for k, v in self._dict.items() if v is not None}
+<switch:english>
+[english] Thanks, that makes perfect sense for managing data structure sizes.

@@ -1,0 +1,23 @@
+[english] How can I write a function that waits until a shared message queue is completely drained, but respects a shutdown signal?
+[english] To implement this flush mechanism, we use an infinite loop combined with periodic checks. We peek at the queue using a timeout to detect emptiness or new items.
+<switch:python>
+[python] def flush(callback=None):
+    """Waits until queue is empty."""
+
+    while True:
+        if shutdown_event.is_set():
+            return
+
+        if callable(callback):
+            callback()
+
+        try:
+            item = queue.get(timeout=1)
+            queue.put(item)  # put it back, we're just peeking.
+        except Queue.Empty:
+            return
+<switch:english>
+[english] This design uses a loop and timeout to check the queue status continuously until no items are found or the process is told to stop.
+[english] What happens if shutdown_event gets set exactly while we're in the middle of peeking?
+[english] If `shutdown_event` is set, the function immediately returns inside the loop. However, if it becomes set after a successful peek but before the return, the queue item might still be processed by other threads.
+[english] Thanks for clarifying how to handle those concurrency issues.

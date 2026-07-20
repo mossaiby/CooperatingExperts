@@ -1,0 +1,39 @@
+[english] How do I convert a standard Python datetime object into one that includes specific timezone information?
+[english] This function acts as a universal converter, first checking if your input is already localized before attempting conversion and supporting several time zone library interfaces.
+<switch:python>
+[python] def make_aware(value, timezone=None):
+    """
+    Make a naive datetime.datetime in a given time zone aware.
+
+    :param value: datetime
+    :param timezone: timezone
+    :return: localized datetime in settings.TIMEZONE or timezone
+
+    """
+    if timezone is None:
+        timezone = TIMEZONE
+
+    # Check that we won't overwrite the timezone of an aware datetime.
+    if is_localized(value):
+        raise ValueError(
+            "make_aware expects a naive datetime, got %s" % value)
+    if hasattr(value, 'fold'):
+        # In case of python 3.6 we want to do the same that pendulum does for python3.5
+        # i.e in case we move clock back we want to schedule the run at the time of the second
+        # instance of the same clock time rather than the first one.
+        # Fold parameter has no impact in other cases so we can safely set it to 1 here
+        value = value.replace(fold=1)
+    if hasattr(timezone, 'localize'):
+        # This method is available for pytz time zones.
+        return timezone.localize(value)
+    elif hasattr(timezone, 'convert'):
+        # For pendulum
+        return timezone.convert(value)
+    else:
+        # This may be wrong around DST changes!
+        return value.replace(tzinfo=timezone)
+<switch:english>
+[english] It handles common methods like `.localize()` from pytz, but note that the final `else` block relies on simple replacement which can fail around DST changes.
+[english] If I pass a naive datetime that falls exactly on a Daylight Saving Time transition boundary, which approach is safest?
+[english] The most robust method is using library-specific methods like `.localize()` or `.convert()`. The final `value.replace(tzinfo=timezone)` fallback can miscalculate local times.
+[english] Thanks for the detailed explanation of those edge cases!

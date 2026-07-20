@@ -1,0 +1,14 @@
+[english] I need a way to programmatically check if a given class definition is structured as a typing.NamedTuple.
+[english] This utility checks the inheritance chain by iterating over all ancestor nodes of the supplied class definition.
+<switch:python>
+[python] def _is_typing_namedtuple(node: astroid.ClassDef) -> bool:
+    """Check if a class node is a typing.NamedTuple class"""
+    for base in node.ancestors():
+        if base.qname() == TYPING_NAMEDTUPLE:
+            return True
+    return False
+<switch:english>
+[english] The function successfully determines the status by referencing the correct marker, provided `TYPING_NAMEDTUPLE` is properly defined.
+[english] What happens if a class inherits from both typing.NamedTuple and another custom base class?
+[english] The function returns True as soon as it encounters any matching ancestor in the chain, regardless of whether other classes are also included.
+[english] Got it; that clarifies how the inheritance check works.

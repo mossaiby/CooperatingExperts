@@ -1,0 +1,26 @@
+[english] I need a script to compare two version objects and display which terms were added or deleted between them.
+[english] The function works by treating the term sets in both versions as mathematical sets. It uses set difference operations to identify exactly what was removed from version 0 versus what is new in version 1. This helps isolate changes rather than checking every single term individually.
+<switch:python>
+[python] def diff(version0, version1):
+    """
+    Display the terms added and removed between two versions
+    :param version0:
+    :param version1:
+    :return:
+    """
+    version0.load()
+    version1.load()
+
+    deleted = set(version0.terms) - set(version1.terms)
+    added = set(version1.terms) - set(version0.terms)
+
+    print("====\n\tfrom: {0}".format(str(version0)))
+    print("\n".join(("-{0} -- {1}".format(str(d), version0.translations['en'][d]) for d in deleted)))
+
+    print("====\n\tto: {0}".format(str(version1)))
+    print("\n".join(("+{0} -- {1}".format(str(d), version1.translations['en'][d]) for d in added)))
+<switch:english>
+[english] It prints the results with a standard diff format using plus and minus signs, though this specific logic only detects additions or removals without handling modified terms.
+[english] What if I have a term that exists in both versions but its translation value has changed?
+[english] The current implementation does not detect changes to existing terms; it only identifies items present in one set and absent in the other. If you wanted modification detection, you would need a second step after finding common keys.
+[english] Got it! Thanks for clarifying how that diff works.

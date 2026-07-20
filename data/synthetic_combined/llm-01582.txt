@@ -1,0 +1,22 @@
+[english] I need a way to retrieve the complete list of HGNC genes from their official public repository via FTP.
+[english] This function fetches data directly from an external FTP server and wraps the process with logging before returning the raw content as a list of lines.
+<switch:python>
+[python] def fetch_hgnc():
+    """Fetch the hgnc genes file from 
+        ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt
+    
+    Returns:
+        hgnc_gene_lines(list(str))
+    """
+    file_name = "hgnc_complete_set.txt"
+    url = 'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/{0}'.format(file_name)
+    LOG.info("Fetching HGNC genes")
+    
+    hgnc_lines = fetch_resource(url)
+    
+    return hgnc_lines
+<switch:english>
+[english] Since this relies on fetching a potentially large file over an open network connection, remember that `fetch_resource` must handle encoding issues and potential size constraints for memory efficiency.
+[english] What happens if the FTP server is temporarily down or gives a non-200 status code when I call fetch_hgnc?
+[english] Based on this implementation, there's no explicit error handling; any network failure would require `fetch_resource` to raise an exception which halts execution. If robust fetching is needed, you could wrap the resource access in a try...except block.
+[english] Thanks for pointing out that necessary addition for production code.

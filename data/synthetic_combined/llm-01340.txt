@@ -1,0 +1,14 @@
+[english] How can I format a list of command strings so they appear neatly organized into multiple aligned columns?
+[english] This function begins by ensuring that all input commands are sorted alphabetically using sort(). It then retrieves the required display width from your debugger settings to set formatting constraints.
+<switch:python>
+[python] def columnize_commands(self, commands):
+        """List commands arranged in an aligned columns"""
+        commands.sort()
+        width = self.debugger.settings['width']
+        return columnize.columnize(commands, displaywidth=width,
+                                   lineprefix='    ')
+<switch:english>
+[english] The core functionality is handled by calling columnize.columnize, which takes the sorted list and a fixed lineprefix ('    ') to create the structured output.
+[english] If I pass a list of commands where one command is significantly longer than all others, how will that affect the alignment?
+[english] The code relies on the `columnize` utility. If an item exceeds the specified width, it typically wraps within that constraint unless specifically configured otherwise by the external library.
+[english] Great, I understand how the padding and sorting work.

@@ -1,0 +1,47 @@
+[english] I need a function that reconstruct a physical operator from a set of observed frequencies and corresponding projection operators, potentially using weighting or trace normalization.
+[english] This function uses linear inversion to reconstruct an unknown matrix when you have measured observables (frequencies) associated with specific projectors (operators). It starts by constructing the basis S matrix from the given operators and then solves for the operator using weighted pseudo-inversion.
+<switch:python>
+[python] def __tomo_linear_inv(freqs, ops, weights=None, trace=None):
+    """
+    Reconstruct a matrix through linear inversion.
+
+    Args:
+        freqs (list[float]): list of observed frequences.
+        ops (list[np.array]): list of corresponding projectors.
+        weights (list[float] or array_like):
+            weights to be used for weighted fitting.
+        trace (float or None): trace of returned operator.
+
+    Returns:
+        numpy.array: A numpy array of the reconstructed operator.
+    """
+    # get weights matrix
+    if weights is not None:
+        W = np.array(weights)
+        if W.ndim == 1:
+            W = np.diag(W)
+
+    # Get basis S matrix
+    S = np.array([vectorize(m).conj()
+                  for m in ops]).reshape(len(ops), ops[0].size)
+    if weights is not None:
+        S = np.dot(W, S)  # W.S
+
+    # get frequencies vec
+    v = np.array(freqs)  # |f>
+    if weights is not None:
+        v = np.dot(W, freqs)  # W.|f>
+    Sdg = S.T.conj()  # S^*.W^*
+    inv = np.linalg.pinv(np.dot(Sdg, S))  # (S^*.W^*.W.S)^-1
+
+    # linear inversion of freqs
+    ret = devectorize(np.dot(inv, np.dot(Sdg, v)))
+    # renormalize to input trace value
+    if trace is not None:
+        ret = trace * ret / np.trace(ret)
+    return ret
+<switch:english>
+[english] When weights are provided, the calculation incorporates them into both the basis construction (`if weights is not None: W = np.array(weights)`) and the final result. The function uses `np.linalg.pinv` to handle potential numerical instabilities during inversion.
+[english] What happens if I pass an operator set that does not span a complete space, like only identity operators?
+[english] If the basis vectors do not span the required space, `np.linalg.pinv` will still return the least-squares solution for the pseudo-inverse. However, this means the reconstructed operator might be under-determined or inaccurate based on the limited measurements.
+[english] That clarifies how completeness affects the reconstruction!

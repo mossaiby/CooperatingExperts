@@ -1,0 +1,20 @@
+[english] How can I refactor Python AST code to automatically remove dead or unreachable code from 'if' statements?
+[english] This function handles if nodes by first visiting them and then recursively applying filtering logic. It uses a helper function on both the body and else clauses before reconstructing the node.
+<switch:python>
+[python] def visit_If(self, node: ast.If) -> Optional[ast.AST]:
+        """Eliminate dead code from if/elif bodies."""
+        new_node = self.generic_visit(node)
+        assert isinstance(new_node, ast.If)
+        return ast.copy_location(
+            ast.If(
+                test=new_node.test,
+                body=_filter_dead_code(new_node.body),
+                orelse=_filter_dead_code(new_node.orelse),
+            ),
+            new_node,
+        )
+<switch:english>
+[english] The use of ast.copy_location ensures that the resulting optimized AST node retains its original source code position.
+[english] What happens if, after filtering, both the body and orelse lists are completely empty?
+[english] If both `body` and `orelse` become empty lists after filtering, the function will return an ast.If node with null statements, which maintains syntactic correctness but may require a specific post-processing step for further optimization.
+[english] This makes sense, thanks!

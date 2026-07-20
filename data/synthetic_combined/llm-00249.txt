@@ -1,0 +1,19 @@
+[english] How can I iterate through a list of ID lists and yield every unique non-zero ID exactly once, preserving the channel order?
+[english] This function is designed to process nested data structures. It iterates through each row (channel) in `onset_front_ids` while using an internal set, `.yielded_so_far`, to prevent duplicate IDs from being yielded.
+<switch:python>
+[python] def _get_front_ids_one_at_a_time(onset_fronts):
+    """
+    Yields one onset front ID at a time until they are gone. All the onset fronts from a
+    frequency channel are yielded, then all of the next channel's, etc., though one at a time.
+    """
+    yielded_so_far = set()
+    for row in onset_fronts:
+        for id in row:
+            if id != 0 and id not in yielded_so_far:
+                yield id
+                yielded_so_far.add(id)
+<switch:english>
+[english] The function ensures uniqueness by checking both `id != 0` and whether the ID already exists in `.yielded_so_far`, maintaining the channel-by-channel processing order.
+[english] What behavior will this have if there are multiple entries for a single ID, but they appear far apart across different rows?
+[english] The `set` structure guarantees that even if an ID appears multiple times across various rows, it will only ever be yielded once upon its first discovery.
+[english] That makes sense; knowing the uniqueness guarantee is helpful.

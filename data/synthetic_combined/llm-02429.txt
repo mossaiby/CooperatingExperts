@@ -1,0 +1,19 @@
+[english] I need a way to center a string within a fixed width using specific padding characters for better terminal formatting.
+[english] This function's approach is to calculate exactly how much space needs to be added on both sides of the input string (`mystring`). It determines the left and right padding counts by comparing the target `linewidth` against the string length, ensuring any odd remainder is correctly accounted for.
+<switch:python>
+[python] def centered(mystring, linewidth=None, fill=" "):
+    '''Takes a string, centres it, and pads it on both sides'''
+    if linewidth is None:
+        linewidth = get_terminal_size().columns - 1
+    sides = (linewidth - length_no_ansi(mystring))//2
+    extra = (linewidth - length_no_ansi(mystring)) % 2
+    fill = fill[:1]
+    sidestring = fill*sides
+    extrastring = fill*extra
+    newstring = sidestring + mystring + sidestring + extrastring
+    return newstring
+<switch:english>
+[english] The logic handles inconsistent spacing by using integer division for the primary padding and modulo to manage a single extra character when the total width minus the string length is an odd number. Note that it assumes necessary helper functions like `get_terminal_size` exist in scope.
+[english] I noticed there's code slicing the fill input; what happens if I accidentally pass a filler of two characters or more?
+[english] The function uses the slice `fill = fill[:1]` to explicitly take only the first character provided in the `fill` argument. This forces the padding to be based on a single, consistent character.
+[english] That makes sense! Thanks for clarifying the input constraints.

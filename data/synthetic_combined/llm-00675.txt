@@ -1,0 +1,23 @@
+[english] I need a function that can statically reduce an expression involving an XOR operation if all its inputs are known.
+[english] For static analysis, we first check if the input value (`val`) is fully defined. If it is, we determine if the XOR operation simplifies to a signal negation or simply returns the other input.
+<switch:python>
+[python] def tryReduceXor(sig, val):
+    """
+    Return sig and val reduced by ^ operator or None
+    if it is not possible to statically reduce expression
+    """
+    m = sig._dtype.all_mask()
+    if not val.vldMask:
+        return val
+
+    if val._isFullVld():
+        v = val.val
+        if v == m:
+            return ~sig
+        elif v == 0:
+            return sig
+<switch:english>
+[english] This function specializes in cases where `val` is fully known and matches specific bit patterns like zero or an all-ones mask for reduction.
+[english] What does the function return for any value that has partial validity flags?
+[english] The existing code only checks for full validity (`_isFullVld()`). If `val` is partially valid, the initial check `if not val.vldMask:` will fail, and thus the reduction logic is skipped.
+[english] Thanks for pointing out that structural limitation.

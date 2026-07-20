@@ -1,0 +1,29 @@
+[english] How do I get the false positive rates and true positive rates to plot a Receiver Operating Characteristic curve?
+[english] This method uses internal helper functions to calculate performance metrics based on specified data keys. It gathers ROC values from `ModelBase._get_metrics` and organizes them into tuples of (FPRs, TPR)
+<switch:python>
+[python] def roc(self, train=False, valid=False, xval=False):
+        """
+        Return the coordinates of the ROC curve for a given set of data.
+
+        The coordinates are two-tuples containing the false positive rates as a list and true positive rates as a list.
+        If all are False (default), then return is the training data. If more than one ROC
+        curve is requested, the data is returned as a dictionary of two-tuples.
+
+        :param bool train: If True, return the ROC value for the training data.
+        :param bool valid: If True, return the ROC value for the validation data.
+        :param bool xval: If True, return the ROC value for each of the cross-validated splits.
+
+        :returns: The ROC values for the specified key(s).
+        """
+        tm = ModelBase._get_metrics(self, train, valid, xval)
+        m = {}
+        for k, v in viewitems(tm):
+
+            if v is not None:
+                m[k] = (v.fprs, v.tprs)
+        return list(m.values())[0] if len(m) == 1 else m
+<switch:english>
+[english] The function returns a list or dictionary depending on how many data splits were requested via the parameters.
+[english] If I request both training and validation sets, what format will the returned object have?
+[english] It will be a dictionary where keys correspond to the input flags (e.g., 'train', 'valid'), mapping each key to its tuple of (FPRs, TPR).
+[english] That makes sense; I need to check if it handles multiple splits efficiently.

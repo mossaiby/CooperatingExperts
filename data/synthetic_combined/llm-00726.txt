@@ -1,0 +1,20 @@
+[english] How can I format custom separators to display section titles neatly in a console application?
+[english] This function generates a stylized row separator, which is useful for visually demarcating sections in terminal output. It handles separators that are either single characters or defined by a tuple specifying left and right lengths.
+<switch:python>
+[python] def _get_separator(num, sep_title, sep_character, sep_length):
+    """Get a row separator for row *num*."""
+    left_divider_length = right_divider_length = sep_length
+    if isinstance(sep_length, tuple):
+        left_divider_length, right_divider_length = sep_length
+    left_divider = sep_character * left_divider_length
+    right_divider = sep_character * right_divider_length
+    title = sep_title.format(n=num + 1)
+
+    return "{left_divider}[ {title} ]{right_divider}\n".format(
+        left_divider=left_divider, right_divider=right_divider, title=title)
+<switch:english>
+[english] The function uses string formatting to construct the final line, dynamically inserting titles based on the provided number. Note that if `sep_length` is not a tuple, it assumes symmetrical dividers.
+[english] What happens if I call this with an empty string for both sep_character and sep_title?
+[english] If both are empty strings, the function returns a single newline character because the `left_divider`, `right_divider`, and `title` will all evaluate to empty strings. The resulting line will be: `
+`.
+[english] That makes sense; I'll keep this in mind for cleaner output.

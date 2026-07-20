@@ -1,0 +1,33 @@
+[english] How do I merge default API settings with specific user preferences provided at runtime?
+[english] This function handles configuration merging by creating a copy of the existing internal options and then selectively updating them based on if new, non-default values are present in the input.
+<switch:python>
+[python] def _hydrate_options(self, query_options: QnAMakerOptions) -> QnAMakerOptions:
+        """
+        Combines QnAMakerOptions passed into the QnAMaker constructor with the options passed as arguments into get_answers().
+        
+        :return: QnAMakerOptions with options passed into constructor overwritten by new options passed into get_answers()
+
+        :rtype: QnAMakerOptions
+        """
+
+        hydrated_options = copy(self._options)
+
+        if query_options:
+            if (
+                query_options.score_threshold != hydrated_options.score_threshold 
+                and query_options.score_threshold
+            ):
+                hydrated_options.score_threshold = query_options.score_threshold
+            
+            if (query_options.top != hydrated_options.top and query_options.top != 0):
+                hydrated_options.top = query_options.top
+            
+            if (len(query_options.strict_filters) > 0):
+                hydrated_options.strict_filters = query_options.strict_filters
+
+        return hydrated_options
+<switch:english>
+[english] The logic ensures that parameters like `score_threshold` or `top` are only updated if they differ from the defaults to prevent unnecessary overwrites with zero or None.
+[english] What happens if I pass a query where scores should be exactly 0, but also set 'top' to 0 during the call?
+[english] Currently, setting `query_options.score_threshold` to 0 *will* update it because there’s no check for zero value; however, setting `query_options.top=0` will not overwrite the existing top count due to the check `query_options.top != 0`.
+[english] Thanks for clarifying how the defaults are prioritized!

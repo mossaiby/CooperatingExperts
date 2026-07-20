@@ -1,0 +1,47 @@
+[english] I have a byte string that was padded using one of three standards (PKCS7, ISO7816, or X923), and I need to reliably strip those extra padding bytes to get the original clean data back.
+[english] To handle different padding schemes, this function first verifies the total length before calculating how many padding bytes were applied based on a specified style. Then, it validates that the contents of the assumed padding chunk match the standard's requirements for security and robustness.
+<switch:python>
+[python] def unpad(padded_data, block_size, style='pkcs7'):
+    """Remove standard padding.
+
+    :Parameters:
+      padded_data : byte string
+        A piece of data with padding that needs to be stripped.
+      block_size : integer
+        The block boundary to use for padding. The input length
+        must be a multiple of ``block_size``.
+      style : string
+        Padding algorithm. It can be *'pkcs7'* (default), *'iso7816'* or *'x923'*.
+    :Return:
+        Data without padding.
+    :Raises ValueError:
+        if the padding is incorrect.
+    """
+
+    pdata_len = len(padded_data)
+    if pdata_len % block_size:
+        raise ValueError("Input data is not padded")
+    if style in ('pkcs7', 'x923'):
+        padding_len = bord(padded_data[-1])
+        if padding_len<1 or padding_len>min(block_size, pdata_len):
+            raise ValueError("Padding is incorrect.")
+        if style == 'pkcs7':
+            if padded_data[-padding_len:]!=bchr(padding_len)*padding_len:
+                raise ValueError("PKCS#7 padding is incorrect.")
+        else:
+            if padded_data[-padding_len:-1]!=bchr(0)*(padding_len-1):
+                raise ValueError("ANSI X.923 padding is incorrect.")
+    elif style == 'iso7816':
+        padding_len = pdata_len - padded_data.rfind(bchr(128))
+        if padding_len<1 or padding_len>min(block_size, pdata_len):
+            raise ValueError("Padding is incorrect.")
+        if padding_len>1 and padded_data[1-padding_len:]!=bchr(0)*(padding_len-1):
+            raise ValueError("ISO 7816-4 padding is incorrect.")
+    else:
+        raise ValueError("Unknown padding style")
+    return padded_data[:-padding_len]
+<switch:english>
+[english] The function returns the original data minus the calculated padding amount but will raise an error if the input size or the padding structure itself is invalid according to the chosen algorithm.
+[english] If 'pkcs7' style is used, how does the code determine which specific value represents the padding length?
+[english] The function uses `bord(padded_data[-1])` to extract the value of the last byte in the input data. For PKCS#7, this single byte directly indicates the exact number of bytes that were added as padding.
+[english] Thanks for clarifying how the logic works!

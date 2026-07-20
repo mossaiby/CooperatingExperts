@@ -1,0 +1,23 @@
+[english] I need to check if a specific movie ID has been added or what its current status is by querying our external API.
+[english] This method begins by generating the correct internal path for retrieving an item's status. It then executes an HTTP GET request using that path and accepts any optional arguments you might provide.
+<switch:python>
+[python] def item_status(self, **kwargs):
+        """
+        Check to see if a movie id is already added to a list.
+
+        Args:
+            movie_id: The id of the movie.
+
+        Returns:
+            A dict respresentation of the JSON returned from the API.
+        """
+        path = self._get_id_path('item_status')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The response data is immediately mapped to internal attributes via a helper function before being returned, simplifying how other parts of the code access the result.
+[english] If the API call fails or returns an error status, what behavior should I expect from this method?
+[english] It's likely that if `self._GET` registers a non-success status, it will either raise an exception or return a structured error dictionary that you can then check for key failure indicators.
+[english] That makes perfect sense; I appreciate the help!

@@ -1,0 +1,27 @@
+[english] How can I simulate a quantum measurement and enforce a basis projection (reset) on a specific qubit?
+[english] This function simulates measuring a qubit to determine an outcome, then applies a unitary correction to project the state onto that measured eigenstate.
+<switch:python>
+[python] def _add_qasm_reset(self, qubit):
+        """Apply a reset instruction to a qubit.
+
+        Args:
+            qubit (int): the qubit being rest
+
+        This is done by doing a simulating a measurement
+        outcome and projecting onto the outcome state while
+        renormalizing.
+        """
+        # get measure outcome
+        outcome, probability = self._get_measure_outcome(qubit)
+        # update quantum state
+        if outcome == '0':
+            update = [[1 / np.sqrt(probability), 0], [0, 0]]
+            self._add_unitary_single(update, qubit)
+        else:
+            update = [[0, 1 / np.sqrt(probability)], [0, 0]]
+            self._add_unitary_single(update, qubit)
+<switch:english>
+[english] The function uses the measurement probability to calculate normalization factors that ensure the updated state is correctly renormalized after collapse.
+[english] If `_get_measure_outcome` returns a zero for probability, what happens when calculating the update matrix?
+[english] Calculating `1 / np.sqrt(probability)` when the probability is zero results in division by zero or infinity. You should add a check to handle cases where measurement outcomes have no non-zero chance of occurring.
+[english] I will implement that safety check immediately.

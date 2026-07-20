@@ -1,0 +1,12 @@
+[english] How can I programmatically retrieve a list of experiments associated with a given workspace ID?
+[english] This function retrieves experiment data by constructing the correct API resource path using string formatting and delegates the actual network request to an internal helper method.
+<switch:python>
+[python] def get_experiments(self, workspace_id):
+        """Runs HTTP GET request to retrieve the list of experiments."""
+        api_path = self.EXPERIMENTS_URI_FMT.format(workspace_id)
+        return self._send_get_req(api_path)
+<switch:english>
+[english] The function relies on `self.EXPERIMENTS_URI_FMT` for URL construction, ensuring that all communication is handled consistently across the service via `self._send_get_req`.
+[english] What happens if the workspace_id provided does not correspond to any existing project within the API?
+[english] If no experiments are found, the underlying API call might return an empty list or a specific 404/403 status code. The implementation of `_send_get_req` determines how that response is processed.
+[english] Thanks for explaining this workflow!

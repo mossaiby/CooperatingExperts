@@ -1,0 +1,17 @@
+[english] How can I safely retrieve a value from a dynamic namespace variable (`*ns*`) that is specific to the current thread?
+[english] This function retrieves a dynamic namespace (ns) for the running thread. It constructs a symbolic representation of your dynamic variable name and then attempts to find its corresponding value.
+<switch:python>
+[python] def get_current_ns(
+    ns_var_name: str = NS_VAR_NAME, ns_var_ns: str = NS_VAR_NS
+) -> Namespace:
+    """Get the value of the dynamic variable `*ns*` in the current thread."""
+    ns_sym = sym.Symbol(ns_var_name, ns=ns_var_ns)
+    ns: Namespace = Maybe(Var.find(ns_sym)).map(lambda v: v.value).or_else_raise(
+        lambda: RuntimeException(f"Dynamic Var {ns_sym} not bound!")
+    )
+    return ns
+<switch:english>
+[english] The use of `Maybe` combined with `.or_else_raise` ensures that if the variable was not bound, a clear RuntimeException is raised instead of returning null.
+[english] What happens if someone uses a namespace object from a different thread calling this function?
+[english] Currently, it will likely fail or return an incorrect value because `Var.find` relies on local thread state and won't look outside the current execution context.
+[english] @what is the recommended way to handle cross-thread namespace access?

@@ -1,0 +1,20 @@
+[english] I need a reliable way to convert my existing Waterfall data files, currently in .fil format, into the more versatile HDF5 (.h5) format.
+[english] The function first initializes a `Waterfall` object with your input file and optional loading configuration. It then checks if an output filename was provided; if not, it automatically generates one by swapping extensions and ensuring it resides in the output directory.
+<switch:python>
+[python] def make_h5_file(filename,out_dir='./', new_filename = None, max_load = None):
+    ''' Converts file to HDF5 (.h5) format. Default saves output in current dir.
+    '''
+
+    fil_file = Waterfall(filename, max_load = max_load)
+    if not new_filename:
+        new_filename = out_dir+filename.replace('.fil','.h5').split('/')[-1]
+
+    if '.h5' not in new_filename:
+        new_filename = new_filename+'.h5'
+
+    fil_file.write_to_hdf5(new_filename)
+<switch:english>
+[english] This helper abstracts away the conversion process entirely through the `fil_file.write_to_hdf5(new_filename)` method. Remember that successful operation depends on how the internal `Waterfall` class handles data serialization.
+[english] How does the function handle filenames that include directory paths, such as './raw_data/test.fil'?
+[english] The logic uses `.split('/')[-1]`, which means it only extracts the filename itself and disregards any preceding folder structure when generating `new_filename`. You should ensure your path management handles this behavior if directory preservation is critical.
+[english] That makes sense, thanks for the detailed breakdown.

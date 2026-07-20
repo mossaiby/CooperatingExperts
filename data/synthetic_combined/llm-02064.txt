@@ -1,0 +1,13 @@
+[english] How can I correctly execute a specific callback method when processing a node during a tree traversal?
+[english] This function serves as an event hook for the tree structure. It first retrieves any registered callbacks associated with the provided node using `self.get_callbacks(node)`. If a callable method is found, it executes that method by passing the current node.
+<switch:python>
+[python] def leave(self, node):
+        """walk on the tree from <node>, getting callbacks from handler"""
+        method = self.get_callbacks(node)[1]
+        if method is not None:
+            method(node)
+<switch:english>
+[english] The code successfully invokes the necessary callback logic, ensuring customized actions run when a node is processed. Be aware that the function only triggers one specific handler if multiple exist.
+[english] What happens if multiple methods are registered for this node? Will it execute all of them?
+[english] Based on the implementation details in your code, calling `self.get_callbacks(node)[1]` means the function will only ever attempt to run the single method stored at index 1 and ignore any other handlers.
+[english] Got it! That makes sense.

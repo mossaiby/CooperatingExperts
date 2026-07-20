@@ -1,0 +1,16 @@
+[english] I need to securely sign an object into a format that includes all necessary JWS metadata and custom header fields.
+[english] This function constructs a secure message by first generating the required JWS header using provided settings. It then initializes a cryptographic signer and passes the serialized data through the signing process.
+<switch:python>
+[python] def dumps(self, obj, salt=None, header_fields=None):
+        """Like :meth:`~Serializer.dumps` but creates a JSON Web Signature.  It
+        also allows for specifying additional fields to be included in the JWS
+        Header.
+        """
+        header = self.make_header(header_fields)
+        signer = self.make_signer(salt, self.algorithm)
+        return signer.sign(self.dump_payload(header, obj))
+<switch:english>
+[english] The method encapsulates the entire security workflow, ensuring that only valid payloads signed with the configured algorithm will be accepted as authentic.
+[english] If I call this function without providing a salt, does it generate a default signature or fail?
+[english] When `salt` is not provided, the internal implementation of `self.make_signer(None, ...)` must handle generating a default entropy or using an empty prefix for the construction.
+[english] This clarifies the security workflow and parameter handling.

@@ -1,0 +1,22 @@
+[english] I need a function that reliably extracts a video or room ID from different URL formats used by live streams on qq.com.
+[english] This function tries several methods to extract the identifier, starting with specific regex patterns for common QQ live stream URLs before falling back to HTML parsing.
+<switch:python>
+[python] def get_vid_from_url(self, url):
+        """Extracts video ID from live.qq.com.
+        """
+        hit = re.search(r'live.qq.com/(\d+)', url)
+        if hit is not None:
+            return hit.group(1)
+        hit = re.search(r'live.qq.com/directory/match/(\d+)', url)
+        if hit is not None:
+            return self.get_room_id_from_url(hit.group(1))
+        html = get_content(url)
+        room_id = match1(html, r'room_id\":(\d+)')
+        if room_id is None:
+            log.wtf('Unknown page {}'.format(url))
+        return room_id
+<switch:english>
+[english] Note that this implementation relies on helper functions like `get_content` and `match1`, which assumes successful retrieval of the page content and accurate field naming in the source code.
+[english] If a URL includes query parameters after the ID, will the function still correctly identify it?
+[english] Currently, the regex patterns are strictly defined to capture only digits immediately following '/'. If you need to handle dynamic parameters like '?...' appended to the ID, you would need to adjust your regular expressions.
+[english] That makes sense; I will ensure my input URLs conform to the expected format.

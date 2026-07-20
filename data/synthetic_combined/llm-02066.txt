@@ -1,0 +1,38 @@
+[english] I need a helper function that extracts specific fields like name, unit, and type from an existing metric configuration dictionary for use in an API update request.
+[english] This approach initializes an empty dictionary and then sequentially checks if each required key exists within the input 'metric' object before copying it over. This ensures only the explicitly needed metadata is transferred to the output dictionary.
+<switch:python>
+[python] def extract_fields(self, metric):
+        """
+        Extract only the required fields for the create/update API call
+        """
+        m = {}
+        if 'name' in metric:
+            m['name'] = metric['name']
+        if 'description' in metric:
+            m['description'] = metric['description']
+        if 'displayName' in metric:
+            m['displayName'] = metric['displayName']
+        if 'displayNameShort' in metric:
+            m['displayNameShort'] = metric['displayNameShort']
+        if 'unit' in metric:
+            m['unit'] = metric['unit']
+        if 'defaultAggregate' in metric:
+            m['defaultAggregate'] = metric['defaultAggregate']
+        if 'defaultResolutionMS' in metric:
+            m['defaultResolutionMS'] = metric['defaultResolutionMS']
+        if 'isDisabled' in metric:
+            m['isDisabled'] = metric['isDisabled']
+        if 'isBuiltin' in metric:
+            m['isBuiltin'] = metric['isBuiltin']
+        if 'type' in metric:
+            m['type'] = metric['type']
+        return m
+<switch:english>
+[english] The function successfully filters the data, though its repetitive structure makes it more verbose than necessary for simple extraction tasks.
+[english] If I need to extract 20 required keys instead of 10, how could you make this code significantly cleaner and more maintainable?
+[english] You can use a loop over a predefined list of required fields combined with dictionary comprehension: 
+```python
+def extract_fields(metric):
+    required = ['name', 'description', 'displayName', 'unit', 'type'] # Add all keys here
+    return {key: metric[key] for key in required if key in metric}
+[english] That is much more efficient. Thanks!

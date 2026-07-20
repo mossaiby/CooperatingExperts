@@ -1,0 +1,38 @@
+[english] How can I parse an iCalendar file (vcal) to extract structured event data like titles, times, and attachments?
+[english] This function parses raw iCalendar strings by first cleaning up line endings and then splitting the content into individual VEVENT blocks. It iterates through each block, treating lines as key-value pairs while intelligently handling complex fields like dates and file attachments.
+<switch:python>
+[python] def parse_ical(vcal):
+    '''Parse Opencast schedule iCalendar file and return events as dict
+    '''
+    vcal = vcal.replace('\r\n ', '').replace('\r\n\r\n', '\r\n')
+    vevents = vcal.split('\r\nBEGIN:VEVENT\r\n')
+    del(vevents[0])
+    events = []
+    for vevent in vevents:
+        event = {}
+        for line in vevent.split('\r\n'):
+            line = line.split(':', 1)
+            key = line[0].lower()
+            if len(line) <= 1 or key == 'end':
+                continue
+            if key.startswith('dt'):
+                event[key] = unix_ts(dateutil.parser.parse(line[1]))
+                continue
+            if not key.startswith('attach'):
+                event[key] = line[1]
+                continue
+            # finally handle attachments
+            event['attach'] = event.get('attach', [])
+            attachment = {}
+            for x in [x.split('=') for x in line[0].split(';')]:
+                if x[0].lower() in ['fmttype', 'x-apple-filename']:
+                    attachment[x[0].lower()] = x[1]
+            attachment['data'] = b64decode(line[1]).decode('utf-8')
+            event['attach'].append(attachment)
+        events.append(event)
+    return events
+<switch:english>
+[english] The function converts timestamps using a Unix time helper, but it relies on predefined functions like `unix_ts` and imports such as `dateutil`, which must be available in the execution environment.
+[english] What happens if an iCalendar file contains properties that are not recognized by the parser?
+[english] Unrecognized lines or keys will simply be ignored because they do not match any of the specific conditional checks (e.g., those starting with 'dt', 'attach', or non-complex types).
+[english] Looks like a solid iCal parsing utility!

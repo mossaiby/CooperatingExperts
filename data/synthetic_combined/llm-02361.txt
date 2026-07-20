@@ -1,0 +1,19 @@
+[english] I need to add or update an entry in my tracked data store, ensuring that if the specific combination already exists, I remove it before adding it new.
+[english] This function ensures unique entries within a clone of the current object's state. It creates a copy and then rebuild*s the list, strategically removing any existing match for the provided name and value pair to avoid duplicates.
+<switch:python>
+[python] def add(self, name, value):
+        """ Append a value to multiple value parameter. """
+        clone = self._clone()
+        clone._qsl = [p for p in self._qsl
+                      if not(p[0] == name and p[1] == value)]
+        clone._qsl.append((name, value,))
+        return clone
+<switch:english>
+[english] By modifying a clone instead of self, this method guarantees immutability for the original instance while returning the updated version.
+[english] What happens if the input `value` is already present but paired with a *different* `name` in the existing list?
+[english] The function will not remove it. The logic specifically checks for both name and value matching during the filtering process, so other pairs remain untouched.
+<switch:python>
+[python] # If list was [('a', 1), ('b', 2)] and we call add(self, 'c', 2):
+# Clone._qsl becomes [('a', 1), ('b', 2)] because no tuple matches both ('c' and 2).
+<switch:english>
+[english] That makes sense; I didn'll use this to manage unique configuration entries.

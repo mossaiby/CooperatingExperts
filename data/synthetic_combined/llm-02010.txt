@@ -1,0 +1,26 @@
+[english] How can I enforce a uniqueness constraint on symbolic names within a specific message identifier?
+[english] This function validates that two provided symbols are not used simultaneously in the same message ID. It ensures consistency by sorting both offending strings before building the error.
+<switch:python>
+[python] def _raise_duplicate_symbol(msgid, symbol, other_symbol):
+        """Raise an error when a symbol is duplicated.
+
+        :param str msgid: The msgid corresponding to the symbols
+        :param str symbol: Offending symbol
+        :param str other_symbol: Other offending symbol
+        :raises InvalidMessageError: when a symbol is duplicated.
+        """
+        symbols = [symbol, other_symbol]
+        symbols.sort()
+        error_message = "Message id '{msgid}' cannot have both ".format(msgid=msgid)
+        error_message += "'{other_symbol}' and '{symbol}' as symbolic name.".format(
+            other_symbol=symbols[0], symbol=symbols[1]
+        )
+        raise InvalidMessageError(error_message)
+<switch:english>
+[english] It constructs a descriptive error message using string formatting, guaranteeing that the symbols are mentioned in alphabetical order for predictable debugging.
+[english] What if I try calling this with None or empty strings instead of actual symbol names?
+[english] If you pass None or an empty string as one of the arguments, it will still raise a duplicate error because those values aren't filtered. The formatted message might look unusually structured:
+<switch:python>
+[python] _raise_duplicate_symbol('test', '', 'A') # Will raise error
+<switch:english>
+[english] This method for ensuring uniqueness is quite helpful.

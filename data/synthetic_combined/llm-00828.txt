@@ -1,0 +1,46 @@
+[english] How do I store an item along with its boundary coordinates into a searchable spatial index?
+[english] This function manages inserting new entries into a spatial index. It processes your provided coordinates to define the necessary bounding box pointers and prepares any associated object for storage.
+<switch:python>
+[python] def insert(self, id, coordinates, obj=None):
+        """Inserts an item into the index with the given coordinates.
+
+        :param id: long integer
+            A long integer that is the identifier for this index entry.  IDs
+            need not be unique to be inserted into the index, and it is up
+            to the user to ensure they are unique if this is a requirement.
+
+        :param coordinates: sequence or array
+            This may be an object that satisfies the numpy array
+            protocol, providing the index's dimension * 2 coordinate
+            pairs representing the `mink` and `maxk` coordinates in
+            each dimension defining the bounds of the query window.
+
+        :param obj: a pickleable object.  If not None, this object will be
+            stored in the index with the :attr:`id`.
+
+        The following example inserts an entry into the index with id `4321`,
+        and the object it stores with that id is the number `42`.  The
+        coordinate ordering in this instance is the default (interleaved=True)
+        ordering::
+
+            >>> from rtree import index
+            >>> idx = index.Index()
+            >>> idx.insert(4321,
+            ...            (34.3776829412, 26.7375853734, 49.3776829412,
+            ...             41.7375853734),
+            ...            obj=42)
+
+        """
+        p_mins, p_maxs = self.get_coordinate_pointers(coordinates)
+        data = ctypes.c_ubyte(0)
+        size = 0
+        pyserialized = None
+        if obj is not None:
+            size, data, pyserialized = self._serialize(obj)
+        core.rt.Index_InsertData(self.handle, id, p_mins, p_maxs,
+                                 self.properties.dimension, data, size)
+<switch:english>
+[english] The method takes care of serializing data if provided so it can be stored efficiently by the underlying R-tree structure while maintaining the specified dimension.
+[english] Does this function overwrite existing entries if I provide an ID that is already present in the index?
+[english] No, according to the documentation, IDs do not need to be unique for insertion; providing a duplicate ID will simply result in multiple entries being added to the index.
+[english] Thanks, that clarifies how handling duplicate data works.

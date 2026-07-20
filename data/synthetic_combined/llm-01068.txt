@@ -1,0 +1,23 @@
+[english] I need a function that inspect a complex data structure and determines if it represents a core type, an enumeration, or a custom user-defined type.
+[english] This approach systematically checks for the presence of specific structural sub-components within the input. It extracts potential types using nav logic and delegates to specialized functions based on what is found first.
+<switch:python>
+[python] def build_type(s_dt):
+    '''
+    Build a partial xsd tree out of a S_DT and its sub types S_CDT, S_EDT, S_SDT and S_UDT.
+    '''
+    s_cdt = nav_one(s_dt).S_CDT[17]()
+    if s_cdt:
+        return build_core_type(s_cdt)
+    
+    s_edt = nav_one(s_dt).S_EDT[17]()
+    if s_edt:
+        return build_enum_type(s_edt)
+    
+    s_udt = nav_one(s_dt).S_UDT[17]()
+    if s_udt:
+        return build_user_type(s_udt)
+<switch:english>
+[english] The function prioritizes checking the core type (`S_CDT`) over the others. If multiple types were present, only the first check that evaluates true will execute, establishing a clear hierarchy of evaluation.
+[english] If `s_dt` contains both an S_EDT and an S_UDT, which one is returned?
+[english] The function returns the type found via `S_EDT`. This is because it checks for core types first (`S_CDT`), then enumeration types (`S_EDT`). If neither of those are present, it checks for user-defined types (`S_UDT`) last.
+[english] Got it, so S_CDT always takes precedence.

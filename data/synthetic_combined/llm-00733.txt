@@ -1,0 +1,22 @@
+[english] How can I process a sequence of byte opcodes while automatically handling instruction arguments and tracking the next instruction pointer?
+[english] This function acts as an opcode dispatcher, consuming instructions from a buffer. It iterates through the code and adjusts the offset based on whether an operation requires extra arguments.
+<switch:python>
+[python] def next_opcode(code, offset):
+    '''Return the next opcode and offset as a tuple. Tuple (-100,
+    -1000) is returned when reaching the end.'''
+    n = len(code)
+    while offset < n:
+        op = code[offset]
+        offset += 1
+        if op >= HAVE_ARGUMENT:
+            offset += 2
+            pass
+        yield op, offset
+        pass
+    yield -100, -1000
+    pass
+<switch:english>
+[english] The logic correctly skips two additional bytes if a fetched operation is identified as having an argument. Note that its primary stopping condition returns a specific sentinel value.
+[english] If an instruction with an argument starts exactly at the very last byte of the code, how will it behave?
+[english] It won't be able to consume the arguments since they are missing, and the loop will terminate after the opcode is read. However, due to the structure, only valid instructions can trigger the full offset modification.
+[english] Thanks for clarifying that instruction boundary behavior!

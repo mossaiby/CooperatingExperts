@@ -1,0 +1,45 @@
+[english] How can I reliably read structured key-value configuration files and only accept explicitly allowed settings?
+[english] This function systematically searches for potential config files, then parses them line by line using regular expressions to identify sections and individual key-value pairs. It enforces validation rules before adding the setting to the internal dictionary.
+<switch:python>
+[python] def _read_config(self):
+        """Find and parse config file, storing all variables in ``self._config``."""
+        self._config_loaded = True
+        conf = []
+        for f in self._candidate_log_files():
+            if os.path.isfile(f):
+                self._logger.info("Reading config file %s" % f)
+                section_rx = re.compile(r"^\[(\w+)\]$")
+                keyvalue_rx = re.compile(r"^(\w+:)?([\w.]+)\s*=(.*)$")
+                with io.open(f, "rt", encoding="utf-8") as config_file:
+                    section_name = None
+                    for lineno, line in enumerate(config_file):
+                        line = line.strip()
+                        if line == "" or line.startswith("#"): continue
+                        m1 = section_rx.match(line)
+                        if m1:
+                            section_name = m1.group(1)
+                            continue
+                        m2 = keyvalue_rx.match(line)
+                        if m2:
+                            lng = m2.group(1)
+                            key = m2.group(2)
+                            val = m2.group(3).strip()
+                            if lng and lng.lower() != "py:": continue
+                            if section_name:
+                                key = section_name + "." + key
+                            if key in H2OConfigReader._allowed_config_keys:
+                                conf.append((key, val))
+                            else:
+                                self._logger.error("Key %s is not a valid config key" % key)
+                            continue
+                        self._logger.error("Syntax error in config file line %d: %s" % (lineno, line))
+                self._config = dict(conf)
+                return
+<switch:english>
+[english] The parsing logic relies on robust regex matching for headers and assignments but is highly dependent on the whitelist of allowed configuration keys. Because of this, the function short-circuits once a valid file is parsed.
+[english] How does the code handle configuration keys that begin with 'py:'?
+[english] The parser explicitly skips any configuration key where the first identifier (captured by the regex) matches "py:". This ensures internal or private settings are filtered out.
+<switch:python>
+[python] if lng and lng.lower() != "py:": continue
+<switch:english>
+[english] That clarifies how those keys are handled, thank you!

@@ -1,0 +1,46 @@
+[english] How can I programmatically create a new resource like 'project' or 'data' by sending it to an API endpoint?
+[english] This function handles the creation process by first validating the input data type. It serializes any dictionary into JSON format and then constructs a formatted URL before executing an authenticated POST request.
+<switch:python>
+[python] def create(self, data, resource='data'):
+        """Create an object of resource:
+
+        * data
+        * project
+        * processor
+        * trigger
+        * template
+
+        :param data: Object values
+        :type data: dict
+        :param resource: Resource name
+        :type resource: string
+
+        """
+        if isinstance(data, dict):
+            data = json.dumps(data)
+
+        if not isinstance(data, str):
+            raise ValueError(mgs='data must be dict, str or unicode')
+
+        resource = resource.lower()
+        if resource not in ('data', 'project', 'processor', 'trigger', 'template'):
+            raise ValueError(mgs='resource must be data, project, processor, trigger or template')
+
+        if resource == 'project':
+            resource = 'case'
+
+        url = urlparse.urljoin(self.url, '/api/v1/{}/'.format(resource))
+        return requests.post(url,
+                             data=data,
+                             auth=self.auth,
+                             headers={
+                                 'cache-control': 'no-cache',
+                                 'content-type': 'application/json',
+                                 'accept': 'application/json, text/plain, */*',
+                                 'referer': self.url,
+                             })
+<switch:english>
+[english] The method ensures resource names are valid and correctly formats headers for API interaction, but assumes `self.url` and `self.auth` are already properly initialized.
+[english] Is there any specific behavior if the input 'data' is a list instead of a dictionary?
+[english] No. If you pass a list or any non-string/non-dictionary type, the function will raise a ValueError because it expects `data` to be convertible into a string representation like JSON.
+[english] This is very helpful; I'll integrate this into my service layer now.

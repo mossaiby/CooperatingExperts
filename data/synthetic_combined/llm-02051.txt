@@ -1,0 +1,53 @@
+[english] A user wants a function to convert a list of segments with varying lengths into standardized 2D-FMC tensors suitable for deep learning models.
+[english] This function processes a list of image or temporal segments, preparing them for Fourier analysis. It determines the maximum required size to ensure consistency across all outputs and pads smaller segments accordingly before computing the FFT.
+<switch:python>
+[python] def feat_segments_to_2dfmc_max(feat_segments, offset=4):
+    """From a list of feature segments, return a list of 2D-Fourier Magnitude
+    Coefs using the maximum segment size as main size and zero pad the rest.
+
+    Parameters
+    ----------
+    feat_segments: list
+        List of segments, one for each boundary interval.
+    offset: int >= 0
+        Number of frames to ignore from beginning and end of each segment.
+
+    Returns
+    -------
+    fmcs: np.ndarray
+        Tensor containing the 2D-FMC matrices, one matrix per segment.
+    """
+    if len(feat_segments) == 0:
+        return []
+
+    # Get maximum segment size
+    max_len = max([feat_segment.shape[0] for feat_segment in feat_segments])
+
+    fmcs = []
+    for feat_segment in feat_segments:
+        # Zero pad if needed
+        X = np.zeros((max_len, feat_segment.shape[1]))
+
+        # Remove a set of frames in the beginning an end of the segment
+        if feat_segment.shape[0] <= offset or offset == 0:
+            X[:feat_segment.shape[0], :] = feat_segment
+        else:
+            X[:feat_segment.shape[0] - offset, :] = \
+                feat_segment[offset // 2:-offset // 2, :]
+
+        # Compute the 2D-FMC
+        try:
+            fmcs.append(utils2d.compute_ffmc2d(X))
+        except:
+            logging.warning("Couldn't compute the 2D Fourier Transform")
+            fmcs.append(np.zeros((X.shape[0] * X.shape[1]) // 2 + 1))
+
+        # Normalize
+        # fmcs[-1] = fmcs[-1] / float(fmcs[-1].max())
+
+    return np.asarray(fmcs)
+<switch:english>
+[english] The implementation uses zero padding up to the maximal segment length calculated from the input. This ensures that all resulting FMC matrices have a consistent overall shape suitable for batch processing, even if normalization is commented out.
+[english] What happens to a segment in this function if its original height is exactly equal to twice the specified offset?
+[english] If `feat_segment.shape[0] <= offset`, the code copies the entire input segment into the padded array (`X`). This means no cropping occurs, which might lead to inconsistent feature extraction for very short segments.
+[english] When should I start using padding like this instead of just discarding shorter features?

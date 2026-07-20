@@ -1,0 +1,32 @@
+[english] I have an AST representation of a multi-dimensional array reference, and I need to flatten it into a single linear subscript expression.
+[english] This function recursively deconstruct the `ArrayRef` structure by iterating through its nested subscripts until the base name is reached. It then reconstruct these dimensions using multiplication and addition operators to simulate a flattened 1D index.
+<switch:python>
+[python] def transform_multidim_to_1d_ref(aref, dimension_dict):
+    """
+    Transform ast of multidimensional reference to a single dimension reference.
+
+    In-place operation!
+    """
+    dims = []
+    name = aref
+    while type(name) is c_ast.ArrayRef:
+        dims.append(name.subscript)
+        name = name.name
+
+    subscript_list = []
+    for i, d in enumerate(dims):
+        if i == 0:
+            subscript_list.append(d)
+        else:
+            subscript_list.append(c_ast.BinaryOp('*', d, reduce(
+                lambda l, r: c_ast.BinaryOp('*', l, r),
+                dimension_dict[name.name][-1:-i-1:-1])))
+
+    aref.subscript = reduce(
+        lambda l, r: c_ast.BinaryOp('+', l, r), subscript_list)
+    aref.name = name
+<switch:english>
+[english] The process modifies the input reference in-place, so be mindful that calling this function side effects on `aref`. For correctness, it relies heavily on the internal structure of `dimension_dict` provided during compilation.
+[english] Does it matter if the dimensions are accessed from inner-to-outer or outer-to-inner when building the subscript list?
+[english] The current logic builds the subscripts based on the order they appear in the AST. To change this behavior, you would need to modify how `dims` is processed in the first loop, specifically adjusting which element from `dimension_dict[name.name]` you access.
+[english] Thanks for clarifying that!

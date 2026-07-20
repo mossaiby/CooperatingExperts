@@ -1,0 +1,16 @@
+[english] I want a list that contains myself along with every other checker currently associated with me.
+[english] We can achieve this by including myself first, then using a nested list comprehension. This efficiently iterates through all collections stored in self._checkers to gather related items while excluding any redundant references to myself.
+<switch:python>
+[python] def get_checkers(self):
+        """return all available checkers as a list"""
+        return [self] + [
+            c
+            for _checkers in self._checkers.values()
+            for c in _checkers
+            if c is not self
+        ]
+<switch:english>
+[english] The condition `if c is not self` prevents the current object from being added multiple times if it appears in several of the checker lists, ensuring a clean list.
+[english] If one of my associated checkers also belongs to me (a cyclic reference), how does this function handle that specific case?
+[english] The `if c is not self` check handles this by explicitly excluding any instance where the checked object is identical to `self`, preventing infinite loops or redundant self-entries.
+[english] This explanation was very helpful!

@@ -1,0 +1,20 @@
+[english] How do I translate a specific parser rule into an executable Python method call within my Abstract Syntax Tree?
+[english] This function builds an Abstract Syntax Tree (AST) node that mimics calling `self.evalRule()` with the rule's name as an argument.
+<switch:python>
+[python] def visit_Rule(self, node: parsing.Rule) -> ast.expr:
+        """Generates python code calling a rule.
+
+        self.evalRule('rulename')
+        """
+        return ast.Call(
+            ast.Attribute(ast.Name('self', ast.Load()),
+                          'evalRule', ast.Load()),
+            [ast.Str(node.name)], [], None, None)
+<switch:english>
+[english] It leverages standard AST classes (`ast.Call` and `ast.Attribute`) to represent a method invocation on the instance itself, using string literals for safety.
+[english] The function uses 'ast.Str' for the rule name; how would I modify this if the rule name was stored in an external variable instead of being literal?
+[english] You would replace the `ast.Str(node.name)` argument with an `ast.Name` node referencing that external variable.
+<switch:python>
+[python] [ast.Name(id='rule_variable', ctx=ast.Load())]
+<switch:english>
+[english] Thanks, this helps clarify how you handle dynamic naming.

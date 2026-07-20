@@ -1,0 +1,29 @@
+[english] How do I standardize different types of command inputs into a single byte string that includes system prefixes for transmission?
+[english] The function first checks if the input commands are already provided as bytes. If not, it uses an external helper to convert any tuple list format into a standardized byte stream before prepending the required prefix.
+<switch:python>
+[python] def _prepare_send(self, commands):
+        """Prepare message to be sent.
+
+        Parameters
+        ----------
+        commands : list of tuples or bytes string
+            Commands as a list of tuples or a bytes string. cam.prefix is
+            allways prepended before sending.
+
+        Returns
+        -------
+        string
+            Message to be sent.
+
+        """
+        if isinstance(commands, bytes):
+            msg = self.prefix_bytes + commands
+        else:
+            msg = tuples_as_bytes(self.prefix + commands)
+        debug(b'> ' + msg)
+        return msg
+<switch:english>
+[english] It ensures that every message is properly prefixed and logs the final output for debugging purposes using `debug(b'> ' + msg)`. Note that the exact conversion logic relies on the `tuples_as_bytes` method.
+[english] If I pass a list of commands, how is the prefix applied when the input is not bytes?
+[english] When `commands` is not bytes, it executes `msg = tuples_as_bytes(self.prefix + commands)`, meaning the bytes string stored in `self.prefix` is added to every element before they are converted into the final message format.
+[english] Perfect, that clarifies how Python handles type conversions within this class.

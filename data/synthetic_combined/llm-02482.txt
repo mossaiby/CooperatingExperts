@@ -1,0 +1,48 @@
+[english] How can I write a reusable function to handle profile form rendering and saving based on incoming request data?
+[english] The function begins by retrieving the associated attendee object from the current user. It then attempts to fetch an existing profile or prepares initial values using speaker information if no profile is found.
+<switch:python>
+[python] def _handle_profile(request, prefix):
+    ''' Returns a profile form instance, and a boolean which is true if the
+    form was handled. '''
+    attendee = people.Attendee.get_instance(request.user)
+
+    try:
+        profile = attendee.attendeeprofilebase
+        profile = people.AttendeeProfileBase.objects.get_subclass(
+            pk=profile.id,
+        )
+    except ObjectDoesNotExist:
+        profile = None
+
+    # Load a pre-entered name from the speaker's profile,
+    # if they have one.
+    try:
+        speaker_profile = request.user.speaker_profile
+        speaker_name = speaker_profile.name
+    except ObjectDoesNotExist:
+        speaker_name = None
+
+    name_field = ProfileForm.Meta.model.name_field()
+    initial = {}
+    if profile is None and name_field is not None:
+        initial[name_field] = speaker_name
+
+    form = ProfileForm(
+        request.POST or None,
+        initial=initial,
+        instance=profile,
+        prefix=prefix
+    )
+
+    handled = True if request.POST else False
+
+    if request.POST and form.is_valid():
+        form.instance.attendee = attendee
+        form.save()
+
+    return form, handled
+<switch:english>
+[english] The function strategically uses `ObjectDoesNotExist` to decide whether to load an existing instance or provide default data for a new entry.
+[english] What happens in this function if the request.user exists but no corresponding Attendee record can be found?
+[english] If getting the attendee fails (e.g., due to ObjectDoesNotExist on `people.Attendee`), the code will raise an uncaught exception because it relies heavily on `request.user` and subsequent calls like `get_instance(request.user)`.
+[english] Thanks for clarifying how these dependencies are handled.

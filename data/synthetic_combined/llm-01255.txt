@@ -1,0 +1,27 @@
+[english] How can I define a new data selection using a boolean expression and integrate it into an undo/redo history system?
+[english] This method first ensures the input is a valid string expression before checking if any existing selection is present under the given name. It strategically skips recording redundant or empty selections to keep your history clean.
+<switch:python>
+[python] def select(self, boolean_expression, mode="replace", name="default", executor=None):
+        """Perform a selection, defined by the boolean expression, and combined with the previous selection using the given mode.
+
+        Selections are recorded in a history tree, per name, undo/redo can be done for them separately.
+
+        :param str boolean_expression: Any valid column expression, with comparison operators
+        :param str mode: Possible boolean operator: replace/and/or/xor/subtract
+        :param str name: history tree or selection 'slot' to use
+        :param executor:
+        :return:
+        """
+        boolean_expression = _ensure_string_from_expression(boolean_expression)
+        if boolean_expression is None and not self.has_selection(name=name):
+            pass  # we don't want to pollute the history with many None selections
+            self.signal_selection_changed.emit(self)  # TODO: unittest want to know, does this make sense?
+        else:
+            def create(current):
+                return selections.SelectionExpression(boolean_expression, current, mode) if boolean_expression else None
+            self._selection(create, name)
+<switch:english>
+[english] The logic uses an inner `create` function to dynamically build a `SelectionExpression`. If the boolean expression was null, it emits a change signal even without adding a new object.
+[english] Since the method calls `self.signal_selection_changed.emit(self)` when no valid selection is made, does this mean parts of the system rely on that emission to know there's been a state transition?
+[english] Yes, it seems to be an intentional design choice to signal any potential changes in state for that specific slot or name, even if technically empty.
+[english] That makes sense, thank you for clarifying.

@@ -1,0 +1,24 @@
+[english] How can I initialize a custom result object and configure its formatting based on environment settings?
+[english] This setup function dynamically constructs a result manager by first generating a base formatter from the configuration. It then conditionally wraps that formatter with features for verbosity or color if those flags are enabled.
+<switch:python>
+[python] def setup(config):
+    """
+    Setup the environment for an example run.
+
+    """
+
+    formatter = config.Formatter()
+
+    if config.verbose:
+        formatter = result.Verbose(formatter)
+    if config.color:
+        formatter = result.Colored(formatter)
+
+    current_result = result.ExampleResult(formatter)
+
+    ivoire.current_result = ivoire._manager.result = current_result
+<switch:english>
+[english] The function finalizes the setup by assigning the resulting object to both `ivoire.current_result` and a nested internal attribute, ensuring global accessibility.
+[english] If I wanted to ensure that only the color theme was used regardless of verbosity, how would I modify these conditional checks?
+[english] You could reorder or restructure the conditions to prevent overriding previous settings if they conflict. However, since `result.Colored(formatter)` takes a formatter as input, the current implementation always applies modifiers sequentially.
+[english] Wait, so what happens if both verbose and color are set?

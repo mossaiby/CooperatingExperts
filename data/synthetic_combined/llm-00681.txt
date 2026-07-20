@@ -1,0 +1,34 @@
+[english] I have a workbook where multi-line content was split into lists by version control tools, and I need to find all those sections and rejoin them into single strings.
+[english] This function iterates through every worksheet in your notebook (`nb`) and inspect every cell. It specifically looks for data that has been mistakenly stored as a list of lines instead of a single string, whether they are code inputs or text sources.
+<switch:python>
+[python] def rejoin_lines(nb):
+    """rejoin multiline text into strings
+    
+    For reversing effects of ``split_lines(nb)``.
+    
+    This only rejoins lines that have been split, so if text objects were not split
+    they will pass through unchanged.
+    
+    Used when reading JSON files that may have been passed through split_lines.
+    """
+    for ws in nb.worksheets:
+        for cell in ws.cells:
+            if cell.cell_type == 'code':
+                if 'input' in cell and isinstance(cell.input, list):
+                    cell.input = _join_lines(cell.input)
+                for output in cell.outputs:
+                    for key in _multiline_outputs:
+                        item = output.get(key, None)
+                        if isinstance(item, list):
+                            output[key] = _join_lines(item)
+            else: # text, heading cell
+                for key in ['source', 'rendered']:
+                    item = cell.get(key, None)
+                    if isinstance(item, list):
+                        cell[key] = _join_lines(item)
+    return nb
+<switch:english>
+[english] The core logic relies on checking if values accessed via `cell.input`, `cell.outputs`, or keys like 'source' and 'rendered' are instances of lists. Remember that this function depends heavily on an external helper named `_join_lines` to perform the actual string joining.
+[english] What happens if one of these list items contains internal Newlines (like '\n') instead of just being a split line?
+[english] The current structure assumes the splitting occurred at element level. If a single entry already has embedded newlines, you must ensure `_join_lines` is robust enough to handle them correctly, or add logic before joining:
+[english] This makes sense; so if I'm worried about nested lists, should I check for that too?

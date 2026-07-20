@@ -1,0 +1,18 @@
+[english] How do I request and retrieve current data or status from a connected hub using its unique identifier?
+[english] This function facilitates data retrieval for a given device ID (`sid`). It first constructs a standard command payload, then intelligently decides whether to expect an 'ack' or a general 'rsp' based on the protocol configured in `self.proto`.
+<switch:python>
+[python] def get_from_hub(self, sid):
+        """Get data from gateway"""
+        cmd = '{ "cmd":"read","sid":"' + sid + '"}'
+        resp = self._send_cmd(cmd, "read_ack") if int(self.proto[0:1]) == 1 else self._send_cmd(cmd, "read_rsp")
+        _LOGGER.debug("read_ack << %s", resp)
+        return self.push_data(resp)
+<switch:english>
+[english] The logic successfully adapts the expected response type before logging and finally returns data after processing it through a utility method called push_data.
+[english] What happens internally if the hub sends back an error message instead of successful data?
+[english] Currently, this function doesn't check for errors in `resp`. You could modify the code to evaluate the returned response object:
+<switch:python>
+[python] if resp and self._is_error(resp):
+            return None # Handle error gracefully
+<switch:english>
+[english] That clarification is very helpful, thanks!

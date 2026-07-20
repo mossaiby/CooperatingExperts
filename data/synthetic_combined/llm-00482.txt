@@ -1,0 +1,18 @@
+[english] How can I calculate the generator or transition rate matrix (Q) for a GTR-like model given state probabilities and weight matrices?
+[english] To derive the rate matrix, we first compute an intermediate tensor using Einstein summation across the input matrices. Then, we adjust the diagonals of this resulting tensor to ensure it is a valid generator where rows sum to zero.
+<switch:python>
+[python] def Q(self):
+        """function that return the product of the transition matrix
+           and the equilibrium frequencies to obtain the rate matrix
+           of the GTR model
+        """
+        tmp = np.einsum('ia,ij->ija', self.Pi, self.W)
+        diag_vals = np.sum(tmp, axis=0)
+        for x in range(tmp.shape[-1]):
+            np.fill_diagonal(tmp[:,:,x], -diag_vals[:,x])
+        return tmp
+<switch:english>
+[english] The core logic involves using `np.einsum` for efficient tensor multiplication and replacing the diagonal with negative sums of columns, which is standard practice for continuous-time Markov chains.
+[english] If one of our transition probabilities (self.Pi) were zero, would the resulting rate matrix Q still be valid?
+[english] Yes, as long as the row corresponding to that state in Pi sums up to a positive value, the calculation remains numerically sound for generating rates.
+[english] That helps clarify how this GTR model is implemented.

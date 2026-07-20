@@ -1,0 +1,51 @@
+[english] I need a way to automatically pull genomic analysis panels from PanelApp into my Scout database.
+[english] This function automates the retrieval process by first fetching gene mappings using `adapter.genes_by_alias()`. It then determines whether to fetch all available panels or just one specific panel ID provided as an argument, iterating through them to load data.
+<switch:python>
+[python] def load_panel_app(adapter, panel_id=None, institute='cust000'):
+    """Load PanelApp panels into scout database
+    
+    If no panel_id load all PanelApp panels 
+    
+    Args:
+        adapter(scout.adapter.MongoAdapter)
+        panel_id(str): The panel app panel id
+    """
+    base_url = 'https://panelapp.genomicsengland.co.uk/WebServices/{0}/'
+    
+    hgnc_map = adapter.genes_by_alias()
+    
+    if panel_id:
+        panel_ids = [panel_id]
+
+    if not panel_id:
+        
+        LOG.info("Fetching all panel app panels")
+        data = get_request(base_url.format('list_panels'))
+    
+        json_lines = json.loads(data)
+        
+        panel_ids = [panel_info['Panel_Id'] for panel_info in json_lines['result']]
+    
+    for panel_id in panel_ids:
+        panel_data = get_request(base_url.format('get_panel') + panel_id)
+        
+        parsed_panel = parse_panel_app_panel(
+            panel_info = json.loads(panel_data)['result'], 
+            hgnc_map=hgnc_map,
+            institute=institute
+        )
+        parsed_panel['panel_id'] = panel_id
+        
+        if len(parsed_panel['genes']) == 0:
+            LOG.warning("Panel {} is missing genes. Skipping.".format(parsed_panel['display_name']))
+            continue
+        
+        try:
+            adapter.load_panel(parsed_panel=parsed_panel)
+        except Exception as err:
+            raise err
+<switch:english>
+[english] The code includes checks for panel completeness, logging a warning and skipping any panel that lacks gene definitions before attempting the database insertion.
+[english] What should I do if the external `get_request` function call fails or returns an invalid JSON format?
+[english] Currently, a generic `try/except` block wraps the final loading process, but API response parsing errors during data retrieval could crash the script. You can add specific checks around `json.loads(panel_data)` to catch malformed responses.
+[english] That clarifies how error handling is managed; I appreciate the insight into robust scripting!

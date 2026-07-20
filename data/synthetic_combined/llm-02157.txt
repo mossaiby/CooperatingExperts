@@ -1,0 +1,24 @@
+[english] How can I create a method that displays a window using wxPython, while optionally forcing it into a modal state that prevents interaction with other application windows until it is dismissed?
+[english] To achieve this, the function uses `self.wx_obj.Show(value)` for basic visibility control. If `modal` is true, it employs a `wx.WindowDisabler` to block external events and runs a custom event loop.
+<switch:python>
+[python] def show(self, value=True, modal=None):
+        "Display or hide the window, optionally disabling all other windows"
+        self.wx_obj.Show(value)
+        if modal:
+            # disable all top level windows of this application (MakeModal)
+            disabler = wx.WindowDisabler(self.wx_obj)
+            # create an event loop to stop execution 
+            eventloop = wx.EventLoop()
+            def on_close_modal(evt):
+                evt.Skip()
+                eventloop.Exit()
+            self.wx_obj.Bind(wx.EVT_CLOSE, on_close_modal)
+            # start the event loop to wait user interaction 
+            eventloop.Run()
+            # reenable the windows disabled and return control to the caller
+            del disabler
+<switch:english>
+[english] By initiating `eventloop.Run()` and using the close handler to call `eventloop.Exit()`, the method effectively halts execution until user interaction finishes. The cleanup is handled by deleting the disabler object, ensuring other windows are re-enabled afterward.
+[english] What if a window managed this way tries to resize or move itself while in modal mode?
+[english] The `wx.WindowDisabler` automatically prevents all top-level interaction during its scope. For any controls residing within the modal object, you might need additional logic to override their specific event handlers to ensure they don't attempt invalid actions.
+[english] I see how the disabler manages that blocking behavior!

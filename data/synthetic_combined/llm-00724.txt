@@ -1,0 +1,20 @@
+[english] I need to convert an existing H5 file into the Sigproc filterbank (.fil) format and save it appropriately.
+[english] This function automates the conversion process. It initializes a `Waterfall` object using your input path and then handles file naming conventions before calling the necessary writing method.
+<switch:python>
+[python] def make_fil_file(filename,out_dir='./', new_filename=None, max_load = None):
+    ''' Converts file to Sigproc filterbank (.fil) format.  Default saves output in current dir.
+    '''
+
+    fil_file = Waterfall(filename, max_load = max_load)
+    if not new_filename:
+        new_filename = out_dir+filename.replace('.h5','.fil').split('/')[-1]
+
+    if '.fil' not in new_filename:
+        new_filename = new_filename+'.fil'
+
+    fil_file.write_to_fil(new_filename)
+<switch:english>
+[english] It automatically replaces the '.h5' extension with '.fil' to ensure the output format is correct. Note that if you don't specify a new filename, it derives one from the input file path.
+[english] What happens if I pass `new_filename=None` but also provide an out_dir that doesn't end in a slash?
+[english] The code concatenates the directory and filename directly without ensuring the directory ends with a separator. To fix this, you should ensure directories are handled correctly before concatenation.
+[english] That makes sense!

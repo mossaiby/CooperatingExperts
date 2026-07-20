@@ -1,0 +1,17 @@
+[english] I need a function that calculates the total time it takes for a packet to travel between two network endpoints.
+[english] I can help with that! To calculate the delay, we determine the bottleneck bandwidth and add the fixed base latencies of both sender and receiver. This gives us an estimate of the entire transfer duration.
+<switch:python>
+[python] def delay(self, sender, receiver, packet, add_delay=0):
+        """
+        bandwidths are inaccurate, as we don't account for parallel transfers here
+        """
+        bw = min(sender.ul_bandwidth, receiver.dl_bandwidth)
+        delay = sender.base_latency + receiver.base_latency
+        delay += len(packet) / bw
+        delay += add_delay
+        return delay
+<switch:english>
+[english] This function calculates total delay by summing the base latencies and adding the packet size divided by the minimum available bandwidth between the two points.
+[english] What happens if either the `ul_bandwidth` or `dl_bandwidth` is zero?
+[english] If bandwidth is zero, division will result in an error because the transfer time would be infinite. You should add a check to handle this edge case:
+[english] That makes sense! Thanks for checking that logic.

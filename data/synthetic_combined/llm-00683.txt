@@ -1,0 +1,37 @@
+[english] I need a way to take an existing URL and update or add query parameters.
+[english] The best approach is to parse the base URL components, extract all current query string values into a dictionary, and then merge your new set of parameters into that collection.
+<switch:python>
+[python] def build_url(base, additional_params=None):
+    """Construct a URL based off of base containing all parameters in
+    the query portion of base plus any additional parameters.
+
+    :param base: Base URL
+    :type base: str
+    ::param additional_params: Additional query parameters to include.
+    :type additional_params: dict
+    :rtype: str
+    """
+    url = urlparse.urlparse(base)
+    query_params = {}
+    query_params.update(urlparse.parse_qsl(url.query, True))
+    if additional_params is not None:
+        query_params.update(additional_params)
+        for k, v in additional_params.iteritems():
+            if v is None:
+                query_params.pop(k)
+
+    return urlparse.urlunparse((url.scheme,
+                                url.netloc,
+                                url.path,
+                                url.params,
+                                urllib.urlencode(query_params),
+                                url.fragment))
+<switch:english>
+[english] Finally, the function reconstructures the entire URL, ensuring valid encoding for the updated query string while preserving all other parts like schemes and paths.
+[english] What happens if `additional_params` contains a key whose value is explicitly `None`?
+[english] If a parameter's value is `None`, it will be removed from the final URL entirely, ensuring no empty parameters are appended. For example,
+<switch:python>
+[python] {'key': 'value', 'none_param': None}
+# results in only {'key': 'value'} being kept.
+<switch:english>
+[english] Got it, thanks for clarifying how that handles null values.

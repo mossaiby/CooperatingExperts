@@ -1,0 +1,36 @@
+[english] How can I ensure a specific hierarchy of groups exists in my HDF5 file using a path like `parameters.mobiles.cars`?
+[english] This helper method takes a dot-separated string path and an optional start point. It initializes the group reference, then loops through each part of the key to build or locate the required nested structure.
+<switch:python>
+[python] def _all_create_or_get_groups(self, key, start_hdf5_group=None):
+        """Creates new or follows existing group nodes along a given colon separated `key`.
+
+        :param key:
+
+            Colon separated path along hdf5 file, e.g. `parameters.mobiles.cars`.
+
+        :param start_hdf5_group:
+
+            HDF5 group from where to start, leave `None` for the trajectory group.
+
+        :return:
+
+            Final group node, e.g. group node with name `cars`.
+
+        """
+        if start_hdf5_group is None:
+            newhdf5_group = self._trajectory_group
+        else:
+            newhdf5_group = start_hdf5_group
+        created = False
+        if key == '':
+            return newhdf5_group, created
+        split_key = key.split('.')
+        for name in split_key:
+            newhdf5_group, created = self._all_create_or_get_group(name, newhdf5_group)
+
+        return newhdf5_group, created
+<switch:english>
+[english] It ensures all necessary intermediate groups are present along the specified hierarchy by repeatedly calling its internal atomic retrieval function. The function returns both the final group node and a boolean flag indicating if any creation occurred.
+[english] If I call this with a key path that is entirely missing, how many times will it attempt to create nodes?
+[english] The function calls `self._all_create_or_get_group` once for every segment in the split key. If the initial group doesn't exist or requires creation, it will handle it on the first iteration.
+[english] Got it, I understand how that path traversal works.

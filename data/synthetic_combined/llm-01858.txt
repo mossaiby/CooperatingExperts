@@ -1,0 +1,19 @@
+[english] I need to implement a mechanism for declaring new CREG indexed identifiers within the program structure, including necessary validation checks.
+[english] This function validates and parses a CREG declaration by creating an AST node first. It then rigorously checks the identifier against reserved names and ensures the required indexing is valid before registering it.
+<switch:python>
+[python] def p_creg_decl(self, program):
+        """
+           creg_decl : CREG indexed_id
+        """
+        program[0] = node.Creg([program[2]])
+        if program[2].name in self.external_functions:
+            raise QasmError("CREG names cannot be reserved words. "
+                            + "Received '" + program[2].name + "'")
+        if program[2].index == 0:
+            raise QasmError("CREG size must be positive")
+        self.update_symtab(program[0])
+<switch:english>
+[english] The process guarantees that created registers are unique (by checking external functions) and adhere to positive index requirements prior to updating the symbol table.
+[english] Does this function specifically check if the register name contains invalid characters, or does it assume the lexer handled all character restrictions?
+[english] Currently, it only verifies against a list of internal reserved words (`self.external_functions`). To enforce stricter naming rules, you would need to add regex validation on `program[2].name`.
+[english] That clarifies how the symbol registration and initial checks work.

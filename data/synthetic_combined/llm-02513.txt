@@ -1,0 +1,43 @@
+[english] How do I implement a retrieval method that can locate an image container by name across collections and display its storage path?
+[english] This function attempts to find a specific resource by first extracting collection and image names from the input `name`. It checks for a corresponding `Collection` record, and if found, it proceeds to search for the associated `Container` using details like tag and version.
+<switch:python>
+[python] def get(self, name, quiet=False):
+    '''Do a get for a container, and then a collection, and then return None
+       if no result is found.
+    Parameters
+    ==========
+    name: should coincide with either the collection name, or the container
+          name with the collection. A query is done first for the collection,
+          and then the container, and the path to the image file returned.
+    '''
+    from sregistry.database.models import Collection, Container
+    names = parse_image_name( remove_uri (name) )
+ 
+    # First look for a collection (required)
+    collection = self.get_collection(name=names['collection'])
+    container = None
+
+    if collection is not None:
+        container = self.get_container(collection_id=collection.id,
+                                       name=names['image'], 
+                                       tag=names['tag'],
+                                       version=names['version'])
+
+        if container is not None and quiet is False:
+
+            # The container image file exists [local]
+            if container.image is not None:
+                print(container.image)
+
+            # The container has a url (but not local file)
+            elif container.url is not None:
+                print(container.url)
+            else:
+                bot.info('No storage file found for %s' %name)
+
+    return container
+<switch:english>
+[english] The method is case sensitive regarding naming conventions and uses internal methods like `get_collection` before attempting the container retrieval. If neither local path nor URL exists in the container record, it reports a missing storage file via the `bot.info` call.
+[english] Does this function handle cases where an image name is provided but no matching collection or container exists, and what does it return?
+[english] If neither the collection nor the container can be found using the provided parameters, the function returns None. This is because the `container` variable remains unassigned within the main logic path if `collection is not None` evaluates to false.
+[english] That clarifies how it handles misses, thank you.

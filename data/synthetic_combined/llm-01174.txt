@@ -1,0 +1,20 @@
+[english] How do I generate a unique OpenQASM instruction string that correctly handles both named and parameterized qubits?
+[english] This function dynamically constructs an OpenQASM-compatible name for an instruction. It checks if the object has parameters to properly format them within parentheses, ensuring the resulting name is fully descriptive before returning.
+<switch:python>
+[python] def qasm(self):
+        """Return a default OpenQASM string for the instruction.
+
+        Derived instructions may override this to print in a
+        different format (e.g. measure q[0] -> c[0];).
+        """
+        name_param = self.name
+        if self.params:
+            name_param = "%s(%s)" % (name_param, ",".join(
+                [str(i) for i in self.params]))
+
+        return self._qasmif(name_param)
+<switch:english>
+[english] The function relies on a helper method `self._qasmif` to finalize the format, but it handles all necessary string formatting logic itself.
+[english] What happens if self.params is an empty list?
+[english] If params is an empty list, `name_param` remains unchanged because the initial check `if self.params:` evaluates to false.
+[english] That clarifies how parameter handling works.

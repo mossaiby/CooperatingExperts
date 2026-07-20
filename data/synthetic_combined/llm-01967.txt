@@ -1,0 +1,17 @@
+[english] How can I create a method to turn an account into an administrator or remove its administrative privileges?
+[english] This function simplifies permission management by checking the input string against a defined role. It first fetches the necessary 'Admin' group object and then uses conditional logic to either add or strip that user from the group.
+<switch:python>
+[python] def modify_permissions(self, permissions):
+        """Modify the user's permissions."""
+
+        group = Group.objects.get(name='Admin')
+
+        if permissions == 'admin':
+            self.groups.add(group)
+        else:
+            self.groups.remove(group)
+<switch:english>
+[english] The code relies on an exact match for the string 'admin'. Be aware that any value other than 'admin' triggers the removal of the admin group membership.
+[english] Does this function handle scenarios where I want to add a user only to one specific, non-admin group?
+[english] No, it is strictly designed for toggling membership in the single 'Admin' group. If you need to manage multiple general groups, you would need to expand the conditional logic and iterate through those desired permissions.
+[english] Got it, so I’d have to refactor that if I want granular permission control later.

@@ -1,0 +1,20 @@
+[english] How do I programmatically display a limited number of stack trace entries from a process object?
+[english] This function is designed to output stack frames by looping through the available stack history in `proc_obj`. It intelligently determines how many entries (`n`) should be printed based on whether a specific count was provided.
+<switch:python>
+[python] def print_stack_trace(proc_obj, count=None, color='plain', opts={}):
+    "Print count entries of the stack trace"
+    if count is None:
+        n=len(proc_obj.stack)
+    else:
+        n=min(len(proc_obj.stack), count)
+    try:
+        for i in range(n):
+            print_stack_entry(proc_obj, i, color=color, opts=opts)
+    except KeyboardInterrupt:
+        pass
+    return
+<switch:english>
+[english] The function relies on an external `print_stack_entry` helper to handle the actual output formatting. Be aware that any customization is passed through the `opts` dictionary.
+[english] If I call this with count=None, does it iterate over every single frame available in the stack?
+[english] Yes, when `count` is None, the variable `n` becomes the total length of `proc_obj.stack`, ensuring all frames are processed.
+[english] That clears up my confusion about how many entries will be printed.

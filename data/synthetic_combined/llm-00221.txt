@@ -1,0 +1,34 @@
+[english] How can I check if a provided short name prefix uniquely corresponds to an actual parameter name within a set of arguments, while accounting for parameters that have already been supplied?
+[english] This function helps validate and resolve shorthand names by first determining which parameters are available based on prior matches (`filled_args`). It then searches the remaining valid argument names using the provided prefix.
+<switch:python>
+[python] def match_shortname(self, name, filled_args=None):
+        """Try to convert a prefix into a parameter name.
+
+        If the result could be ambiguous or there is no matching
+        parameter, throw an ArgumentError
+
+        Args:
+            name (str): A prefix for a parameter name
+            filled_args (list): A list of filled positional arguments that will be
+                removed from consideration.
+
+        Returns:
+            str: The full matching parameter name
+        """
+
+        filled_count = 0
+        if filled_args is not None:
+            filled_count = len(filled_args)
+
+        possible = [x for x in self.arg_names[filled_count:] if x.startswith(name)]
+        if len(possible) == 0:
+            raise ArgumentError("Could not convert short-name full parameter name, none could be found", short_name=name, parameters=self.arg_names)
+        elif len(possible) > 1:
+            raise ArgumentError("Short-name is ambiguous, could match multiple keyword parameters", short_name=name, possible_matches=possible)
+
+        return possible[0]
+<switch:english>
+[english] The logic ensures parameter matching is strict; if no match is found or if multiple parameters start with the same string, it intentionally raises an ArgumentError to prevent ambiguity.
+[english] If `possible` contains more than one item starting with the same letter but having different lengths (e.g., 'a' and 'apple'), why does the function raise an error?
+[english] The function treats all matching prefixes as equally ambiguous, which is enforced by checking if len(possible) > 1; thus, any potential for multiple interpretations results in raising that specific exception.
+[english] This makes sense to prevent unpredictable behavior.

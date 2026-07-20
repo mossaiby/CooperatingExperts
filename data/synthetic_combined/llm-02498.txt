@@ -1,0 +1,17 @@
+[english] How can I check if my HttpMessageSecurity object is fully configured to handle message protection?
+[english] This function verifies the presence of necessary cryptographic keys required for secure communication. It relies on checking four specific attributes on the instance.
+<switch:python>
+[python] def supports_protection(self):
+        """
+        Determines if the the current HttpMessageSecurity object supports the message protection protocol.
+        :return: True if the current object supports protection, otherwise False
+        """
+        return self.client_signature_key \
+               and self.client_encryption_key \
+               and self.server_signature_key \
+               and self.server_encryption_key
+<switch:english>
+[english] The method uses logical `and` operators to ensure every key is truthy, which dictates whether protection is possible.
+[english] What happens if the client encryption key exists but others are missing?
+[english] If any of the required keys are missing or falsy, the function immediately returns False without needing to evaluate the subsequent key checks.
+[english] That makes sense. Thanks for clarifying.

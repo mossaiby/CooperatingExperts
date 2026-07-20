@@ -1,0 +1,27 @@
+[english] How can I convert a standard six-digit hexadecimal HTML color string like \"FF0088\" into an RGBA CSS format with a specified opacity?
+[english] This function is designed to parse a hex code and convert its components from base 16 (hexadecimal) into integers. It then structures these values along with the provided alpha value into a valid CSS string.
+<switch:python>
+[python] def html_color_to_rgba(html_colour, alpha):
+    """
+    :param html_colour: Colour string like FF0088
+    :param alpha: Alpha value (opacity)
+    :return: RGBA semitransparent version of colour for use in css
+    """
+    html_colour = html_colour.upper()
+    if html_colour[0] == '#':
+        html_colour = html_colour[1:]
+
+    r_str = html_colour[0:2]
+    g_str = html_colour[2:4]
+    b_str = html_colour[4:6]
+
+    r = int(r_str, 16)
+    g = int(g_str, 16)
+    b = int(b_str, 16)
+
+    return 'rgba(%s, %s, %s, %s)' % (r, g, b, alpha)
+<switch:english>
+[english] The function successfully parses standard FFGG BB codes, but it won't handle shorthand three-digit hex colors like #F00 without modification.
+[english] What happens if I pass in a shorthand color, say \"F00\", instead of the full six digits?
+[english] Currently, passing a shorter string would result in an indexing error because it expects two characters for R, G, and B. To fix this, you might need logic to expand three-digit hex values into their full six-digit equivalents.
+[english] Thanks for pointing that out.

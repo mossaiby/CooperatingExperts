@@ -1,0 +1,19 @@
+[english] How can I update or track the operational status of a specific service within my application's database?
+[english] This function utilizes an Object-Relational Mapper (ORM) pattern to modify an existing record, or create one if it doesn't exist. It initializes a state object and updates its attributes before managing the database transaction.
+<switch:python>
+[python] def set_service_status(service, status):
+    '''Update the status of a particular service in the database.
+    '''
+    srv = db.ServiceStates()
+    srv.type = service
+    srv.status = status
+
+    dbs = db.get_session()
+    dbs.merge(srv)
+    dbs.commit()
+    dbs.close()
+<switch:english>
+[english] The code ensures data integrity by explicitly committing the changes and then closing the session, which is crucial for resource management.
+[english] What happens if a record for that specific service type does not already exist in the database?
+[english] Because you are initializing a new object (`srv = db.ServiceStates()`) and using `dbs.merge(srv)`, SQLAlchemy will typically insert the record automatically upon committing the session since no primary key was matched to an existing row.
+[english] That makes sense regarding how the merge function handles missing records.

@@ -1,0 +1,16 @@
+[english] I need to create a method that executes an HTTP request and automatically sets a specific User-Agent if none is already defined in my headers.
+[english] This function prepares an outgoing HTTP request by first checking for a header. If the 'User-Agent' key isn't present, it ensures it adds 'Tensor HTTP checker' to the headers before executing the actual network call.
+<switch:python>
+[python] def getBody(self, url, method='GET', headers={}, data=None, socket=None):
+        """Make an HTTP request and return the body
+        """
+
+        if not 'User-Agent' in headers:
+            headers['User-Agent'] = ['Tensor HTTP checker']
+
+        return self.request(url, method, headers, data, socket)
+<switch:english>
+[english] The function relies entirely on a previously defined `self.request` method to perform the network communication and return the result.
+[english] If I call this method without passing any arguments for 'headers', will it still add that User-Agent?
+[english] Yes, because the headers dictionary defaults to an empty dict when called with no parameters, and the logic in the function explicitly checks if the User-Agent exists before adding it.
+[english] That makes much more sense, thanks!

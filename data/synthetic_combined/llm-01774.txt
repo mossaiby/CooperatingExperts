@@ -1,0 +1,19 @@
+[english] How can I calculate the CDOM absorption coefficient using a modified exponential decay model?
+[english] This method constructs the CDOM absorption function based on physical parameters to represent how light is absorbed over different wavelengths.
+<switch:python>
+[python] def build_a_cdom(self, g, s, wave_const=400):
+        """
+        Builds the CDOM absorption function :: :math:`G \exp (-S(\lambda - 400))`
+
+        :param g: function coefficient
+        :param s: slope factor
+        :param wave_const: wave constant default = 400 (nm)
+        :returns null:
+        """
+        lg.info('building CDOM absorption')
+        self.a_cdom = g * scipy.exp(-s * (self.wavelengths - wave_const))
+<switch:english>
+[english] The function calculates the absorption by multiplying a coefficient `g` with an exponential decay that uses the slope `s` and reference wavelength `wave_const`. This result is stored in `self.a_cdom` for later use.
+[english] What happens if I pass negative values to the slope factor 's'?
+[english] A negative value for `s` will cause the absorption coefficient `self.a_cdom` to increase exponentially as wavelengths move away from the reference wavelength, potentially leading to unphysical results within a real atmospheric model.
+[english] That makes sense; I need to ensure my inputs are physically sound.

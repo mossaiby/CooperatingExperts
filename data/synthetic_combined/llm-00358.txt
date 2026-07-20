@@ -1,0 +1,33 @@
+[english] How can I add a specific item to a custom collection object only if it isn't already present?
+[english] This function serves as an external wrapper that checks for and executes a required internal method, `_lens_contains_add`, before attempting any modification.
+<switch:python>
+[python] def contains_add(self, item):
+    # type (Any, Any) -> Any
+    '''Takes a collection and an item and returns a new collection
+    of the same type that contains the item. The notion of "contains"
+    is defined by the object itself; The following must be ``True``:
+
+    .. code-block:: python
+
+        item in contains_add(obj, item)
+
+    This function is used by some lenses (particularly ContainsLens)
+    to add new items to containers when necessary.
+
+    The corresponding method call for this hook is
+    ``obj._lens_contains_add(item)``.
+
+    There is no default implementation.
+    '''
+    try:
+        self._lens_contains_add
+    except AttributeError:
+        message = 'Don\'t know how to add an item to {}'
+        raise NotImplementedError(message.format(type(self)))
+    else:
+        return self._lens_contains_add(item)
+<switch:english>
+[english] The method relies entirely on the implementation of `self._lens_contains_add`. You are responsible for ensuring this helper method handles the actual addition logic.
+[english] If I were to implement this on an immutable data structure, how should my `_lens_contains_add` handle the return value?
+[english] When dealing with immutability, your implementation of `self._lens_contains_add(item)` must return a *new* instance of the collection containing the item, rather than modifying the existing one.
+[english] I found this explanation very helpful!

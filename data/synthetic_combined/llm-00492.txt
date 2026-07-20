@@ -1,0 +1,22 @@
+[english] I have a long string with potential nested or consecutive parentheses which I want to clean up by removing any overlapping pairs of delimiters.
+[english] This function calculates and removes redundant matching parenthesis pairs from an expression using index tracking. It first identifies the start and end indices of all delimiter matches, then surgically removes them based on their positions in the string.
+<switch:python>
+[python] def _remove_consecutive_delims(expr, ldelim="(", rdelim=")"):
+    """Remove consecutive delimiters."""
+    tpars = _pair_delims(expr, ldelim=ldelim, rdelim=rdelim)
+    # Flag superfluous delimiters
+    ddelim = []
+    for ctuple, ntuple in zip(tpars, tpars[1:]):
+        if ctuple == (ntuple[0] - 1, ntuple[1] + 1):
+            ddelim.extend(ntuple)
+    ddelim.sort()
+    # Actually remove delimiters from expression
+    for num, item in enumerate(ddelim):
+        expr = expr[: item - num] + expr[item - num + 1 :]
+    # Get functions
+    return expr
+<switch:english>
+[english] The core logic relies on checking if a current match starts exactly one index after the previous match ended, indicating overlap or unnecessary consecutiveness.
+[english] What happens if the expression has unbalanced delimiters, like an opening brace without a corresponding closing one?
+[english] If the function encounters unbalanced delimiters, it will still attempt to process all valid matches it finds but may fail to remove unmatched ones entirely, depending on how _pair_delims handles them.
+[english] Thanks for clarifying those index tracking steps!

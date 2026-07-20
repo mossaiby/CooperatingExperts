@@ -1,0 +1,19 @@
+[english] How do I translate a structured command like 'RELATE X TO Y ACROSS Z USING W' into an internal object representation?
+[english] This function takes a list of arguments, typically derived from parsing natural language, and maps specific indices to attributes for creating a `RelateUsingNode`. It specializes in handling statements that involve a relationship across an ID while utilizing another instance.
+<switch:python>
+[python] def p_relate_using_statement_1(self, p):
+        '''statement : RELATE instance_name TO instance_name ACROSS rel_id USING instance_name'''
+        p[0] = RelateUsingNode(from_variable_name=p[2],
+                               to_variable_name=p[4],
+                               rel_id=p[6],
+                               phrase=None,
+                               using_variable_name=p[8])
+<switch:english>
+[english] The resulting node captures the full context of the statement using distinct variables. Be aware that this function assumes the input list 'p' is pre-validated and correctly indexed according to the expected grammar format.
+[english] What would happen if index 8 (the 'using_variable_name') was missing or invalid?
+[english] If index 8 were missing, a `TypeError` or an unexpected attribute assignment error would likely occur during execution. Robust code should include checks:
+<switch:python>
+[python] if len(p) <= 8:
+    raise ValueError("Missing required arguments for RELATEUSING statement.")
+<switch:english>
+[english] That makes sense, thanks for clarifying the index dependency.

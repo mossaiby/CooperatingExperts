@@ -1,0 +1,21 @@
+[english] I need a way to reliably check if a dataset is locally stored and download it from a URL automatically if it’s missing.
+[english] This function handles resource management by first determining the necessary directory structure for the file path. It checks if the required folder exists, creates it using `os.makedirs` if not, and finally confirms the dataset hasn't been downloaded yet before retrieving it from the provided URL.
+<switch:python>
+[python] def find(dataset, url):
+    '''Find the location of a dataset on disk, downloading if needed.'''
+    fn = os.path.join(DATASETS, dataset)
+    dn = os.path.dirname(fn)
+    if not os.path.exists(dn):
+        print('creating dataset directory: %s', dn)
+        os.makedirs(dn)
+    if not os.path.exists(fn):
+        if sys.version_info < (3, ):
+            urllib.urlretrieve(url, fn)
+        else:
+            urllib.request.urlretrieve(url, fn)
+    return fn
+<switch:english>
+[english] The final return value is a string representing the absolute local path to the data file. Note that this implementation uses basic error checking for downloads; critical network failures are not explicitly handled.
+[english] What happens if the dataset at that `url` has changed or been updated by the server after I first downloaded it?
+[english] This function does not check for updates and only checks for file existence. To enforce freshness, you would need to add logic that compares local timestamps against data available via HTTP headers.
+[english] That makes sense; relying on simple existence isn't enough for dynamic content.

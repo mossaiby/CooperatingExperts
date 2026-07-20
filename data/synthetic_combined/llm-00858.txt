@@ -1,0 +1,20 @@
+[english] I need a function that checks if my game has ended based on whether the player has crashed or if all opponents have been defeated.
+[english] This method implements termination logic by checking for two primary end states: immediate loss due to dangerous conditions, and victory upon eliminating all rivals. If neither is true, it allows the game to proceed normally.
+<switch:python>
+[python] def check_game_end(self):
+        '''Checks for the game's win/lose conditions and 'alters' the
+        game state to reflect the condition found. If the game has not
+        been won or lost then it just returns the game state
+        unaltered.'''
+
+        if self.player in self.crashes.union(self.robots):
+            return self.end_game('You Died!')
+        elif not self.robots:
+            return self.end_game('You Win!')
+        else:
+            return self
+<switch:english>
+[english] The function modifies the game state using `self.end_game()` if a terminal condition is met, otherwise it returns the current instance unmodified.
+[english] If both the player has crashed and there are no robots left, which win/loss condition takes precedence?
+[english] The loss condition ('You Died!') will always take precedence because checking for `self.player in self.crashes` is evaluated before checking if `self.robots` is empty.
+[english] Perfect, I appreciate the detailed analysis!

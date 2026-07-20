@@ -1,0 +1,31 @@
+[english] How do I securely save a large temporary file stream to a specific local path, ensuring necessary directories are created and updating metadata on an object?
+[english] This function is designed to persist data streamed from a temporary source to a final destination. It first verifies or creates the target directory before opening the destination file in binary write mode.
+<switch:python>
+[python] def _save_local(self, temp_file, filename, obj):
+        """Saves the specified file to the local file system."""
+
+        path = self._get_path(filename)
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path), self.permission | 0o111)
+
+        fd = open(path, 'wb')
+
+        # Thanks to:
+        # http://stackoverflow.com/a/3253276/2066849
+        temp_file.seek(0)
+        t = temp_file.read(1048576)
+        while t:
+            fd.write(t)
+            t = temp_file.read(1048576)
+
+        fd.close()
+
+        if self.filesize_field:
+            setattr(obj, self.filesize_field, os.path.getsize(path))
+
+        return filename
+<switch:english>
+[english] The code efficiently handles data transfer by reading and writing in chunks, which prevents memory overload for large files. Finally, it updates the object's attributes with the resulting file size if configured.
+[english] What happens if the input `temp_file` handle is not seekable or has already been closed?
+[english] If the input handle cannot be read from (i.e., it is unseekable or closed), the call to temp_file.read(1048576) inside the loop will raise an IOError, causing the saving process to fail.
+[english] That helps clarify the expected input requirements for this method.

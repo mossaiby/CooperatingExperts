@@ -1,0 +1,19 @@
+[english] How can I retrieve both a command class object and its associated execution method given only the command's string name?
+[english] This utility searches a remote locator for a matching command based on its name, then extracts specific executable components from that match.
+<switch:python>
+[python] def _getCommandAndResponder(self, commandName):
+        """Gets the command class and matching responder function for the
+        given command name.
+
+        """
+        # DISGUSTING IMPLEMENTATION DETAIL EXPLOITING HACK
+        locator = self._remote.boxReceiver.locator
+        responder = locator.locateResponder(commandName)
+        responderFunction = responder.func_closure[1].cell_contents
+        command = responder.func_closure[2].cell_contents
+        return command, responderFunction
+<switch:english>
+[english] The method directly accesses internal properties of the response object (`func_closure`) to pull out the raw functional code and class reference.
+[english] What happens if `locator.locateResponder(commandName)` fails to find a match?
+[english] If no responder is found, this function will raise an AttributeError or TypeError when attempting to access `responder.func_closure`, as the locator would likely return None or an object lacking those specific attributes.
+[english] Got it, I appreciate pointing out that reliance on internal object structure.

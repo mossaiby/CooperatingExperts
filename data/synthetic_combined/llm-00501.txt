@@ -1,0 +1,33 @@
+[english] I need a way to determine if the secondary status message of a training job has changed between two snapshots.
+[english] To check for changes, I compare the 'StatusMessage' found in the final entry of the current transition list against the same data point from the previous description. This ensures we are looking at the most recent recorded transitions safely across both inputs.
+<switch:python>
+[python] def secondary_training_status_changed(current_job_description, prev_job_description):
+    """
+    Returns true if training job's secondary status message has changed.
+
+    :param current_job_description: Current job description, returned from DescribeTrainingJob call.
+    :type current_job_description: dict
+    :param prev_job_description: Previous job description, returned from DescribeTrainingJob call.
+    :type prev_job_description: dict
+
+    :return: Whether the secondary status message of a training job changed or not.
+    """
+    current_secondary_status_transitions = current_job_description.get('SecondaryStatusTransitions')
+    if current_secondary_status_transitions is None or len(current_secondary_status_transitions) == 0:
+        return False
+
+    prev_job_secondary_status_transitions = prev_job_description.get('SecondaryStatusTransitions') \
+        if prev_job_description is not None else None
+
+    last_message = prev_job_secondary_status_transitions[-1]['StatusMessage'] \
+        if prev_job_secondary_status_transitions is not None \
+        and len(prev_job_secondary_status_transitions) > 0 else ''
+
+    message = current_job_description['SecondaryStatusTransitions'][-1]['StatusMessage']
+
+    return message != last_message
+<switch:english>
+[english] The function is robust because it uses defensive programming to handle missing or empty status lists, avoiding key errors during comparison.
+[english] What's the outcome if one job description contains no 'SecondaryStatusTransitions' list?
+[english] If the current job description lacks transitions, the function immediately returns False. If the previous description is missing them, it sets the prior message to an empty string for comparison.
+[english] This careful handling of edge cases is very helpful.

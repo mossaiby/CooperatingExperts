@@ -1,0 +1,21 @@
+[english] I need a way to finalize a process by saving its output ports if they exist and recording whether the execution succeeded or failed.
+[english] This method handles final state bookkeeping. It first checks if there are string outputs to save before writing them to `ports.json`, then it records the overall status in `status.json` using the provided success/fail message.
+<switch:python>
+[python] def finalize(self, success_or_fail, message=''):
+        """
+        :param success_or_fail: string that is 'success' or 'fail'
+        :param message:
+        """
+        self.logit.debug('String OutputPorts: %s' % self.__string_output_ports)
+        if self.__string_output_ports:
+            with open(os.path.join(self.output_path, 'ports.json'), 'w') as opf:
+                json.dump(self.__string_output_ports, opf, indent=4)
+            self.logit.debug('Ports.json written to %s' % os.path.join(self.output_path, 'ports.json'))
+
+        with open(os.path.join(self.base_path, 'status.json'), 'w') as sf:
+            json.dump({'status': success_or_fail, 'reason': message}, sf, indent=4)
+<switch:english>
+[english] The function ensures persistence by dumping JSON files, but remember that relying on file system writes (`os.path.join`) can introduce I/O bottlenecks during execution.
+[english] If `self.__string_output_ports` is None or an empty list, how does the code handle writing the ports?
+[english] The condition `if self.__string_output_ports:` evaluates to False if it's empty or None. In this case, the block that writes 'ports.json' is skipped entirely.
+[english] That makes sense; it handles missing data gracefully.

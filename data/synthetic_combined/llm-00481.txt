@@ -1,0 +1,23 @@
+[english] How can I efficiently process a spinn3r feed stream provided as an file handle into usable data items?
+[english] This function uses lazy evaluation to read stream chunks sequentially without loading the entire file into memory. It utilizes `ProtoStreamReader` for parsing and combines iterative tools to handle potential empty or invalid packets gracefully.
+<switch:python>
+[python] def _make_stream_items(f):
+    """Given a spinn3r feed, produce a sequence of valid StreamItems.
+
+    Because of goopy Python interactions, you probably need to call
+    this and re-yield its results, as
+
+    >>> with open(filename, 'rb') as f:
+    ...   for si in _make_stream_items(f):
+    ...     yield si
+
+    """
+    reader = ProtoStreamReader(f)
+    return itertools.ifilter(
+        lambda x: x is not None,
+        itertools.imap(_make_stream_item, reader))
+<switch:english>
+[english] It acts as a generator pipeline that processes chunks lazily. Note that the implementation relies on `ProtoStreamReader` managing the underlying stream state.
+[english] If the feed temporarily stalls or returns an EOF mid-message, will this function raise an immediate error?
+[english] Since it uses iterators (`itertools.imap`), it will only raise an exception when you attempt to pull a value from the generator that triggers the underlying read operation.
+[english] That clarifies things immensely, thank you!

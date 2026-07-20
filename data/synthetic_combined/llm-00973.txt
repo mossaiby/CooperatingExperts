@@ -1,0 +1,14 @@
+[english] How do I create a method to start a stopwatch and continuously update its last known execution time within a class?
+[english] This approach checks if the timer is currently inactive before recording the initial start time. It then records the current timestamp for tracking duration in every call.
+<switch:python>
+[python] def start(self):
+        """Start the timer."""
+        if not self._is_running:
+            self._t_start = time()
+            self._is_running = True
+        self._t_last = time()
+<switch:english>
+[english] The function successfully initializes `_t_start` only on the first run but updates `_t_last` regardless of whether it was already running or not.
+[english] If I call this method thousands of times per second, will the startup time (`_t_start`) change?
+[english] No, because of the initial check `if not self._is_running:`, only the first call sets `self._t_start` to prevent continuous resetting.
+[english] Got it! So this is a robust timing hook.

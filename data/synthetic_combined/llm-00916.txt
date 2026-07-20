@@ -1,0 +1,34 @@
+[english] I need to write the handler function that initializes state variables and handles the initial handshake when a new websocket connection opens.
+[english] This function sets up all necessary instance attributes for handling a live websocket session, including request objects, logging capabilities, and remote addresses. It also establishes unique message IDs using itertools to ensure outgoing messages are tracked correctly before sending an opening handshake response.
+<switch:python>
+[python] def on_open(self):
+        """Handle new websocket connection."""
+        this.request = WSGIRequest(self.ws.environ)
+        this.ws = self
+        this.send = self.send
+        this.reply = self.reply
+
+        self.logger = self.ws.logger
+        self.remote_ids = collections.defaultdict(set)
+
+        # `_tx_buffer` collects outgoing messages which must be sent in order
+        self._tx_buffer = {}
+        # track the head of the queue (buffer) and the next msg to be sent
+        self._tx_buffer_id_gen = itertools.cycle(irange(sys.maxint))
+        self._tx_next_id_gen = itertools.cycle(irange(sys.maxint))
+        # start by waiting for the very first message
+        self._tx_next_id = next(self._tx_next_id_gen)
+
+        this.remote_addr = self.remote_addr = \
+            '{0[REMOTE_ADDR]}:{0[REMOTE_PORT]}'.format(
+                self.ws.environ,
+            )
+        this.subs = {}
+        safe_call(self.logger.info, '+ %s OPEN', self)
+        self.send('o')
+        self.send('a["{\\"server_id\\":\\"0\\"}"]')
+<switch:english>
+[english] After initializing the connection state and defining buffers for ordered delivery, it logs the successful connection and sends initial 'open' and server ID identification messages.
+[english] The code heavily uses `itertools.cycle` and complex buffer setup; how does this mechanism ensure that outgoing messages are always delivered in strict sequence?
+[english] By using two separate cycles (`_tx_buffer_id_gen` and `_tx_next_id_gen`) and tracking the 'head' of the queue, it guarantees that only one message is processed from the buffer at a time, maintaining perfect order.
+[english] Got it, thanks for detailing how those buffers work!

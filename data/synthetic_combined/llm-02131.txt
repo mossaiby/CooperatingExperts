@@ -1,0 +1,97 @@
+[english] How do I calculate the Root Mean Square (RMS) energy for an audio signal over defined frames?
+[english] This function calculates RMS energy, which represents the average power of a signal across time. It intelligently handles both raw time-domain audio samples and precomputed spectrogram magnitudes.
+<switch:python>
+[python] def rms(y=None, S=None, frame_length=2048, hop_length=512,
+        center=True, pad_mode='reflect'):
+    '''Compute root-mean-square (RMS) value for each frame, either from the
+    audio samples `y` or from a spectrogram `S`.
+
+    Computing the RMS value from audio samples is faster as it doesn't require
+    a STFT calculation. However, using a spectrogram will give a more accurate
+    representation of energy over time because its frames can be windowed,
+    thus prefer using `S` if it's already available.
+
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        (optional) audio time series. Required if `S` is not input.
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) spectrogram magnitude. Required if `y` is not input.
+
+    frame_length : int > 0 [scalar]
+        length of analysis frame (in samples) for energy calculation
+
+    hop_length : int > 0 [scalar]
+        hop length for STFT. See `librosa.core.stft` for details.
+
+    center : bool
+        If `True` and operating on time-domain input (`y`), pad the signal
+        by `frame_length//2` on either side.
+
+        If operating on spectrogram input, this has no effect.
+
+    pad_mode : str
+        Padding mode for centered analysis.  See `np.pad` for valid
+        values.
+
+    Returns
+    -------
+    rms : np.ndarray [shape=(1, t)]
+        RMS value for each frame
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.rms(y=y)
+    array([[ 0.   ,  0.056, ...,  0.   ,  0.   ]], dtype=float32)
+
+    Or from spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> rms = librosa.feature.rms(S=S)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(rms.T, label='RMS Energy')
+    >>> plt.xticks([])
+    >>> plt.xlim([0, rms.shape[-1]])
+    >>> plt.legend(loc='best')
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.tight_layout()
+
+    Use a STFT window of constant ones and no frame centering to get consistent
+    results with the RMS computed from the audio samples `y`
+
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
+    >>> librosa.feature.rms(S=S)
+
+    '''
+    if y is not None and S is not None:
+        raise ValueError('Either `y` or `S` should be input.')
+    if y is not None:
+        y = to_mono(y)
+        if center:
+            y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+
+        x = util.frame(y,
+                       frame_length=frame_length,
+                       hop_length=hop_length)
+    elif S is not None:
+        x, _ = _spectrogram(y=y, S=S,
+                            n_fft=frame_length,
+                            hop_length=hop_length)
+    else:
+        raise ValueError('Either `y` or `S` must be input.')
+    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
+<switch:english>
+[english] The core logic computes the square root of the mean of squared absolute values for each frame's magnitude, yielding the final RMS curve.
+[english] What happens if I pass in both `y` (audio) and `S` (spectrogram) as arguments?
+[english] If you provide both primary inputs, the function raises a `ValueError` because it expects to compute the analysis either from time-domain data or frequency-domain magnitude.
+[english] Does this work if I want to use different padding modes?

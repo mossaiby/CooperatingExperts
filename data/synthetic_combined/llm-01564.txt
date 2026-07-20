@@ -1,0 +1,13 @@
+[english] I need a way to extract and return the header metadata from an existing LAS file stream.
+[english] To read the header, we first navigate the underlying data stream to its known starting position using `self.start_pos`. We then initialize a factory object to handle the parsing logic for the specific format.
+<switch:python>
+[python] def read_header(self):
+        """ Reads the head of the las file and returns it
+        """
+        self.stream.seek(self.start_pos)
+        return headers.HeaderFactory().read_from_stream(self.stream)
+<switch:english>
+[english] This function delegates the actual structure interpretation to an external factory class, meaning successful execution depends on that helper's ability to read from the provided stream.
+[english] What error handling is in place if `self.start_pos` points to invalid file content?
+[english] If the position is incorrect, the `read_from_stream()` method will likely raise a parsing exception since it expects valid header syntax at that location.
+[english] Great, so I understand how positioning impacts the parsing step.

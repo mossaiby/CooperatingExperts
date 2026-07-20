@@ -1,0 +1,27 @@
+[english] How can I compute the total loss for my neural network, including standard losses and regularization?
+[english] This method calculates a regularized loss by first discovering all necessary components based on keyword arguments.
+<switch:python>
+[python] def loss(self, **kwargs):
+        '''Return a variable representing the regularized loss for this network.
+
+        The regularized loss includes both the :ref:`loss computation <losses>`
+        for the network as well as any :ref:`regularizers <regularizers>` that
+        are in place.
+
+        Keyword arguments are passed directly to
+        :func:`theanets.regularizers.from_kwargs`.
+
+        Returns
+        -------
+        loss : Theano expression
+            A Theano expression representing the loss of this network.
+        '''
+        regs = regularizers.from_kwargs(self, **kwargs)
+        outputs, _ = self.build_graph(regs)
+        return sum(l.weight * l(outputs) for l in self.losses) + \
+            sum(r.weight * r.loss(self.layers, outputs) for r in regs)
+<switch:english>
+[english] The function sums the weighted standard losses and the weighted regularization terms to produce a single total loss expression.
+[english] If I pass specific parameters like learning rate during this call, are those values used directly by the regularizers?
+[english] No, arguments passed to `loss` are first handled by `regularizers.from_kwargs`. The documentation suggests these kwargs feed into creating or configuring the regularizer objects themselves.
+[english] That makes sense for managing hyperparameters!

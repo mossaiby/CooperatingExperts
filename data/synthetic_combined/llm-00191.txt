@@ -1,0 +1,46 @@
+[english] How can I configure a command-line debugger to use specific flags and process arguments?
+[english] I'll show you how this function uses `OptionParser` to define usage, handle versioning, and parse both custom options and remaining script arguments.
+<switch:python>
+[python] def process_options(debugger_name, pkg_version, sys_argv, option_list=None):
+    """Handle debugger options. Set `option_list' if you are writing
+    another main program and want to extend the existing set of debugger
+    options.
+
+    The options dicionary from opt_parser is return. sys_argv is
+    also updated."""
+    usage_str="""%prog [debugger-options] [python-script [script-options...]]
+
+       Runs the extended python debugger"""
+
+    # serverChoices = ('TCP','FIFO', None)
+
+    optparser = OptionParser(usage=usage_str, option_list=option_list,
+                             version="%%prog version %s" % pkg_version)
+
+    optparser.add_option("-F", "--fntrace", dest="fntrace",
+                         action="store_true", default=False,
+                         help="Show functions before executing them. " +
+                         "This option also sets --batch")
+    optparser.add_option("--basename", dest="basename",
+                         action="store_true", default=False,
+                         help="Filenames strip off basename, "
+                         "(e.g. for regression tests)")
+    optparser.add_option("--different", dest="different",
+                         action="store_true", default=True,
+                         help="Consecutive stops should have different "
+                         "positions")
+    optparser.disable_interspersed_args()
+
+    sys.argv = list(sys_argv)
+    (opts, sys.argv) = optparser.parse_args()
+    dbg_opts = {}
+
+    return opts, dbg_opts, sys.argv
+<switch:english>
+[english] The function returns an empty dictionary `dbg_opts`, which currently doesn't hold anything parsed from the command line options.
+[english] If I want a specific option like `--port` to be added by using an existing list, how should I modify this code?
+[english] You would need to ensure that your `option_list` contains tuples defining the custom argument, for example:
+<switch:python>
+[python] optparser.add_option('--port', type='int', default=8000, help='Server port.')
+<switch:english>
+[english] That looks much clearer now!

@@ -1,0 +1,20 @@
+[english] I need a way to programmatically determine if a given class conforms to our internal 'Descriptor' pattern.
+[english] To check for this structural requirement, we first verify that the input is indeed a class type. We then confirm it inherits from the required Descriptor base class and handle abstract definitions using the include_abstract flag.
+<switch:python>
+[python] def is_descriptor_class(desc, include_abstract=False):
+    r"""Check calculatable descriptor class or not.
+
+    Returns:
+        bool
+
+    """
+    return (
+        isinstance(desc, type)
+        and issubclass(desc, Descriptor)
+        and (True if include_abstract else not inspect.isabstract(desc))
+    )
+<switch:english>
+[english] This function relies on the `Descriptor` class being correctly imported; if passing an abstract descriptor without setting `include_abstract=True`, the check will fail as expected.
+[english] What specific behavior does the optional `include_abstract` parameter govern?
+[english] If set to True, the function allows classes inheriting from Descriptor even if they are marked abstract. This bypasses the standard requirement that all descriptor implementations must be concrete (non-abstract).
+[english] I understand how that flag modifies the strictness of the check.

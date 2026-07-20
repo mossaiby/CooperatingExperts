@@ -1,0 +1,39 @@
+[english] I need a way to synchronize local references with a remote state by deleting stale ones and updating new ones.
+[english] This function systematically cleans up outdated Git references before applying incoming updates. First, it identifies all necessary reference names and then iterates through existing refs to remove any that are not in the required list or are tagged revisions.
+<switch:python>
+[python] def _update_references(self, refs):
+        """Update references removing old ones."""
+
+        new_refs = [ref.refname for ref in refs]
+
+        # Delete old references
+        for old_ref in self._discover_refs():
+            if not old_ref.refname.startswith('refs/heads/'):
+                continue
+            if old_ref.refname in new_refs:
+                continue
+            self._update_ref(old_ref, delete=True)
+
+        # Update new references
+        for new_ref in refs:
+            refname = new_ref.refname
+
+            if refname.endswith('^{}'):
+                logger.debug("Annotated tag %s ignored for updating in sync process",
+                             refname)
+                continue
+            elif not refname.startswith('refs/heads/') and not refname.startswith('refs/tags/'):
+                logger.debug("Reference %s not needed; ignored for updating in sync process",
+                             refname)
+                continue
+            else:
+                self._update_ref(new_ref)
+
+        # Prune repository to remove old branches
+        cmd = ['git', 'remote', 'prune', 'origin']
+        self._exec(cmd, cwd=self.dirpath, env=self.gitenv)
+<switch:english>
+[english] The process concludes by executing `git remote prune origin`, which ensures the local repository mirrors the actual state of the remote server.
+[english] What exactly happens if an incoming reference starts with 'refs/tags/' but doesn't start with 'refs/heads/', and is it guaranteed to be updated?
+[english] If a reference is a tag (i.e., not starting with `refs/heads/`), the function uses `_update_ref(new_ref)` to perform the update logic for that specific type of ref, bypassing the explicit deletion checks.
+[english] Got it, that makes sense.

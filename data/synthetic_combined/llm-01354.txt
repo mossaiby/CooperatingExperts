@@ -1,0 +1,20 @@
+[english] I need a callback function to process incoming MQTT messages and execute specific logic based on device status commands.
+[english] This method serves as an internal event handler that listens for application command messages. It attempts to parse the message payload into a structured Status object before dispatching it.
+<switch:python>
+[python] def _onAppStatus(self, client, userdata, pahoMessage):
+        """
+        Internal callback for application command messages, parses source application from topic string and
+        passes the information on to the registerd applicaion status callback
+        """
+        try:
+            status = Status(pahoMessage)
+            self.logger.debug("Received %s action from %s" % (status.action, status.clientId))
+            if self.appStatusCallback:
+                self.appStatusCallback(status)
+        except InvalidEventException as e:
+            self.logger.critical(str(e))
+<switch:english>
+[english] The function uses a `try...except` block to handle cases where the incoming message might be malformed, preventing unexpected application crashes.
+[english] If an InvalidEventException occurs during parsing, will any data about the bad message be logged?
+[english] No execution continues once the exception is caught; however, a critical log entry (`self.logger.critical`) containing the error string `e` provides diagnostic information.
+[english] Perfect, that explains the robustness of the handler.

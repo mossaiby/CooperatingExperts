@@ -1,0 +1,34 @@
+[english] How can I run a function using various profilers and then send those detailed performance metrics to an external server?
+[english] This function executes your target code while invoking specified profiling tools. It collects all the statistical data, packages it into a compressed stream, and prepares it for remote transmission.
+<switch:python>
+[python] def run(func, options, args=(), kwargs={}, host='localhost', port=8000):  # pylint: disable=dangerous-default-value
+    """Runs profilers on a function.
+
+    Args:
+        func: A Python function.
+        options: A string with profilers configuration (i.e. 'cmh').
+        args: func non-keyword arguments.
+        kwargs: func keyword arguments.
+        host: Host name to send collected data.
+        port: Port number to send collected data.
+
+    Returns:
+        A result of func execution.
+    """
+    run_stats = run_profilers((func, args, kwargs), options)
+
+    result = None
+    for prof in run_stats:
+        if not result:
+            result = run_stats[prof]['result']
+        del run_stats[prof]['result']  # Don't send result to remote host
+
+    post_data = gzip.compress(
+        json.dumps(run_stats).encode('utf-8'))
+    urllib.request.urlopen('http://%s:%s' % (host, port), post_data)
+    return result
+<switch:english>
+[english] The function is designed to be asynchronous with respect to telemetry, sending buffered statistics over HTTP without waiting for server acknowledgment. It also intentionally deletes the execution result before compression ensures only stats are sent remotely.
+[english] Is there any error handling implemented if the network connection at host or port drops during the data transmission?
+[english] No explicit try/except block is wrapping `urllib.request.urlopen`. If an OSError occurs, it will raise an exception and prevent the return of the function's result.
+[english] Thanks for clarifying how that networking works.

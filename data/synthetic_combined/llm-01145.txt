@@ -1,0 +1,18 @@
+[english] I have layer offset logic that needs to be monitored reactively, ensuring any change automatically triggers a view redraw.
+[english] This function acts as a getter that wraps the offset calculation in a watcher pattern. It checks if the underlying offset accessor is callable to determine how parameters are tracked and monitored when initializing the observer.
+<switch:python>
+[python] def offset(self):
+        """
+        Property to be used for setting and getting the offset of the layer.
+        
+        Note that setting this property causes an immediate redraw.
+        """
+        if callable(self._offset):
+            return util.WatchingList(self._offset(*(self.widget.pos+self.widget.size)),self._wlredraw_offset)
+        else:
+            return util.WatchingList(self._offset,self._wlredraw_offset)
+<switch:english>
+[english] Remember that because this property returns a `util.WatchingList`, retrieving it immediately sets up logic to redraw the view whenever the offset changes.
+[english] If `self._offset` exists but is neither callable nor defined, how does the function behave?
+[english] If neither condition is met (e.g., `self._offset` is undefined), accessing this property will raise an appropriate AttributeError when trying to read it.
+[english] This makes sense now, thanks!

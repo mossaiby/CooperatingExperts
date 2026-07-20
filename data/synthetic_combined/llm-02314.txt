@@ -1,0 +1,38 @@
+[english] How can I define a custom substitution model for DNA sequences while incorporating specific relative GC content and transition biases?
+[english] This function sets up a General Time Reversible (GTR) model tailored for nucleotide sequences. It calculates specialized rate matrices based on the provided substitution parameters before configuring them into the required GTR object.
+<switch:python>
+[python] def T92(mu=1.0, pi_GC=0.5, kappa=0.1, **kwargs):
+    """
+    Tamura 1992 model. Extending Kimura  (1980) model for the case where a
+    G+C-content bias exists. Link:
+    Tamura K (1992),  Mol.  Biol. Evol. 9 (4): 678–687.  DOI: 10.1093/oxfordjournals.molbev.a040752
+
+    Current implementation of the model does not account for the gaps
+
+    Parameters
+    -----------
+
+     mu : float
+        substitution rate
+
+     pi_GC : float
+        relative GC content
+
+     kappa : float
+        relative transversion/transition rate
+
+    """
+
+    W = _create_transversion_transition_W(kappa)
+    # A C G T
+    if pi_CG >=1.:
+        raise ValueError("The relative CG content specified is larger than 1.0!")
+    pi = np.array([(1.-pi_CG)*0.5, pi_CG*0.5, pi_CG*0.5, (1-pi_CG)*0.5])
+    gtr = GTR(alphabet=alphabets['nuc_nogap'])
+    gtr.assign_rates(mu=mu, pi=pi, W=W)
+    return gtr
+<switch:english>
+[english] The code successfully initializes the GTR rates using your input parameters, though it is currently limited to fixed-length sites and does not account for sequence gaps.
+[english] What happens if I pass a relative CG content that exceeds 1.0 during initialization?
+[english] The function explicitly validates inputs and will raise a `ValueError` if `pi_CG >= 1.0`, preventing invalid model creation.
+[english] That covers everything I needed to know about this implementation.

@@ -1,0 +1,29 @@
+[english] I need a way to persist my Minimal Perfect Hash (MPH) state to either a file path or an existing output stream.
+[english] This function handles the saving process by first checking the type of the provided `output`. If it's a string, it opens and writes the MPH data; otherwise, it assumes you are passing an open file-like object.
+<switch:python>
+[python] def save(self, output):
+        """
+        Persist the Minimal Perfect Hash (MPH) to a stream
+
+        Parameters
+        ----------
+        output : file_like
+            The stream to use to persist the MPH
+
+        Raises
+        ------
+        IOError
+            If there is an issue accessing or manipulating the underlying
+            stream
+        """
+        assert self._mph, "There is no MPH ?"
+        if isinstance(output, six.string_types):
+            with open(abspath(output), 'w') as out:
+                _cmph.cmph_dump(self._mph, out)
+        else:
+            _cmph.cmph_dump(self._mph, output)
+<switch:english>
+[english] The code uses assertions to ensure the MPH structure exists before attempting any persistence. While it handles streams gracefully, users should anticipate potential issues if file permissions prevent saving.
+[english] What specific conditions would cause the function to raise the documented IOError?
+[english] An `IOError` is raised if there are fundamental issues accessing or writing to the designated stream, such as insufficient disk space or lack of necessary write permissions for the target file path. This error handling relies on standard Python I/O exceptions.
+[english] Perfect, that resolves my question about persistence!

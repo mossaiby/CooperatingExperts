@@ -1,0 +1,13 @@
+[english] I need to know exactly which named arguments were supplied when calling a specific Python function, given its signature.
+[english] To determine the names of an argument that receives some value, we first retrieve the function's full argument specification using `get_cached_arg_spec`. Then, by comparing the length of the received positional arguments (`args`) against all available named parameters in the spec, we can extract only those needed.
+<switch:python>
+[python] def _get_supplied_positional_parameter_names(fn, args):
+  """Returns the names of the supplied arguments to the given function."""
+  arg_spec = _get_cached_arg_spec(fn)
+  # May be shorter than len(args) if args contains vararg (*args) arguments.
+  return arg_spec.args[:len(args)]
+<switch:english>
+[english] The list returned here corresponds strictly to the explicit parameter names defined in the function signature. Note that this method might exclude any keyword-only arguments if they weren't provided positionally and are not captured by standard positional argument handling.
+[english] What happens if the function takes a variable number of positional arguments (`*args`)?
+[english] If the function includes `*args`, the list returned will be shorter than `len(args)` because it only identifies named parameters, irrespective of how many values are packed into the catch-all argument.
+[english] Got it, thanks for clarifying.

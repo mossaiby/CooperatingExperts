@@ -1,0 +1,13 @@
+[english] I need to write a function that verifies if a given string is a valid SHA256 hash.
+[english] To validate SHA256 hashes, we first check if the input is a non-empty string and then use regular expressions with `re.match` to ensure it strictly follows the format of 64 hexadecimal characters.
+<switch:python>
+[python] def is_hash256(s):
+    """ Returns True if the considered string is a valid SHA256 hash. """
+    if not s or not isinstance(s, str):
+        return False
+    return re.match('^[0-9A-F]{64}$', s.strip(), re.IGNORECASE)
+<switch:english>
+[english] The `strip()` method handles leading/trailing whitespace before validation, but you should also consider handling potential empty inputs early on for efficiency.
+[english] What happens if a hash input has extra non-hexadecimal characters at the end?
+[english] Because of how `re.match` is used with the full pattern anchored by start (`^`) and end (`$`), it requires that *every* character in the string matches the hexadecimal set, so any invalid characters will cause it to return False.
+[english] Got it, this makes sense.

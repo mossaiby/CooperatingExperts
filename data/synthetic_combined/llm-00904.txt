@@ -1,0 +1,20 @@
+[english] How can I write a flexible function to output structured data as either CSV or JSON based on class configuration?
+[english] This method acts as a dispatcher, allowing you to handle different output formats without duplicating logic. It checks the `self._format` attribute and calls the appropriate cursor handler.
+<switch:python>
+[python] def printCursor(self, fieldnames=None, datemap=None, time_format=None):
+        '''
+        Output a cursor to a filename or stdout if filename is "-".
+        fmt defines whether we output CSV or JSON.
+        '''
+
+        if self._format == 'csv':
+            count = self.printCSVCursor(fieldnames, datemap, time_format)
+        else:
+            count = self.printJSONCursor( fieldnames, datemap, time_format)
+
+        return count
+<switch:english>
+[english] The function delegating work to specific methods like `printCSVCursor` ensures that complex formatting details are kept separate from this main execution flow.
+[english] If I set self._format = 'yaml', which method does the code actually execute?
+[english] Since there is no explicit check for other formats, setting it to 'yaml' results in the failure of `printJSONCursor` due to an unsupported format assumption.
+[english] Thanks for clarifying the logic flow!

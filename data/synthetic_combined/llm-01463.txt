@@ -1,0 +1,29 @@
+[english] I need a way to format complex transcript objects into standardized strings that describe where amino acid changes occur.
+[english] This function is designed to extract necessary metadata from the input object and assemble it into a descriptive change string based on whether the data pertains to an exon, intron, or intergenic region. It constructs a specific pattern using parts of the transcript information provided in the dictionary structure.
+<switch:python>
+[python] def transcript_str(transcript_obj, gene_name=None):
+    """Generate amino acid change as a string."""
+    if transcript_obj.get('exon'):
+        gene_part, part_count_raw = 'exon', transcript_obj['exon']
+    elif transcript_obj.get('intron'):
+        gene_part, part_count_raw = 'intron', transcript_obj['intron']
+    else:
+        # variant between genes
+        gene_part, part_count_raw = 'intergenic', '0'
+
+    part_count = part_count_raw.rpartition('/')[0]
+    change_str = "{}:{}{}:{}:{}".format(
+        transcript_obj.get('refseq_id', ''),
+        gene_part,
+        part_count,
+        transcript_obj.get('coding_sequence_name', 'NA'),
+        transcript_obj.get('protein_sequence_name', 'NA'),
+    )
+    if gene_name:
+        change_str = "{}:".format(gene_name) + change_str
+    return change_str
+<switch:english>
+[english] It identifies the feature type (exon/intron/intergenic) first, then formats a comprehensive string. Note that if no 'refseq_id' or sequence names are present, they default to empty strings or 'NA'.
+[english] The code uses `rpartition` on part_count_raw; what would happen if the value looks like '12345/6789'?
+[english] If the input is '12345/6789', `part_count` becomes '12345'. The function uses `rpartition('/')` to split on the last slash and keeps the part before it.
+[english] That makes perfect sense, thank you for explaining that!

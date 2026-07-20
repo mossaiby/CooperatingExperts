@@ -1,0 +1,14 @@
+[english] I need a way to collect all the related clinic, case, and variant data points required for generating an ACMG classification form.
+[english] This function aggregates various pieces of clinical data by retrieving the associated institute, patient case, and genetic variant using provided IDs. Once gathered, it structures this information alongside necessary ACMG classification standards.
+<switch:python>
+[python] def variant_acmg(store, institute_id, case_name, variant_id):
+    """Collect data relevant for rendering ACMG classification form."""
+    institute_obj, case_obj = institute_and_case(store, institute_id, case_name)
+    variant_obj = store.variant(variant_id)
+    return dict(institute=institute_obj, case=case_obj, variant=variant_obj,
+                CRITERIA=ACMG_CRITERIA, ACMG_OPTIONS=ACMG_OPTIONS)
+<switch:english>
+[english] The function returns a single dictionary containing all essential objects and global configurations needed by the classification form renderer.
+[english] What happens if any of these IDs (institute or variant) are invalid or not found in the store?
+[english] The behavior relies on the implementation of `institute_and_case` and `store.variant(id)`; typically, they will either raise an exception or return a null/None object.
+[english] That clarifies how potential failures might be handled.

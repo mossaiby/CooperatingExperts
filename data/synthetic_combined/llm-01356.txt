@@ -1,0 +1,41 @@
+[english] I need a script that reads a phylogenetic tree from a Newick file, re-roots it at its midpoint, and saves the resulting data into a specific structured JSON report.
+[english] This function relies on DendroPy to manage the tree structure. It loads your input Newick file, executes a mid-point rerooting operation, and then formats the resulting string for output.
+<switch:python>
+[python] def main(newick):
+    """Main executor of the process_newick template.
+
+    Parameters
+    ----------
+    newick : str
+        path to the newick file.
+
+    """
+
+    logger.info("Starting newick file processing")
+
+    print(newick)
+
+    tree = dendropy.Tree.get(file=open(newick, 'r'), schema="newick")
+
+    tree.reroot_at_midpoint()
+
+    to_write=tree.as_string("newick").strip().replace("[&R] ", '').replace(' ', '_').replace("'", "")
+
+    with open(".report.json", "w") as json_report:
+        json_dic = {
+            "treeData": [{
+                "trees": [
+                    to_write
+                ]
+            }],
+        }
+
+        json_report.write(json.dumps(json_dic, separators=(",", ":")))
+
+    with open(".status", "w") as status_fh:
+        status_fh.write("pass")
+<switch:english>
+[english] The code modifies the Newick string heavily via multiple replacements before saving it. Be aware that aggressively replacing spaces with underscores might interfere with other tools expecting standard Newick syntax.
+[english] If DendroPy fails to parse the input because of an invalid Newick format, how can I gracefully handle that error?
+[english] The current function does not anticipate parsing errors. You should wrap the tree loading logic in a try/except block to catch potential dendropy exceptions:
+[english] That adds necessary robustness, thank you for the advice.

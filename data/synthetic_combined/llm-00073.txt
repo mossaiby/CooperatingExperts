@@ -1,0 +1,31 @@
+[english] How can I dynamically determine a filename, preferring a debugger's main file if no specific input is provided?
+[english] This function handles default filename retrieval for debugging purposes by first checking if an explicit 'filename' argument was given. If not, it checks the `self.debugger` to see if a primary source file exists before proceeding.
+<switch:python>
+[python] def filename(self, filename=None):
+        """Return filename or the basename of that depending on the
+        basename setting"""
+        if filename is None:
+            if self.debugger.mainpyfile:
+                filename = self.debugger.mainpyfile
+            else:
+                return None
+        if self.debugger.settings['basename']:
+            return(os.path.basename(filename))
+        return filename
+<switch:english>
+[english] After determining the path, it returns either the full path or just the file's base name based on a configuration setting.
+[english] What happens if `self.debugger.settings['basename']` is set to 'False', but the input `filename` contains directory separators?
+[english] The function currently skips the basename logic and returns the original filename path directly, even with directories present.
+```python
+def filename(self, filename=None):
+        """Return filename or the basename of that depending on the basenames setting"""
+        if filename is None:
+            if self.debugger.mainpyfile:
+                filename = self.debugger.mainpyfile
+            else: 
+                return None
+        # If setting is False, it returns filename directly (including paths)
+        if not self.debugger.settings['basename'] or filename is None and not hasattr(self.debugger, 'settings')["get"]('basename', True):
+             return filename
+        return os.path.basename(filename)
+[english] Thanks for clarifying how that logic works!

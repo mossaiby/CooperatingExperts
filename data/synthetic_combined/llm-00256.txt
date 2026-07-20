@@ -1,0 +1,21 @@
+[english] I need a way to generate an authentication token string for a user, including their identity and expiration time.
+[english] This function crafts a unique user login token by combining the username and an identity hash. It then packages this data structure with metadata about the user's ID and calculated expiry before returning it.
+<switch:python>
+[python] def get_user_token(user, purpose, minutes_valid):
+    """Return login token info for given user."""
+    token = ''.join(
+        dumps([
+            user.get_username(),
+            get_auth_hash(user, purpose),
+        ]).encode('base64').split('\n')
+    )
+    return {
+        'id': get_meteor_id(user),
+        'token': token,
+        'tokenExpires': calc_expiry_time(minutes_valid),
+    }
+<switch:english>
+[english] The resulting dictionary provides a comprehensive set of authentication details, ensuring the client knows not just the token but also when it will become invalid.
+[english] If `get_auth_hash` is intended to be resistant to replay attacks, what should its inputs guarantee?
+[english] To make the hash resistant to tampering or reuse within a specific context, you must ensure that the `purpose` parameter and potentially an additional nonce are unique for every token generation.
+[english] This looks like exactly what I needed to start building my authentication service!

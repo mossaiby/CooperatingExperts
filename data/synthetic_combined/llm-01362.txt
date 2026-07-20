@@ -1,0 +1,19 @@
+[english] How do I retrieve a dictionary containing all statistical information for the opposing team in a specific season?
+[english] This function starts by fetching the relevant document for the given year. It locates a specific stats table within that document, parses it into a DataFrame, and then isolates the row corresponding to 'Opp. Stats'.
+<switch:python>
+[python] def opp_stats(self, year):
+        """Returns a Series (dict-like) of the team's opponent's stats from the
+        team-season page.
+
+        :year: Int representing the season.
+        :returns: A Series of team stats.
+        """
+        doc = self.get_year_doc(year)
+        table = doc('table#team_stats')
+        df = sportsref.utils.parse_table(table)
+        return df.loc[df.player_id == 'Opp. Stats'].iloc[0]
+<switch:english>
+[english] The function returns a Series, which behaves like a dictionary where keys are the stat names and values are the opponent's statistics for that year.
+[english] What happens if there is no row with `player_id` equal to 'Opp. Stats' in the table?
+[english] If the specified ID isn't found, calling `.iloc[0]` on an empty result will raise an IndexError. You should check the length of the filtered DataFrame before attempting to access it.
+[english] Thanks for clarifying how this handles data absence.

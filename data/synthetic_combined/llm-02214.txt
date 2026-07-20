@@ -1,0 +1,19 @@
+[english] I need a standard list of public signing keys formatted for use as a JWKS endpoint.
+[english] The method first attempts to retrieve all available signing keys directly from the signer's keyjar. If that initial search yields no results, it performs a secondary search, specifically filtering the keys by matching the designated issuer (`self.iss`).
+<switch:python>
+[python] def signing_keys_as_jwks(self):
+        """
+        Build a JWKS from the signing keys belonging to the self signer
+
+        :return: Dictionary
+        """
+        _l = [x.serialize() for x in self.self_signer.keyjar.get_signing_key()]
+        if not _l:
+            _l = [x.serialize() for x in
+                  self.self_signer.keyjar.get_signing_key(owner=self.iss)]
+        return {'keys': _l}
+<switch:english>
+[english] This logic guarantees that if we have a defined issuing identity, its associated signing keys are correctly included in the final JWKS output.
+[english] If `self.iss` does not match any owner within the keyjar during the second search, what would be returned?
+[english] The function would return an empty list of signed keys inside the dictionary because none satisfy the ownership filter applied by `owner=self.iss` in the code.
+[english] That makes sense, thank you for breaking down that logic.

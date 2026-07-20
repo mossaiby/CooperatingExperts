@@ -1,0 +1,54 @@
+[english] Write a function that parses meter data to extract hourly or minute-specific schedule tariffs and periods.
+[english] This function determines which schedule lookup table (`work_table`) to use based on the input `schedule` range. After adjusting the period and schedule IDs, it thoroughly checks for boundary conditions before attempting any lookups in the provided work table.
+<switch:python>
+[python] def extractSchedule(self, schedule, period):
+        """ Read a single schedule tariff from meter object buffer.
+
+        Args:
+            schedule (int): A :class:`~ekmmeters.Schedules` value or in range(Extent.Schedules).
+            tariff (int): A :class:`~ekmmeters.Tariffs` value or in range(Extent.Tariffs).
+
+        Returns:
+            bool: True on completion.
+        """
+        ret = namedtuple("ret", ["Hour", "Min", "Tariff", "Period", "Schedule"])
+        work_table = self.m_schd_1_to_4
+        if Schedules.Schedule_5 <= schedule <= Schedules.Schedule_6:
+            work_table = self.m_schd_5_to_6
+        period += 1
+        schedule += 1
+        ret.Period = str(period)
+        ret.Schedule = str(schedule)
+        if (schedule < 1) or (schedule > Extents.Schedules) or (period < 0) or (period > Extents.Periods):
+            ekm_log("Out of bounds: tariff " + str(period) + " for schedule " + str(schedule))
+            ret.Hour = ret.Min = ret.Tariff = str(0)
+            return ret
+
+        idxhr = "Schedule_" + str(schedule) + "_Period_" + str(period) + "_Hour"
+        idxmin = "Schedule_" + str(schedule) + "_Period_" + str(period) + "_Min"
+        idxrate = "Schedule_" + str(schedule) + "_Period_" + str(period) + "_Tariff"
+
+        if idxhr not in work_table:
+            ekm_log("Incorrect index: " + idxhr)
+            ret.Hour = ret.Min = ret.Tariff = str(0)
+            return ret
+
+        if idxmin not in work_table:
+            ekm_log("Incorrect index: " + idxmin)
+            ret.Hour = ret.Min = ret.Tariff = str(0)
+            return ret
+
+        if idxrate not in work_table:
+            ekm_log("Incorrect index: " + idxrate)
+            ret.Hour = ret.Min = ret.Tariff = str(0)
+            return ret
+
+        ret.Hour = work_table[idxhr][MeterData.StringValue]
+        ret.Min = work_table[idxmin][MeterData.StringValue].zfill(2)
+        ret.Tariff = work_table[idxrate][MeterData.StringValue]
+        return ret
+<switch:english>
+[english] The logic is heavily reliant on string construction for indexing into the dictionary; if keys are misspelled or malformed, the function handles them gracefully by logging an error.
+[english] What happens if a schedule index falls outside of `Extents.Schedules` but still leads to valid data within one of the specific work tables?
+[english] If the schedule is out of bounds, the internal boundary check triggers the log statement and returns a default value where all fields (Hour, Min, Tariff) are set to '0' as strings.
+[english] Does this return logic handle incomplete dataset scenarios effectively?

@@ -1,0 +1,15 @@
+[english] How can I locate a specific term resource within my system when I only have its external SIS ID?
+[english] To solve this, we iterate over every term available through the `get_all_terms()` method. For each term retrieved, we check if its internal ID property matches the provided input.
+<switch:python>
+[python] def get_term_by_sis_id(self, sis_term_id):
+        """
+        Return a term resource for the passed SIS ID.
+        """
+        for term in self.get_all_terms():
+            if term.sis_term_id == sis_term_id:
+                return term
+<switch:english>
+[english] This approach assumes that `self.get_all_terms()` returns multiple matches are possible, but the function only guarantees returning the first match it encounters.
+[english] What happens if we call this method with a SIS ID that does not correspond to any existing terms?
+[english] If no term matches the provided `sis_term_id`, the loop will finish without finding a condition to return, and the function will implicitly return None.
+[english] That makes perfect sense.

@@ -1,0 +1,78 @@
+[english] Create an InstallRequirement from various specification sources like package names, URLs, or local file paths.
+[english] This function first attempts to identify if the input string is a URL via `is_url`. It then checks for markers and determines if the requirement points to a remote location (URL) or a local directory/archive. It uses these findings to construct a Link object and eventually return an InstallRequirement.
+<switch:python>
+[python] def from_line(cls, name, comes_from=None, isolated=False):
+        """Creates an InstallRequirement from a name, which might be a
+        requirement, directory containing 'setup.py', filename, or URL.
+        """
+        from pip.index import Link
+
+        url = None
+        if is_url(name):
+            marker_sep = '; '
+        else:
+            marker_sep = ';'
+        if marker_sep in name:
+            name, markers = name.split(marker_sep, 1)
+            markers = markers.strip()
+            if not markers:
+                markers = None
+        else:
+            markers = None
+        name = name.strip()
+        req = None
+        path = os.path.normpath(os.path.abspath(name))
+        link = None
+
+        if is_url(name):
+            link = Link(name)
+        elif (os.path.isdir(path)
+                and (os.path.sep in name or name.startswith('.'))):
+            if not is_installable_dir(path):
+                raise InstallationError(
+                    "Directory %r is not installable. File 'setup.py' not "
+                    "found." % name
+                )
+            link = Link(path_to_url(name))
+        elif is_archive_file(path):
+            if not os.path.isfile(path):
+                logger.warning(
+                    'Requirement %r looks like a filename, but the file does '
+                    'not exist',
+                    name
+                )
+            link = Link(path_to_url(name))
+
+        # it's a local file, dir, or url
+        if link:
+
+            url = link.url
+            # Handle relative file URLs
+            if link.scheme == 'file' and re.search(r'\.\./', url):
+                url = path_to_url(os.path.normpath(os.path.abspath(link.path)))
+
+            # wheel file
+            if link.ext == wheel_ext:
+                wheel = Wheel(link.filename)  # can raise InvalidWheelFilename
+                if not wheel.supported():
+                    raise UnsupportedWheel(
+                        "%s is not a supported wheel on this platform." %
+                        wheel.filename
+                    )
+                req = "%s==%s" % (wheel.name, wheel.version)
+            else:
+                # set the req to the egg fragment.  when it's not there, this
+                # will become an 'unnamed' requirement
+                req = link.egg_fragment
+
+        # a requirement specifier
+        else:
+            req = name
+
+        return cls(req, comes_from, url=url, markers=markers,
+                   isolated=isolated)
+<switch:english>
+[english] The structure correctly extracts environment markers (`markers`) early in the process, allowing the final result to be formatted as a requirement with its appropriate dependency specifications.
+[english] If `name` is a local directory that requires a relative path (e.g., './site'), should it always raise an error if setup.py isn't found?
+[english] No, it checks first via `os.path.isdir(path)` and then verifies installation capability using `is_installable_dir`. If that check fails, the function raises the InstallationError described in the code.
+[english] That makes sense; I'll use this for parsing local dependencies.

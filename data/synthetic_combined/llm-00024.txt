@@ -1,0 +1,27 @@
+[english] I need a function that verifies a list of indices are all integers and fall within specified dimension bounds before collapsing it into a single, flat list.
+[english] To ensure the input is safe for use with array indexing, we first validate the data types using `all` and then check if any index exceeds the given dimensions via `npany`. Finally, we flatten the result in return.
+<switch:python>
+[python] def listify(lst, dim):
+    """
+    Flatten lists of indices and ensure bounded by a known dim.
+
+    Parameters
+    ----------
+    lst : list
+        List of integer indices
+
+    dim : tuple
+        Bounds for indices
+    """
+    if not all([l.dtype == int for l in lst]):
+        raise ValueError("indices must be integers")
+
+    if npany(asarray(lst) >= dim):
+        raise ValueError("indices out of bounds for axis with size %s" % dim)
+
+    return lst.flatten()
+<switch:english>
+[english] The function strictly enforces integer types and uses `npany` combined with NumPy's array capabilities to handle the boundary checks efficiently.
+[english] What happens if I pass a list of indices that are perfectly valid but come from a generator instead of a full list?
+[english] Since the implementation in line 23 calls `asarray(lst)`, it will convert even generators or iterators into NumPy arrays, allowing them to be processed and flattened correctly.
+[english] That makes sense; thanks for clarifying how internal conversions work.

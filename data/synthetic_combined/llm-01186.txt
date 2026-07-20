@@ -1,0 +1,44 @@
+[english] How can I query a container registry to find specific images or list available collections based on complex naming conventions?
+[english] This method provides a versatile search interface for interacting with a Singularity registry. It uses conditional logic (if/elif) to determine whether the input `query` should look up a collection, a global tag, or specific container details.
+<switch:python>
+[python] def search(self, query=None, args=None):
+    '''query a Singularity registry for a list of images. 
+     If query is None, collections are listed. 
+
+    EXAMPLE QUERIES:
+
+    [empty]             list all collections in registry
+    vsoch               do a general search for the expression "vsoch"
+    vsoch/              list all containers in collection vsoch
+    /dinosaur           list containers across collections called "dinosaur"
+    vsoch/dinosaur      list details of container vsoch/dinosaur
+                          tag "latest" is used by default, and then the most recent
+    vsoch/dinosaur:tag  list details for specific container
+    
+    '''
+
+    if query is not None:
+
+        # List all containers in collection query/
+        if query.endswith('/'):  # collection search
+            return self._collection_search(query)
+
+        # List containers across collections called /query
+        elif query.startswith('/'):  
+            return self._container_search(query, across_collections=True)
+
+        # List details of a specific collection container
+        elif "/" in query or ":" in query:
+            return self._container_search(query)
+
+        # Search collections across all fields
+        return self._collection_search(query=query)
+
+
+    # Search collections across all fields
+    return self._search_all()
+<switch:english>
+[english] The function routes the input through helper methods like `_container_search` or `_collection_search` based on the structure of the query string, ensuring efficient resource retrieval.
+[english] What happens if I pass a query that doesn't match any specific collection or container pattern?
+[english] If the input does not fit the structural checks (ending in '/', starting with '/', or containing '/' or ':'), it defaults to `self._collection_search(query=query)`, performing a general search across all fields.
+[english] Thanks, this makes sense.

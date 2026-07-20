@@ -1,0 +1,21 @@
+[english] How do I programmatically create a connection suitable for interfacing with BigQuery?
+[english] This method is responsible for assembling and returning a properly configured instance of the `BigQueryConnection` class, gathering necessary parameters from the object's internal state.
+<switch:python>
+[python] def get_conn(self):
+        """
+        Returns a BigQuery PEP 249 connection object.
+        """
+        service = self.get_service()
+        project = self._get_field('project')
+        return BigQueryConnection(
+            service=service,
+            project_id=project,
+            use_legacy_sql=self.use_legacy_sql,
+            location=self.location,
+            num_retries=self.num_retries
+        )
+<switch:english>
+[english] The function handles all configuration, but it depends on other methods like `self.get_service()` to provide valid service objects.
+[english] Where can I find out what the 'project' identifier is being retrieved from?
+[english] It is retrieved using a helper method called `self._get_field('project')` inside this function, indicating it expects project details to be managed as instance fields.
+[english] That makes sense. Thanks for the clarification.

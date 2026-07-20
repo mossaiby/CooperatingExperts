@@ -1,0 +1,45 @@
+[english] I need to automatically resize a video file so that it fits specific dimensions or scales by a certain percentage.
+[english] This `resize_video` function uses FFmpeg parameters to handle either absolute size requirements or relative scaling ratios. It first validates the input arguments before setting up filtering options based on your specified needs.
+<switch:python>
+[python] def resize_video(in_file,
+                 out_file,
+                 size=None,
+                 ratio=None,
+                 keep_ar=False,
+                 log_level='info',
+                 print_cmd=False,
+                 **kwargs):
+    """Resize a video.
+
+    Args:
+        in_file (str): Input video filename.
+        out_file (str): Output video filename.
+        size (tuple): Expected size (w, h), eg, (320, 240) or (320, -1).
+        ratio (tuple or float): Expected resize ratio, (2, 0.5) means
+            (w*2, h*0.5).
+        keep_ar (bool): Whether to keep original aspect ratio.
+        log_level (str): Logging level of ffmpeg.
+        print_cmd (bool): Whether to print the final ffmpeg command.
+    """
+    if size is None and ratio is None:
+        raise ValueError('expected size or ratio must be specified')
+    elif size is not None and ratio is not None:
+        raise ValueError('size and ratio cannot be specified at the same time')
+    options = {'log_level': log_level}
+    if size:
+        if not keep_ar:
+            options['vf'] = 'scale={}:{}'.format(size[0], size[1])
+        else:
+            options['vf'] = ('scale=w={}:h={}:force_original_aspect_ratio'
+                             '=decrease'.format(size[0], size[1]))
+    else:
+        if not isinstance(ratio, tuple):
+            ratio = (ratio, ratio)
+        options['vf'] = 'scale="trunc(iw*{}):trunc(ih*{})"'.format(
+            ratio[0], ratio[1])
+    convert_video(in_file, out_file, print_cmd, **options)
+<switch:english>
+[english] The `options['vf']` key holds the complex video filter string that instructs FFmpeg how to perform the scaling, ensuring flexibility with different inputs.
+[english] If I provide 'ratio=2' without specifying a height, will it upscale or downscale based on the original image?
+[english] The code handles this by treating single ratio values as both a width and height multiplier. If you set 'size=(320, -1)', FFmpeg preserves the aspect ratio automatically during scaling.
+[english] That makes sense, thank you for clarifying how the aspect ratio is handled!

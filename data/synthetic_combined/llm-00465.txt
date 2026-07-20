@@ -1,0 +1,27 @@
+[english] I need a way to deconstruct this Constraint object into a simple tuple containing its selector and arguments.
+[english] This method transforms internal attributes of the constraint instance into a standard Python tuple. It handles mapping the comparison type using an external configuration map before assembling the final structure.
+<switch:python>
+[python] def to_python(self):
+        """Deconstruct the ``Constraint`` instance to a tuple.
+
+        Returns:
+            tuple: The deconstructed ``Constraint``.
+        """
+        return (
+            self.selector,
+            COMPARISON_MAP.get(self.comparison, self.comparison),
+            self.argument
+        )
+<switch:english>
+[english] The function prioritizes using a specific mapped value for comparison but gracefully falls back to the original attribute if no mapping is found.
+[english] What happens if my `self.comparison` type isn't defined in `COMPARISON_MAP`?
+[english] If the key does not exist in the map, the `.get()` method returns the default value provided, which is `self.comparison`.
+<switch:python>
+[python] def to_python(self):
+        return (
+            self.selector,
+            COMPARISON_MAP.get(self.comparison, self.comparison),
+            self.argument
+        )
+<switch:english>
+[english] That makes sense; it's good error handling.

@@ -1,0 +1,21 @@
+[english] How can I write a method to automatically configure the dimensions of a document layout based on predefined sizes or custom numerical strings?
+[english] This method validates input for page size, defaulting first to a known key in `self.layout_dict`. If that fails, it tries to parse a string like '10x8' into point measurements.
+<switch:python>
+[python] def set_page_size(self, layout):
+        """ Valid choices: 'a3, 'a4', 'a5', 'letter', 'legal', '11x17'.
+
+        """
+        self.layout = layout.lower()
+        if self.layout in self.layout_dict:
+            self.page_size = self.layout_dict[self.layout]
+        else:
+            dimensions = self.layout.split('x')
+            if len(dimensions) == 2:
+                self.page_size = (float(dimensions[0]) * 72, float(dimensions[1]) * 72)
+            else:
+                raise IndexError("Page is two dimensions, given: %s" % len(dimensions))
+<switch:english>
+[english] The function consistently converts input to lowercase before checking the dictionary. If a custom string format isn't used, it raises an `IndexError` because exactly two dimensions are required for calculation.
+[english] What happens if a user passes '10x8y', which has three components after splitting?
+[english] If the input results in more than two dimensions (e.g., '10x8y'), `dimensions` will have a length greater than 2, causing the function to skip both the dictionary lookup and the `len(dimensions) == 2` check, finally raising an `IndexError`.
+[english] That makes sense, thanks for clarifying that handling custom strings.

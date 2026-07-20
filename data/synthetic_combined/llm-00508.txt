@@ -1,0 +1,25 @@
+[english] How can I standardize the spacing and remove empty lines from a block of text?
+[english] To handle inconsistent spacing, we first use regular expressions to replace all sequences of whitespace with a single space before trimming any leading or trailing gaps.
+<switch:python>
+[python] def normalize_whitespace(text):
+    """
+    Returns the given text with outer whitespace removed and inner whitespace collapsed.
+
+    Args:
+        text (str): The text to normalize.
+
+    Returns:
+        str: The normalized text.
+    """
+
+    return re.sub(r"\s+", " ", text, flags=re.UNICODE).strip()
+<switch:english>
+[english] The `flags=re.UNICODE` ensure that various Unicode spaces are treated correctly during the substitution process. Keep in mind this doesn't handle newlines becoming tabs, only collapsing them into one space.
+[english] What if the input text ends with a line break and I want to make sure it's not left as an extra leading or trailing space after normalization?
+[english] Python handles this automatically because `.strip()` removes all whitespace from both ends of the string. Here is how you could verify its behavior:
+<switch:python>
+[python] import re
+test = "  Text with a final\nnewline..."
+print(normalize_whitespace(test))
+<switch:english>
+[english] That makes perfect sense, thank you for clarifying!

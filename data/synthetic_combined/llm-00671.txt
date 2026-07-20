@@ -1,0 +1,15 @@
+[english] How do I write a Python function to start multiple AWS EC2 instances when provided with their IDs?
+[english] I can definitely help with that! The approach is first to check if any instance IDs were passed; this prevents errors before attempting to connect or make API calls.
+<switch:python>
+[python] def start_instances(instances, region):
+    '''Start all the instances given by its ids'''
+    if not instances: return
+    conn = ec2_connect(region)
+    log("Starting instances {0}.".format(instances))
+    conn.start_instances(instances)
+    log("Done")
+<switch:english>
+[english] The function uses the `ec2_connect` helper to establish a connection and then calls `conn.start_instances(instances)` directly to trigger the start command on AWS.
+[english] If I pass an ID that is already running, how does this function handle it?
+[english] The underlying EC2 API usually handles redundant requests gracefully by only acting if necessary. However, for explicit status checks, you would need an additional loop that queries the instance state before calling start_instances.
+[english] Perfect, I think I have what I need.

@@ -1,0 +1,38 @@
+[english] How can I reliably fetch HTML content from a specific URL while preventing my service from getting rate-limited?
+[english] This function is designed to safely fetch webpage content. It uses global locks and timestamps to ensure that requests are throttled according to a defined delay.
+<switch:python>
+[python] def get_html(url):
+    """Gets the HTML for the given URL using a GET request.
+
+    :url: the absolute URL of the desired page.
+    :returns: a string of HTML.
+    """
+    global last_request_time
+    with throttle_process_lock:
+        with throttle_thread_lock:
+            # sleep until THROTTLE_DELAY secs have passed since last request
+            wait_left = THROTTLE_DELAY - (time.time() - last_request_time.value)
+            if wait_left > 0:
+                time.sleep(wait_left)
+
+            # make request
+            response = requests.get(url)
+
+            # update last request time for throttling
+            last_request_time.value = time.time()
+
+    # raise ValueError on 4xx status code, get rid of comments, and return
+    if 400 <= response.status_code < 500:
+        raise ValueError(
+            'Status Code {} received fetching URL "{}"'
+            .format(response.status_code, url)
+        )
+    html = response.text
+    html = html.replace('<!--', '').replace('-->', '')
+
+    return html
+<switch:english>
+[english] The function also explicitly checks for client errors in the 4xx range, raising an exception if they occur to prevent silent failures.
+[english] What happens to common HTML comments within the response? Do I still need to remove them manually?
+[english] Yes, the code explicitly removes HTML comments using string replacement. It searches for and substitutes '<!--' with nothing and similarly handles '--->'.
+[english] This makes fetching robust against server limits and prevents unwanted tags in my output.

@@ -1,0 +1,25 @@
+[english] I need help understanding how my DHCP client handles timeouts and retries when it is in a rebind state.
+[english] This function determines if the request for rebinding has timed out or should continue. It first checks if the current attempt count exceeds our configured maximum attempts to determine the next action.
+<switch:python>
+[python] def timeout_request_rebinding(self):
+        """Timeout of request rebinding on REBINDING state.
+
+        Same comments as in
+        :func:`dhcpcapfsm.DHCPCAPFSM.timeout_requesting`.
+
+        """
+        logger.debug("C6.2:T In %s, timeout receiving response to request.",
+                     self.current_state)
+        if self.request_attempts >= MAX_ATTEMPTS_REQUEST:
+            logger.debug('C.2.3: T. Maximum number %s of REQUESTs '
+                         'reached, already sent %s, wait lease time expires.',
+                         MAX_ATTEMPTS_REQUEST, self.disover_requests)
+            # raise self.ERROR()
+        logger.debug("C2.3: F. Maximum number of REQUESTs retries not reached,"
+                     "raise REBINDING.")
+        raise self.REBINDING()
+<switch:english>
+[english] It uses conditional logic to either log more attempts or raises REBINDING, forcing a state transition when limits are reached or processing continues.
+[english] If I hit the maximum number of requests, does this function immediately fail, or is it waiting for something else?
+[english] When `self.request_attempts` exceeds `MAX_ATTEMPTS_REQUEST`, it logs that it has exceeded the limit and waits for a lease to expire before taking further action.
+[english] Got it, thanks for explaining the state management!

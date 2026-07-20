@@ -1,0 +1,17 @@
+[english] I need to generate a list of appropriate executable names for scripts, ensuring they have the correct OS-specific extensions.
+[english] To handle platform differences, we first import utilities and check if the current operating system is Windows by inspecting its type. If it's Windows, we modify each script name with a .bat extension to match common naming conventions.
+<switch:python>
+[python] def ensure_scripts(linux_scripts):
+    """Creates the proper script names required for each platform
+    (taken from 4Suite)
+    """
+    from distutils import util
+
+    if util.get_platform()[:3] == "win":
+        return linux_scripts + [script + ".bat" for script in linux_scripts]
+    return linux_scripts
+<switch:english>
+[english] This code preserves the original list on non-Windows systems while dynamically creating batch files for Windows compatibility.
+[english] What happens if `linux_scripts` is an empty list?
+[english] If `linux_scripts` is empty, both return paths will simply result in an empty list because the list comprehension iterates over zero items.
+[english] Got it, thanks for breaking that down.

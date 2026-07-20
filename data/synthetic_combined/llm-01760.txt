@@ -1,0 +1,26 @@
+[english] How can I automatically determine if a given duration in seconds should be displayed as minutes, hours, or days for better readability?
+[english] This function iterates through a predefined table to find the appropriate time threshold based on the input seconds.
+<switch:python>
+[python] def get_time_units_and_multiplier(seconds):
+    """
+    Given a duration in seconds, determines the best units and multiplier to
+    use to display the time. Return value is a 2-tuple of units and multiplier.
+    """
+    for cutoff, units, multiplier in units_table:
+        if seconds < cutoff:
+            break
+    return units, multiplier
+<switch:english>
+[english] It uses an external `units_table` structure which must be properly defined and sorted for correct behavior. If no cutoff is met, the current implementation might rely on initial variable definitions outside this scope.
+[english] What happens if I initialize units='s' and multiplier=1 before the loop starts?
+[english] If you pre-set them, those values will be returned when the `seconds` input is smaller than the first cutoff in your table. For example:
+<switch:python>
+[python] def get_time_units_and_multiplier(seconds): 
+    units = 's'
+    multiplier = 1
+    for cutoff, units, multiplier in units_table: 
+        if seconds < cutoff: 
+            break
+    return units, multiplier
+<switch:english>
+[english] Ah, so the loop finds the smallest applicable unit!

@@ -1,0 +1,21 @@
+[english] How do I remove and retrieve either the most recent or oldest item from an ordered data collection?
+[english] This function handles removal by checking if the collection is empty first. It then uses a generator based on the 'last' flag to find the appropriate key before calling an internal pop method.
+<switch:python>
+[python] def popitem(self, last=True):  # pylint: disable=arguments-differ
+        u"""*x.popitem() → (k, v)*
+
+        Remove and return the most recently added item as a (key, value) pair
+        if *last* is True, else the least recently added item.
+
+        :raises KeyError: if *x* is empty.
+        """
+        if not self:
+            raise KeyError('mapping is empty')
+        key = next((reversed if last else iter)(self))
+        val = self._pop(key)
+        return key, val
+<switch:english>
+[english] The function raises a `KeyError` if the collection is empty. The logic relies heavily on internal methods like `iter` and `_pop` to manage state efficiently.
+[english] If I don't pass any arguments, what behavior does this specific implementation default to?
+[english] By looking at the signature, if no argument is passed, 'last' defaults to `True`. Therefore, it will remove and return the most recently added item (LIFO).
+[english] Thanks for clarifying how that handles the default value.

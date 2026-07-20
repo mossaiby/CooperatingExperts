@@ -1,0 +1,17 @@
+[english] I need to calculate the standard error of an array while properly handling missing values that might be NaN.
+[english] To account for potential NaNs, we first use np.nanstd to get the deviation across valid data points and then normalize this by the square root of the count of finite elements.
+<switch:python>
+[python] def stderr(a):
+    """
+    Calculate the standard error of a.
+    """
+    return np.nanstd(a) / np.sqrt(sum(np.isfinite(a)))
+<switch:english>
+[english] This design ensures that the population standard error is calculated using only the reliably measured samples in the dataset.
+[english] What result will this function return if the input array contains no finite numbers, like `[np.nan, np.nan]`?
+[english] If all elements are NaN, the count of finite numbers is zero, leading to a division by zero error or returning infinity/NaN depending on NumPy settings.
+
+```python
+a = [np.nan, np.nan]
+print(stderr(a)) # This will result in Inf or raise a runtime warning
+[english] That makes sense; I appreciate the detailed breakdown of how it handles edge cases.

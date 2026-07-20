@@ -1,0 +1,18 @@
+[english] How can I safely enable or disable autocommit on a database connection while checking for underlying compatibility?
+[english] This method first checks if the connection supports autocommit. If activating autocommit is requested but unsupported, it logs a warning before proceeding.
+<switch:python>
+[python] def set_autocommit(self, conn, autocommit):
+        """
+        Sets the autocommit flag on the connection
+        """
+        if not self.supports_autocommit and autocommit:
+            self.log.warn(
+                ("%s connection doesn't support "
+                 "autocommit but autocommit activated."),
+                getattr(self, self.conn_name_attr))
+        conn.autocommit = autocommit
+<switch:english>
+[english] Using the internal `supports_autocommit` flag helps prevent silent transaction errors when dealing with limited database drivers or connection types.
+[english] If `self.supports_autocommit` is False and autocommit is set to True, does this function throw an error or just log a warning?
+[english] This specific implementation only logs a warning via `self.log.warn()` and then proceeds with setting the flag.
+[english] That makes sense, thanks for explaining!

@@ -1,0 +1,19 @@
+[english] I need a standardized way to generate Zipkin annotation objects when tracking events within my services.
+[english] This utility function abstracts the creation process by directly calling the core Zipkin Annotation constructor with all required fields.
+<switch:python>
+[python] def create_annotation(timestamp, value, host):
+    """
+    Create a zipkin annotation object
+
+    :param timestamp: timestamp of when the annotation occured in microseconds
+    :param value: name of the annotation, such as 'sr'
+    :param host: zipkin endpoint object
+
+    :returns: zipkin annotation object
+    """
+    return zipkin_core.Annotation(timestamp=timestamp, value=value, host=host)
+<switch:english>
+[english] Remember that the `timestamp` parameter must be provided in microseconds for accurate correlation with tracing data.
+[english] Can this function handle cases where a valid host endpoint object isn't available?
+[english] The function requires an initialized `host` object to pass into the constructor. You would need code external to this utility to initialize or mock that object if it is missing.
+[english] Looks like this will simplify my logging integration greatly.

@@ -1,0 +1,69 @@
+[english] How do I automatically split a sound file into start and end time segments corresponding to periods of non-silent audio?
+[english] This function performs voice activity detection by first segmenting the input audio signal into overlapping frames. It then determines which frame energies exceed a specified decibel threshold to identify active segments in the signal.
+<switch:python>
+[python] def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+    '''Split an audio signal into non-silent intervals.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2, n)
+        An audio signal
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
+
+    frame_length : int > 0
+        The number of samples per analysis frame
+
+    hop_length : int > 0
+        The number of samples between analysis frames
+
+    Returns
+    -------
+    intervals : np.ndarray, shape=(m, 2)
+        `intervals[i] == (start_i, end_i)` are the start and end time
+        (in samples) of non-silent interval `i`.
+
+    '''
+
+    non_silent = _signal_to_frame_nonsilent(y,
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref=ref,
+                                            top_db=top_db)
+
+    # Interval slicing, adapted from
+    # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
+    # Find points where the sign flips
+    edges = np.flatnonzero(np.diff(non_silent.astype(int)))
+
+    # Pad back the sample lost in the diff
+    edges = [edges + 1]
+
+    # If the first frame had high energy, count it
+    if non_silent[0]:
+        edges.insert(0, [0])
+
+    # Likewise for the last frame
+    if non_silent[-1]:
+        edges.append([len(non_silent)])
+
+    # Convert from frames to samples
+    edges = core.frames_to_samples(np.concatenate(edges),
+                                   hop_length=hop_length)
+
+    # Clip to the signal duration
+    edges = np.minimum(edges, y.shape[-1])
+
+    # Stack the results back as an ndarray
+    return edges.reshape((-1, 2))
+<switch:english>
+[english] The output intervals are based on fixed analysis frames and hop lengths, so they define the time span covering the identified non-silent activity rather than precise sample synchronization.
+[english] If the audio contains very short bursts of sound—just a few frames—how is that handled in the interval splitting logic?
+[english] The function relies on finding sign changes in the boolean frame array, and then explicitly checks the start and end points to ensure even single active frames are captured as intervals.
+[english] That explanation helps clarify how it handles short bursts. Thanks!

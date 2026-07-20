@@ -1,0 +1,17 @@
+[english] How can I safely handle incoming data from a network socket while ensuring my connection objects are properly closed if an error occurs?
+[english] This function handles the reading process by first attempting to grab input from the socket. It uses a try-except block to gracefully catch any potential socket or IO errors and ensures cleanup happens immediately.
+<switch:python>
+[python] def process_input(self):
+        """Called when socket is read-ready"""
+        try:
+            pyngus.read_socket_input(self.connection, self.socket)
+        except Exception as e:
+            LOG.error("Exception on socket read: %s", str(e))
+            self.connection.close_input()
+            self.connection.close()
+        self.connection.process(time.time())
+<switch:english>
+[english] After handling the input reading or error state, it triggers a process method that likely handles message parsing and further processing of the received data.
+[english] If this is running in an event loop, should I be concerned about calling `self.connection.process(time.time())` repeatedly without checks?
+[english] Yes, if your processing logic is time-intensive or non-exclusive, you might want to add a safeguard like rate limiting or ensure the connection object itself is thread-safe.
+[english] That makes sense for maintaining stability in high-throughput scenarios.

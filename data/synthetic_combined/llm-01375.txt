@@ -1,0 +1,55 @@
+[english] How can I convert a complex XML string into a structured Python dictionary that preserves attributes, text content, and child elements?
+[english] This function recursively converts the XML element tree into a nested dictionary structure. It handles attributes directly on the node and groups all sibling children of the same tag into lists for easy iteration.
+<switch:python>
+[python] def xml_to_dict(raw_xml):
+    """Convert a XML stream into a dictionary.
+
+    This function transforms a xml stream into a dictionary. The
+    attributes are stored as single elements while child nodes are
+    stored into lists. The text node is stored using the special
+    key '__text__'.
+
+    This code is based on Winston Ewert's solution to this problem.
+    See http://codereview.stackexchange.com/questions/10400/convert-elementtree-to-dict
+    for more info. The code was licensed as cc by-sa 3.0.
+
+    :param raw_xml: XML stream
+
+    :returns: a dict with the XML data
+
+    :raises ParseError: raised when an error occurs parsing the given
+        XML stream
+    """
+    def node_to_dict(node):
+        d = {}
+        d.update(node.items())
+
+        text = getattr(node, 'text', None)
+
+        if text is not None:
+            d['__text__'] = text
+
+        childs = {}
+        for child in node:
+            childs.setdefault(child.tag, []).append(node_to_dict(child))
+
+        d.update(childs.items())
+
+        return d
+
+    purged_xml = remove_invalid_xml_chars(raw_xml)
+
+    try:
+        tree = xml.etree.ElementTree.fromstring(purged_xml)
+    except xml.etree.ElementTree.ParseError as e:
+        cause = "XML stream %s" % (str(e))
+        raise ParseError(cause=cause)
+
+    d = node_to_dict(tree)
+
+    return d
+<switch:english>
+[english] The helper function `node_to_dict` is key, using special logic to store text under `'__text__'` while accumulating child elements recursively.
+[english] What happens to attributes if an element has both text content and multiple child nodes?
+[english] Attributes are merged directly into the dictionary for that node. If it also contains text, that text is stored separately using the `d['__text__'] = text` logic.
+[english] This looks much cleaner than manual traversal!

@@ -1,0 +1,15 @@
+[english] I have several configuration settings provided as keyword arguments, and I need to apply them to an instance of a class while ensuring that certain single string values are automatically converted into lists.
+[english] This function iterates over the keyword arguments passed to it. It uses internal logic to check if a key requires a list format and converts suitable strings from `kwargs` before permanently setting the attribute on `self` using `setattr`.
+<switch:python>
+[python] def from_args(self, **kwargs):
+        """Read config values from `kwargs`."""
+        for k, v in iitems(kwargs):
+            if v is not None:
+                if k in self.MUST_BE_LIST and isinstance(v, string_class):
+                    v = [v]
+                setattr(self, k, v)
+<switch:english>
+[english] The logic ensures that fields listed in `self.MUST_BE_LIST` are correctly wrapped when they receive only a single string value.
+[english] What happens if a user passes an empty list or None for a key even though it is required to be a list?
+[english] If the user passes `None`, the initial check `if v is not None:` will skip setting the attribute entirely. If they pass an empty list, it will be assigned correctly as lists are not strings.
+[english] That makes sense.

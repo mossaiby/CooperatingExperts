@@ -1,0 +1,26 @@
+[english] I need a function to take a binary data stream from a giraffez archive header and parse it into structured column definitions.
+[english] This function systematically consumes the binary input. It reads fixed-size chunks using `struct.unpack` first, followed by variable-length strings (the titles) until all data is consumed.
+<switch:python>
+[python] def deserialize(cls, data):
+        """
+        Deserializes giraffez Archive header. See
+        :meth:`~giraffez.types.Columns.serialize` for more information.
+
+        :param str data: data in giraffez Archive format, to be deserialized
+        :return: :class:`~giraffez.types.Columns` object decoded from data
+        """
+        column_list = cls()
+        while data:
+            tup, data = data[:10], data[10:]
+            column_type, length, prec, scale, title_len = struct.unpack("5H", tup)
+            title, data = data[:title_len], data[title_len:]
+            try:
+                column_list.append((title, column_type, length, prec, scale))
+            except GiraffeTypeError as error:
+                raise GiraffeEncodeError(error)
+        return column_list
+<switch:english>
+[english] The function iterates through the binary data, extracting metadata and titles, then populating a list of structured columns.
+[english] What happens if there's an issue during the type conversion when adding the column to the list?
+[english] If `GiraffeTypeError` is raised while attempting to append the data, the function catches it and re-raises a more specific `GiraffeEncodeError`. This ensures that serialization problems are consistently reported.
+[english] That makes sense, thank you for clarifying.

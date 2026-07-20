@@ -1,0 +1,76 @@
+[english] I need a way to correct detected onset timings by rolling them back from their peak detection point to the nearest preceding trough in an audio energy function.
+[english] This function identifies local minimum points within the provided energy curve and then maps each raw onset event backward. It ensures that only minima occurring chronologically before an input event are considered for matching.
+<switch:python>
+[python] def onset_backtrack(events, energy):
+    '''Backtrack detected onset events to the nearest preceding local
+    minimum of an energy function.
+
+    This function can be used to roll back the timing of detected onsets
+    from a detected peak amplitude to the preceding minimum.
+
+    This is most useful when using onsets to determine slice points for
+    segmentation, as described by [1]_.
+
+    .. [1] Jehan, Tristan.
+           "Creating music by listening"
+           Doctoral dissertation
+           Massachusetts Institute of Technology, 2005.
+
+    Parameters
+    ----------
+    events : np.ndarray, dtype=int
+        List of onset event frame indices, as computed by `onset_detect`
+
+    energy : np.ndarray, shape=(m,)
+        An energy function
+
+    Returns
+    -------
+    events_backtracked : np.ndarray, shape=events.shape
+        The input events matched to nearest preceding minima of `energy`.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=30, duration=2.0)
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> # Detect events without backtracking
+    >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
+    ...                                        backtrack=False)
+    >>> # Backtrack the events using the onset envelope
+    >>> onset_bt = librosa.onset.onset_backtrack(onset_raw, oenv)
+    >>> # Backtrack the events using the RMS values
+    >>> rms = librosa.feature.rms(S=np.abs(librosa.stft(y=y)))
+    >>> onset_bt_rms = librosa.onset.onset_backtrack(onset_raw, rms[0])
+
+    >>> # Plot the results
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> plt.plot(oenv, label='Onset strength')
+    >>> plt.vlines(onset_raw, 0, oenv.max(), label='Raw onsets')
+    >>> plt.vlines(onset_bt, 0, oenv.max(), label='Backtracked', color='r')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.subplot(2,1,2)
+    >>> plt.plot(rms[0], label='RMS')
+    >>> plt.vlines(onset_bt_rms, 0, rms.max(), label='Backtracked (RMS)', color='r')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    '''
+
+    # Find points where energy is non-increasing
+    # all points:  energy[i] <= energy[i-1]
+    # tail points: energy[i] < energy[i+1]
+    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) &
+                            (energy[1:-1] < energy[2:]))
+
+    # Pad on a 0, just in case we have onsets with no preceding minimum
+    # Shift by one to account for slicing in minima detection
+    minima = util.fix_frames(1 + minima, x_min=0)
+
+    # Only match going left from the detected events
+    return minima[util.match_events(events, minima, right=False)]
+<switch:english>
+[english] The goal is robust segmentation; however, if the energy curve has many small dips, the mapping relies entirely on how `util.match_events` resolves potential overlaps in preceding minima.
+[english] If a detected onset occurs very early in the audio and there are no preceding local minima, what happens to that event?
+[english] The function attempts to pad with zeros using util utilities, but since it only matches events going left (`right=False`), any event without a qualifying predecessor will be excluded from the final output array.
+[english] Understood. I can now use this for more accurate slice points.

@@ -1,0 +1,19 @@
+[english] I need a way to configure my application to exclude specific module paths when generating tracebacks.
+[english] This function first standardizes input by checking if the provided arguments are nested in a list inside the tuple, and then iterates over all identified paths. It adds each path to a globally accessible exclusion list (`SKIPPED_PATHS`).
+<switch:python>
+[python] def skip_path(*paths):
+    """
+        This will exclude all modules that start from this path
+    :param paths: list of str of the path of modules to exclude
+    :return:      None
+    """
+    paths = (paths and isinstance(paths[0], list)) and paths[0] or paths
+    for path in paths:
+        if not path in SKIPPED_PATHS:
+            SKIPPED_PATHS.append(path)
+    traceback.extract_tb = _new_extract_tb
+<switch:english>
+[english] Finally, it overrides the default traceback method (`traceback.extract_tb`) with `_new_extract_tb`. Since this function modifies global state, be mindful of initialization order.
+[english] What is the behavior if `skip_path` is called without any path arguments?
+[english] If no paths are provided, the input processing logic handles it gracefully by assigning an empty tuple to paths. The subsequent loop iterates zero times, meaning SKIPPED_PATHS is not modified in that call.
+[english] That makes sense; thanks for the detailed breakdown.

@@ -1,0 +1,30 @@
+[english] How do I manually trigger the OAuth 2.0 authorization process to retrieve necessary access tokens for a client?
+[english] This function handles manual token acquisition by starting the OAuth flow, generating an authorization URL, and then processing the user-provided code.
+<switch:python>
+[python] def _update_tokens(self):
+        '''Present the client with authentication flow to get tokens from code.
+           This simply updates the client _response to be used to get tokens
+           for auth and transfer (both use access_token as index). We call
+           this not on client initialization, but when the client is actually
+           needed.
+        '''
+
+        self._client.oauth2_start_flow(refresh_tokens=True)
+        authorize_url = self._client.oauth2_get_authorize_url()
+        print('Please go to this URL and login: {0}'.format(authorize_url))
+
+        auth_code = raw_input(
+                    'Please enter the code you get after login here: ').strip()
+
+        # Save to client
+
+        self._response = self._client.oauth2_exchange_code_for_tokens(auth_code)
+        self.auth = self._response.by_resource_server['auth.globus.org']
+        self.transfer = self._response.by_resource_server['transfer.api.globus.org']
+        self._update_setting('GLOBUS_TRANSFER_RESPONSE', self.transfer)
+        self._update_setting('GLOBUS_AUTH_RESPONSE', self.auth)
+<switch:english>
+[english] After successfully exchanging the code, it saves separate authentication and transfer responses into instance attributes and internal settings for later use in API calls.
+[english] Since `raw_input` is used here, what happens if this code needs to run asynchronously or in a non-interactive environment?
+[english] If you need asynchronous token acquisition (like server-side flows), you should replace the interactive parts with methods that handle client credentials grants or PKCE flow automatically without requiring user input.
+[english] Thanks, that makes perfect sense.

@@ -1,0 +1,27 @@
+[english] How can I safely check if an application setup object has the expected `IS_RELEASE` status?
+[english] This function is designed to inspect a setup configuration for its release flag while preventing crashes. It first attempts to retrieve the attribute and handles missing attributes gracefully.
+<switch:python>
+[python] def setup_is_release(setup, expected=True):
+    """
+    Returns
+    -------
+    bool or None :
+        None if we can't tell
+    """
+    try:
+        is_release = setup.IS_RELEASE
+    except AttributeError:
+        return None
+    else:
+        if is_release and expected:
+            return ""
+        elif not is_release and not expected:
+            return ""
+        else:
+            return ("Unexpected value of setup.py IS_RELEASE. Found "
+                    + str(is_release) + ".\n")
+<switch:english>
+[english] A successful validation returns an empty string, while any unexpected state results in a descriptive error message. Passing `None` indicates that the necessary attribute was missing from the input object.
+[english] What happens if I pass a setup object where `IS_RELEASE` exists but has a non-boolean value?
+[english] The comparison relies on Python's inherent truthiness, meaning any non-empty string or number will evaluate to True. If you need strict boolean enforcement, you should validate the type.
+[english] This helps me avoid hard crashes during startup.

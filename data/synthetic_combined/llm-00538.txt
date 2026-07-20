@@ -1,0 +1,30 @@
+[english] I want to implement a way in my handler that signals failure to the message queue so it will be retried later.
+[english] This method is designed to signal processing failure back to the NsqD daemon, prompting it to requeue the current task. It starts by checking if this responder has already been used to prevent accidental multiple triggers.
+<switch:python>
+[python] def requeue(self, **kwargs):
+        """
+        Respond to ``nsqd`` that you've failed to process this message successfully (and would
+        like it to be requeued).
+
+        :param backoff: whether or not :class:`nsq.Reader` should apply backoff handling
+        :type backoff: bool
+
+        :param delay: the amount of time (in seconds) that this message should be delayed
+            if -1 it will be calculated based on # of attempts
+        :type delay: int
+        """
+
+        # convert delay to time_ms for fixing
+        # https://github.com/nsqio/pynsq/issues/71 and maintaining
+        # backward compatibility
+        if 'delay' in kwargs and isinstance(kwargs['delay'], int) and kwargs['delay'] >= 0:
+            kwargs['time_ms'] = kwargs['delay'] * 1000
+
+        assert not self._has_responded
+        self._has_responded = True
+        self.trigger(event.REQUEUE, message=self, **kwargs)
+<switch:english>
+[english] The code handles delay conversion by multiplying the input `delay` (seconds) by 1000 to ensure proper millisecond formatting for internal use. By setting `self._has_responded = True`, it ensures subsequent calls will fail quickly.
+[english] What happens if I try to call this function twice on the same message?
+[english] The code contains the assertion `assert not self._has_responded`. If called a second time, this assertion will raise an AssertionError, preventing duplicate requeue requests.
+[english] Understood, that makes sense!

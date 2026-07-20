@@ -1,0 +1,26 @@
+[english] I need a single helper that can reliably retrieve settings from my configuration parser while handling types, defaults, and custom transformations.
+[english] This function acts as a flexible wrapper around your config access. It attempts to pull raw values using `self.config.get()` and handles various transformation paths before returning the result.
+<switch:python>
+[python] def _get_value(self, key, func=None, split_val=None, as_boolean=False,
+		exception_default=None):
+		"""
+		Helper method to get a value from the config
+		"""
+		try:
+			if as_boolean:
+				return self.config.getboolean(key[0], key[1])
+			value = self.config.get(key[0], key[1])
+			if split_val is not None:
+				value = value.split(split_val)
+			if func is not None:
+				return func(value)
+			return value
+		except (KeyError, configparser.NoSectionError, configparser.NoOptionError) as e:
+			if exception_default is not None:
+				return exception_default
+			raise KeyError(e)
+<switch:english>
+[english] The implementation uses extensive error handling to catch configuration-specific issues, ensuring that exceptions like missing keys are managed gracefully through `exception_default`.
+[english] If I use a custom function (`func`), does this method guarantee that function receives the data type it expects?
+[english] Yes; if you provide a string value and pass `split_val`, the code first executes `value = value.split(split_val)` before applying your functional transformation.
+[english] That makes much more sense now, thank you!

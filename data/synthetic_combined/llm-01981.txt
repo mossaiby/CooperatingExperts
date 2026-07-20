@@ -1,0 +1,40 @@
+[english] How can I implement a mechanism that recursively traverses an object hierarchy and registers every signal from units and nested interfaces for VCD logging?
+[english] This function manages detailed state by recursively traversing the design structure. It first checks if the object contains sub-interfaces or subunits to create nested scopes.
+<switch:python>
+[python] def vcdRegisterInterfaces(self, obj: Union[Interface, Unit],
+                              parent: Optional[VcdVarWritingScope]):
+        """
+        Register signals from interfaces for Interface or Unit instances
+        """
+        if hasattr(obj, "_interfaces") and obj._interfaces:
+            name = obj._name
+            parent_ = self.vcdWriter if parent is None else parent
+
+            subScope = parent_.varScope(name)
+            self._obj2scope[obj] = subScope
+
+            with subScope:
+                # register all subinterfaces
+                for chIntf in obj._interfaces:
+                    self.vcdRegisterInterfaces(chIntf, subScope)
+
+                if isinstance(obj, (Unit, SimModel)):
+                    # register interfaces from all subunits
+                    for u in obj._units:
+                        self.vcdRegisterInterfaces(u, subScope)
+
+            return subScope
+        else:
+            t = obj._dtype
+            if isinstance(t, self.supported_type_classes):
+                tName, width, formatter = vcdTypeInfoForHType(t)
+                try:
+                    parent.addVar(obj, getSignalName(obj),
+                                  tName, width, formatter)
+                except VarAlreadyRegistered:
+                    pass
+<switch:english>
+[english] If the object is a simple signal type rather than an interface container, it translates its data type and registers the variable in the appropriate scope.
+[english] What ensures that if a specific signal name accidentally appears multiple times across different layers, the function doesn't crash?
+[english] The `try...except VarAlreadyRegistered` block safely catches this scenario, allowing the registration to proceed without error even if duplicate signals are encountered in the hierarchy.
+[english] I understand how it handles scope conflicts now.

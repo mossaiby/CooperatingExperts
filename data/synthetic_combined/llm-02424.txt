@@ -1,0 +1,55 @@
+[english] How do I efficiently find all rows that contain the minimum value for a specific column, optionally restricting those results to within defined groups?
+[english] This function calculates the row corresponding to the smallest value in a given column. It first checks if grouping is required; without it, it selects rows globally with the minimum value.
+<switch:python>
+[python] def argmin(df, column: str, groups: Union[str, List[str]] = None):
+    """
+    Keep the row of the data corresponding to the minimal value in a column
+
+    ---
+
+    ### Parameters
+
+    *mandatory :*
+    - `column` (str): name of the column containing the value you want to keep the minimum
+
+    *optional :*
+    - `groups` (*str or list(str)*): name of the column(s) used for 'groupby' logic
+    (the function will return the argmax by group)
+    ---
+
+    ### Example
+
+    **Input**
+
+    | variable |   wave  |  year    | value |
+    |:--------:|:-------:|:--------:|:-----:|
+    |   toto   |  wave 1 |  2014    |  300  |
+    |   toto   |  wave 1 |  2015    |  250  |
+    |   toto   |  wave 1 |  2016    |  450  |
+<switch:english>
+[english] cson
+    argmin:
+      column: 'year'
+    ]
+<switch:python>
+[python] **Output**
+
+    | variable |   wave  |  year    | value |
+    |:--------:|:-------:|:--------:|:-----:|
+    |   toto   |  wave 1 |  2015    |  250  |
+    """
+    if groups is None:
+        df = df[df[column] == df[column].min()].reset_index(drop=True)
+    else:
+        group_min = df.groupby(groups)[column].transform('min')
+        df = (df
+              .loc[df[column] == group_min, :]
+              .drop_duplicates()
+              .reset_index(drop=True)
+              )
+    return df
+<switch:english>
+[english] When groups are provided, the function calculates a minimum for each group using `.transform('min')` before filtering.
+[english] If there are multiple rows tied for the minimum value within a group, how does this function handle those ties?
+[english] The current implementation uses `.drop_duplicates()` after filtering by `group_min`, meaning it will only return one row per group even if several rows share the minimal value. To keep all tied entries, you would need to modify the logic to handle duplicates differently.
+[english] Got it, that clarifies how duplicate handling and grouping work.

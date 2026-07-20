@@ -1,0 +1,16 @@
+[english] How can I prune a tree structure to keep only or remove nodes whose names match those in a specific list?
+[english] This method first iterates through all available leaves using the `self.walk()` helper and creates a filtered list of matches based on name, then passes that list to the core pruning logic.
+<switch:python>
+[python] def prune_by_names(self, leaf_names, inverse=False):
+        """
+        Perform an (inverse) prune, with leaves specified by name.
+        :param node_names: A list of leaaf Node names (strings)
+        :param inverse: Specifies whether to remove nodes in the list or not\
+                in the list.
+        """
+        self.prune([l for l in self.walk() if l.name in leaf_names], inverse)
+<switch:english>
+[english] By using a list comprehension and `self.walk()`, this function efficiently finds all nodes matching your input before calling the dedicated pruning mechanism.
+[english] If one of the names provided in `leaf_names` doesn't correspond to any actual leaf, what happens to that request?
+[english] The code simply won't find a match for it within `self.walk()`, so effectively nothing related to that specific non-existent name is processed by the pruning logic.
+[english] Got it, thanks for explaining how this works!

@@ -1,0 +1,23 @@
+[english] How can we guarantee that a specific set of setup functions executes exactly one time before any request hits the application?
+[english] To ensure the function runs only once across concurrent requests, we use an internal flag (`self._got_first_request`) combined with a mutex lock.
+<switch:python>
+[python] def try_trigger_before_first_request_functions(self):
+        """Called before each request and will ensure that it triggers
+        the :attr:`before_first_request_funcs` and only exactly once per
+        application instance (which means process usually).
+
+        :internal:
+        """
+        if self._got_first_request:
+            return
+        with self._before_request_lock:
+            if self._got_first_request:
+                return
+            self._got_first_request = True
+            for func in self.before_first_request_funcs:
+                func()
+<switch:english>
+[english] The use of `with self._before_request_lock:` provides thread-safe initialization by preventing race conditions during the first request handling.
+[english] If one of the functions in this list raises an exception, does that prevent future requests from completing successfully?
+[english] No, if a function fails, it halts the setup process and will likely prevent all subsequent requests. You would need to wrap individual calls in try/except blocks.
+[english] Got it; the locking strategy makes perfect sense now.

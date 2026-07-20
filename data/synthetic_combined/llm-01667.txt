@@ -1,0 +1,36 @@
+[english] I need a function to transform an incoming Price entity from the DAL schema into our internal standardized PriceModel.
+[english] This approach maps each field of the price entity while handling potential null values and converting various data types as needed. It involves specific logic for parsing date-time strings and calculating derived fields like the final value.
+<switch:python>
+[python] def map_entity(self, entity: dal.Price) -> PriceModel:
+        """ Map the price entity """
+        if not entity:
+            return None
+
+        result = PriceModel()
+        result.currency = entity.currency
+
+        # date/time
+        dt_string = entity.date
+        format_string = "%Y-%m-%d"
+        if entity.time:
+            dt_string += f"T{entity.time}"
+            format_string += "T%H:%M:%S"
+        price_datetime = datetime.strptime(dt_string, format_string)
+        result.datum = Datum()
+        result.datum.from_datetime(price_datetime)
+        assert isinstance(result.datum, Datum)
+
+        #result.namespace = entity.namespace
+        #result.symbol = entity.symbol
+        result.symbol = SecuritySymbol(entity.namespace, entity.symbol)
+
+        # Value
+        value = Decimal(entity.value) / Decimal(entity.denom)
+        result.value = Decimal(value)
+
+        return result
+<switch:english>
+[english] Pay close attention to the datetime parsing; it dynamically adjusts based on whether a time component is present in the input entity.
+[english] The code combines namespace and symbol into a SecuritySymbol object; why is this separate class necessary?
+[english] It provides a cleaner, structured way to handle financial identifiers rather than storing them as raw strings. The line `result.symbol = SecuritySymbol(entity.namespace, entity.symbol)` encapsulates that logic.
+[english] That makes sense; I'll integrate this mapping into our service layer.

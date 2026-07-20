@@ -1,0 +1,25 @@
+[english] How do I apply a specific two-qubit unitary gate to my current quantum state vector within this class?
+[english] This helper function applies a given two-qubit matrix (gate) to the system's full statevector. It uses NumPy's `einsum` to efficiently perform the tensor contraction, handling the specific qubit indices provided.
+<switch:python>
+[python] def _add_unitary_two(self, gate, qubit0, qubit1):
+        """Apply a two-qubit unitary matrix.
+
+        Args:
+            gate (matrix_like): a the two-qubit gate matrix
+            qubit0 (int): gate qubit-0
+            qubit1 (int): gate qubit-1
+        """
+        # Compute einsum index string for 1-qubit matrix multiplication
+        indexes = einsum_vecmul_index([qubit0, qubit1], self._number_of_qubits)
+        # Convert to complex rank-4 tensor
+        gate_tensor = np.reshape(np.array(gate, dtype=complex), 4 * [2])
+        # Apply matrix multiplication
+        self._statevector = np.einsum(indexes, gate_tensor,
+                                      self._statevector,
+                                      dtype=complex,
+                                      casting='no')
+<switch:english>
+[english] By using `np.einsum`, the function avoids explicit loops and performs the complex tensor multiplication in a highly optimized way.
+[english] What happens if I accidentally provide qubit indices that exceed my total number of qubits, or if the input gate is not correctly shaped?
+[english] The current implementation relies heavily on `einsum_vecmul_index`. If invalid indices are passed, it will likely throw an IndexError during index computation. Thorough validation checks for `qubit0` and `qubit1` against `self._number_of_qubits - 1` would make the function more robust.
+[english] That makes sense; I should add input validation to my class methods.

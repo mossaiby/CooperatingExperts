@@ -1,0 +1,42 @@
+[english] How can I generate a frequency domain constant-Q transform filter basis given specific parameters like sample rate, minimum frequency, and bin configuration?
+[english] To create the CQT basis in the frequency domain, we first use `filters.constant_q` to get the raw basis, then adjust the FFT size based on the hop length before transforming it using an FFT library.
+<switch:python>
+[python] def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
+                     filter_scale, norm, sparsity, hop_length=None,
+                     window='hann'):
+    '''Generate the frequency domain constant-Q filter basis.'''
+
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin,
+                                        n_bins=n_bins,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        filter_scale=filter_scale,
+                                        norm=norm,
+                                        pad_fft=True,
+                                        window=window)
+
+    # Filters are padded up to the nearest integral power of 2
+    n_fft = basis.shape[1]
+
+    if (hop_length is not None and
+            n_fft < 2.0**(1 + np.ceil(np.log2(hop_length)))):
+
+        n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
+
+    # re-normalize bases with respect to the FFT window length
+    basis *= lengths[:, np.newaxis] / float(n_fft)
+
+    # FFT and retain only the non-negative frequencies
+    fft = get_fftlib()
+    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft // 2)+1]
+
+    # sparsify the basis
+    fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity)
+
+    return fft_basis, n_fft, lengths
+<switch:english>
+[english] The function concludes by sparsifying the resulting FFT matrix rows based on the provided quantile parameter (`sparsity`), which can significantly reduce computation for subsequent analysis.
+[english] If no `hop_length` is specified, how does the code decide on the final FFT size (`n_fft`)?
+[english] When `hop_length` is None, the initial FFT size derived from the CQT basis calculation is used. This simplifies the process by avoiding forced padding based on a specific window shift.
+[english] That makes sense; I appreciate the detailed explanation of how the transformations are handled.

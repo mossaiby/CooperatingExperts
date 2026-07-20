@@ -1,0 +1,24 @@
+[english] How can I generate a specified number of formatted paragraphs, optionally wrapping them in HTML tags or returning them as a list?
+[english] This function serves as a robust text generator that controls how many blocks of text are created. It iterates based on the `quantity` parameter and wraps each block using defined start and end markers.
+<switch:python>
+[python] def paragraphs(quantity=2, separator='\n\n', wrap_start='', wrap_end='',
+               html=False, sentences_quantity=3, as_list=False):
+    """Random paragraphs."""
+    if html:
+        wrap_start = '<p>'
+        wrap_end = '</p>'
+        separator = '\n\n'
+
+    result = []
+    for i in xrange(0, quantity):
+        result.append(wrap_start + sentences(sentences_quantity) + wrap_end)
+
+    if as_list:
+        return result
+    else:
+        return separator.join(result)
+<switch:english>
+[english] The logic is very flexible, allowing you to control separators between paragraphs or format them specifically for web use via the `html` flag.
+[english] If I only need a single paragraph instead of multiple, how would I adjust the parameters?
+[english] You simply set the `quantity=1`. The function will execute the loop once and return that single wrapped string (or list item if `as_list` is True).
+[english] That makes perfect sense! Thanks for clarifying.

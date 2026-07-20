@@ -1,0 +1,20 @@
+[english] How can I easily execute multiple functions when a specific event occurs, and ensure they receive any extra data?
+[english] This method is designed to handle event dispatching by looking up registered listeners for a given name. It iterates through those callbacks and executes each one using the provided parameters.
+<switch:python>
+[python] def trigger(self, name, *args, **kwargs):
+        """
+        Execute the callbacks for the listeners on the specified event with the
+        supplied arguments.
+
+        All extra arguments are passed through to each callback.
+
+        :param name: the name of the event
+        :type name: string
+        """
+        for ev in self.__listeners[name]:
+            ev(*args, **kwargs)
+<switch:english>
+[english] The key functionality here is that it unpackall positional (*args) and keyword (**kwargs) arguments into each listener function (ev).
+[english] What happens if there are no listeners registered for a given event name?
+[english] If no listeners are found in self.__listeners[name], the loop will simply not execute, preventing any errors.
+[english] That clears up how event triggering works!

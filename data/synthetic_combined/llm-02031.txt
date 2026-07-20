@@ -1,0 +1,60 @@
+[english] How can I programmatically initialize the properties of a toolkit widget from its declaration before child elements are created?
+[english] This function handles the initial setup phase for a UI element by translating structural declarations into functional widget states. It first applies basic, core properties and then iterates through declared members to set dynamic attributes.
+<switch:python>
+[python] def init_widget(self):
+        """ Initialize the state of the toolkit widget.
+
+        This method is called during the top-down pass, just after the
+        'create_widget()' method is called. This method should init the
+        state of the widget. The child widgets will not yet be created.
+
+        """
+        widget = self.widget
+        d = self.declaration
+
+        #: Save ref id
+        ref = d.ref
+        CACHE[ref] = atomref(self)
+        widget.set('ref', ref)
+
+        if d.text:
+            self.set_text(d.text)
+        if d.tail:
+            self.set_tail(d.tail)
+        if d.style:
+            self.set_style(d.style)
+        if d.cls:
+            self.set_cls(d.cls)
+        if d.attrs:
+            self.set_attrs(d.attrs)
+        if d.id:
+            widget.set('id', d.id)
+        if d.draggable:
+            self.set_draggable(d.draggable)
+
+        # Set any attributes that may be defined
+        for name, member in d.members().items():
+            if not member.metadata:
+                continue
+            meta = member.metadata
+
+            # Exclude any attr tags
+            if not (meta.get('d_member') and meta.get('d_final')):
+                continue
+
+            # Skip any items with attr=false
+            elif not meta.get('attr', True):
+                continue
+
+            elif isinstance(member, Event):
+                continue
+            value = getattr(d, name)
+            if value:
+                self.set_attribute(name, value)
+<switch:english>
+[english] Notice that attribute setting depends heavily on checking specific metadata, which ensures only intended data properties are applied while skipping events or excluded tags.
+[english] What happens if a declared member has `attr: false` in its metadata? Does it prevent application of the attribute or cause an error?
+[english] It skips applying any attributes where the metadata explicitly sets 'attr' to false. The check prevents unnecessary execution of the setter logic using this conditional block:
+        elif not meta.get('attr', True):
+            continue
+[english] That clarifies the initialization process for me.

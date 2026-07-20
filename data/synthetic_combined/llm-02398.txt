@@ -1,0 +1,28 @@
+[english] How do I calculate the true current number of total commits across multiple weeks when only weekly totals are provided?
+[english] This method first adjusts existing commit counts by subtracting previous weekly values and then iterates backward through time. It uses a provided starting point to gradually build up the cumulative count for each week.
+<switch:python>
+[python] def calc_total_commits(self, starting_commits=0):
+        """
+        Uses the weekly commits and traverses back through the last
+        year, each week subtracting the weekly commits and storing them. It
+        needs an initial starting commits number, which should be taken from
+        the most up to date number from github_stats.py output.
+        """
+        for week_of_commits in self.commits_dict_list:
+            try:
+                self.commits[week_of_commits['week']] -= week_of_commits['total']
+            except KeyError:
+                total = self.commits[week_of_commits['week']] \
+                    = -week_of_commits['total']
+        self.sorted_weeks = sorted(self.commits)
+
+        #reverse because lower numbered weeks are older in time.
+        #we traverse from most recent to oldest
+        for week in reversed(self.sorted_weeks):
+            self.commits[week] = self.commits[week] + starting_commits
+            starting_commits = self.commits[week]
+<switch:english>
+[english] The final loop essentially re-bases all prior weeks on your initial `starting_commits` value, though it modifies the internal state of `self.commits`. Note that sorting and reversing is necessary since lower IDs represent older dates here.
+[english] What happens if a week is missing from our commit data?
+[english] If no entry exists for a specific week in the dictionary during processing, the original logic will skip it safely. However, if an entry is manually added to `self.commits` but absent from `self.commits_dict_list` (the weekly source), its value will remain unchanged by this function.
+[english] Thanks for clarifying how that calculation works!

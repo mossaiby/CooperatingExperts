@@ -1,0 +1,30 @@
+[english] How can I write a method that executes a configured API request while logging necessary debugging info and handling potential failure states?
+[english] This function sets up the connection by defining the target URL and then checks configuration parameters like headers and data. It proceeds by dynamically calling the designated HTTP execution method.
+<switch:python>
+[python] def _call_api(self):
+        """
+        Make an API call to get the metric definition
+        """
+
+        self._url = self.form_url()
+        if self._headers is not None:
+            logging.debug(self._headers)
+        if self._data is not None:
+            logging.debug(self._data)
+        if len(self._get_url_parameters()) > 0:
+            logging.debug(self._get_url_parameters())
+
+        result = self._methods[self._method]()
+
+        if not self.good_response(result.status_code):
+            logging.error(self._url)
+            logging.error(self._method)
+            if self._data is not None:
+                logging.error(self._data)
+            logging.error(result)
+        self._api_result = result
+<switch:english>
+[english] The function is robust as it uses `good_response` to validate the status code, ensuring that detailed errors are logged for debugging if the API call does not succeed before saving the outcome.
+[english] If an exception occurs during the request (such as a network timeout) rather than an unsuccessful HTTP status code, how is that handled?
+[english] Currently, uncaught exceptions raised within `self._methods[self._method]()` would propagate up and halt execution. To catch these specifically, you should wrap that line in a try/except block.
+[english] I understand; I'll add error handling to manage unexpected failures.

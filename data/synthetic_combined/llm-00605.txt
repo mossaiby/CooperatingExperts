@@ -1,0 +1,17 @@
+[english] How can I safely deserialize a raw JSON string or byte stream into a Python object?
+[english] This function is designed to handle both bytes and strings for input, automatically decoding any byte data using UTF-8 before passing it to the standard JSON loader.
+<switch:python>
+[python] def loads(s, **kwargs):
+    """Unserialize a JSON object from a string ``s`` by using the application's
+    configured decoder (:attr:`~flask.Flask.json_decoder`) if there is an
+    application on the stack.
+    """
+    _load_arg_defaults(kwargs)
+    if isinstance(s, bytes):
+        s = s.decode(kwargs.pop('encoding', None) or 'utf-8')
+    return _json.loads(s, **kwargs)
+<switch:english>
+[english] The function leverages keyword arguments to allow users extensive control over decoding and parsing behavior while maintaining a simple interface.
+[english] What specific error handling does this function provide if the input `s` is invalid JSON?
+[english] It relies on `_json.loads()`, so an invalid format will raise a standard exception like `JSONDecodeError` unless explicit try/except blocks are added around the call.
+[english] I appreciate the detailed breakdown.

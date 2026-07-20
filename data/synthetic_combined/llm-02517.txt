@@ -1,0 +1,17 @@
+[english] I need to write a method that pulls specific arguments from a CLI structure and uses one of those arguments to build a functional API path.
+[english] This function first calls `ApiCli.get_arguments(self)` to populate the command-line object. It then checks if the user provided a `pluginName` argument, assigning it locally before constructing an API endpoint using that name in a formatted string.
+<switch:python>
+[python] def get_arguments(self):
+        """
+        Extracts the specific arguments of this CLI
+        """
+        ApiCli.get_arguments(self)
+        if self.args.pluginName is not None:
+            self.pluginName = self.args.pluginName
+
+        self.path = "v1/plugins/{0}/components".format(self.pluginName)
+<switch:english>
+[english] The function successfully maps the argument to `self.pluginName` and constructs a standardized API path, but it relies entirely on preceding code setting up the structure of `self.args`.
+[english] What happens if the user runs the CLI without specifying a plugin name?
+[english] If `self.args.pluginName` is None, the function simply skips the conditional block, leaving `self.pluginName` unset and thus failing to construct the desired API path.
+[english] That makes sense; I should probably add input validation for that.

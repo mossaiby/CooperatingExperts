@@ -1,0 +1,21 @@
+[english] I need a way to take input tokens for style and size and use them to configure a drawing pen's font settings.
+[english] This function processes an input dictionary called tokens to set specific properties on `self.pen`. It retrieves the bold type and converts the size token into an integer before setting the final font string.
+<switch:python>
+[python] def proc_font(self, tokens):
+        """ Sets the font. """
+
+        size = int(tokens["s"])
+        self.pen.font = "%s %d" % (tokens["b"], size)
+        return []
+<switch:english>
+[english] The function creates a complete font identifier by combining the bold type and numerical size into `self.pen.font` for use by the drawing engine.
+[english] What error handling should I add if one of those tokens, like 's', isn't provided?
+[english] To prevent errors when accessing or converting tokens, you can check existence and use try/except blocks:
+<switch:python>
+[python] try :
+            size = int(tokens["s"])
+            self.pen.font = "%s %d" % (tokens["b"], size)
+        except KeyError as e:
+            print(f"Missing token: {e}")"
+<switch:english>
+[english] Great, that covers how to make it more resilient.

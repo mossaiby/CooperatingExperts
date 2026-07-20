@@ -1,0 +1,24 @@
+[english] How can I convert a complex Python data structure into a properly encoded JSON string?
+[english] This function serializes an object to a JSON string while respecting application configuration.
+<switch:python>
+[python] def dumps(obj, **kwargs):
+    """Serialize ``obj`` to a JSON formatted ``str`` by using the application's
+    configured encoder (:attr:`~flask.Flask.json_encoder`) if there is an
+    application on the stack.
+
+    This function can return ``unicode`` strings or ascii-only bytestrings by
+    default which coerce into unicode strings automatically.  That behavior by
+    default is controlled by the ``JSON_AS_ASCII`` configuration variable
+    and can be overriden by the simplejson ``ensure_ascii`` parameter.
+    """
+    _dump_arg_defaults(kwargs)
+    encoding = kwargs.pop('encoding', None)
+    rv = _json.dumps(obj, **kwargs)
+    if encoding is not None and isinstance(rv, text_type):
+        rv = rv.encode(encoding)
+    return rv
+<switch:english>
+[english] It utilizes internal components like `_json` to perform the initial serialization via `_json.dumps()`, handling specific output encoding if a character type (`text_type`) is detected in `encoding`.
+[english] What happens if I pass an object that isn't serializable by default, for example, a datetime object?
+[english] If `obj` contains types not natively supported by JSON (like complex objects or dates), you would typically need to provide a custom serialization handler that can be picked up by the application context or passed via kwargs.
+[english] Thanks for clarifying how encoding is handled in this function!

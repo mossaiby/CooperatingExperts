@@ -1,0 +1,13 @@
+[english] How can I ensure that every edge in my graph references the current list of available nodes?
+[english] To synchronize all edges with the master node list, we iterate through each object in self.edges and explicitly assign the value of self.nodes to a private attribute on the individual edge.
+<switch:python>
+[python] def _set_node_lists(self, new):
+        """ Maintains each edge's list of available nodes.
+        """
+        for edge in self.edges:
+            edge._nodes = self.nodes
+<switch:english>
+[english] This method guarantees consistency across the data structure by overwriting old references for every edge during execution.
+[english] What happens if I change `self.nodes` after calling this function? Do the edges automatically update?
+[english] No, because the assignment is static when this function runs; you must call it again to refresh the edge lists with any new node data.
+[english] That makes sense, so I'll make sure to call this regularly.

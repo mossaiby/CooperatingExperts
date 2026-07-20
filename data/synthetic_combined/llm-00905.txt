@@ -1,0 +1,17 @@
+[english] How can I write a function to programmatically create a new course on a specified Canvas account?
+[english] This function leverages external API structures defined by `ACCOUNTS_API` to target the correct enrollment endpoint.
+<switch:python>
+[python] def create_course(self, account_id, course_name):
+        """
+        Create a canvas course with the given subaccount id and course name.
+
+        https://canvas.instructure.com/doc/api/courses.html#method.courses.create
+        """
+        url = ACCOUNTS_API.format(account_id) + "/courses"
+        body = {"course": {"name": course_name}}
+        return CanvasCourse(data=self._post_resource(url, body))
+<switch:english>
+[english] The method constructs the necessary HTTP request and wraps the successful API response data in a custom `CanvasCourse` object.
+[english] What happens if I try to create a course with an empty string for the name?
+[english] If 'course_name' is invalid or missing, it will likely result in a validation error from the Canvas API, which `self._post_resource` would typically handle by raising an exception.
+[english] Got it! Thanks for clarifying.

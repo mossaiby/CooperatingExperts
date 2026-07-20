@@ -1,0 +1,15 @@
+[english] How do I send a full, well-formatted HTTP response including custom headers using the socket library?
+[english] To handle sending a complete HTTP response over the network connection, we need to first set the status and message. Then, if any optional headers are provided, we iterate through them before marking the end of the header section.
+<switch:python>
+[python] def _send_response(self, http_code, message=None, headers=None):
+        """Sends HTTP response code, message and headers."""
+        self.send_response(http_code, message)
+        if headers:
+            for header in headers:
+                self.send_header(*header)
+            self.end_headers()
+<switch:english>
+[english] The function iterates over `headers`; each item is unpacked using the splat operator (`*`) when calling `self.send_header()` before finalizing with `end_headers()`.
+[english] What happens to the HTTP response if no headers are provided?
+[english] If `headers` is None, the function skips the entire loop block and calls `self.end_headers()` immediately after sending the status line.
+[english] Does this handle empty or None values for http_code and message?

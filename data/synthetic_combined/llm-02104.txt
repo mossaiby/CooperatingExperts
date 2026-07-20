@@ -1,0 +1,20 @@
+[english] How can I safely release a lock on a server while handling potential communication errors during the unlock process?
+[english] This function is responsible for signaling the locking server to release a held resource. It checks the response status code and handles conditional logging for retried failures.
+<switch:python>
+[python] def release(self):
+        """Releases lock"""
+        # self.start(test_connection=False)
+        str_response, retries = self._req_rep_retry(LockerServer.UNLOCK)
+        response = str_response.split(LockerServer.DELIMITER)
+        if response[0] == LockerServer.RELEASED:
+            pass  # Everything is fine
+        elif response[0] == LockerServer.RELEASE_ERROR and retries > 0:
+            # Message was sent but Server response was lost and we tried again
+            self._logger.error(str_response + '; Probably due to retry')
+        else:
+            raise RuntimeError('Response `%s` not understood' % response)
+<switch:english>
+[english] The implementation ensures that if it's not an error state, a successful release, or a valid retry message, it throws a clear runtime exception.
+[english] If `response[0]` is `LockerServer.RELEASE_ERROR` but `retries` is 0, which path does the function take?
+[english] Since neither of the explicit checks (`== LockerServer.RELEASED` or `elif ... and retries > 0`) passes, the code proceeds to the final `else` block and raises a RuntimeError.
+[english] Got it, so I should ensure retry logic handles that zero-count scenario.

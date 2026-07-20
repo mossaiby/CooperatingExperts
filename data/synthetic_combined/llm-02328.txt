@@ -1,0 +1,18 @@
+[english] How can I retrieve the system fees associated with a specific block height in this blockchain?
+[english] This function is designed to interact with an external JSON RPC API endpoint to fetch fee data for any given block index. It isolates the remote call logic, passing the required parameters directly.
+<switch:python>
+[python] def get_block_sys_fee(self, block_index, **kwargs):
+        """ Returns the system fees associated with a specific block index.
+
+        :param block_index: a block index (block height)
+        :type block_index: int
+        :return: system fees of the block, expressed in NeoGas units
+        :rtype: str
+
+        """
+        return self._call(JSONRPCMethods.GET_BLOCK_SYS_FEE.value, [block_index, ], **kwargs)
+<switch:english>
+[english] The function relies on `self._call` to handle the network request and uses `GET_BLOCK_SYS_FEE` to target the correct blockchain method. Note that fees are returned as a string.
+[english] What happens if I pass an invalid or future block index?
+[english] If you provide an invalid index, the function will likely raise an error encapsulated by the base class._call wrapper when the RPC server responds with a failure status to `GET_block_sys_fee`.
+[english] Okay, thanks for clarifying how error handling works here.

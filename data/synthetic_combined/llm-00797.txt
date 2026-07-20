@@ -1,0 +1,26 @@
+[english] I need a function that can traverse deeply nested dictionaries or lists of dictionaries to efficiently find all values associated with a specific key.
+[english] This solution uses recursion combined with Python generators to perform a depth-first search. The function checks if the input is a dictionary or list, recursively calling itself on sub-structures to find matches.
+<switch:python>
+[python] def search_dict(data, key):
+    """
+    Search for a key in a nested dict, or list of nested dicts, and return the values.
+
+    :param data: dict/list to search
+    :param key: key to find
+    :return: matches for key
+    """
+    if isinstance(data, dict):
+        for dkey, value in data.items():
+            if dkey == key:
+                yield value
+            for result in search_dict(value, key):
+                yield result
+    elif isinstance(data, list):
+        for value in data:
+            for result in search_dict(value, key):
+                yield result
+<switch:english>
+[english] Since it's a generator, if the target key doesn't exist anywhere, calling `list(search_dict(...))` will simply return an empty iterator.
+[english] What happens if I call the function and the specified key isn't present in any part of the data structure?
+[english] If the key is not found, the generator yields nothing, meaning it produces an exhausted iterator. You can check for this by wrapping the call in `list()` and checking the resulting list length.
+[english] That makes sense, thanks for clarifying!

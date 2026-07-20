@@ -1,0 +1,31 @@
+[english] How can I simulate a trajectory step using leapfrog integration for continuous state and momentum variables?
+[english] This function performs one time-step iteration of the leapfrog method, which is a numerical integration technique. It updates the system's state and momentum by predicting future gradients to maintain stability.
+<switch:python>
+[python] def _leapfrog(value_and_gradients_fn,
+              current_state,
+              current_grads_target_log_prob,
+              current_momentum,
+              step_size):
+  """Runs one step of leapfrog integration."""
+  mid_momentum = [
+      m + 0.5 * step * g for m, step, g in
+      zip(current_momentum, step_size, current_grads_target_log_prob)]
+  next_state = [
+      s + step * m for s, step, m in
+      zip(current_state, step_size, mid_momentum)]
+  next_target_log_prob, next_grads_target_log_prob = value_and_gradients_fn(
+      *next_state)
+  next_momentum = [
+      m + 0.5 * step * g for m, step, g in
+      zip(mid_momentum, step_size, next_grads_target_log_prob)]
+  return [
+      next_state,
+      next_target_log_prob,
+      next_grads_target_log_prob,
+      next_momentum,
+  ]
+<switch:english>
+[english] The core logic relies on calculating an intermediate 'mid_momentum' before predicting the next state. This staggered update helps improve long-term integration accuracy compared to simpler methods.
+[english] Does this function require all inputs (like gradients and momentum) to have the same dimension, or can they be lists of varying sizes?
+[english] The use of `zip` implies that all list inputs (`current_momentum`, `step_size`, etc.) must have matching lengths. If your variables are mismatched in size, you would need to restructure how these inputs are passed into the function.
+[english] That makes sense; I'll ensure my data structures are consistently sized before calling it.

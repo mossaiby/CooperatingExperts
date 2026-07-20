@@ -1,0 +1,28 @@
+[english] How do I write a string of data to a specified file name, ensuring proper logging and handling differences between Python versions?
+[english] This function handles writing data while first logging an intent. It checks if the Python version requires explicit UTF-8 encoding before determining if the operation is a dry run.
+<switch:python>
+[python] def write_file(self, what, filename, data):
+        """Write `data` to `filename` (if not a dry run) after announcing it
+
+        `what` is used in a log message to identify what is being written
+        to the file.
+        """
+        log.info("writing %s to %s", what, filename)
+        if sys.version_info >= (3,):
+            data = data.encode("utf-8")
+        if not self.dry_run:
+            f = open(filename, 'wb')
+            f.write(data)
+            f.close()
+<switch:english>
+[english] The code uses binary write mode ('wb') to ensure consistent handling of encoded bytes, which is appropriate given the automatic encoding applied for Python 3+. Note that it relies on external attributes like `self.dry_run` and a global `log` object.
+[english] What should I do if the disk has no space or permissions are denied when trying to execute this write operation?
+[english] While not explicitly handled here, you could wrap the file operations in a try/except block: 
+```python
+try:
+f = open(filename, 'wb')
+# ... write logic ...
+save_file.
+except IOError as e:
+    log.error("Failed to write file %s: %s", filename, e)
+[english] Is there a more idiomatic way in Python 3 to handle the opening and closing of files?

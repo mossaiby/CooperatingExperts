@@ -1,0 +1,14 @@
+[english] I need a method that takes the internal binary representation of my data and converts it into a usable pandas DataFrame.
+[english] This function first reads all stored content as raw bytes using `read_as_binary()`. It then wraps these bytes in a `BytesIO` object to simulate a file stream, which is what the deserializer expects.
+<switch:python>
+[python] def _to_dataframe(self):
+        """Read and return the dataset contents as a pandas DataFrame."""
+        #TODO: figure out why passing in the opened stream directly gives invalid data
+        data = self.read_as_binary()
+        reader = BytesIO(data)
+        return deserialize_dataframe(reader, self.data_type_id)
+<switch:english>
+[english] The method successfully converts the binary data into a structured DataFrame via `deserialize_dataframe`. Be mindful of the existing TODO regarding potential performance improvements by avoiding direct stream passing.
+[english] What happens if the data stored in this object isn't actually in binary format?
+[english] The process relies heavily on receiving bytes, as shown when creating the reader. If non-binary content is provided instead, `deserialize_dataframe` will likely raise a type or structure error.
+[english] That makes sense, thanks for explaining how the streaming works!

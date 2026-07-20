@@ -1,0 +1,52 @@
+[english] How can I automatically enrich a list of compounds belonging to a variant with detailed rank scores and gene information?
+[english] This function iterates through the compound list within the provided `variant` object and attempts to find matching data using either an in-memory dictionary (`variant_objs`) or by querying the database. If a match is found, it updates the compound details like 'rank_score' and nested 'genes'.
+<switch:python>
+[python] def update_variant_compounds(self, variant, variant_objs = None):
+        """Update compounds for a variant.
+
+        This will add all the necessary information of a variant on a compound object.
+
+        Args:
+            variant(scout.models.Variant)
+            variant_objs(dict): A dictionary with _ids as keys and variant objs as values.
+
+        Returns:
+            compound_objs(list(dict)): A dictionary with updated compound objects.
+
+        """
+        compound_objs = []
+        for compound in variant.get('compounds', []):
+            not_loaded = True
+            gene_objs = []
+            # Check if the compound variant exists
+            if variant_objs:
+                variant_obj = variant_objs.get(compound['variant'])
+            else:
+                variant_obj = self.variant_collection.find_one({'_id': compound['variant']})
+            if variant_obj:
+                # If the variant exosts we try to collect as much info as possible
+                not_loaded = False
+                compound['rank_score'] = variant_obj['rank_score']
+                for gene in variant_obj.get('genes', []):
+                    gene_obj = {
+                        'hgnc_id': gene['hgnc_id'],
+                        'hgnc_symbol': gene.get('hgnc_symbol'),
+                        'region_annotation': gene.get('region_annotation'),
+                        'functional_annotation': gene.get('functional_annotation'),
+                    }
+                    gene_objs.append(gene_obj)
+                    compound['genes'] = gene_objs
+
+            compound['not_loaded'] = not_loaded
+            compound_objs.append(compound)
+
+        return compound_objs
+<switch:english>
+[english] The process marks these compounds as loaded via `compound['not_loaded']`, allowing downstream logic to know which data was successfully retrieved from the source.
+[english] What happens if a variant has no corresponding entry in the database or provided dictionary?
+[english] If no matching `variant_obj` is found, `not_loaded` remains True (as initialized) and the compound objects are updated only with this status.
+<switch:python>
+[python] pound['not_loaded'] = not_loaded # which would be True in that case
+You will see a clean update without the rank or gene data.
+<switch:english>
+[english] That makes sense; I rely on `not_loaded` to manage my batch operations.

@@ -1,0 +1,54 @@
+[english] How do I convert form inputs like HGNC symbols and score thresholds into a usable MongoDB query object?
+[english] This function translates various user-facing filters into a structured Python dictionary suitable for querying a MongoDB database.
+<switch:python>
+[python] def build_variant_query(self, query=None, category='snv', variant_type=['clinical']):
+        """Build a mongo query across multiple cases.
+        Translate query options from a form into a complete mongo query dictionary.
+
+        Beware that unindexed queries against a large variant collection will
+        be extremely slow.
+
+        Currently indexed query options:
+            hgnc_symbols
+            rank_score
+            variant_type
+            category
+
+        Args:
+            query(dict): A query dictionary for the database, from a query form.
+            category(str): 'snv', 'sv', 'str' or 'cancer'
+            variant_type(str): 'clinical' or 'research'
+
+        Returns:
+            mongo_query : A dictionary in the mongo query format.
+        """
+
+        query = query or {}
+        mongo_variant_query = {}
+
+        LOG.debug("Building a mongo query for %s" % query)
+
+        if query.get('hgnc_symbols'):
+            mongo_variant_query['hgnc_symbols'] = {'$in': query['hgnc_symbols']}
+
+        mongo_variant_query['variant_type'] = {'$in': variant_type}
+
+        mongo_variant_query['category'] = category
+
+        rank_score = query.get('rank_score') or 15
+
+        mongo_variant_query['rank_score'] = {'$gte': rank_score}
+        LOG.debug("Querying %s" % mongo_variant_query)
+
+        return mongo_variant_query
+<switch:english>
+[english] Note that the docstring warns against running unindexed queries, as they can significantly impact performance on large variant collections.
+[english] If the input dictionary 'query' is completely empty, how does the resulting query behave?
+[english] By default, it creates a query filtered only by the mandatory `category` and specified `variant_type`, while setting the minimum score (`rank_score`) to 15.
+<switch:python>
+[python] query = query or {}
+        mongo_variant_query = {}
+        # ... rest of code ensures category/variant_type are always present
+        return mongo_variant_query
+<switch:english>
+[english] That clarifies how default values handle missing data, thank you.

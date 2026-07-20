@@ -1,0 +1,13 @@
+[english] I need a method that performs an HTTP GET request using predefined instance variables like URL and headers.
+[english] This function uses the widely adopted `requests` library to handle web communication. It gathers information from class attributes to construct the API call details.
+<switch:python>
+[python] def _do_get(self):
+        """
+        HTTP Get Request
+        """
+        return requests.get(self._url, data=self._data, headers=self._headers, auth=(self._email, self._api_token))
+<switch:english>
+[english] The method automatically handles authentication by passing a tuple of email and token directly to the `auth` parameter.
+[english] Is there any built-in error handling if this API endpoint returns an HTTP 404 or 500 status?
+[english] While it returns the raw response object, you should check `response.raise_for_status()` immediately after calling this method to raise exceptions on bad status codes.
+[english] That clarifies how I should handle potential failures.

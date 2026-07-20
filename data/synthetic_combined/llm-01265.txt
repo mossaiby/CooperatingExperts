@@ -1,0 +1,30 @@
+[english] How can I determine programmatically whether a request is being handled by my administrative application?
+[english] This utility function checks if the current execution context belongs to the admin application. It first leverages internal caching before attempting several cascading lookups within the request's global context.
+<switch:python>
+[python] def current_app_is_admin(self):
+        """Returns boolean whether current application is Admin contrib.
+
+        :rtype: bool
+        """
+        is_admin = self._current_app_is_admin
+        if is_admin is None:
+            context = self.current_page_context
+
+            current_app = getattr(
+                # Try from request.resolver_match.app_name
+                getattr(context.get('request', None), 'resolver_match', None), 'app_name',
+                # Try from global context obj.
+                getattr(context, 'current_app', None))
+
+            if current_app is None:  # Try from global context dict.
+                current_app = context.get('current_app', '')
+
+            is_admin = current_app == ADMIN_APP_NAME
+            self._current_app_is_admin = is_admin
+
+        return is_admin
+<switch:english>
+[english] The code intelligently tries various points in the request chain—from specific resolver matches down to general context keys—to locate the app name.
+[english] If all three lookup methods fail, and no 'current_app' is found by the function, what value will it eventually return?
+[english] If none of the lookups are successful, `current_app` remains None (or an empty string), meaning the comparison to ADMIN_APP_NAME will evaluate to False. The function returns the cached or determined boolean value indicating non-admin status.
+[english] That clarifies how it handles missing context.

@@ -1,0 +1,25 @@
+[english] How can I check if a movie has been rated, favorited, or added to my watch list for a specific session?
+[english] This method fetches the current status of an account's relationship with a movie using a defined API path and required authentication credentials.
+<switch:python>
+[python] def account_states(self, **kwargs):
+        """
+        This method lets users get the status of whether or not the movie has
+        been rated or added to their favourite or watch lists. A valid session
+        id is required.
+
+        Args:
+            session_id: see Authentication.
+
+        Returns:
+            A dict representation of the JSON returned from the API.
+        """
+        path = self._get_id_path('account_states')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The function returns a dictionary, which represents the JSON response received from the external service call.
+[english] What happens if I don't provide any required session arguments in kwargs?
+[english] If necessary arguments aren't included in `kwargs`, the underlying API call (`self._GET`) will likely fail due to missing authentication or identifier data. This might return an error response which is then set as attributes by `_set_attrs_to_values`.
+[english] Got it, thanks for clarifying.

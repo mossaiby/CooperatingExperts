@@ -1,0 +1,55 @@
+[english] How can I reliably convert a Unix-style Python source file path into its fully qualified dotted package name?
+[english] This function determines a module's full package identity by analyzing its file path. It leverages OS utilities to traverse parent directories, assuming they are packages until it hits a non-package directory.
+<switch:python>
+[python] def getpackage(filename):
+    """
+    Find the full dotted package name for a given python source file
+    name. Returns None if the file is not a python source file.
+
+    >>> getpackage('foo.py')
+    'foo'
+    >>> getpackage('biff/baf.py')
+    'baf'
+    >>> getpackage('nose/util.py')
+    'nose.util'
+
+    Works for directories too.
+
+    >>> getpackage('nose')
+    'nose'
+    >>> getpackage('nose/plugins')
+    'nose.plugins'
+
+    And __init__ files stuck onto directories
+
+    >>> getpackage('nose/plugins/__init__.py')
+    'nose.plugins'
+
+    Absolute paths also work.
+
+    >>> path = os.path.abspath(os.path.join('nose', 'plugins'))
+    >>> getpackage(path)
+    'nose.plugins'
+    """
+    src_file = src(filename)
+    if not src_file.endswith('.py') and not ispackage(src_file):
+        return None
+    base, ext = os.path.splitext(os.path.basename(src_file))
+    if base == '__init__':
+        mod_parts = []
+    else:
+        mod_parts = [base]
+    path, part = os.path.split(os.path.split(src_file)[0])
+    while part:
+        if ispackage(os.path.join(path, part)):
+            mod_parts.append(part)
+        else:
+            break
+        path, part = os.path.split(path)
+    mod_parts.reverse()
+    return '.'.join(mod_parts)
+<switch:english>
+[english] The resulting package name is built from the sequence of folders found in the path that qualify as Python packages. Note that this process relies entirely on whether the parent directories are correctly identified by `ispackage()` on your specific file system.
+[english] What happens if one of the intermediate folders in the path does not have an __init__.py or is missing?
+[english] If a folder lacks an `__init__.py`, the function's check for package validity will fail. The loop generating the module parts terminates immediately at that non-package directory.
+[english] Perfect, this explains the logic!

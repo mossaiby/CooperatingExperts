@@ -1,0 +1,16 @@
+[english] How can I merge custom data items into existing global context while safely handling environments where the request object is unavailable?
+[english] This function attempts to combine user-provided dictionary data with Django's built-in site context from a request. We use a try/except block to gracefully handle cases where the necessary request objects or attributes are missing.
+<switch:python>
+[python] def _context_data(data, request=None):
+    """
+    Add admin global context, for compatibility with Django 1.7
+    """
+    try:
+        return dict(site.each_context(request).items() + data.items())
+    except AttributeError:
+        return data
+<switch:english>
+[english] If any error occurs during context fetching, the function falls back to simply returning the input 'data', ensuring the code remains robust even outside standard Django request cycles.
+[english] What happens if `site` itself is not defined in the scope when this function runs?
+[english] The function will raise a NameError because it attempts to access `site.each_context()`, and no inner handling covers missing imports or dependencies like the Django 'site' module.
+[english] Does this mean I need to guarantee that dependent modules are always imported?

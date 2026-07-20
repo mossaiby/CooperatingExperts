@@ -1,0 +1,51 @@
+[english] I need a way to run multiple test suites defined by simple strings while customizing the reporting and stopping the execution automatically if too many failures occur.
+[english] This function orchestrates running tests specified as names, loading them dynamically using an ObjectLocator, and executing them within a standardunittest framework. It intelligently wraps the default reporter to handle logging and early termination based on provided arguments.
+<switch:python>
+[python] def run(tests=(), reporter=None, stop_after=None):
+    """
+    Run the tests that are loaded by each of the strings provided.
+
+    Arguments:
+
+        tests (iterable):
+
+            the collection of tests (specified as `str` s) to run
+
+        reporter (Reporter):
+
+            a `Reporter` to use for the run. If unprovided, the default
+            is to return a `virtue.reporters.Counter` (which produces no
+            output).
+
+        stop_after (int):
+
+            a number of non-successful tests to allow before stopping the run.
+
+    """
+
+    if reporter is None:
+        reporter = Counter()
+    if stop_after is not None:
+        reporter = _StopAfterWrapper(reporter=reporter, limit=stop_after)
+
+    locator = ObjectLocator()
+    cases = (
+        case
+        for test in tests
+        for loader in locator.locate_by_name(name=test)
+        for case in loader.load()
+    )
+    suite = unittest.TestSuite(cases)
+    getattr(reporter, "startTestRun", lambda: None)()
+    suite.run(reporter)
+    getattr(reporter, "stopTestRun", lambda: None)()
+    return reporter
+<switch:english>
+[english] The use of dynamic wrapping (like _StopAfterWrapper) allows this function to inject powerful control flow logic into what is otherwise a simple test runner setup, offering fine-grained control over the execution lifecycle.
+[english] What happens if I provide a custom reporter that doesn't implement both `startTestRun` and `stopTestRun` methods? Does the test suite still run?
+[english] The function uses getattr with a lambda to call these methods safely; however, if they are missing, nothing will be called, which might mean you lose hook points for your custom reporter's lifecycle management.
+<switch:python>
+[python] def run(tests=(), reporter=None, stop_after=None):
+    # ... (function body from input)
+<switch:english>
+[english] That makes sense, I will test that edge case in my integration.

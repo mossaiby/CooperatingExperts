@@ -1,0 +1,41 @@
+[english] How can I protect an endpoint to ensure the user has provided a valid OAuth access token before executing the request handler?
+[english] This decorator factory (`require_oauth`) sets up middleware to intercept requests. It handles various pre-request checks, extracts parameters like headers and body, and then validates the client's OAuth credentials against configured servers.
+<switch:python>
+[python] def require_oauth(self, *realms, **kwargs):
+        """Protect resource with specified scopes."""
+        def wrapper(f):
+            @wraps(f)
+            def decorated(*args, **kwargs):
+                for func in self._before_request_funcs:
+                    func()
+
+                if hasattr(request, 'oauth') and request.oauth:
+                    return f(*args, **kwargs)
+
+                server = self.server
+                uri, http_method, body, headers = extract_params()
+                try:
+                    valid, req = server.validate_protected_resource_request(
+                        uri, http_method, body, headers, realms
+                    )
+                except Exception as e:
+                    log.warn('Exception: %r', e)
+                    e.urlencoded = urlencode([('error', 'unknown')])
+                    e.status_code = 400
+                    return _error_response(e)
+                for func in self._after_request_funcs:
+                    valid, req = func(valid, req)
+
+                if not valid:
+                    return abort(401)
+                # alias user for convenience
+                req.user = req.access_token.user
+                request.oauth = req
+                return f(*args, **kwargs)
+            return decorated
+        return wrapper
+<switch:english>
+[english] The decorator ensures that if validation succeeds, the request object is augmented with user information before it reaches your main function, allowing you to easily access `req.user` within your business logic.
+[english] If the external OAuth server fails or times out during token validation, what specific status code and error format will the client receive?
+[english] In case of an exception during resource validation (like a network failure), the function catches it, sets the response to a 400 Bad Request, and returns a standardized JSON error body.
+[english] This makes sense; relying on centralized token validation simplifies endpoint security.

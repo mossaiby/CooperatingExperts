@@ -1,0 +1,24 @@
+[english] I need a way to programmatically combine Korean Hangul components (initial consonant, medial vowel, final consonant) into a complete syllable.
+[english] This function works by treating each component as an index within predefined arrays (CHO, JOONG, JONG). It uses these indices alongside mathematical constants (NUM_JOONG, NUM_JONG) to calculate the precise Unicode code point for the resulting Hangul block.
+<switch:python>
+[python] def compose(chosung, joongsung, jongsung=u''):
+    """This function returns a Hangul letter by composing the specified chosung, joongsung, and jongsung.
+    @param chosung
+    @param joongsung
+    @param jongsung the terminal Hangul letter. This is optional if you do not need a jongsung."""
+
+    if jongsung is None: jongsung = u''
+
+    try:
+        chosung_index = CHO.index(chosung)
+        joongsung_index = JOONG.index(joongsung)
+        jongsung_index = JONG.index(jongsung)
+    except Exception:
+        raise NotHangulException('No valid Hangul character index')
+
+    return unichr(0xAC00 + chosung_index * NUM_JOONG * NUM_JONG + joongsung_index * NUM_JONG + jongsung_index)
+<switch:english>
+[english] The calculation starts from the base code point 0xAC00 and uses a weighted index formula to map the components into the correct unique Unicode position.
+[english] If I pass an invalid character like 'X' for chosung, how does it handle that error before trying to return the final letter?
+[english] The function attempts to find the provided characters in the lookup tables (CHO, JOONG, JONG). If any character is not found, it immediately raises a NotHangulException due to the 'try...except' block.
+[english] Got it. Thanks for clarifying.

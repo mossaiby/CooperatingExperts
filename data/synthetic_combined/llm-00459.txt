@@ -1,0 +1,16 @@
+[english] I need a way to dynamically register a custom function as a template filter within my Jinja environment.
+[english] To solve this, we can directly inject a callable into the Jinja environment's filters dictionary using this method. If no name is provided, it intelligently defaults to the function's own name.
+<switch:python>
+[python] def add_template_filter(self, f, name=None):
+        """Register a custom template filter.  Works exactly like the
+        :meth:`template_filter` decorator.
+
+        :param name: the optional name of the filter, otherwise the
+                     function name will be used.
+        """
+        self.jinja_env.filters[name or f.__name__] = f
+<switch:english>
+[english] Once registered, any templates associated with this object will be able to call your function as if it were a built-in filter.
+[english] If I explicitly pass `name=None` when calling this, how is the final key determined in the filters dictionary?
+[english] The expression `name or f.__name__` ensures that if `name` evaluates to falsy (like None), Python uses the actual name of the function object (`f.__name__`) as the filter's identifier.
+[english] That makes sense, thanks for clarifying how the default naming works!

@@ -1,0 +1,25 @@
+[english] How can we implement custom, object-level permission checks before allowing a deletion?
+[english] This function determines if a user has permission to delete an object by checking specific Django settings. If configuration enables detailed checks, it verifies the user's database permissions against the object.
+<switch:python>
+[python] def has_delete_permission(self, request, obj=None):
+        """
+        Implement a lookup for object level permissions. Basically the same as
+        ModelAdmin.has_delete_permission, but also passes the obj parameter in.
+        """
+        if settings.TREE_EDITOR_OBJECT_PERMISSIONS:
+            opts = self.opts
+            r = request.user.has_perm(opts.app_label + '.' + opts.get_delete_permission(), obj)
+        else:
+            r = True
+
+        return r and super(TreeEditor, self).has_delete_permission(request, obj)
+<switch:english>
+[english] The final result is gated by calling `super().has_delete_permission`, ensuring that standard model-level permission logic always has the last say.
+[english] What happens if settings.TREE_EDITOR_OBJECT_PERMISSIONS is False?
+[english] If this setting is false, the function sets r = True and bypasses custom object lookups to rely only on the superclass implementation of delete permission:
+<switch:python>
+[python] def has_delete_permission(self, request, obj=None):
+        # ... logic when settings are False returns True for initial check.
+        return True and super(TreeEditor, self).has_delete_permission(request, obj)
+<switch:english>
+[english] That clarifies how the conditional logic works!

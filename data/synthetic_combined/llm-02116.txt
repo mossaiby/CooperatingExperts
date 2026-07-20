@@ -1,0 +1,24 @@
+[english] How can we define a PUT request handler that verifies if an entity exists before processing a modification?
+[english] We are setting up a method that intercepts PUT requests intended for specific resources. The function first tries to retrieve the target resource using `thing_id` and checks if it was successfully found.
+<switch:python>
+[python] def put(self, thing_id='0', action_name=None, action_id=None):
+        """
+        Handle a PUT request.
+
+        TODO: this is not yet defined in the spec
+
+        thing_id -- ID of the thing this request is for
+        action_name -- name of the action from the URL path
+        action_id -- the action ID from the URL path
+        """
+        thing = self.get_thing(thing_id)
+        if thing is None:
+            self.set_status(404)
+            return
+
+        self.set_status(200)
+<switch:english>
+[english] The current implementation only verifies existence: if `self.get_thing(thing_id)` returns None, it sets a 404 status; otherwise, it defaults to success (200). The actual data processing logic is yet to be implemented within this method.
+[english] If `self.get_thing` encounters an internal failure like a database connection error instead of just not finding the thing, what should happen?
+[english] A system-level or unexpected failure during retrieval should result in a 500 Internal Server Error status code to indicate a server problem.
+[english] Understood. I will make sure to wrap the database interaction with better exception handling then.

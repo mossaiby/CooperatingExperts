@@ -1,0 +1,31 @@
+[english] How can I retrieve the `SubParsersAction` instance from a Python `argparse.ArgumentParser` after it has been created, or add one if missing?
+[english] Since standard argparse often makes accessing the underlying subparser manager difficult, this function inspect's the parser's internal actions._subparsers attribute to locate and return the required action.
+<switch:python>
+[python] def get_subparsers(parser, create=False):
+    """
+    Returns the :class:`argparse._SubParsersAction` instance for given
+    :class:`ArgumentParser` instance as would have been returned by
+    :meth:`ArgumentParser.add_subparsers`. The problem with the latter is that
+    it only works once and raises an exception on the second attempt, and the
+    public API seems to lack a method to get *existing* subparsers.
+
+    :param create:
+        If `True`, creates the subparser if it does not exist. Default if
+        `False`.
+
+    """
+    # note that ArgumentParser._subparsers is *not* what is returned by
+    # ArgumentParser.add_subparsers().
+    if parser._subparsers:
+        actions = [a for a in parser._actions
+                   if isinstance(a, argparse._SubParsersAction)]
+        assert len(actions) == 1
+        return actions[0]
+    else:
+        if create:
+            return parser.add_subparsers()
+<switch:english>
+[english] The function relies on checking the private `parser._subparsers` attribute and filtering the general action list to find the specific subparser manager.
+[english] Is it safe for me to rely on accessing private attributes like `_actions` in different versions of argparse?
+[english] While this implementation works, relying on internal attributes is generally advised against as they may change without warning. If possible, use a wrapper or structure your code so you only call `add_subparsers()` when needed.
+[english] Thanks for clarifying the usage and caveats here!

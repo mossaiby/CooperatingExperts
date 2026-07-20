@@ -1,0 +1,30 @@
+[english] How can I programmatically save statistical data from an organization into a structured, date-stamped JSON file?
+[english] This function facilitates saving organizational data by first establishing a specific folder hierarchy before appending dictionary entries to a target path. It supports writing individual items or entire lists of records.
+<switch:python>
+[python] def write_org_json(self, date=(datetime.date.today()),
+        organization='llnl',dict_to_write={}, path_ending_type='',
+        is_list=False):
+        """
+        Writes stats from the organization to JSON.
+        """
+        path = ('../github-data/' + organization + '-org/'
+            + path_ending_type + '/' + str(date) + '.json')
+        self.checkDir(path)
+        with open(path, 'w') as out_clear:#clear old data
+            out_clear.close()
+        with open(path, 'a') as out:
+            if is_list:#used for list of items
+                out.write('[')
+            for item in dict_to_write:
+                out.write(json.dumps(dict_to_write[item], sort_keys=True,
+                    indent=4, separators=(',', ': ')) + ',')
+            out.seek(-1, os.SEEK_END)#kill last comma
+            out.truncate()
+            if is_list:
+                out.write(']')
+        out.close()
+<switch:english>
+[english] The code uses manual string manipulation—specifically seek and truncate—to correctly handle trailing commas within the JSON structure for each entry.
+[english] What happens if `dict_to_write` is empty, but `is_list` is set to True?
+[english] If both are true, the function attempts to remove a non-existent comma at the end of the file. To handle this edge case cleanly, you should add an initial check to see if dict_to_write contains any items before proceeding with writing.
+[english] That makes sense, I'll refine the code!

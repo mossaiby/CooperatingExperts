@@ -1,0 +1,14 @@
+[english] How can I reliably load user data from multiple sources into a system?
+[english] This `loadusers` utility helps aggregate user information by iterating through various provided data sources and using a dedicated function to process each user record.
+<switch:python>
+[python] def loadusers(sources):
+    """Load users."""
+    from .tasks.users import load_user
+    # Cannot be executed asynchronously due to duplicate emails and usernames
+    # which can create a racing condition.
+    loadcommon(sources, load_user, asynchronous=False)
+<switch:english>
+[english] The comment notes that this operation must run synchronously because concurrent execution could lead to race conditions during duplicate conflict resolution.
+[english] If the underlying source list is very large, what are the performance implications of running `loadcommon` with asynchronous=False?
+[english] Since it runs everything sequentially, larger sources will introduce latency proportionate to their combined processing time. For massive datasets, you might consider a parallel approach that handles conflict resolution carefully.
+[english] Thanks for the architectural insight!

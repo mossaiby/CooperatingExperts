@@ -1,0 +1,38 @@
+[english] I need a way to automatically log metadata about every user action when running a specific task.
+[english] This decorator wraps a function and uses database sessions to inject logging logic before the original code runs. It handles extracting identifying information from the request context to create a persistent audit trail.
+<switch:python>
+[python] def action_logging(f):
+    """
+    Decorator to log user actions
+    """
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+
+        with create_session() as session:
+            if g.user.is_anonymous:
+                user = 'anonymous'
+            else:
+                user = g.user.username
+
+            log = Log(
+                event=f.__name__,
+                task_instance=None,
+                owner=user,
+                extra=str(list(request.args.items())),
+                task_id=request.args.get('task_id'),
+                dag_id=request.args.get('dag_id'))
+
+            if 'execution_date' in request.args:
+                log.execution_date = pendulum.parse(
+                    request.args.get('execution_date'))
+
+            session.add(log)
+
+        return f(*args, **kwargs)
+
+    return wrapper
+<switch:english>
+[english] The wrapper ensures that relevant metadata, including user identities and DAG details, is captured in a log object before returning the result of the decorated function.
+[english] What happens if `g.user` or `request.args` is not properly initialized when this decorator runs?
+[english] If those objects are missing, accessing their attributes (like `.is_anonymous` or calling `.get()`) will raise an AttributeError. You might need to add try/except blocks around the initialization logic for extra safety.
+[english] That makes sense; I'll consider error handling for production use.

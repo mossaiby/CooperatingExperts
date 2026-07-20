@@ -1,0 +1,18 @@
+[english] How can I write a method that deletes files, defaulting to local storage but supporting cloud deletion via S3?
+[english] This function centralizes file removal logic by checking for specific cloud parameters. If both `storage_type` and `bucket_name` are absent, it defaults to calling `self._delete_local(filename)` for local cleanup.
+<switch:python>
+[python] def delete(self, filename, storage_type=None, bucket_name=None):
+        """Deletes the specified file, either locally or from S3, depending on the file's storage type."""
+
+        if not (storage_type and bucket_name):
+            self._delete_local(filename)
+        else:
+            if storage_type != 's3':
+                raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % storage_type)
+
+            self._delete_s3(filename, bucket_name)
+<switch:english>
+[english] The code enforces strict validation; if a storage type is provided but isn't 's3', it immediately raises a TypeError. Remember that S3 deletion requires both filename and bucket name.
+[english] If I pass an empty string ("") as the `storage_type`, how does the code handle it?
+[english] Since Python treats empty strings as falsy, the condition `if not (storage_type and bucket_name)` evaluates to true. Therefore, passing an empty string causes the function to default to local deletion using `self._delete_local(filename)`.
+[english] That clarifies how the defaults are handled.

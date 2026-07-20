@@ -1,0 +1,19 @@
+[english] I need a function to safely convert an operating system file path into a standardized client path that uses forward slashes.
+[english] To achieve this conversion while maintaining cross-platform compatibility, the code first detects if it's running on Unix-like systems. If necessary, it applies specific string replacements based on the OS separator.
+<switch:python>
+[python] def os_path_to_client_path(self, os_path):
+        """
+        Converts an operating system path into a client path by
+        replacing instances of os.path.sep with '/'.
+
+        Note: If the client path contains any instances of '/'
+        already, they will be replaced with '-'.
+        """
+        if os.path.sep == '/':
+            return os_path
+        return os_path.replace('/', '-').replace(os.path.sep, '/')
+<switch:english>
+[english] The function intentionally sanitizes paths by replacing any existing forward slashes with hyphens before making its final conversion to standard network notation.
+[english] If I pass a typical Windows path like 'C:\Users\Data', what will the resulting client path look like?
+[english] Assuming this runs on a non-Unix system, the function first ensures no slashes are present by replacing existing forward slashes with hyphens. Then, it converts backslashes to forward slashes, yielding 'C:/Users/Data'.
+[english] That logic is helpful; thank you for walking me through that.

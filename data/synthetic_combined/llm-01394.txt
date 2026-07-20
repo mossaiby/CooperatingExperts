@@ -1,0 +1,38 @@
+[english] How can I implement a buffered file reader that allows reading up to a specific number of bytes from an underlying stream?
+[english] This method handles sequential data retrieval by managing internal buffers and ensuring you don't read past the available data limit. It checks if we need more data before returning whatever is requested or available.
+<switch:python>
+[python] def read(self, size=-1):
+        """
+        read([size]) -> read at most size bytes, returned as a string.
+
+        If the size argument is negative or omitted, read until EOF is reached.
+        Notice that when in non-blocking mode, less data than what was
+        requested may be returned, even if no size parameter was given.
+        """
+        if self.left is not None:
+            size = min(size, self.left)
+        if self.closed:
+            raise ValueError('I/O operation on closed file')
+        if size < 0:
+            return ''.join(self)
+        elif not size:
+            chunk = ''
+        elif self.buf:
+            chunk = self.buf
+            self.buf = None
+        else:
+            try:
+                chunk = next(self.iterator)
+            except StopIteration:
+                return ''
+        if len(chunk) > size:
+            self.buf = chunk[size:]
+            chunk = chunk[:size]
+        if self.left is not None:
+            self.left -= len(chunk)
+        return chunk
+<switch:english>
+[english] The function intelligently updates `self.left` to track consumed bytes, which is crucial for tracking how much data remains in the stream.
+[english] If I request a size larger than what's currently available in `self.buf`, does it always pull from the iterator?
+[english] Yes, if `self.buf` is empty and you request data, the function attempts to fetch the next chunk using the underlying `self.iterator`. If no more chunks are available, it returns an empty string.
+[english] Great, this logic makes sense for streaming operations.

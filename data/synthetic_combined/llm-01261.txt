@@ -1,0 +1,23 @@
+[english] How can I calculate accuracy when my model outputs continuous probability values instead of discrete categories?
+[english] To determine if your predictions match reality, this function first rounds every value in y_predicted to the nearest integer. Then it compares these rounded predictions against the true labels element by element.
+<switch:python>
+[python] def round_accuracy(y_true, y_predicted):
+    """
+    Rounds predictions and calculates accuracy in terms of absolute coincidence.
+
+    Args:
+        y_true: list of true values
+        y_predicted: list of predicted values
+
+    Returns:
+        portion of absolutely coincidental samples
+    """
+    predictions = [round(x) for x in y_predicted]
+    examples_len = len(y_true)
+    correct = sum([y1 == y2 for y1, y2 in zip(y_true, predictions)])
+    return correct / examples_len if examples_len else 0
+<switch:english>
+[english] The function relies on simple boolean comparisons and division to give you the final ratio of correct predictions even when starting with continuous data. It handles empty input lists safely by returning a default value of 0.
+[english] What happens if y_true contains floating point numbers that are not whole integers?
+[english] The function compares rounded integer predictions against all values in y_true, regardless of their original type. In the example below, comparing `4` (rounded from `3.6`) to `5.1` would count as incorrect.
+[english] That makes sense; rounding seems like a good preprocessing step.

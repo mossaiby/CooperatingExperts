@@ -1,0 +1,99 @@
+[english] How can I write a function that translates elements of a quantum circuit's abstract syntax tree (AST) into specific operations for a target backend?
+[english] The `_process_node` method functions as a visitor pattern, iterating over an intermediate representation. It inspect the type tag of each node and directs the program flow to the appropriate action necessary for compilation.
+<switch:python>
+[python] def _process_node(self, node):
+        """Carry out the action associated with a node."""
+        if node.type == "program":
+            self._process_children(node)
+
+        elif node.type == "qreg":
+            qreg = QuantumRegister(node.index, node.name)
+            self.dag.add_qreg(qreg)
+
+        elif node.type == "creg":
+            creg = ClassicalRegister(node.index, node.name)
+            self.dag.add_creg(creg)
+
+        elif node.type == "id":
+            raise QiskitError("internal error: _process_node on id")
+
+        elif node.type == "int":
+            raise QiskitError("internal error: _process_node on int")
+
+        elif node.type == "real":
+            raise QiskitError("internal error: _process_node on real")
+
+        elif node.type == "indexed_id":
+            raise QiskitError("internal error: _process_node on indexed_id")
+
+        elif node.type == "id_list":
+            # We process id_list nodes when they are leaves of barriers.
+            return [self._process_bit_id(node_children)
+                    for node_children in node.children]
+
+        elif node.type == "primary_list":
+            # We should only be called for a barrier.
+            return [self._process_bit_id(m) for m in node.children]
+
+        elif node.type == "gate":
+            self._process_gate(node)
+
+        elif node.type == "custom_unitary":
+            self._process_custom_unitary(node)
+
+        elif node.type == "universal_unitary":
+            args = self._process_node(node.children[0])
+            qid = self._process_bit_id(node.children[1])
+            for element in qid:
+                self.dag.apply_operation_back(UBase(*args, element), self.condition)
+
+        elif node.type == "cnot":
+            self._process_cnot(node)
+
+        elif node.type == "expression_list":
+            return node.children
+
+        elif node.type == "binop":
+            raise QiskitError("internal error: _process_node on binop")
+
+        elif node.type == "prefix":
+            raise QiskitError("internal error: _process_node on prefix")
+
+        elif node.type == "measure":
+            self._process_measure(node)
+
+        elif node.type == "format":
+            self.version = node.version()
+
+        elif node.type == "barrier":
+            ids = self._process_node(node.children[0])
+            qubits = []
+            for qubit in ids:
+                for j, _ in enumerate(qubit):
+                    qubits.append(qubit[j])
+            self.dag.apply_operation_back(Barrier(len(qubits)), qubits, [])
+
+        elif node.type == "reset":
+            id0 = self._process_bit_id(node.children[0])
+            for i, _ in enumerate(id0):
+                self.dag.apply_operation_back(Reset(), [id0[i]], [], self.condition)
+
+        elif node.type == "if":
+            self._process_if(node)
+
+        elif node.type == "opaque":
+            self._process_gate(node, opaque=True)
+
+        elif node.type == "external":
+            raise QiskitError("internal error: _process_node on external")
+
+        else:
+            raise QiskitError("internal error: undefined node type",
+                              node.type, "line=%s" % node.line,
+                              "file=%s" % node.file)
+        return None
+<switch:english>
+[english] This function relies heavily on specific external components like self.dag and assumes that all input nodes adhere strictly to the expected structure defined by this compiler's grammar.
+[english] In what scenarios would it raise an internal error, such as when processing `indexed_id` or `binop`?
+[english] It raises a QiskitError for those types because they represent syntax or logic not yet implemented in the compilation process. For example, encountering 'int' means that data type handling is not supported by this specific compiler layer.
+[english] It’s clear this function serves as a dispatcher for an incomplete but structured translator.

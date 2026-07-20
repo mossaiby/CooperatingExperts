@@ -1,0 +1,19 @@
+[english] How can I create an HTML script tag for a JavaScript file while ensuring that relative paths are converted to full URLs?
+[english] This function handles path resolution by checking if the provided URL is absolute. If it's not, it prepends your static site URL before generating the necessary `<script>` tag.
+<switch:python>
+[python] def jsfile(url):
+    '''
+    Output a script tag to a js file.
+    '''
+
+    if not url.startswith('http://') and not url[:1] == '/':
+        #add media_url for relative paths
+        url = settings.STATIC_URL + url
+
+    return '<script type="text/javascript" src="{src}"></script>'.format(
+        src=url)
+<switch:english>
+[english] The function relies on accessing `settings.STATIC_URL` to build fully qualified paths for assets.
+[english] If I pass a relative path that starts with `./`, will that still trigger the automatic addition of the static URL?
+[english] Yes, paths starting with `./` do not begin with `'http://'` and thus fall through the initial checks. The function would prepend `settings.STATIC_URL` to ensure it resolves correctly.
+[english] That fully addresses my concerns about relative path handling.

@@ -1,0 +1,42 @@
+[english] I need a function that takes a date and adds or subtract months from it, handling standard year rollovers.
+[english] This code calculates the new month index by adjusting the input month relative to twelve. It then iterates through years using while loops to ensure the resulting `new_month` is between 1 and 12 before calculating the final date.
+<switch:python>
+[python] def add_months_to_date(months, date):
+    """Add a number of months to a date"""
+    month = date.month
+    new_month = month + months
+    years = 0
+
+    while new_month < 1:
+        new_month += 12
+        years -= 1
+
+    while new_month > 12:
+        new_month -= 12
+        years += 1
+
+    # month = timestamp.month
+    year = date.year + years
+
+    try:
+        return datetime.date(year, new_month, date.day)
+    except ValueError:
+        # This means that the day exceeds the last day of the month, i.e. it is 30th March, and we are finding the day
+        # 1 month ago, and it is trying to return 30th February
+        if months > 0:
+            # We are adding, so use the first day of the next month
+            new_month += 1
+            if new_month > 12:
+                new_month -= 12
+                year += 1
+
+            return datetime.datetime(year, new_month, 1)
+        else:
+            # We are subtracting - use the last day of the same month
+            new_day = calendar.monthrange(year, new_month)[1]
+            return datetime.datetime(year, new_month, new_day)
+<switch:english>
+[english] The function handles invalid days (like Feb 30th) by either defaulting to the 1st of the next month when adding months or using the last valid day when subtracting them.
+[english] What happens if I try to add two months to February 29, 2024?
+[english] Adding two months to Feb 29 results in April 29. The date logic handles this smoothly because April has 30 days and the `try` block succeeds for February's original day.
+[english] That makes sense!

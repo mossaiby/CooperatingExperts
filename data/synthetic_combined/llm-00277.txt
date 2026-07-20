@@ -1,0 +1,42 @@
+[english] How do I upload a file content from memory or a local stream to an AWS S3 bucket while managing naming conventions?
+[english] This function simplifies the process of pushing data into S3 by first validating necessary parameters. It handles setup, such as ensuring a bucket name is available and checking for existing files before proceeding.
+<switch:python>
+[python] def load_file_obj(self,
+                      file_obj,
+                      key,
+                      bucket_name=None,
+                      replace=False,
+                      encrypt=False):
+        """
+        Loads a file object to S3
+
+        :param file_obj: The file-like object to set as the content for the S3 key.
+        :type file_obj: file-like object
+        :param key: S3 key that will point to the file
+        :type key: str
+        :param bucket_name: Name of the bucket in which to store the file
+        :type bucket_name: str
+        :param replace: A flag that indicates whether to overwrite the key
+            if it already exists.
+        :type replace: bool
+        :param encrypt: If True, S3 encrypts the file on the server,
+            and the file is stored in encrypted form at rest in S3.
+        :type encrypt: bool
+        """
+        if not bucket_name:
+            (bucket_name, key) = self.parse_s3_url(key)
+
+        if not replace and self.check_for_key(key, bucket_name):
+            raise ValueError("The key {key} already exists.".format(key=key))
+
+        extra_args = {}
+        if encrypt:
+            extra_args['ServerSideEncryption'] = "AES256"
+
+        client = self.get_conn()
+        client.upload_fileobj(file_obj, bucket_name, key, ExtraArgs=extra_args)
+<switch:english>
+[english] The implementation uses `upload_fileobj` for efficient stream handling. A key detail is that the method automatically appends ServerSideEncryption if the encrypt flag is set.
+[english] If I don't provide a `bucket_name`, where does the function look for it, and what happens if parsing fails?
+[english] The function relies on calling `self.parse_s3_url(key)` to try and extract both bucket and key from a potential S3 URL format within the provided `key` argument.
+[english] That clarifies how the naming is handled when I only provide the key.

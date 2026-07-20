@@ -1,0 +1,15 @@
+[english] How can I wait for all active background threads or asynchronous tasks to finish before proceeding with my program logic?
+[english] This function is designed to handle task synchronization, ensuring that concurrent processes complete their work. It checks how many futures are in the state and uses specific methods to block until completion.
+<switch:python>
+[python] def wait_for_result(self, psd_state):
+        """Wait for all PSD threads to finish and return result"""
+        if len(psd_state['futures']) > 1:
+            concurrent.futures.wait(psd_state['futures'])
+        elif psd_state['futures']:
+            psd_state['futures'][0].result()
+        return self.result(psd_state)
+<switch:english>
+[english] The function guarantees that all listed tasks are fully completed before calling `self.result()`. It distinguishes between waiting for a single thread or waiting for an entire group of threads.
+[english] If one of the background threads crashes, how does this function handle the exception?
+[english] Since `.result()` will re-raise any exceptions that occurred in that future, you would need to wrap the logic with a `try...except` block or use specific error handling for each thread.
+[english] Got it, thank you for explaining that.

@@ -1,0 +1,16 @@
+[english] How can I retrieve the raw text contents of a specific intermediate dataset within a current experiment?
+[english] To fetch the data, we call an internal method on the rest client that handles reading intermediate datasets. The function requires several identifiers to pinpoint the exact resource being requested.
+<switch:python>
+[python] def read_as_text(self):
+        '''Read and return the dataset contents as text.'''
+        return self.workspace._rest.read_intermediate_dataset_contents_text(
+            self.workspace.workspace_id,
+            self.experiment.experiment_id,
+            self.node_id,
+            self.port_name
+        )
+<switch:english>
+[english] This function relies heavily on existing object state due to its reliance on `self`. If any required IDs (e.g., `node_id`) are missing, the call will likely fail with an API error.
+[english] What happens if the dataset specified by this method is found but it contains no data?
+[english] Typically, reading an empty intermediate dataset via a text endpoint will return an empty string (`''`).
+[english] That makes sense; I have successfully implemented the retrieval logic now.

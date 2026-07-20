@@ -1,0 +1,50 @@
+[english] How do I programmatically export data from a Hive table using specific formatting options?
+[english] This function handles the complex logic for exporting a destination database table by first gathering all required configuration parameters.
+<switch:python>
+[python] def export_table(self, table, export_dir, input_null_string,
+                     input_null_non_string, staging_table,
+                     clear_staging_table, enclosed_by,
+                     escaped_by, input_fields_terminated_by,
+                     input_lines_terminated_by,
+                     input_optionally_enclosed_by, batch,
+                     relaxed_isolation, extra_export_options=None):
+        """
+        Exports Hive table to remote location. Arguments are copies of direct
+        sqoop command line Arguments
+
+        :param table: Table remote destination
+        :param export_dir: Hive table to export
+        :param input_null_string: The string to be interpreted as null for
+            string columns
+        :param input_null_non_string: The string to be interpreted as null
+            for non-string columns
+        :param staging_table: The table in which data will be staged before
+            being inserted into the destination table
+        :param clear_staging_table: Indicate that any data present in the
+            staging table can be deleted
+        :param enclosed_by: Sets a required field enclosing character
+        :param escaped_by: Sets the escape character
+        :param input_fields_terminated_by: Sets the field separator character
+        :param input_lines_terminated_by: Sets the end-of-line character
+        :param input_optionally_enclosed_by: Sets a field enclosing character
+        :param batch: Use batch mode for underlying statement execution
+        :param relaxed_isolation: Transaction isolation to read uncommitted
+            for the mappers
+        :param extra_export_options: Extra export options to pass as dict.
+            If a key doesn't have a value, just pass an empty string to it.
+            Don't include prefix of -- for sqoop options.
+        """
+        cmd = self._export_cmd(table, export_dir, input_null_string,
+                               input_null_non_string, staging_table,
+                               clear_staging_table, enclosed_by, escaped_by,
+                               input_fields_terminated_by,
+                               input_lines_terminated_by,
+                               input_optionally_enclosed_by, batch,
+                               relaxed_isolation, extra_export_options)
+
+        self.Popen(cmd)
+<switch:english>
+[english] The method constructs and executes an external process via `self.Popen(cmd)` to manage the actual data export, treating it like a command-line utility call.
+[english] Does this function modify or validate the input table structure before starting the export?
+[english] The function primarily relies on the internal method `_export_cmd` for constructing the necessary command arguments. It executes the generated process but does not perform explicit structural validation of the data itself.
+[english] Got it, so this is mainly a wrapper around a system call.

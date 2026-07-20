@@ -1,0 +1,29 @@
+[english] How can I format a 2D list of data into a properly styled RST-compatible markdown table?
+[english] This function takes a grid and calculates the maximum necessary width for every column. It then iterates through the rows, building the table structure using helper functions to ensure proper alignment.
+<switch:python>
+[python] def make_table(grid):
+    """ Make a RST-compatible table
+
+    From http://stackoverflow.com/a/12539081
+
+    """
+    cell_width = 2 + max(
+        reduce(
+            lambda x, y: x+y, [[len(item) for item in row] for row in grid], []
+        )
+    )
+    num_cols = len(grid[0])
+    rst = table_div(num_cols, cell_width, 0)
+    header_flag = 1
+    for row in grid:
+        rst = rst + '| ' + '| '.join(
+            [normalize_cell(x, cell_width-1) for x in row]
+        ) + '|\n'
+        rst = rst + table_div(num_cols, cell_width, header_flag)
+        header_flag = 0
+    return rst
+<switch:english>
+[english] The output is a string ready to be rendered as an RST table, but you need to define the dependencies like `table_div` and `normalize_cell` for it to run correctly.
+[english] What happens if one of the rows in the grid is empty or significantly shorter than others?
+[english] The function calculates cell width based on all items. If a row is empty, it will generate padded cells up to the maximum determined column count, preventing table breakage.
+[english] Got it, this looks much cleaner.

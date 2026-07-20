@@ -1,0 +1,25 @@
+[english] How can I retrieve command audit logs, including optional metrics, using a specific ID via an API?
+[english] This function retrieves data by first constructing a dynamic URL that incorporates the provided resource ID and a high-precision Unix timestamp. It then uses the built-in `requests` library to perform an HTTP GET request to this constructed endpoint.
+<switch:python>
+[python] def get_command_audit(self, id, metrics=[]):
+        '''**Description**
+            Get a command audit.
+
+        **Arguments**
+            - id: the id of the command audit to get.
+
+        **Success Return Value**
+            A JSON representation of the command audit.
+        '''
+        url = "{url}/api/commands/{id}?from=0&to={to}{metrics}".format(
+            url=self.url,
+            id=id,
+            to=int(time.time() * 10**6),
+            metrics="&metrics=" + json.dumps(metrics) if metrics else "")
+        res = requests.get(url, headers=self.hdrs, verify=self.ssl_verify)
+        return self._request_result(res)
+<switch:english>
+[english] This method is responsible for building complex API query parameters, such as serializing optional metrics into the URL correctly before making the live network call.
+[english] If the specified command ID does not exist on the server, what response does `self._request_result()` return?
+[english] The behavior depends entirely on how that private method is implemented. Usually, it checks `res.status_code`; if the code indicates an error (like 404 Not Found), the function would likely raise an exception or return a detailed error object.
+[english] I will check the implementation of `_request_result` to handle that edge case.

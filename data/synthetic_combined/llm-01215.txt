@@ -1,0 +1,70 @@
+[english] How can this function be used to display phone numbers and contacts from a list of vCards that match specific search criteria?
+[english] This function processes a list of contact vCards, extracting all associated phone numbers. It then iterates through these numbers, formatting them into a user-friendly or machine-readable table based on the 'parsable' flag, and filters them against provided `search_terms`.
+<switch:python>
+[python] def phone_subcommand(search_terms, vcard_list, parsable):
+    """Print a phone application friendly contact table.
+
+    :param search_terms: used as search term to filter the contacts before
+        printing
+    :type search_terms: str
+    :param vcard_list: the vcards to search for matching entries which should
+        be printed
+    :type vcard_list: list of carddav_object.CarddavObject
+    :param parsable: machine readable output: columns devided by tabulator (\t)
+    :type parsable: bool
+    :returns: None
+    :rtype: None
+
+    """
+    all_phone_numbers_list = []
+    matching_phone_number_list = []
+    for vcard in vcard_list:
+        for type, number_list in sorted(vcard.get_phone_numbers().items(),
+                                        key=lambda k: k[0].lower()):
+            for number in sorted(number_list):
+                if config.display_by_name() == "first_name":
+                    name = vcard.get_first_name_last_name()
+                else:
+                    name = vcard.get_last_name_first_name()
+                # create output lines
+                line_formatted = "\t".join([name, type, number])
+                line_parsable = "\t".join([number, name, type])
+                if parsable:
+                    # parsable option: start with phone number
+                    phone_number_line = line_parsable
+                else:
+                    # else: start with name
+                    phone_number_line = line_formatted
+                if re.search(search_terms,
+                             "%s\n%s" % (line_formatted, line_parsable),
+                             re.IGNORECASE | re.DOTALL):
+                    matching_phone_number_list.append(phone_number_line)
+                elif len(re.sub("\D", "", search_terms)) >= 3:
+                    # The user likely searches for a phone number cause the
+                    # search string contains at least three digits.  So we
+                    # remove all non-digit chars from the phone number field
+                    # and match against that.
+                    if re.search(re.sub("\D", "", search_terms),
+                                 re.sub("\D", "", number), re.IGNORECASE):
+                        matching_phone_number_list.append(phone_number_line)
+                # collect all phone numbers in a different list as fallback
+                all_phone_numbers_list.append(phone_number_line)
+    if matching_phone_number_list:
+        if parsable:
+            print('\n'.join(matching_phone_number_list))
+        else:
+            list_phone_numbers(matching_phone_number_list)
+    elif all_phone_numbers_list:
+        if parsable:
+            print('\n'.join(all_phone_numbers_list))
+        else:
+            list_phone_numbers(all_phone_numbers_list)
+    else:
+        if not parsable:
+            print("Found no phone numbers")
+        sys.exit(1)
+<switch:english>
+[english] The logic prioritizes displaying matched results; if no matches are found, it falls back to showing all collected phone numbers. Remember that name display depends on a global configuration setting (`config.display_by_name()`).
+[english] If the `vcard_list` is empty, what happens and will any output be generated or errors raised?
+[english] If the input list is empty, both `matching_phone_number_list` and `all_phone_numbers_list` remain empty. The function will then skip all printing logic and exit with a status code indicating no contacts were found.
+[english] Thanks for clarifying how it handles edge cases!

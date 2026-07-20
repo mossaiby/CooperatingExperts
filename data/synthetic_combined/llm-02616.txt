@@ -1,0 +1,34 @@
+[english] How can I create an authentication endpoint that handles both GET and POST requests for OpenID providers?
+[english] This `login` function acts as a versatile handler by integrating with an authentication library while ensuring the response is properly managed, which is necessary when using adapters like Werkzeug.
+<switch:python>
+[python] def login(provider_name):
+    """
+    Login handler, must accept both GET and POST to be able to use OpenID.
+    """
+
+    # We need response object for the WerkzeugAdapter.
+    response = make_response()
+
+    # Log the user in, pass it the adapter and the provider name.
+    result = authomatic.login(
+        WerkzeugAdapter(
+            request,
+            response),
+        provider_name)
+
+    # If there is no LoginResult object, the login procedure is still pending.
+    if result:
+        if result.user:
+            # We need to update the user to get more info.
+            result.user.update()
+
+        # The rest happens inside the template.
+        return render_template('login.html', result=result)
+
+    # Don't forget to return the response.
+    return response
+<switch:english>
+[english] The key logic here relies on checking if `result` exists; because it's designed to support both requests and pending status, it handles the flow from initial login attempt up to displaying a final template.
+[english] What specific library or framework is required for this function to execute correctly?
+[english] This function uses `authomatic`, which implies an underlying requirement for Flask (or similar microframework) along with related utilities like `WerkzeugAdapter` and `make_response`.
+[english] Thanks, that clarifies the dependencies.

@@ -1,0 +1,33 @@
+[english] I need to serialize an Authentication struct object into a KMIP-compliant data stream.
+[english] This function handles the serialization by first collecting and encoding all individual credentials into a temporary buffer, then prepending necessary metadata before writing the final structure to the destination stream.
+<switch:python>
+[python] def write(self, output_stream, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the Authentication struct to a stream.
+
+        Args:
+            output_stream (stream): A data stream in which to encode object
+                data, supporting a write method; usually a BytearrayStream
+                object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        local_stream = utils.BytearrayStream()
+
+        if len(self._credentials) == 0:
+            raise ValueError("Authentication struct missing credentials.")
+        for credential in self._credentials:
+            credential.write(local_stream, kmip_version=kmip_version)
+
+        self.length = local_stream.length()
+        super(Authentication, self).write(
+            output_stream,
+            kmip_version=kmip_version
+        )
+        output_stream.write(local_stream.buffer)
+<switch:english>
+[english] The method ensures data integrity by calculating the total length of all buffered credentials before writing them to the final stream.
+[english] If I modify `self._credentials` after calling this method, will it affect future serialization?
+[english] Since the loop iterates over `self._credentials`, any changes made to that list or collection should be reflected in subsequent calls to `write()`.
+[english] This structure makes sense for managing object state and output.

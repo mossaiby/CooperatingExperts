@@ -1,0 +1,16 @@
+[english] How can I check if an input object supports iteration?
+[english] We need to check if the provided object is a standard iterable like a list or tuple. If not, we iterate through specialized type modules to see if they's defined types match.
+<switch:python>
+[python] def mappable(obj):
+    """return whether an object is mappable or not."""
+    if isinstance(obj, (tuple,list)):
+        return True
+    for m in arrayModules:
+        if isinstance(obj,m['type']):
+            return True
+    return False
+<switch:english>
+[english] This function determines mappability by checking against built-in sequence types and custom types found in `arrayModules` for specialized handling.
+[english] What happens if an object is both a list and a tuple?
+[english] The function returns True immediately upon finding the first match. The check for tuples and lists occurs before checking any entries in `arrayModules`.
+[english] Got it, thanks!

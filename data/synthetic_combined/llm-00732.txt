@@ -1,0 +1,23 @@
+[english] How do I adjust coordinate values like the center x-coordinate (`cx`) of detections after applying a horizontal flip (mirror transformation) to an image?
+[english] The function systematically checks all keys in your detection label dictionary. For any key starting with 'detection', it applies geometric transformations: reflecting the central x-coordinate and adjusting rotational angles if specified.
+<switch:python>
+[python] def hflip_detections(label, w):
+    """
+    Horizontally flip detections according to an image flip.
+
+    :param label: The label dict containing all detection lists.
+    :param w: The width of the image as a number.
+    :return:
+    """
+    for k in label.keys():
+        if k.startswith("detection"):
+            detections = label[k]
+            for detection in detections:
+                detection.cx = w - detection.cx
+                if k == "detections_2.5d":
+                    detection.theta = math.pi - detection.theta
+<switch:english>
+[english] This ensures that a detection originally found on one side of an image is correctly remapped to its mirrored position after flipping. The complex angle calculation is constrained to specific data types.
+[english] What happens if the label dictionary contains keys that don't start with 'detection'? Does the function handle them?
+[english] The current implementation explicitly uses `if k.startswith("detection"):`, meaning any unrelated keys in the dictionary are safely ignored and left completely untouched.
+[english] Thanks, that clarifies how it handles extra data!

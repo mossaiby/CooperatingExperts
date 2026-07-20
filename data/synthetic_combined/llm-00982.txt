@@ -1,0 +1,54 @@
+[english] I need help understanding how this method reads system configuration, sets logging levels, creates temporary log files, and initializes streaming objects for my tool.
+[english] This method configures various run parameters by extracting values from `self.cfg`. It handles default thread counts using CPU availability and standardizes the verbose logging level before initializing StreamConfig instances based on specific multi-section configurations and adding necessary dependencies if SSL is involved.
+<switch:python>
+[python] def read_config(self):
+        """        Read phantom tool specific options        """
+        self.threads = self.cfg["threads"] or str(int(multiprocessing.cpu_count() / 2) + 1)
+        self.phantom_modules_path = self.cfg["phantom_modules_path"]
+        self.additional_libs = ' '.join(self.cfg["additional_libs"])
+        self.answ_log_level = self.cfg["writelog"]
+        if self.answ_log_level.lower() in ['0', 'false']:
+            self.answ_log_level = 'none'
+        elif self.answ_log_level.lower() in ['1', 'true']:
+            self.answ_log_level = 'all'
+        self.timeout = parse_duration(self.cfg["timeout"])
+        if self.timeout > 120000:
+            logger.warning(
+                "You've set timeout over 2 minutes."
+                " Are you a functional tester?")
+        self.answ_log = self.core.mkstemp(".log", "answ_")
+        self.core.add_artifact_file(self.answ_log)
+        self.core.add_artifact_file(self.phout_file)
+        self.core.add_artifact_file(self.stat_log)
+        self.phantom_log = self.core.mkstemp(".log", "phantom_")
+        self.core.add_artifact_file(self.phantom_log)
+
+        main_stream = StreamConfig(
+            self.core,
+            len(self.streams), self.phout_file, self.answ_log,
+            self.answ_log_level, self.timeout, self.cfg, True)
+        self.streams.append(main_stream)
+
+        for section in self.multi():
+            self.streams.append(
+                StreamConfig(
+                    self.core,
+                    len(self.streams), self.phout_file, self.answ_log,
+                    self.answ_log_level, self.timeout, section))
+
+        for stream in self.streams:
+            stream.read_config()
+
+        if any(stream.ssl for stream in self.streams):
+            self.additional_libs += ' ssl io_benchmark_method_stream_transport_ssl'
+<switch:english>
+[english] The function effectively bridges configuration data to the runtime environment, but it relies heavily on the existence of helper functions like `parse_duration` and external classes such as `StreamConfig`. Note that subsequent calls to these streams require them to have their own configurations read.
+[english] What happens if 'multiprocessing.cpu_count()' returns null or zero?
+[english] If no CPU count is available, the default expression for threads would likely fail with an AttributeError when trying to access methods on a non-existent object before calculation. You might want to add a guard check:
+<switch:python>
+[python] try:
+    self.threads = self.cfg["threads"] or str(int(multiprocessing.cpu_count() / 2) + 1)
+except AttributeError:
+    self.threads = "1" # Fallback to single thread
+<switch:english>
+[english] Thanks, that makes the configuration flow much clearer for me.

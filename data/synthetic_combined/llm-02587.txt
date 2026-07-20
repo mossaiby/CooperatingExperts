@@ -1,0 +1,48 @@
+[english] How do I export rendered SVG content into PNG, PDF, or SVG format from my application?
+[english] This function first saves the internal rendering to a temporary file with an SVG extension. It then fetches configuration details like type and resolution before dispatching the conversion process.
+<switch:python>
+[python] def render(self, file_path, **kwargs):
+        """ Save the content of the .svg file in the chosen rendered format.
+
+        Parameters
+        ----------
+        file_path: str
+            Path to the output file.
+
+        Kwargs
+        ------
+        file_type: str
+            Choices: 'png', 'pdf', 'svg'
+            Default: 'pdf'
+
+        dpi: int
+            Dots-per-inch for the png and pdf.
+            Default: 150
+
+        support_unicode: bool
+            Whether to allow unicode to be encoded in the PDF.
+            Default: False
+        """
+        temp = get_tempfile(suffix='.svg')
+        self.save_content(temp.name)
+
+        file_type = kwargs.get('file_type', 'pdf')
+        dpi = kwargs.get('dpi', 150)
+        support_unicode = kwargs.get('support_unicode', False)
+        try:
+            if file_type == 'svg':
+                shutil.copyfile(temp.name, file_path)
+            elif file_type == 'png':
+                svg2png(temp.name, file_path, dpi=dpi)
+            elif file_type == 'pdf':
+                svg2pdf(temp.name, file_path, dpi=dpi, support_unicode=support_unicode)
+        except:
+            log.exception(
+                'Error exporting file {} to {}'.format(file_path, file_type)
+            )
+            raise
+<switch:english>
+[english] It utilizes specific helper functions for each output type (PNG/PDF) while supporting settings like DPI and unicode support. Note that it captures all errors during export and re-raises them after logging.
+[english] What happens if the file path directory where I want to save the output doesn't exist?
+[english] The function will raise an exception, which is then caught by its try/except block. It logs this failure using `log.exception` before propagating the error.
+[english] That makes sense. Thanks for clarifying that detail!

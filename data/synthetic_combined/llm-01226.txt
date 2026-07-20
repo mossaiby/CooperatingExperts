@@ -1,0 +1,18 @@
+[english] I need a utility function that recursively deletes every file found within a specific S3 bucket path.
+[english] This function first uses `self.s3walk` to traverse the specified source location and builds a list of only true files, intentionally skipping any directories using an if statement. It then leverages a thread pool approach to execute the deletion process in parallel for efficiency.
+<switch:python>
+[python] def del_files(self, source):
+    '''Delete files on S3'''
+    src_files = []
+    for obj in self.s3walk(source):
+      if not obj['is_dir']: # ignore directories
+        src_files.append(obj['name'])
+
+    pool = ThreadPool(ThreadUtil, self.opt)
+    pool.batch_delete(src_files)
+    pool.join()
+<switch:english>
+[english] The use of `pool.batch_delete` ensures high throughput by grouping multiple deletions, while `pool.join()` guarantees that the function waits until all asynchronous tasks are completed before exiting.
+[english] What happens if one specific file deletion fails during the batch process?
+[english] Since this uses a ThreadPool for execution, exceptions on individual file deletion might be handled by internal pool logic or require explicit error handling within the `batch_delete` implementation to log failures effectively.
+[english] That explanation helps clarify how the concurrency is managed.

@@ -1,0 +1,15 @@
+[english] I need a way to take raw ReStructuredText input and format it before passing it through my message handler.
+[english] This function acts as an intermediary wrapper that utilizes external library logic to preprocess text. It first imports the necessary formatting tools from `trepan.lib` to apply styling based on current configuration settings.
+<switch:python>
+[python] def rst_msg(self, text, opts={}):
+        """Convert ReStructuredText and run through msg()"""
+        from trepan.lib.format import rst_text
+        text = rst_text(text,
+                        'plain' == self.debugger.settings['highlight'],
+                        self.debugger.settings['width'])
+        return self.msg(text)
+<switch:english>
+[english] The primary role of this method is ensuring that ReStructuredText content is properly rendered and then fed into a standard message output mechanism.
+[english] What happens if 'highlight' setting isn't explicitly defined in the debugger?
+[english] If `self.debugger.settings['highlight']` is missing, accessing it will raise a Key Error. You should consider adding an explicit default value when retrieving settings to make this method more resilient.
+[english] Got it! Thanks for clarifying how to handle configuration keys within methods.

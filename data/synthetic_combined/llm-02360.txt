@@ -1,0 +1,36 @@
+[english] How can I iterate over a results set from an API query even if the total number of results exceeds available memory?
+[english] This method implements iterator logic, allowing you to loop through a large result set. It handles data fetching in chunks by checking if the internal buffer is exhausted before retrieving the next page.
+<switch:python>
+[python] def next(self):
+        """
+        Allows the Query object to be an iterable.
+
+        This method will iterate through a cached result set
+        and fetch successive pages as required.
+
+        A `StopIteration` exception will be raised when there aren't
+        any more results available or when the requested result
+        slice range or limit has been fetched.
+
+        Returns: The next result.
+        """
+        if not hasattr(self, '_cursor'):
+            # Iterator not initialized yet
+            self.__iter__()
+
+        # len(self) returns `min(limit, total)` results
+        if self._cursor == len(self):
+            raise StopIteration()
+
+        if self._buffer_idx == len(self._buffer):
+            self.execute(self._page_offset + self._buffer_idx)
+            self._buffer_idx = 0
+
+        self._cursor += 1
+        self._buffer_idx += 1
+        return self._buffer[self._buffer_idx - 1]
+<switch:english>
+[english] The primary job of this method is managing state between requests. If `self._cursor` or other internal variables get out of sync, iteration will break.
+[english] What happens inside this function if `self.execute()` fails to fetch a new page of data?
+[english] If fetching fails, the exception will propagate up immediately because there is no try/except block surrounding `self.execute()`, halting iteration instantly. If you need graceful error handling, you should wrap that call.
+[english] I understand; it's important to manage state carefully during pagination.

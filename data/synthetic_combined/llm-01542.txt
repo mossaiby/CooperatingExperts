@@ -1,0 +1,25 @@
+[english] How can I generate a serialized byte representation of all data currently held by this object?
+[english] This method serializes internal data for storage, converting each value within `self._data` into its picklable binary format using versioning.
+<switch:python>
+[python] def _store(self):
+        """Returns a dictionary containing pickle dumps"""
+        store_dict = {}
+        for key, val in self._data.items():
+            store_dict[key] = pickle.dumps(val, protocol=self.v_protocol)
+        store_dict[PickleResult.PROTOCOL] = self.v_protocol
+        return store_dict
+<switch:english>
+[english] The function returns a dictionary where values are bytes, meaning you must unpickle them with `pickle.loads()` when restoring the object.
+[english] Will this method correctly handle circular references or non-standard Python types within the data?
+[english] If your objects have standard pickling definitions, they will work; however,
+<switch:python>
+[python] import pickle
+class Node: 
+    def __init__(self): pass
+b = {} # Example of simple storage
+try:
+    pickle.dumps(Node(), protocol=v) # This works for basic types
+except TypeError as e:
+    print(f'Could not serialize object due to {e}') # Custom data might fail
+<switch:english>
+[english] This clarifies the serialization process; thanks!

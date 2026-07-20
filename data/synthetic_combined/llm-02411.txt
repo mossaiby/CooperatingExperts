@@ -1,0 +1,26 @@
+[english] How can I generate a correct OAuth 2.0 authorization URL for user authentication, provided I have my client ID and redirect URI?
+[english] To handle the complexity of building an OAuth flow link, this function automatically bundles necessary security parameters into a single string. It relies on pre-configured credentials within the class to ensure the resulting URL is valid.
+<switch:python>
+[python] def oauth2_url(self, redirect_uri: str, scope: Optional[str] = None, state: Optional[str] = None) -> str:
+        """Generate an outh2 url for user authentication.
+
+        Parameters
+        ----------
+        redirect_uri : str
+            Where spotify should redirect the user to after authentication.
+        scope : Optional[str]
+            Space seperated spotify scopes for different levels of access.
+        state : Optional[str]
+            Using a state value can increase your assurance that an incoming connection is the result of an authentication request.
+
+        Returns
+        -------
+        url : str
+            The OAuth2 url.
+        """
+        return OAuth2.url_(self.http.client_id, redirect_uri, scope=scope, state=state)
+<switch:english>
+[english] This method acts as a clean wrapper around the external `OAuth2.url_` helper, ensuring that your specific authentication requirements are met without manual URL construction.
+[english] If I don't specify any scopes or states, will the generated URL be valid but minimally functional?
+[english] Yes, if no scope is provided, it defaults to whatever minimum permissions the OAuth provider requires for basic access. The state parameter being optional allows you to omit security checks when they aren't mandatory.
+[english] Got it, so I don're safe even without extra scopes.

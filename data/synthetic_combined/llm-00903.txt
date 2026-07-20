@@ -1,0 +1,20 @@
+[english] How do I initialize a MultivariateNormalTriL distribution in TensorFlow using a combined parameter vector (loc and scale)?
+[english] We can instantiate this specific distribution by defining its location parameters and constructing the necessary triangular precision matrix from the remaining parameters.
+<switch:python>
+[python] def new(params, event_size, validate_args=False, name=None):
+    """Create the distribution instance from a `params` vector."""
+    with tf.compat.v1.name_scope(name, 'MultivariateNormalTriL',
+                                 [params, event_size]):
+      params = tf.convert_to_tensor(value=params, name='params')
+      scale_tril = tfb.ScaleTriL(
+          diag_shift=np.array(1e-5, params.dtype.as_numpy_dtype()),
+          validate_args=validate_args)
+      return tfd.MultivariateNormalTriL(
+          loc=params[..., :event_size],
+          scale_tril=scale_tril(params[..., event_size:]),
+          validate_args=validate_args)
+<switch:english>
+[english] The function uses a predefined small diagonal shift of 1e-5 in the ScaleTriL object to help maintain numerical stability when calculating variances.
+[english] What would happen if `event_size` is larger than what's available in the parameters?
+[english] `event_size` must be less than or equal to the total parameter dimension. If it is too large, slicing operations like `params[..., :event_size]` will fail because there aren't enough elements.
+[english] That makes sense.

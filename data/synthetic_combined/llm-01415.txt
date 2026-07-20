@@ -1,0 +1,36 @@
+[english] I need a function that takes symbolic layer outputs and formats them into standard data structures for model execution.
+[english] This method is responsible for translating raw symbolic inputs from previous layers into structured output dictionaries or lists, ensuring they conform to what subsequent parts of the framework expect.
+<switch:python>
+[python] def connect(self, inputs):
+        '''Create Theano variables representing the outputs of this layer.
+
+        Parameters
+        ----------
+        inputs : dict of Theano expressions
+            Symbolic inputs to this layer, given as a dictionary mapping string
+            names to Theano expressions. Each string key should be of the form
+            "{layer_name}:{output_name}" and refers to a specific output from
+            a specific layer in the graph.
+
+        Returns
+        -------
+        outputs : dict
+            A dictionary mapping names to Theano expressions for the outputs
+            from this layer.
+        updates : sequence of (parameter, expression) tuples
+            Updates that should be performed by a Theano function that computes
+            something using this layer.
+        '''
+        outputs, updates = self.transform(inputs)
+        # transform the outputs to be a list of ordered pairs if needed.
+        if isinstance(outputs, dict):
+            outputs = sorted(outputs.items())
+        if isinstance(outputs, (TT.TensorVariable, SS.SparseVariable)):
+            outputs = [('out', outputs)]
+        outs = {self.full_name(name): expr for name, expr in outputs}
+        return outs, updates
+<switch:english>
+[english] By checking if the outputs are a dictionary or specific variable types like `TT.TensorVariable`, it ensures the resulting data structure is universally compatible with the execution engine.
+[english] What does `self.full_name(name)` actually achieve for the output keys?
+[english] `self.full_name(name)` likely combines the current layer's identifier with the specific output name to create a unique and canonical key within the final dictionary, preventing naming collisions across different parts of the graph.
+[english] That makes sense! Thanks for explaining.

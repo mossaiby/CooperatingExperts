@@ -1,0 +1,28 @@
+[english] How can I programmatically count the total number of simple expressions within a complex nested boolean operation structure?
+[english] To solve this, the function employs recursion to traverse the expression tree. It iterates over all children and uses type checking to determine if a child is another boolean operation or a fundamental expression.
+<switch:python>
+[python] def _count_boolean_expressions(bool_op):
+    """Counts the number of boolean expressions in BoolOp `bool_op` (recursive)
+
+    example: a and (b or c or (d and e)) ==> 5 boolean expressions
+    """
+    nb_bool_expr = 0
+    for bool_expr in bool_op.get_children():
+        if isinstance(bool_expr, BoolOp):
+            nb_bool_expr += _count_boolean_expressions(bool_expr)
+        else:
+            nb_bool_expr += 1
+    return nb_bool_expr
+<switch:english>
+[english] The count increases by one for every non-Boolean operator child found, while nested Boolean operators trigger a recursive call to handle their own internal expressions.
+[english] What will this function return if the input `bool_op` object contains no children at all?
+[english] If there are no children, the `for` loop iterates over an empty sequence and the function immediately returns the initialized value of zero. This handles the base case of an empty structure correctly.
+<switch:python>
+[python] def _count_boolean_expressions(bool_op):
+    nb_bool_expr = 0
+    for bool_expr in bool_op.get_children():
+        # ... (rest of logic)
+            pass
+    return nb_bool_expr
+<switch:english>
+[english] I understand it gracefully handles empty expression trees.

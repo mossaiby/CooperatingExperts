@@ -1,0 +1,27 @@
+[english] I need a way to mathematically sum two quantum channels within Qiskit.
+[english] To add channels, this function first attempts to convert the input into a standard `Chi` object. It then checks if both channels share identical dimensions before performing the data addition and returning a new channel object.
+<switch:python>
+[python] def add(self, other):
+        """Return the QuantumChannel self + other.
+
+        Args:
+            other (QuantumChannel): a quantum channel.
+
+        Returns:
+            Chi: the linear addition self + other as a Chi object.
+
+        Raises:
+            QiskitError: if other is not a QuantumChannel subclass, or
+            has incompatible dimensions.
+        """
+        if not isinstance(other, Chi):
+            other = Chi(other)
+        if self.dim != other.dim:
+            raise QiskitError("other QuantumChannel dimensions are not equal")
+        return Chi(self._data + other.data, self._input_dims,
+                   self._output_dims)
+<switch:english>
+[english] This method ensures structural integrity by requiring exact dimension matches; otherwise, it will raise a QiskitError to prevent invalid operations.
+[english] What specific error is raised if I try to add two channels that have different output dimensions?
+[english] If the input dimensions do not match exactly, a `QiskitError` is raised with a message stating that 'other QuantumChannel dimensions are not equal'. This protects against incorrect linear combinations.
+[english] Thanks for the clarification.

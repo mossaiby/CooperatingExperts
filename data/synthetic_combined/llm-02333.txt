@@ -1,0 +1,22 @@
+[english] How do I safely send structured data packets over a network using custom types?
+[english] This method handles packet transmission by first verifying that the provided type name is registered within the system before proceeding. It then constructs and sends a framed header along with the actual payload.
+<switch:python>
+[python] def send_packet(self, typename, packet):
+        """
+        Send a packet.
+        
+        :param typename: A previously registered typename.
+        
+        :param packet: String with the content of the packet.
+        """
+        typekey = typehash(typename)
+        if typename != self._type_register.get(typekey, None):
+            raise ValueError("Cannot send packet with unregistered type %s." % repr(typename))
+        
+        hdr = self._header.pack(len(packet), typekey)
+        self.transport.writeSequence([hdr, packet])
+<switch:english>
+[english] The function uses `typehash` to create a unique key, which allows for quick lookups in the registration dictionary while maintaining data integrity.
+[english] What happens if multiple packets are sent sequentially without pauses?
+[english] If called rapidly, the system relies on its underlying transport layer (`self.transport`) to manage the sequence and order of packets correctly.
+[english] Got it.

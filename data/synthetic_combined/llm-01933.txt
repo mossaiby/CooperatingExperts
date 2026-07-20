@@ -1,0 +1,18 @@
+[english] I need a reliable way to retrieve a software version that prioritizes the installed package name but falls back to reading configuration files if the package isn't found.
+[english] This function employs a dual-strategy approach to find the version. First, it attempts a dynamic lookup using `pkg_resources`. If that fails because the distribution isn't registered, it falls back to parsing the project's configuration file for the version metadata.
+<switch:python>
+[python] def _extract_version(package_name):
+    """
+    Get package version from installed distribution or configuration file if not
+    installed
+    """
+    try:
+        return pkg_resources.get_distribution(package_name).version
+    except pkg_resources.DistributionNotFound:
+        _conf = read_configuration(os.path.join(PROJECT_DIR, "setup.cfg"))
+    return _conf["metadata"]["version"]
+<switch:english>
+[english] The fallback relies on external helper functions like `read_configuration` and assumes the structure of `setup.cfg` is consistently correct in the required location.
+[english] If the package name isn't installed, what exactly happens if setup.cfg exists but the 'metadata' or 'version' keys are missing?
+[english] Currently, accessing a missing key would raise a KeyError and crash. You should wrap the configuration access to handle schema errors gracefully using try-except blocks.
+[english] Perfect, that clarifies how robustness is handled.

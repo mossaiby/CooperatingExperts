@@ -1,0 +1,28 @@
+[english] I need to package a list of individual I2C commands into a single, complex structure that can be passed to an operating system for execution.
+[english] This function builds the necessary raw data structures by first allocating an array of message structs based on the length of your input. It then iterates through each message tuple to populate its specific fields like address and buffer pointers.
+<switch:python>
+[python] def make_i2c_rdwr_data(messages):
+    """Utility function to create and return an i2c_rdwr_ioctl_data structure
+    populated with a list of specified I2C messages.  The messages parameter
+    should be a list of tuples which represent the individual I2C messages to
+    send in this transaction.  Tuples should contain 4 elements: address value,
+    flags value, buffer length, ctypes c_uint8 pointer to buffer.
+    """
+    # Create message array and populate with provided data.
+    msg_data_type = i2c_msg*len(messages)
+    msg_data = msg_data_type()
+    for i, message in enumerate(messages):
+        msg_data[i].addr = message[0] & 0x7F
+        msg_data[i].flags = message[1]
+        msg_data[i].len = message[2]
+        msg_data[i].buf = message[3]
+    # Now build the data structure.
+    data = i2c_rdwr_ioctl_data()
+    data.msgs = msg_data
+    data.nmsgs = len(messages)
+    return data
+<switch:english>
+[english] The resulting object, `data`, holds the entire sequence ready for a low-level I2C IOCTL call. Remember that this function manages ctypes memory manually, so careful resource handling is necessary in a larger system.
+[english] Does this function handle an empty list of messages gracefully without causing errors?
+[english] Yes, if `messages` is empty, the function returns an initialized `i2c_rdwr_ioctl_data` object with its message array pointers set up but zero elements. Calling it will result in a null transaction.
+[english] Got it, that makes sense for handling edge cases.

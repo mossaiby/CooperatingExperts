@@ -1,0 +1,24 @@
+[english] How do I programmatically add a formatted list of assigned task links to the bottom of an existing Asana issue?
+[english] This function is designed to inject structured task data into an issue's body as text. It first formats the required task numbers using helper methods before checking if any tasks were successfully generated.
+<switch:python>
+[python] def apply_tasks_to_issue(self, issue, tasks, issue_body=None):
+        """Applies task numbers to an issue."""
+        issue_body = issue_body or issue.body
+        task_numbers = transport.format_task_numbers_with_links(tasks)
+        if task_numbers:
+            new_body = transport.ASANA_SECTION_RE.sub('', issue_body)
+            new_body = new_body + "\n## Asana Tasks:\n\n%s" % task_numbers
+            transport.issue_edit(issue,
+                                 body=new_body)
+            return new_body
+
+        return issue_body
+<switch:english>
+[english] The code uses regex substitution (`ASANA_SECTION_RE`) to clear old content before appending the new task list, ensuring a clean update.
+[english] What happens if `transport.format_task_numbers_with_links` returns an empty string instead of None?
+[english] If it returns an empty string, the function treats it as falsy and skips the task application logic entirely. To handle this case explicitly, you might adjust the conditional check:
+<switch:python>
+[python] if task_numbers:
+            # ... existing code...
+<switch:english>
+[english] Thanks for clarifying that behavior.

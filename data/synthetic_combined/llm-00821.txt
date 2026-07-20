@@ -1,0 +1,42 @@
+[english] How do I generate a repeating animation sequence tensor from a character sprite sheet given an action and direction?
+[english] This function constructs an animation sequence by first locating the relevant frames within the input character sprite using metadata, then reshaping and slicing those frames.
+<switch:python>
+[python] def create_seq(character, action_metadata, direction, length=8, start=0):
+  """Creates a sequence.
+
+  Args:
+    character: A character sprite tensor.
+    action_metadata: An action metadata tuple.
+    direction: An integer representing the direction, i.e., the row
+      offset within each action group corresponding to a particular
+      direction.
+    length: Desired length of the sequence. If this is longer than
+      the number of available frames, it will roll over to the
+      beginning.
+    start: Index of possible frames at which to start the sequence.
+
+  Returns:
+    A sequence tensor.
+  """
+  sprite_start = (action_metadata[0]+direction) * FRAME_SIZE
+  sprite_end = (action_metadata[0]+direction+1) * FRAME_SIZE
+  sprite_line = character[sprite_start:sprite_end, ...]
+
+  # Extract 64x64 patches that are side-by-side in the sprite, and limit
+  # to the actual number of frames for the given action.
+  frames = tf.stack(tf.split(sprite_line, 13, axis=1))  # 13 is a hack
+  frames = frames[0:action_metadata[1]]
+
+  # Extract a slice of the desired length.
+  # NOTE: Length could be longer than the number of frames, so tile as needed.
+  frames = tf.roll(frames, shift=-start, axis=0)
+  frames = tf.tile(frames, [2, 1, 1, 1])  # 2 is a hack
+  frames = frames[:length]
+  frames = tf.cast(frames, dtype=tf.float32)
+  frames.set_shape([length, FRAME_SIZE, FRAME_SIZE, CHANNELS])
+  return frames
+<switch:english>
+[english] The function uses `tf.roll` and `tf.tile` to handle sequence wrapping, effectively looping the animation if the requested `length` exceeds the original frame count.
+[english] Where exactly are the 'hacks' mentioned in the code compensating for?
+[english] The hacks (13 and 2) suggest that fixed values were used to slice frames or tile sequences during development, likely based on specific input dimensions rather than being universally correct. If FRAME_SIZE is the width of a single frame, `tf.split(sprite_line, 13)` assumes there are 13 frames in the action.
+[english] That makes sense; I'll adjust those constants now.

@@ -1,0 +1,28 @@
+[english] How do I automatically create a secret, temporary share link for an item based on a submitted request record?
+[english] This function first retrieves the corresponding data record using the provided ID to ensure it exists before proceeding. It then uses `render_template` to dynamically construct a detailed and formatted description using all available submission details.
+<switch:python>
+[python] def create_secret_link(request, message=None, expires_at=None):
+    """Receiver for request-accepted signal."""
+    pid, record = get_record(request.recid)
+    if not record:
+        raise RecordNotFound(request.recid)
+
+    description = render_template(
+        "zenodo_accessrequests/link_description.tpl",
+        request=request,
+        record=record,
+        pid=pid,
+        expires_at=expires_at,
+        message=message,
+    )
+
+    request.create_secret_link(
+        record["title"],
+        description=description,
+        expires_at=expires_at
+    )
+<switch:english>
+[english] After assembling the complete descriptive text, this method calls the request object's internal linking mechanism (`request.create_secret_link`) to finalize and generate the secret URL with the specified expiration time.
+[english] What validation is performed on `expires_at` before it is passed to the link creation logic?
+[english] The current implementation does not perform any explicit validation on the `expires_at` parameter. It simply passes whatever datetime object or value you provide directly into the request's linking method.
+[english] Got it, I will add a validation check here to ensure the expiration time is in the future.

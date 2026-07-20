@@ -1,0 +1,29 @@
+[english] I need to combine two Striplog objects into one as if they were merged.
+[english] To perform the union, I first verify that both input objects have compatible types. Then, the function iterates through a deep copy of itself and checks for overlaps with every element in the other log.
+<switch:python>
+[python] def union(self, other):
+        """
+        Makes a striplog of all unions.
+
+        Args:
+            Striplog. The striplog instance to union with.
+
+        Returns:
+            Striplog. The result of the union.
+        """
+        if not isinstance(other, self.__class__):
+            m = "You can only union striplogs with each other."
+            raise StriplogError(m)
+
+        result = []
+        for iv in deepcopy(self):
+            for jv in other:
+                if iv.any_overlaps(jv):
+                    iv = iv.union(jv)
+            result.append(iv)
+        return Striplog(result)
+<switch:english>
+[english] The process ensures all overlapping elements from `other` are merged into corresponding items in the result list before returning a new Striplog instance. Note that this implementation creates a new object rather than mutating the input logs.
+[english] If an element already present in 'self' overlaps with multiple individual items in 'other', how is it handled?
+[english] Because the code has nested loops, the existing item in `self` will be checked against every item in `other`. If multiple overlaps occur during iteration, their content will sequentially be merged into that single element. For example:
+[english] This makes total sense for managing intersecting logs.

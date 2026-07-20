@@ -1,0 +1,55 @@
+[english] How can I extract a comprehensive list of types (like email or custom labels) associated with a vCard object?
+[english] This method consolidates type information by checking three main sources: explicit custom labels, standard 'TYPE' parameters from the vCard structure, and version 4.0 preference settings.
+<switch:python>
+[python] def _get_types_for_vcard_object(self, object, default_type):
+        """
+        get list of types for phone number, email or post address
+        :param object: vcard class object
+        :type object: vobject.vCard
+        :param default_type: use if the object contains no type
+        :type default_type: str
+        :returns: list of type labels
+        :rtype: list(str)
+        """
+        type_list = []
+        # try to find label group for custom value type
+        if object.group:
+            for label in self.vcard.getChildren():
+                if label.name == "X-ABLABEL" and label.group == object.group:
+                    custom_type = label.value.strip()
+                    if custom_type:
+                        type_list.append(custom_type)
+        # then load type from params dict
+        standard_types = object.params.get("TYPE")
+        if standard_types is not None:
+            if not isinstance(standard_types, list):
+                standard_types = [standard_types]
+            for type in standard_types:
+                type = type.strip()
+                if type and type.lower() != "pref":
+                    if not type.lower().startswith("x-"):
+                        type_list.append(type)
+                    elif type[2:].lower() not in [x.lower() for x in type_list]:
+                        # add x-custom type in case it's not already added by
+                        # custom label for loop above but strip x- before
+                        type_list.append(type[2:])
+        # try to get pref parameter from vcard version 4.0
+        try:
+            type_list.append("pref=%d" % int(object.params.get("PREF")[0]))
+        except (IndexError, TypeError, ValueError):
+            # else try to determine, if type params contain pref attribute
+            try:
+                for x in object.params.get("TYPE"):
+                    if x.lower() == "pref" and "pref" not in type_list:
+                        type_list.append("pref")
+            except TypeError:
+                pass
+        # return type_list or default type
+        if type_list:
+            return type_list
+        return [default_type]
+<switch:english>
+[english] The function is designed to be robust, handling both single string and list versions of types while providing a sensible default if no specific types are found.
+[english] If the object uses a standard type but specifies 'pref' in its `TYPE` parameter without an explicit numeric code in `PREF`, will 'pref' always be added to the resulting list?
+[english] Yes, if a user includes 'pref' in the TYPE parameters and fails to provide a specific integer for PREF, the code includes a secondary check that appends 'pref' directly.
+[english] That clarifies how preferences are handled. Thanks!

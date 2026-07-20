@@ -1,0 +1,20 @@
+[english] I need a client setup that connects to a specified UDP server using asynchronous networking calls.
+[english] This solution utilizes asynchronous resolution to prevent blocking while waiting for host data, then triggers the connection logic once the address is determined.
+<switch:python>
+[python] def createClient(self):
+        """Create a UDP connection to Riemann"""
+        server = self.config.get('server', '127.0.0.1')
+        port = self.config.get('port', 5555)
+
+        def connect(ip):
+            self.protocol = riemann.RiemannUDP(ip, port)
+            self.endpoint = reactor.listenUDP(0, self.protocol)
+
+        d = reactor.resolve(server)
+        d.addCallback(connect)
+        return d
+<switch:english>
+[english] The implementation relies on a global or module-level `reactor` object and uses callbacks to handle the eventual connection setup after address resolution.
+[english] If the server configuration changes, how can I restart this client safely?
+[english] You would typically need a method that clears existing state (like self.endpoint) and then calls createClient() again, allowing the new asynchronous operation to take precedence.
+[english] Is there any thread safety concern here?

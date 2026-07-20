@@ -1,0 +1,20 @@
+[english] I have a list of CIDR network strings, like '192.168.0.1/24', and I need to convert them into a format showing both the IP address and its corresponding subnet mask.
+[english] This function uses the external `netaddr` library to parse the CIDR input. It extracts the network address from the prefix object, then retrieves the associated netmask.
+<switch:python>
+[python] def prefix_to_addrmask(value, sep=" "):
+    """
+    Converts a CIDR formatted prefix into an address netmask representation.
+    Argument sep specifies the separator between the address and netmask parts.
+    By default it's a single space.
+
+    Examples:
+        >>> "{{ '192.168.0.1/24|prefix_to_addrmask }}" -> "192.168.0.1 255.255.255.0"
+        >>> "{{ '192.168.0.1/24|prefix_to_addrmask('/') }}" -> "192.168.0.1/255.255.255.0"
+    """
+    prefix = netaddr.IPNetwork(value)
+    return "{}{}{}".format(prefix.ip, sep, prefix.netmask)
+<switch:english>
+[english] The result is a formatted string combining the IP address and netmask using the specified separator. Remember that this requires the 'netaddr' package to be installed in your environment.
+[english] What happens if I pass an invalid CIDR format, like '192.168.0.5/xyz'?
+[english] If an invalid network is provided, `netaddr.IPNetwork(value)` will raise a ValueError because it cannot successfully parse the input.
+[english] That makes sense, thanks for clarifying!

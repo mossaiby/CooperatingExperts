@@ -1,0 +1,35 @@
+[english] I need a function that automatically determines the correct, relevant CSV header fields based on whether I am submitting variant data or case data.
+[english] This function helps construct a precise CSV header by comparing necessary fields from predefined header constants against the actual keys present in your submission objects. It selects only those required fields that are actually present in the provided list of data objects, creating a streamlined custom header for export.
+<switch:python>
+[python] def clinvar_submission_header(submission_objs, csv_type):
+    """Determine which fields to include in csv header by checking a list of submission objects
+
+        Args:
+            submission_objs(list): a list of objects (variants or casedata) to include in a csv file
+            csv_type(str) : 'variant_data' or 'case_data'
+
+        Returns:
+            custom_header(dict): A dictionary with the fields required in the csv header. Keys and values are specified in CLINVAR_HEADER and CASEDATA_HEADER
+
+    """
+
+    complete_header = {} # header containing all available fields
+    custom_header = {}   # header reflecting the real data included in the submission objects
+    if csv_type == 'variant_data' :
+        complete_header = CLINVAR_HEADER
+    else:
+        complete_header = CASEDATA_HEADER
+
+    for header_key, header_value in complete_header.items(): # loop over the info fields provided in each submission object
+        for clinvar_obj in submission_objs: # loop over the submission objects
+            for key, value in clinvar_obj.items(): # loop over the keys and values of the clinvar objects
+
+                if not header_key in custom_header and header_key == key: # add to custom header if missing and specified in submission object
+                    custom_header[header_key] = header_value
+
+    return custom_header
+<switch:english>
+[english] The logic successfully ensures that only headers containing available data points are included, preventing empty or irrelevant columns from appearing in your final CSV file. Note that this approach checks if a field exists in any object within the submission list.
+[english] What happens if one of the required fields listed in CLINVAR_HEADER is missing entirely from every single object in submission_objs?
+[english] If a header key is present in `CLINVAR_HEADER` but is not found as a key in *any* of the objects in `submission_objs`, it will simply be excluded from the resulting custom_header dictionary.
+[english] That makes sense, thank you for clarifying how missing data is handled.

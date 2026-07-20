@@ -1,0 +1,30 @@
+[english] Can I set up a mechanism to skip running PyFunceble entirely if my latest commit message contains a specific bypass tag?
+[english] This function determines whether its execution should be bypassed based on two conditions: it checks if the script is currently running within Travis CI. It then uses regex to inspect the most recent git commit message for a predefined skip marker.
+<switch:python>
+[python] def bypass(cls):
+        """
+        Exit the script if :code:`[PyFunceble skip]` is matched into the latest
+        commit message.
+        """
+
+        # We set the regex to match in order to bypass the execution of
+        # PyFunceble.
+        regex_bypass = r"\[PyFunceble\sskip\]"
+
+        if (
+            PyFunceble.CONFIGURATION["travis"]
+            and Regex(
+                Command("git log -1").execute(), regex_bypass, return_data=False
+            ).match()
+        ):
+            # * We are under Travis CI.
+            # and
+            # * The bypass marker is matched into the latest commit.
+
+            # We save everything and stop PyFunceble.
+            AutoSave(True, is_bypass=True)
+<switch:english>
+[english] If both the CI environment and the specific bypass tag are found, the function automatically saves the state and halts execution of PyFunceble.
+[english] What happens if I run this code locally but still use the `[PyFunceble skip]` tag in my commit message?
+[english] The bypass will not be triggered because it requires `PyFunceble.CONFIGURATION["travis"]` to evaluate to true, which is only set when running within the Travis CI environment.
+[english] That makes sense; I need to ensure those specific configuration flags are handled correctly.

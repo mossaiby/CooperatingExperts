@@ -1,0 +1,12 @@
+[english] I need a method to correctly update the ending position of a discovered token within my custom lexical analyzer.
+[english] This function is typically found within a lexing component of a parser. Its primary role is to ensure that after successfully identifying a token, its metadata accurately reflects where the matched string ends in the input source.
+<switch:python>
+[python] def t_GE(self, t):
+        r"\>\="
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+<switch:english>
+[english] The core logic assumes `t.value` contains the full text recognized for the token (like '>= '), allowing it to precisely calculate and assign the end position using simple arithmetic.
+[english] What if I am dealing with multiline tokens, or what happens if `len(t.value)` doesn't accurately reflect character encoding?
+[english] If you are concerned about encoding complexity (like UTF-8), relying on Python's built-in `len()` is usually safe for Unicode strings. If the token spans multiple lines and your tracking requires line numbers, you would need a more complex function to calculate offsets based on newline counts.
+[english] That makes sense; standard string lengths should be fine for typical lexical analysis.

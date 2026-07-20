@@ -1,0 +1,41 @@
+[english] How can I load my LSI configuration profiles from a home directory file into an object?
+[english] This function reads user profile configurations stored in a standard application location. It utilizes Python's ConfigParser to look up settings, providing sensible default objects if no config is found or if the requested profile section is missing.
+<switch:python>
+[python] def load(cls, profile_name=None):
+        """Loads the user's LSI profile, or provides a default."""
+        lsi_location = os.path.expanduser('~/.lsi')
+        if not os.path.exists(lsi_location):
+            return LsiProfile()
+        cfg_parser = ConfigParser()
+        cfg_parser.read(lsi_location)
+        if profile_name is None:
+            # Load the default profile if one exists; otherwise return empty.
+            if cfg_parser.has_section('default'):
+                profile_name = 'default'
+            else:
+                return cls()
+        elif not cfg_parser.has_section(profile_name):
+            raise cls.LoadError('No such profile {}'.format(profile_name))
+        def _get(option, alt=None):
+            """Gets an option if it exists; else returns `alt`."""
+            if cfg_parser.has_option(profile_name, option):
+                return cfg_parser.get(profile_name, option)
+            else:
+                return alt
+        if cfg_parser.has_option(profile_name, 'inherit'):
+            profile = cls.load(cfg_parser.get(profile_name, 'inherit'))
+        else:
+            profile = cls()
+        profile.override('username', _get('username'))
+        profile.override('identity_file', _get('identity file'))
+        profile.override('command', _get('command'))
+        filters = [s for s in _get('filters', '').split(',') if len(s) > 0]
+        exclude = [s for s in _get('exclude', '').split(',') if len(s) > 0]
+        profile.filters.extend(filters)
+        profile.exclude.extend(exclude)
+        return profile
+<switch:english>
+[english] The method builds the final profile by first determining the base configuration (which might be inherited from another profile) and then explicitly overriding core fields using values read directly from the parsed file.
+[english] What happens if a required key like 'command' or 'filters' doesn't exist for a given profile in the config file?
+[english] The internal helper function `_get` handles this by returning its provided alternative (`alt`). Since we call it with no explicit default, missing options effectively return None, leaving the corresponding property untouched unless overridden.
+[english] That clarifies how fallbacks are handled.

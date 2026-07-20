@@ -1,0 +1,18 @@
+[english] How can I convert a complex Python object into a signed, verifiable string using this library?
+[english] To serialize an object for secure transmission, this method first converts the input data into a payload. It then uses the provided salt to generate and apply a cryptographic signature over that payload before returning the result.
+<switch:python>
+[python] def dumps(self, obj, salt=None):
+        """Returns a signed string serialized with the internal serializer.
+        The return value can be either a byte or unicode string depending
+        on the format of the internal serializer.
+        """
+        payload = want_bytes(self.dump_payload(obj))
+        rv = self.make_signer(salt).sign(payload)
+        if self.is_text_serializer:
+            rv = rv.decode('utf-8')
+        return rv
+<switch:english>
+[english] The function manages serialization carefully, making sure the output is handled as bytes or decoded into a UTF-8 string based on configuration.
+[english] If I don't provide a `salt`, how does the signing process know which key to use?
+[english] When salt is omitted, the function likely relies on a default key stored during the instantiation of the object or signer. The internal logic within 'make_signer' selects the appropriate credentials based on its initial setup.
+[english] That makes sense; I will test it with both salted and unsalted inputs.

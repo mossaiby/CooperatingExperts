@@ -1,0 +1,27 @@
+[english] How can I programmatically define and register a new macro within an object's namespace while ensuring that the provided action is correctly converted into a Macro instance?
+[english] This function is designed to allow users to register custom macros under a specified name. It first normalizes the input, checking if the action (`themacro`) is a string and converting it into an IPython Macro object if necessary.
+<switch:python>
+[python] def define_macro(self, name, themacro):
+        """Define a new macro
+
+        Parameters
+        ----------
+        name : str
+            The name of the macro.
+        themacro : str or Macro
+            The action to do upon invoking the macro.  If a string, a new
+            Macro object is created by passing the string to it.
+        """
+
+        from IPython.core import macro
+
+        if isinstance(themacro, basestring):
+            themacro = macro.Macro(themacro)
+        if not isinstance(themacro, macro.Macro):
+            raise ValueError('A macro must be a string or a Macro instance.')
+        self.user_ns[name] = themacro
+<switch:english>
+[english] By enforcing that `themacro` is always a proper `Macro` instance before assignment, this function ensures type safety for macro invocation within its environment (like Jupyter).
+[english] If I call define_macro twice using the same name but with different string actions, which version will be available?
+[english] The second definition will completely overwrite the first one, as the function blindly assigns to `self.user_ns[name]` regardless of previous content.
+[english] I see, so I should handle checks before calling this if uniqueness is important.

@@ -1,0 +1,33 @@
+[english] How can I programmatically find a specific relational link between two instances given their types, ID, and descriptive phrase?
+[english] This function searches for an association by iterating through all defined relationships in the first instance's metaclass.
+<switch:python>
+[python] def _find_link(inst1, inst2, rel_id, phrase):
+    '''
+    Find links that correspond to the given arguments.
+    '''
+    metaclass1 = get_metaclass(inst1)
+    metaclass2 = get_metaclass(inst2)
+
+    if isinstance(rel_id, int):
+        rel_id = 'R%d' % rel_id
+        
+    for ass in metaclass1.metamodel.associations:
+        if ass.rel_id != rel_id:
+            continue
+
+        if (ass.source_link.from_metaclass.kind == metaclass1.kind and
+            ass.source_link.to_metaclass.kind == metaclass2.kind and
+            ass.source_link.phrase == phrase):
+            return inst1, inst2, ass
+
+        if (ass.target_link.from_metaclass.kind == metaclass1.kind and
+            ass.target_link.to_metaclass.kind == metaclass2.kind and
+            ass.target_link.phrase == phrase):
+            return inst2, inst1, ass
+
+    raise UnknownLinkException(metaclass1.kind, metaclass2.kind, rel_id, phrase)
+<switch:english>
+[english] It checks if the relationship matches both directionality (source/target) and the provided text phrase; otherwise, it signals a failure via an exception.
+[english] What happens if `rel_id` is passed as an integer input instead of a string?
+[english] The function first converts any integer `rel_id` into its string representation using `'R%d' % rel_id` to ensure consistent comparison against the defined association IDs.
+[english] Got it, that makes sense for robust data lookup.

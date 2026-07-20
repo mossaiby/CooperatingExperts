@@ -1,0 +1,13 @@
+[english] How do I efficiently update a list of associated edges when they are being replaced?
+[english] This method handles edge replacement by first cleaning up the existing connections before introducing the new set.
+<switch:python>
+[python] def _edges_replaced(self, object, name, old, new):
+        """ Handles a list of edges being set.
+        """
+        self._delete_edges(old)
+        self._add_edges(new)
+<switch:english>
+[english] The function removes the specified `old` edges and then dynamically calls a method to add all elements from the `new` collection.
+[english] Does this implementation guarantee that an edge isn't accidentally added if it already exists in 'new', or are we relying on `self._add_edges` to handle uniqueness?
+[english] `self._add_edges(new)` implies internal logic handles duplication; however, for maximum safety, you should ensure the 'new' list contains only unique identifiers before calling this function.
+[english] That makes much more sense. Thanks for explaining how it maintains state!

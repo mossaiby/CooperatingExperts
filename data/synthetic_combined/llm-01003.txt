@@ -1,0 +1,19 @@
+[english] I need a utility function to sub-sample large OpenSWATH files efficiently, with the option to process and save them to an output file.
+[english] This function manages how input and output filenames are handled before initiating the heavy lifting. It checks if you provided an explicit output path; if not, it defaults to using the source file as the destination.
+<switch:python>
+[python] def subsample(infile, outfile, subsample_ratio, test):
+    """
+    Subsample OpenSWATH file to minimum for integrated scoring
+    """
+
+    if outfile is None:
+        outfile = infile
+    else:
+        outfile = outfile
+
+    subsample_osw(infile, outfile, subsample_ratio, test)
+<switch:english>
+[english] The core functionality relies on calling the external helper function `subsample_osw` with all necessary parameters for the actual subsampling logic.
+[english] What happens if I set 'outfile' to None and try to run this, assuming 'infile' is a valid path?
+[english] When 'outfile' is None, the initial conditional block sets 'outfile = infile', meaning the function attempts to perform an in-place substitution or overwrite.
+[english] Thanks for clarifying how that input argument is managed!

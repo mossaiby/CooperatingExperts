@@ -1,0 +1,27 @@
+[english] I need to generate a rectangular matrix filled with complex numbers where both the real and imaginary parts are normally distributed.
+[english] To create this random complex matrix, we use NumPy. We generate two separate arrays of normal random variables—one for the real component and one for the imaginary component (multiplied by 1j)—and then add them together.
+<switch:python>
+[python] def __ginibre_matrix(nrow, ncol=None, seed=None):
+    """
+    Return a normally distributed complex random matrix.
+
+    Args:
+        nrow (int): number of rows in output matrix.
+        ncol (int): number of columns in output matrix.
+        seed (int): Optional. To set a random seed.
+    Returns:
+        ndarray: A complex rectangular matrix where each real and imaginary
+            entry is sampled from the normal distribution.
+    """
+    if ncol is None:
+        ncol = nrow
+    if seed is not None:
+        np.random.seed(seed)
+    G = np.random.normal(size=(nrow, ncol)) + \
+        np.random.normal(size=(nrow, ncol)) * 1j
+    return G
+<switch:english>
+[english] This function effectively constructs a Ginibre ensemble matrix by combining two independent standard normal distributions across all entries.
+[english] If I don't specify any size, does it default to creating a square matrix?
+[english] Yes, if `ncol` is not provided, the code sets `ncol = nrow`, ensuring the resulting matrix is always square when called with only one dimension.
+[english] Got it, thanks for clarifying.

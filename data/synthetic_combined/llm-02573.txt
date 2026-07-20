@@ -1,0 +1,24 @@
+[english] I have a list of various field objects, and I only want to extract the ones marked as custom fields.
+[english] This function iterates through your input set of fields to identify which entries are designated as custom using the 'custom' flag. It then maps these filtered items by their unique ID for easy lookup.
+<switch:python>
+[python] def filter_custom_fields(fields):
+    """Filter custom fields from a given set of fields.
+
+    :param fields: set of fields
+
+    :returns: an object with the filtered custom fields
+    """
+
+    custom_fields = {}
+
+    sorted_fields = [field for field in fields if field['custom'] is True]
+
+    for custom_field in sorted_fields:
+        custom_fields[custom_field['id']] = custom_field
+
+    return custom_fields
+<switch:english>
+[english] The use of a dictionary comprehension style loop ensures that even if duplicate IDs somehow existed, they would overwrite each other during iteration. You can access any field directly via its ID after this process completes.
+[english] What should happen if one of the custom fields does not have an 'id' key?
+[english] If a custom field is missing the 'id' key, it will be skipped entirely when constructing the final dictionary because the line `custom_fields[custom_field['id']] = custom_field` requires that access.
+[english] That clears up my uncertainty about how potential errors are handled.

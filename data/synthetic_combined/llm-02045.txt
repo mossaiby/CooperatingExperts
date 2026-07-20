@@ -1,0 +1,48 @@
+[english] How can I consolidate parameters defined across multiple process objects into a single, merged Nextflow configuration string?
+[english] This logic iterates through all processes to collect their defined parameters. It uses a temporary dictionary to handle the merging and ensures that only the 'default' value from each parameter definition is captured.
+<switch:python>
+[python] def _get_merged_params_string(self):
+        """Returns the merged nextflow params string from a dictionary object.
+
+        The params dict should be a set of key:value pairs with the
+        parameter name, and the default parameter value::
+
+            self.params = {
+                "genomeSize": 2.1,
+                "minCoverage": 15
+            }
+
+        The values are then added to the string as they are. For instance,
+        a ``2.1`` float will appear as ``param = 2.1`` and a
+        ``"'teste'" string will appear as ``param = 'teste'`` (Note the
+        string).
+
+        Identical parameters in multiple processes will be merged into the same
+        param.
+
+        Returns
+        -------
+        str
+            Nextflow params configuration string
+        """
+
+        params_temp = {}
+
+        for p in self.processes:
+
+            logger.debug("[{}] Adding parameters: {}".format(p.template,
+                                                             p.params))
+            for param, val in p.params.items():
+
+                params_temp[param] = val["default"]
+
+        config_str = "\n\t" + "\n\t".join([
+            "{} = {}".format(param, val) for param, val in params_temp.items()
+        ])
+
+        return config_str
+<switch:english>
+[english] The function successfully formats these merged settings into a specific multi-line configuration string, correctly handling type conversion for floats and strings like Nextflow requires.
+[english] If a parameter name appears in multiple processes but lacks a "default" key in its value dictionary, how does the merging process behave?
+[english] The function relies strictly on `val["default"]`. If that key is missing from any parameter definition, it will raise a KeyError and halt execution.
+[english] That clarifies the necessity for consistent default definitions.

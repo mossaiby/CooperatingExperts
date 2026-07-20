@@ -1,0 +1,13 @@
+[english] I need a way to apply string formatting based on template rules across an entire columnar dataset.
+[english] This function wraps Vaex's powerful string formatting capabilities into a structure suitable for column operations. It first performs the actual string substitution using `vaex.strings.format` and then encapsulates the results in a more specialized Arrow-like format, `ColumnStringArrow`.
+<switch:python>
+[python] def format(x, format):
+    """Uses http://www.cplusplus.com/reference/string/to_string/ for formatting"""
+    # don't change the dtype, otherwise for each block the dtype may be different (string length)
+    sl = vaex.strings.format(x, format)
+    return column.ColumnStringArrow(sl.bytes, sl.indices, sl.length, sl.offset, string_sequence=sl)
+<switch:english>
+[english] A critical detail is that this approach avoids modifying data types excessively during the iteration process by preserving internal dtypes until the final construction.
+[english] Does this function handle cases where the input column contains non-string or null values?
+[english] If `x` contains mixed types, Vaex's string formatting will typically coerce them to strings first. If a value is explicitly NaN or None, it depends on Vaex's implementation of that operation but usually results in an empty or placeholder string.
+[english] Got it, so this is highly efficient for large datasets.

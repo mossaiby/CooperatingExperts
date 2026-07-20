@@ -1,0 +1,46 @@
+[english] How can I generate rule definitions by iterating over values while correctly managing prerequisite lists and handling specific grammar errors?
+[english] This function builds a sequence of defined rules based on `self.values`. It iteratively appends processed values to a deque, carefully adjusting the list of prerequisites (`pre`) whenever an error like `FlushGrams` occurs.
+<switch:python>
+[python] def build(self, pre=None, shortest=False):
+        """Build this rule definition
+        
+        :param list pre: The prerequisites list
+        :param bool shortest: Whether or not the shortest reference-chain (most minimal) version of the field should be generated.
+        """
+        if pre is None:
+            pre = []
+
+        res = deque()
+        for value in self.values:
+            try:
+                res.append(utils.val(value, pre, shortest=shortest))
+            except errors.FlushGrams as e:
+                prev = "".join(res)
+                res.clear()
+                # this is assuming a scope was pushed!
+                if len(self.fuzzer._scope_stack) == 1:
+                    pre.append(prev)
+                else:
+                    stmts = self.fuzzer._curr_scope.setdefault("prev_append", deque())
+                    stmts.extend(pre)
+                    stmts.append(prev)
+                    pre.clear()
+                continue
+            except errors.OptGram as e:
+                continue
+            except errors.GramFuzzError as e:
+                print("{} : {}".format(self.name, str(e)))
+                raise
+
+        return self.sep.join(res)
+<switch:english>
+[english] It uses `try...except` blocks to handle different grammar validation errors, ensuring that prerequisite tracking (`pre`) is only modified when specific flow-breaking exceptions occur.
+[english] When an error like `FlushGrams` occurs, how does the handling of existing prerequisites differ between being in a single scope vs. nested scopes?
+[english] If there's only one item on the stack, the previous output (`prev`) is appended to `pre`; otherwise, it appends the entire current prerequisite chain (`pre`) before adding `prev` to `self.fuzzer._curr_scope`.
+<switch:python>
+[python] stmts = self.fuzzer._curr_scope.setdefault("prev_append", deque())
+    stmts.extend(pre)
+    stmts.append(prev)
+    pre.clear()
+<switch:english>
+[english] This detailed breakdown is very helpful for understanding the grammar generation logic!

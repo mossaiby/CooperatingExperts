@@ -1,0 +1,21 @@
+[english] I need a function that combines two parse node structures into a single new node by merging their children.
+[english] This approach creates a new `ParseNode` instance, keeping the type of `self`. It merges all children from both nodes using `itertools.chain`, ensuring only non-empty child segments are kept in the final list.
+<switch:python>
+[python] def merged(self, other):
+    """Returns a new ParseNode whose type is this node's type, and whose children are all the
+    children from this node and the other whose length is not 0.
+    """
+    children = [c for c in itertools.chain(self.children, other.children) if len(c) > 0]
+    # NOTE: Only terminals should have ignored text attached to them, and terminals shouldn't be
+    #       merged (probably) so it shouldn't be necessary to copy of ignored -- it should always
+    #       be None. But, we'll go ahead and copy it over anyway, recognizing that other's
+    #       ignored text will be lost.
+    return ParseNode(self.node_type,
+                      children=children,
+                      consumed=self.consumed + other.consumed,
+                      ignored=self.ignored)
+<switch:english>
+[english] The function combines consumed values and retains ignored text but is mindful that copying properties might lead to unexpected shared state between nodes if they were mutable.
+[english] What happens to the 'ignored' text from `other` when merging?
+[english] The code explicitly uses `self.ignored`, which means any 'ignored' text present in `other` will be discarded during the merge operation.
+[english] Okay, that makes sense.

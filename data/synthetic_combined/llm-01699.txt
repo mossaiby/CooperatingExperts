@@ -1,0 +1,21 @@
+[english] I need to extract and yield all token objects that represent character offsets from a list of sentence structures.
+[english] This function employs nested iteration to traverse every token within every provided sentence. It uses conditional yielding to ensure only tokens marked with the specific character offset type are returned.
+<switch:python>
+[python] def sentences_to_char_tokens(si_sentences):
+    '''Convert stream item sentences to character ``Offset``s.'''
+    for sentence in si_sentences:
+        for token in sentence.tokens:
+            if OffsetType.CHARS in token.offsets:
+                yield token
+<switch:english>
+[english] The use of `yield` makes this a memory-efficient generator, which is ideal for processing large streams without loading everything into memory at once.
+[english] What will happen if an item in si_sentences doesn't have a .tokens attribute?
+[english] If a sentence object lacks the .tokens attribute, Python will raise an AttributeError. To prevent this, you could add a check for the existence of tokens within the loop:
+<switch:python>
+[python] for sentence in si_sentences:
+    if hasattr(sentence, 'tokens'): # Added safety check
+        for token in sentence.tokens:
+            if OffsetType.CHARS in token.offsets:
+                yield token
+<switch:english>
+[english] That makes sense; I'll integrate that safety feature into my larger pipeline.

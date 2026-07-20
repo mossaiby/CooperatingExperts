@@ -1,0 +1,51 @@
+[english] How can I create a Python method that recursively applies fuzzing mutations to dictionaries and lists based on specific configuration parameters?
+[english] This function uses recursion and type checking to traverse complex data structures. It maintains custom logic for dict keys against configured parameter sets while applying standardized mutation via another object.
+<switch:python>
+[python] def fuzz_elements(self, element):
+        """
+        Fuzz all elements inside the object
+        """
+        try:
+            if type(element) == dict:
+                tmp_element = {}
+                for key in element:
+                    if len(self.config.parameters) > 0:
+                        if self.config.exclude_parameters:
+                            fuzz = key not in self.config.parameters
+                        else:
+                            fuzz = key in self.config.parameters
+                    else:
+                        fuzz = True
+                    if fuzz:
+                        if type(element[key]) == dict:
+                            tmp_element.update({key: self.fuzz_elements(element[key])})
+                        elif type(element[key]) == list:
+                            tmp_element.update({key: self.fuzz_elements(element[key])})
+                        else:
+                            tmp_element.update({key: self.mutator.fuzz(element[key])})
+                    else:
+                        tmp_element.update({key: self.fuzz_elements(element[key])})
+                element = tmp_element
+                del tmp_element
+            elif type(element) == list:
+                arr = []
+                for key in element:
+                    if type(key) == dict:
+                        arr.append(self.fuzz_elements(key))
+                    elif type(key) == list:
+                        arr.append(self.fuzz_elements(key))
+                    else:
+                        if len(self.config.parameters) <= 0:
+                            arr.append(self.mutator.fuzz(key))
+                        else:
+                            arr.append(key)
+                element = arr
+                del arr
+        except Exception as e:
+            raise PJFBaseException(e.message if hasattr(e, "message") else str(e))
+        return element
+<switch:english>
+[english] The recursive nature ensures deep traversal, but the logic heavily depends on external state maintained in `self.config` and `self.mutator` objects.
+[english] If an element inside the dictionary is a class instance or a tuple, how does this function handle it?
+[english] Since tuples and custom classes are not explicitly checked for at the beginning of the method, they would likely fall into the 'else' block in the dict loop, using `self.mutator.fuzz()` on them.
+[english] Got it, thanks!

@@ -1,0 +1,20 @@
+[english] How can I efficiently retrieve and clear all pending items from a job queue managed by Redis?
+[english] This function retrieves all existing items in the queue using an atomic pipeline, then immediately clears them to prevent reprocessing.
+<switch:python>
+[python] def items(self):
+        """Get the items fetched by the jobs."""
+
+        # Get and remove queued items in an atomic transaction
+        pipe = self.conn.pipeline()
+        pipe.lrange(Q_STORAGE_ITEMS, 0, -1)
+        pipe.ltrim(Q_STORAGE_ITEMS, 1, 0)
+        items = pipe.execute()[0]
+
+        for item in items:
+            item = pickle.loads(item)
+            yield item
+<switch:english>
+[english] The function ensures atomicity for retrieval and deletion; however, it assumes that every item fetched is valid JSON data deserializable via `pickle.loads()`.
+[english] What happens if one of the items stored in the queue is corrupted or not a valid pickled object?
+[english] If an item cannot be unpickled, a `pickle.UnpicklingError` (or similar exception) will be raised, causing the loop to terminate prematurely.
+[english] Does this approach handle large queues gracefully?

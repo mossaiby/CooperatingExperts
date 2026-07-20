@@ -1,0 +1,59 @@
+[english] How can I download the configuration details for multiple VPN sites within a specific Virtual WAN in Azure?
+[english] This function initiates the complex, potentially long-running process of retrieving configuration data for your specified VPN sites. By passing the necessary resource identifiers and configurations, it prepares both the initial request and the mechanism needed to track its completion.
+<switch:python>
+[python] def download(
+            self, resource_group_name, virtual_wan_name, vpn_sites=None, output_blob_sas_url=None, custom_headers=None, raw=False, polling=True, **operation_config):
+        """Gives the sas-url to download the configurations for vpn-sites in a
+        resource group.
+
+        :param resource_group_name: The resource group name.
+        :type resource_group_name: str
+        :param virtual_wan_name: The name of the VirtualWAN for which
+         configuration of all vpn-sites is needed.
+        :type virtual_wan_name: str
+        :param vpn_sites: List of resource-ids of the vpn-sites for which
+         config is to be downloaded.
+        :type vpn_sites:
+         list[~azure.mgmt.network.v2018_04_01.models.SubResource]
+        :param output_blob_sas_url: The sas-url to download the configurations
+         for vpn-sites
+        :type output_blob_sas_url: str
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: The poller return type is ClientRawResponse, the
+         direct response alongside the deserialized response
+        :param polling: True for ARMPolling, False for no polling, or a
+         polling object for personal polling strategy
+        :return: An instance of LROPoller that returns None or
+         ClientRawResponse<None> if raw==True
+        :rtype: ~msrestazure.azure_operation.AzureOperationPoller[None] or
+         ~msrestazure.azure_operation.AzureOperationPoller[~msrest.pipeline.ClientRawResponse[None]]
+        :raises:
+         :class:`ErrorException<azure.mgmt.network.v2018_04_01.models.ErrorException>`
+        """
+        raw_result = self._download_initial(
+            resource_group_name=resource_group_name,
+            virtual_wan_name=virtual_wan_name,
+            vpn_sites=vpn_sites,
+            output_blob_sas_url=output_blob_sas_url,
+            custom_headers=custom_headers,
+            raw=True,
+            **operation_config
+        )
+
+        def get_long_running_output(response):
+            if raw:
+                client_raw_response = ClientRawResponse(None, response)
+                return client_raw_response
+
+        lro_delay = operation_config.get(
+            'long_running_operation_timeout',
+            self.config.long_running_operation_timeout)
+        if polling is True: polling_method = ARMPolling(lro_delay, **operation_config)
+        elif polling is False: polling_method = NoPolling()
+        else: polling_method = polling
+        return LROPoller(self._client, raw_result, get_long_running_output, polling_method)
+<switch:english>
+[english] The returned LROPoller object handles whether the operation is synchronous or requires continuous polling until the download completes successfully.
+[english] If I need a totally custom polling strategy that isn't ARMPolling, how do I guarantee it replaces the default polling logic?
+[english] You pass your custom Polling object directly as an argument to the `download` function. This object is then correctly integrated into the final LROPoller constructor.
+[english] I appreciate the detailed breakdown on managing those asynchronous operations!

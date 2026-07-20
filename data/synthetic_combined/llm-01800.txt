@@ -1,0 +1,39 @@
+[english] I need a way to check if the current currency format settings are valid and ensure that positive, negative, and zero display formats are correctly defined.
+[english] This function first handles cases where you pass in a callable object by executing it. Then, it checks if the provided input is a string matching a specific pattern or validates dictionary keys to determine how to configure currency formatting.
+<switch:python>
+[python] def _check_currency_format(self, format=None):
+        """
+        Summary.
+
+        Args:
+            format (TYPE, optional): Description
+
+        Returns:
+            name (TYPE): Description
+        """
+        defaults = self.settings['currency']['format']
+        if hasattr(format, '__call__'):
+            format = format()
+        if is_str(format) and re.match('%v', format):
+
+            # Create and return positive, negative and zero formats:
+            return {
+                'pos': format,
+                'neg': format.replace("-", "").replace("%v", "-%v"),
+                'zero': format
+            }
+        elif not format or not format['por'] or not re.match('%v',
+                                                             format['pos']):
+            self.settings['currency']['format'] = {
+                'pos': defaults,
+                'neg': defaults.replace("%v", "-%v"),
+                'zero': defaults
+            }
+            return self.settings
+
+        return format
+<switch:english>
+[english] If the supplied format fails validation or is missing a required element like 'pos', the function automatically reverts to using the previously saved defaults and updates settings accordingly. Otherwise, it returns the validated format provided by the user.
+[english] What happens if I pass a custom dictionary that doesn't match the `%v` pattern but has all the necessary keys?
+[english] The function is specifically designed to handle formats matching the `%v` regex in its validation paths. If a format does not meet these checks, especially if it fails `re.match('%v', format['pos'])`, it will fall back to creating a new configuration using existing defaults.
+[english] That makes sense; I'll try implementing that logic now.

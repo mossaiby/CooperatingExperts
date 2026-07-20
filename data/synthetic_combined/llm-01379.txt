@@ -1,0 +1,26 @@
+[english] How can I add multiple tracks to a specific playlist?
+[english] To manage this, we iterate through all provided tracks and convert them into strings first. We then use these formatted tracks in an API call to update the user's playlist.
+<switch:python>
+[python] async def add_tracks(self, playlist: Union[str, Playlist], *tracks) -> str:
+        """Add one or more tracks to a user’s playlist.
+
+        Parameters
+        ----------
+        playlist : Union[str, Playlist]
+            The playlist to modify
+        tracks : Sequence[Union[str, Track]]
+            Tracks to add to the playlistv 
+
+        Returns
+        -------
+        snapshot_id : str
+            The snapshot id of the playlist.
+        """
+        tracks = [str(track) for track in tracks]
+        data = await self.http.add_playlist_tracks(self.id, str(playlist), tracks=','.join(tracks))
+        return data['snapshot_id']
+<switch:english>
+[english] The function assumes that each track has a string representation that is suitable for concatenation by commas before being sent to the service.
+[english] What happens if one of the items passed into `*tracks` cannot be converted directly into a valid string?
+[english] If an item fails conversion, Python's list comprehension will raise a `TypeError`. To make this robust, you might add error handling around `str(track)` or validate types before processing them.
+[english] That makes sense. Thanks!

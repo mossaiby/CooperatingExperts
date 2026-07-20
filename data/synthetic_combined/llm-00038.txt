@@ -1,0 +1,25 @@
+[english] I need a function to initialize a geological soil object with specific geotechnical parameters like internal friction angle and unit weight.
+[english] We can create this helper function to standardize the creation of Soil objects by accepting standard engineering parameters as keyword arguments. This ensures that all necessary properties are set upon instantiation.
+<switch:python>
+[python] def create_soil(phi=0.0, cohesion=0.0, unit_dry_weight=0.0, pw=9800):
+    """
+    Can define a Soil object.
+    :param phi: Internal friction angle
+    :param cohesion: Cohesion of soil
+    :param unit_dry_weight: The dry unit weight of the soil.
+    :param pw: specific weight of water
+    :return: A Soil object.
+    """
+    soil = Soil(pw=pw)
+    soil.phi = phi
+    soil.cohesion = cohesion
+    soil.unit_dry_weight = unit_dry_weight
+    return soil
+<switch:english>
+[english] This function acts as a dedicated factory, making it easy to manage the default values and dependencies of the Soil object.
+[english] What happens if I define 'phi' with a negative value?
+[english] The function will simply assign the negative value directly to `soil.phi`. Since this method isn't validating input ranges, you might add checks like:
+<switch:python>
+[python] if phi < 0: raise ValueError("Friction angle cannot be negative")
+<switch:english>
+[english] Thanks, that clears up how data validation would work.

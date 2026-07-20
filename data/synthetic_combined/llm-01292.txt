@@ -1,0 +1,26 @@
+[english] How can I dynamically generate an initialization method for a class that automatically sets several attributes based on an input list?
+[english] This function uses metaprogramming by constructing the body of a required `__init__` method as a string. It then leverages Python's `exec()` function to define and return this new, complete lifecycle method.
+<switch:python>
+[python] def create_init(attrs):
+    """Create an __init__ method that sets all the attributes
+    necessary for the function the Descriptor invokes to check the
+    value.
+
+    """
+    args = ", ".join(attrs)
+    vals = ", ".join(['getattr(self, "{}")'.format(attr) for attr in attrs])
+    attr_lines = "\n    ".join(
+        ["self.{attr} = {attr}".format(attr=attr) for attr in attrs])
+    init_code = """def _init(self, {args}):
+    super(self.__class__, self).__init__()
+    {attr_lines}
+    self.field_type += "({{}})".format(
+        ", ".join([str(val) for val in [{vals}]]))
+    """.format(args=args, attr_lines=attr_lines, vals=vals)
+    exec(init_code, globals())
+    return _init
+<switch:english>
+[english] The core logic relies on generating setup code via string formatting and executing it dynamically. Be cautious when using `exec()` with unvalidated inputs due to potential security concerns.
+[english] If one of the attributes defined in the input list already exists as a static class attribute, will this initializer overwrite it?
+[english] Yes, because it performs standard assignment (`self.{attr} = {attr}`), which overrides any existing instance or class-level attribute with that same name.
+[english] I understand how to use dynamic method generation properly now.

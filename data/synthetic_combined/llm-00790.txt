@@ -1,0 +1,30 @@
+[english] How can I ensure my manifest file is correctly formatted for UTF-8 compatibility across different operating systems?
+[english] This approach first iterates through the file list to validate that every filename can be successfully encoded in UTF-8. If a character causes an encoding failure, it logs a warning and removes that file from the manifest.
+<switch:python>
+[python] def write_manifest (self):
+        """Write the file list in 'self.filelist' (presumably as filled in
+        by 'add_defaults()' and 'read_template()') to the manifest file
+        named by 'self.manifest'.
+        """
+        # The manifest must be UTF-8 encodable. See #303.
+        if sys.version_info >= (3,):
+            files = []
+            for file in self.filelist.files:
+                try:
+                    file.encode("utf-8")
+                except UnicodeEncodeError:
+                    log.warn("'%s' not UTF-8 encodable -- skipping" % file)
+                else:
+                    files.append(file)
+            self.filelist.files = files
+
+        files = self.filelist.files
+        if os.sep!='/':
+            files = [f.replace(os.sep,'/') for f in files]
+        self.execute(write_file, (self.manifest, files),
+                     "writing manifest file '%s'" % self.manifest)
+<switch:english>
+[english] After verifying the encoding and standardizing system-dependent path separators to forward slashes, it executes the write operation.
+[english] What exactly happens if a filename is non-UTF-8 encodable?
+[english] The logic catches the `UnicodeEncodeError` during the attempt to encode the string. Instead of stopping execution, it logs a warning indicating that specific file cannot be included and proceeds with the rest.
+[english] Got it, so the manifest always stays consistent even on Windows.

@@ -1,0 +1,20 @@
+[english] How do I write a method in my class that retrieves a configured host and initializes a new sqlite connection object so I can start querying the database?
+[english] To handle database access, we first call an internal getter to fetch configuration details associated with a specific ID. Then, we use the retrieved information's `host` attribute to establish a standardized sqlite connection.
+<switch:python>
+[python] def get_conn(self):
+        """
+        Returns a sqlite connection object
+        """
+        conn = self.get_connection(self.sqlite_conn_id)
+        conn = sqlite3.connect(conn.host)
+        return conn
+<switch:english>
+[english] This method ensures that even if the underlying data source changes, you retrieve a functional connection object using the configured host path.
+[english] What should I do if `self.get_connection` returns None?
+[english] You should implement defensive programming by checking for null return values early to prevent an AttributeError when trying to access `.host`.
+<switch:python>
+[python] conn = self.get_connection(self.sqlite_conn_id)
+    if conn is None:
+        raise ConnectionError("Database config failed")
+<switch:english>
+[english] That makes sense, I'll add that error handling.

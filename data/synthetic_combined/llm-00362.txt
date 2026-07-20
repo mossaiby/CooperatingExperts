@@ -1,0 +1,20 @@
+[english] I want to configure a throttle that only limits or monitors POST requests, allowing all other methods through instantly.
+[english] This function determines the request type first by checking if the HTTP method is anything other than 'POST'. If it isn't a POST request, it returns True right away, bypassing any throttling logic entirely. Only when the method is 'POST' does it proceed to call the parent class implementation for actual rate limiting.
+<switch:python>
+[python] def allow_request(self, request, view):
+        """
+        Throttle POST requests only.
+        """
+        if request.method != 'POST':
+            return True
+
+        return super(PostRequestThrottleMixin, self).allow_request(request, view)
+<switch:english>
+[english] By checking for non-POST methods first, the code efficiently allows diverse traffic while reserving expensive throttling checks specifically for POST requests.
+[english] What if I wanted to skip the throttle not just for GET, but also for idempotent methods like PUT and DELETE?
+[english] You can update the conditional check to include a tuple or list of methods that should bypass the throttle. For example:
+<switch:python>
+[python] if request.method in ('GET', 'PUT', 'DELETE'):
+            return True
+<switch:english>
+[english] That makes perfect sense for fine-tuning my API limits.

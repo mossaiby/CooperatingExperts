@@ -1,0 +1,15 @@
+[english] How can I retrieve the fully transformed coordinates for this bone's vertices?
+[english] This function acts as an interface to fetch pre-calculated vertex geometry. It offloads the transformation logic to the internal `Bone` object, using current region parameters to ensure the data is up-to-date and production-ready.
+<switch:python>
+[python] def getVertices(self,data):
+        """
+        Returns the vertices of this region already transformed and ready-to-use.
+        
+        Internally uses :py:meth:`Bone.transformVertices()`\ .
+        """
+        return self.bone.transformVertices(data,self.vertices,self.dims)
+<switch:english>
+[english] It's worth noting that this method is dependent on the correct state of `self.bone`, as it relies entirely on the internal transformation logic to generate the final vertex set.
+[english] What specific format does the returned transformed data take?
+[english] The output is typically a collection or list structure defined by the calling class, but its exact coordinates and scale are determined by `self.bone.transformVertices()`. If you needed to force a default empty result in case of transformation failure, you might add:
+[english] Thanks for explaining the dependency on the internal state.

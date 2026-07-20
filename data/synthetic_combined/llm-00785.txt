@@ -1,0 +1,36 @@
+[english] I need a method that checks if a current token is a macro identifier (starting with '%') and, if so, parses it into its scoped name.
+[english] Since this function only attempts to parse a macro when necessary, it first verifies if the current token starts with '%' before proceeding. If the check passes, we look up the macro using a delegate method after advancing the token position.
+<switch:python>
+[python] def _maybe_parse_macro(self):
+    """Try to parse an macro (%scope/name)."""
+    if self._current_token.value != '%':
+      return False, None
+
+    location = self._current_location()
+    self._advance_one_token()
+    scoped_name = self._parse_selector(allow_periods_in_scope=True)
+
+    with utils.try_with_location(location):
+      macro = self._delegate.macro(scoped_name)
+
+    return True, macro
+<switch:english>
+[english] The module uses `utils.try_with_location` to ensure that any parsing errors during macro retrieval don't lose the original file location information.
+<switch:python>
+[python] def _maybe_parse_macro(self):
+    """Try to parse an macro (%scope/name)."""
+    if self._current_token.value != '%':
+      return False, None
+
+    location = self._current_location()
+    self._advance_one_token()
+    scoped_name = self._parse_selector(allow_periods_in_scope=True)
+
+    with utils.try_with_location(location):
+      macro = self._delegate.macro(scoped_name)
+
+    return True, macro
+<switch:english>
+[english] What happens if `self._parse_selector` fails to find a valid name after the '%' character?
+[english] If `self._parse_selector` raises an exception (e.g., invalid syntax), that error will propagate out of `_maybe_parse_macro`, halting the parsing process unless handled by the caller.
+[english] Okay, this makes sense!

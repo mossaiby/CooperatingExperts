@@ -1,0 +1,14 @@
+[english] I need a way to ensure that every internal component of an object receives and processes a set of update parameters.
+[english] This method acts as a delegation pattern, taking generic arguments and explicitly passing them down. By iterating over the contents of self, it guarantees that every constituent part gets updated.
+<switch:python>
+[python] def _updateParamsFrom(self, *args, **kwargs):
+        """
+        :note: doc in :func:`~hwt.synthesizer.interfaceLevel.propDeclCollector._updateParamsFrom`
+        """
+        for o in self:
+            o._updateParamsFrom(*args, **kwargs)
+<switch:english>
+[english] It is crucial to understand that this implementation only works if every object within `self` has its own defined version of _updateParamsFrom.
+[english] What happens if one of the objects in 'self' does not have a method named '_updateParamsFrom'?
+[english] The function will raise an AttributeError when it attempts to call that missing method on the object. To be safer, you could check for the attribute first:
+[english] This helps me understand how class delegation works better.

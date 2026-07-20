@@ -1,0 +1,33 @@
+[english] How do I verify that a list of wires correctly maps to all necessary inputs and outputs for replacing a specific node (a DAGNode)?
+[english] This function ensures structural integrity when applying a transformation or replacement within the circuit's graph. It first checks for duplicate wire names using sets, then validates if the provided number ofWires matches the required total count.
+<switch:python>
+[python] def _check_wires_list(self, wires, node):
+        """Check that a list of wires is compatible with a node to be replaced.
+
+        - no duplicate names
+        - correct length for operation
+        Raise an exception otherwise.
+
+        Args:
+            wires (list[register, index]): gives an order for (qu)bits
+                in the input circuit that is replacing the node.
+            node (DAGNode): a node in the dag
+
+        Raises:
+            DAGCircuitError: if check doesn't pass.
+        """
+        if len(set(wires)) != len(wires):
+            raise DAGCircuitError("duplicate wires")
+
+        wire_tot = len(node.qargs) + len(node.cargs)
+        if node.condition is not None:
+            wire_tot += node.condition[0].size
+
+        if len(wires) != wire_tot:
+            raise DAGCircuitError("expected %d wires, got %d"
+                                  % (wire_tot, len(wires)))
+<switch:english>
+[english] The logic relies on counting internal arguments (qargs/cargs) and potential condition sizes to calculate the exact expected length.
+[english] What happens if the node has both classical and quantum arguments?
+[english] The function calculates the total wire count by summing up the lengths of both `node.qargs` (quantum arguments) and `node.cargs` (classical arguments), ensuring all connections are accounted for.
+[english] Thanks, that makes sense!

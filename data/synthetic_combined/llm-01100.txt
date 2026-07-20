@@ -1,0 +1,17 @@
+[english] How do I retrieve all the details for a specific repository from your API?
+[english] This function constructs the full endpoint URL by joining several path components and then uses an instance method to fetch the data.
+<switch:python>
+[python] def repo(self):
+        """Get repository data"""
+
+        path = urijoin(self.base_url, 'repos', self.owner, self.repository)
+
+        r = self.fetch(path)
+        repo = r.text
+
+        return repo
+<switch:english>
+[english] The function assumes that `urijoin` and `self.fetch` handle all necessary network operations and authentication.
+[english] What happens if the repository name is missing or misspelled?
+[english] If the repository cannot be found, it's likely an API error will occur during the fetch operation, which should ideally return a non-200 status code from `self.fetch`.
+[english] That makes perfect sense for handling external data retrieval.

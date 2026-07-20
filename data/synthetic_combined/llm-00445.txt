@@ -1,0 +1,30 @@
+[english] How can I register a custom freeform key to correctly handle complex MP4 Tags metadata mapping?
+[english] This function helps standardize how specific, non-traditional MP4 keys (freeform atoms) are accessed within your tag structure by defining explicit getter and setter functions. It calculates its unique atom ID based on the user provided name, mean, and internal logic before registering it with the class.
+<switch:python>
+[python] def RegisterFreeformKey(cls, key, name, mean=b"com.apple.iTunes"):
+        """Register a text key.
+
+        If the key you need to register is a simple one-to-one mapping
+        of MP4 freeform atom (----) and name to EasyMP4Tags key, then
+        you can use this function::
+
+            EasyMP4Tags.RegisterFreeformKey(
+                "musicbrainz_artistid", b"MusicBrainz Artist Id")
+        """
+        atomid = b"----:" + mean + b":" + name
+
+        def getter(tags, key):
+            return [s.decode("utf-8", "replace") for s in tags[atomid]]
+
+        def setter(tags, key, value):
+            tags[atomid] = [utf8(v) for v in value]
+
+        def deleter(tags, key):
+            del(tags[atomid])
+
+        cls.RegisterKey(key, getter, setter, deleter)
+<switch:english>
+[english] This mapping is highly dependent on how EasyMP4Tags processes data, so ensuring the types passed to the `setter` (converted via `utf8`) and retrieved by the `getter` match expectations is crucial for compatibility.
+[english] What happens if a user tries to set the value using an incompatible type in the setter?
+[english] The setter relies on a helper function, likely failing if it doesn't encounter byte sequences or strings that can be encoded. For robust usage, you should validate input types before calling the registered key.
+[english] That makes sense! Thanks for the help.

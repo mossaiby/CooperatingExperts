@@ -1,0 +1,34 @@
+[english] How can I automatically remove unused import statements from my Python code while preserving the indentation and logic?
+[english] This function analyzes each line to detect imports using helper routines like `extract_package_name`. It determines if an imported module is necessary based on provided usage lists, opting to simplify or replace the import if it's deemed unused.
+<switch:python>
+[python] def filter_unused_import(line, unused_module, remove_all_unused_imports,
+                         imports, previous_line=''):
+    """Return line if used, otherwise return None."""
+    if multiline_import(line, previous_line):
+        return line
+
+    is_from_import = line.lstrip().startswith('from')
+
+    if ',' in line and not is_from_import:
+        return break_up_import(line)
+
+    package = extract_package_name(line)
+    if not remove_all_unused_imports and package not in imports:
+        return line
+
+    if ',' in line:
+        assert is_from_import
+        return filter_from_import(line, unused_module)
+    else:
+        # We need to replace import with "pass" in case the import is the
+        # only line inside a block. For example,
+        # "if True:\n    import os". In such cases, if the import is
+        # removed, the block will be left hanging with no body.
+        return (get_indentation(line) +
+                'pass' +
+                get_line_ending(line))
+<switch:english>
+[english] The code uses specific logic for standard modules versus `from` assignments. If a non-used import needs removing from inside a block, it safely replaces the line with 'pass' rather than deleting it entirely.
+[english] If an imported module is used multiple times across different parts of a file, does this function still correctly decide whether to keep or remove that specific import line?
+[english] Yes, because the logic relies on external context provided by the `imports` parameter which should already track all known usages throughout your entire codebase. If 'package' is in those imports, it stays.
+[english] Thanks for explaining how complex dependency filtering works!

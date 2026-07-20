@@ -1,0 +1,25 @@
+[english] How do I convert a dense volumetric annotation into a standard 3D mesh file for visualization?
+[english] This function uses Marching Cubes, a popular algorithm available in PyMCubes, to extract a surface from your volume. It first ensures the filename has the correct '.obj' extension.
+<switch:python>
+[python] def export_obj(filename, cutout, level=0):
+    """
+    Converts a dense annotation to a obj, using Marching Cubes (PyMCubes).
+
+    Arguments:
+        filename (str): The filename to write out to
+        cutout (numpy.ndarray): The dense annotation
+        level (int): The level at which to run mcubes
+
+    Returns:
+        boolean success
+    """
+    if ".obj" not in filename:
+        filename = filename + ".obj"
+
+    vs, fs = mcubes.marching_cubes(cutout, level)
+    mcubes.export_obj(vs, fs, filename)
+<switch:english>
+[english] The core logic relies on `mcubes.marching_cubes` to generate vertices and faces before writing them out using `mcubes.export_obj`. Note that PyMCubes is required for this function to run.
+[english] What happens if the input 'cutout' array has zero values, meaning no surface can be found?
+[english] If the density is zero or below the specified level, Marching Cubes will produce empty lists for vertices and faces. The resulting .obj file might be created but contain no geometry.
+[english] That makes sense; thanks for the clarification.

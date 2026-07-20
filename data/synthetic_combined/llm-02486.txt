@@ -1,0 +1,34 @@
+[english] How can I identify a set of genetic variants that are present in a specific patient and categorized as, for example, 'snv'?
+[english] This function gathers variant records from the database by constructing a detailed query. It uses MongoDB syntax to filter documents based on required IDs, categories, and sample-specific genotype evidence.
+<switch:python>
+[python] def sample_variants(self, variants, sample_name, category = 'snv'):
+        """Given a list of variants get variant objects found in a specific patient
+
+        Args:
+            variants(list): a list of variant ids
+            sample_name(str): a sample display name
+            category(str): 'snv', 'sv' ..
+
+        Returns:
+            result(iterable(Variant))
+        """
+        LOG.info('Retrieving variants for subject : {0}'.format(sample_name))
+        has_allele = re.compile('1|2') # a non wild-type allele is called at least once in this sample
+
+        query = {
+            '$and': [
+                {'_id' : { '$in' : variants}},
+                {'category' : category},
+                {'samples': {
+                    '$elemMatch': { 'display_name' : sample_name, 'genotype_call': { '$regex' : has_allele } }
+                }}
+            ]
+        }
+
+        result = self.variant_collection.find(query)
+        return result
+<switch:english>
+[english] The crucial part of this logic is the `$elemMatch`, which ensures that the retrieved variant object specifically contains an allele match for the requested `sample_name` within the defined category.
+[english] What if one of the specified variants is present in the patient's data, but their genotype call shows a completely wild-type (reference) state?
+[english] If you only want to include variants that definitely show an altered allele, your current regex (`re.compile('1|2')`) handles this. To exclude any variant flagged as reference, you would need a more complex negative projection or exclusion query.
+[english] That makes sense, thanks for the detail.

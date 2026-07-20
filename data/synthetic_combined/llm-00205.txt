@@ -1,0 +1,20 @@
+[english] I need to implement a method that sets a property value but first ensures the input meets certain criteria.
+[english] This function follows a standard pattern of defensive programming. It calls a validation check before proceeding with the assignment, ensuring data integrity.
+<switch:python>
+[python] def set_value(self, value):
+        """
+        Set the current value of the property.
+
+        value -- the value to set
+        """
+        self.validate_value(value)
+        self.value.set(value)
+<switch:english>
+[english] By separating validation from the actual assignment, this method keeps its logic clean and reusable.
+[english] What happens if the `validate_value` method determines that the provided input is invalid?
+[english] In most robust implementations, `validate_value` would raise a standard exception like ValueError or TypeError to immediately stop execution.
+
+def validate_value(self, value):
+    if not isinstance(value, int): 
+        raise TypeError("Value must be an integer")
+[english] I understand; raising exceptions is the appropriate way to handle invalid states.

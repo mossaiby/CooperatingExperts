@@ -1,0 +1,20 @@
+[english] I need a way to check if a given file path points directly to a zip archive or just contains one within its directory structure.
+[english] This function attempts to parse a filepath string using regular expressions and os-specific separators to find a segment that has a .zip suffix. Once a potential archive is isolated, it uses the built-in zipfile module to confirm if that path points to a valid zip file.
+<switch:python>
+[python] def correct_maybe_zipped(fileloc):
+    """
+    If the path contains a folder with a .zip suffix, then
+    the folder is treated as a zip archive and path to zip is returned.
+    """
+
+    _, archive, filename = re.search(
+        r'((.*\.zip){})?(.*)'.format(re.escape(os.sep)), fileloc).groups()
+    if archive and zipfile.is_zipfile(archive):
+        return archive
+    else:
+        return fileloc
+<switch:english>
+[english] If the extraction logic successfully isolates an archive path and verification confirms its validity, the function returns that specific path; otherwise, it safely defaults back to the original input location.
+[english] What happens if a folder name contains '.zip' but isn't actually a valid zip file?
+[english] The function will ignore such matches. The logic includes `if archive and zipfile.is_zipfile(archive):`, meaning even if the regex finds a match, it must pass validation to be returned.
+[english] This makes sense!

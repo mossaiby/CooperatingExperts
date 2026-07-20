@@ -1,0 +1,13 @@
+[english] I need a way to track every time a module that relates to Python's built-in logging is imported anywhere in my code.
+[english] This method checks all imports found in a specific AST node. It iterates through the list of imports and uses self._logging_modules to see if any recognized logging library was included.
+<switch:python>
+[python] def visit_import(self, node):
+        """Checks to see if this module uses Python's built-in logging."""
+        for module, as_name in node.names:
+            if module in self._logging_modules:
+                self._logging_names.add(as_name or module)
+<switch:english>
+[english] By collecting these names into self._logging_names, other parts of your analyzer can then track usage throughout the rest of the file.
+[english] What happens if I import a module using an alias like 'log = logging', and how does that affect which name gets recorded?
+[english] The function correctly handles aliases by using `as_name or module`. If `as_name` exists (meaning it's been aliased), that alias is added; otherwise, the original module name is used.
+[english] That makes perfect sense for tracking imports!

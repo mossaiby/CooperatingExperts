@@ -1,0 +1,47 @@
+[english] How can I generate an HTML fragment that highlights different text segments based on which version they first appeared in, given a list of ordered document versions?
+[english] This function tracks word tokens across multiple document fragments. It processes each document by identifying where tokens appear for the first time and then merges and applies customized markup to those specific spans.
+<switch:python>
+[python] def html_annotate(doclist, markup=default_markup):
+    """
+    doclist should be ordered from oldest to newest, like::
+
+        >>> version1 = 'Hello World'
+        >>> version2 = 'Goodbye World'
+        >>> print(html_annotate([(version1, 'version 1'),
+        ...                      (version2, 'version 2')]))
+        <span title="version 2">Goodbye</span> <span title="version 1">World</span>
+
+    The documents must be *fragments* (str/UTF8 or unicode), not
+    complete documents
+
+    The markup argument is a function to markup the spans of words.
+    This function is called like markup('Hello', 'version 2'), and
+    returns HTML.  The first argument is text and never includes any
+    markup.  The default uses a span with a title:
+
+        >>> print(default_markup('Some Text', 'by Joe'))
+        <span title="by Joe">Some Text</span>
+    """
+    # The basic strategy we have is to split the documents up into
+    # logical tokens (which are words with attached markup).  We then
+    # do diffs of each of the versions to track when a token first
+    # appeared in the document; the annotation attached to the token
+    # is the version where it first appeared.
+    tokenlist = [tokenize_annotated(doc, version)
+                 for doc, version in doclist]
+    cur_tokens = tokenlist[0]
+    for tokens in tokenlist[1:]:
+        html_annotate_merge_annotations(cur_tokens, tokens)
+        cur_tokens = tokens
+
+    # After we've tracked all the tokens, we can combine spans of text
+    # that are adjacent and have the same annotation
+    cur_tokens = compress_tokens(cur_tokens)
+    # And finally add markup
+    result = markup_serialize_tokens(cur_tokens, markup)
+    return ''.join(result).strip()
+<switch:english>
+[english] The process relies heavily on helper functions that handle tokenization, annotation merging, and final HTML serialization.
+[english] If a word is added in version 3, but it was already present (and annotated) in version 1, how does the system ensure it keeps the 'version 1' label?
+[english] The logic uses `html_annotate_merge_annotations` to track the *first* appearance. Once a token has an annotation, subsequent appearances only update its position, not its initial version tag.
+[english] This pattern is really useful for displaying historical changes in content.

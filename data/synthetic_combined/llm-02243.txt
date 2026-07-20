@@ -1,0 +1,25 @@
+[english] How can I ensure that my Python environment uses a clean list of unique and absolute directories when running imports?
+[english] This function cleans up `sys.path` by iterating through existing entries, converting all paths to absolute forms using helper functions, and filtering out any duplicates before replacing the path list in place.
+<switch:python>
+[python] def removeduppaths():
+    """ Remove duplicate entries from sys.path along with making them
+    absolute"""
+    # This ensures that the initial path provided by the interpreter contains
+    # only absolute pathnames, even if we're running from the build directory.
+    L = []
+    known_paths = set()
+    for dir in sys.path:
+        # Filter out duplicate paths (on case-insensitive file systems also
+        # if they only differ in case); turn relative paths into absolute
+        # paths.
+        dir, dircase = makepath(dir)
+        if not dircase in known_paths:
+            L.append(dir)
+            known_paths.add(dircase)
+    sys.path[:] = L
+    return known_paths
+<switch:english>
+[english] The modification happens directly on `sys.path` using slicing, ensuring that subsequent imports benefit from the cleaned list without needing to reassign the variable itself.
+[english] What if I'm unsure what 'makepath' does?
+[english] It is a prerequisite helper function not shown here; it typically handles the logic of converting relative paths (like '.' or '../lib') into fully qualified, absolute directory paths.
+[english] That makes sense, thanks for clarifying.

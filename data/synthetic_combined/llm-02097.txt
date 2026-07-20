@@ -1,0 +1,33 @@
+[english] How can I persist a complete metamodel containing class definitions and all the associated data instances into a single file?
+[english] To save your metadata to disk, we iterate through various components of the `metamodel`, from classes to individual instances. This approach uses the provided path and writes serialized representations for each object sequentially.
+<switch:python>
+[python] def persist_database(metamodel, path, mode='w'):
+    '''
+    Persist all instances, class definitions and association definitions in a
+    *metamodel* by serializing them and saving to a *path* on disk.
+    '''
+    with open(path, mode) as f:
+        for kind in sorted(metamodel.metaclasses.keys()):
+            metaclass = metamodel.metaclasses[kind]
+            s = serialize_class(metaclass.clazz)
+            f.write(s)
+            
+            for index_name, attribute_names in metaclass.indices.items():
+                attribute_names = ', '.join(attribute_names)
+                s = 'CREATE UNIQUE INDEX %s ON %s (%s);\n' % (index_name,
+                                                              metaclass.kind,
+                                                              attribute_names)
+                f.write(s)
+                
+        for ass in sorted(metamodel.associations, key=lambda x: x.rel_id):
+            s = serialize_association(ass)
+            f.write(s)
+
+        for inst in metamodel.instances:
+            s = serialize_instance(inst)
+            f.write(s)
+<switch:english>
+[english] The function organizes persistence by first writing class definitions and unique indexes into the file before finally appending any defined associations and data instances at the end.
+[english] If an instance within `metamodel.instances` refers to a relationship that wasn't explicitly defined in `metamodel.associations`, will it fail?
+[english] No, because this function only serializes existing definitions via `serialize_instance(inst)`. If you intended to enforce consistency at persistence time, you would need additional validation logic elsewhere.
+[english] Got it, thanks.

@@ -1,0 +1,24 @@
+[english] I need a way to reliably export my internal data structure into a delimited string format, specifying custom null values and field separators.
+[english] This function first prepares the export environment by instructing the underlying encoder how to represent `NULL` values using the provided `null` parameter. It then establishes the column delimiter before configuring and fetching the final data stream.
+<switch:python>
+[python] def to_str(self, delimiter='|', null='NULL'):
+        """
+        Sets the current encoder output to Python `str` and returns
+        a row iterator.
+
+        :param str null: The string representation of null values
+        :param str delimiter: The string delimiting values in the output
+            string
+
+        :rtype: iterator (yields ``str``)
+        """
+        self.export.set_null(null)
+        self.export.set_delimiter(delimiter)
+        self.options("delimiter", escape_string(delimiter), 2)
+        self.options("null", null, 3)
+        return self._fetchall(ENCODER_SETTINGS_STRING, coerce_floats=False)
+<switch:english>
+[english] It is important to note that this method relies heavily on internal state management (`self`) and specific, hardcoded constants like `ENCODER_SETTINGS_STRING` for its operation.
+[english] How does the function handle cases where an actual piece of data within a row happens to contain the same character used as the defined delimiter?
+[english] The call `self.options("delimiter", escape_string(delimiter), 2)` suggests that the underlying encoder automatically escapes fields containing the delimiter, ensuring the output structure remains valid.
+[english] That clarification about automatic escaping is very helpful.

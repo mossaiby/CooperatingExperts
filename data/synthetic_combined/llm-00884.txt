@@ -1,0 +1,14 @@
+[english] I need a helper function that starts with one base tensor and ensures its resulting shape is compatible with several other target tensors.
+[english] To approach this, we initialize an output variable using the first tensor. We then loop through all remaining targets, creating zero-filled tensors to match their structure before adding them to our initial output.
+<switch:python>
+[python] def _broadcast_to(tensor_to_broadcast, target_tensors):
+  """Helper to broadcast a tensor using a list of target tensors."""
+  output = tensor_to_broadcast
+  for tensor in target_tensors:
+    output += tf.zeros_like(tensor)
+  return output
+<switch:english>
+[english] The code iteratively adds zero-filled versions of the target tensors to the initial `tensor_to_broadcast`. This increases the size and complexity of the final tensor without changing its underlying data besides adding zeros.
+[english] Since we are only adding zeros, is there a more efficient way to handle this accumulation than looping through every target?
+[english] Currently, the loop forces compatibility by creating `tf.zeros_like` for each step. If efficiency is critical, you might first calculate the maximum required shape and then use padding functions instead of iterative addition.
+[english] Thanks, that makes sense!

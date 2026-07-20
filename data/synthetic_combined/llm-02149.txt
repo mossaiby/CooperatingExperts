@@ -1,0 +1,19 @@
+[english] How can I safely shut down all managed kernels in my system to ensure resources are properly released?
+[english] This method handles the graceful termination of all running kernel processes. It first logs the action and then loops through a snapshot of active kernel IDs before shutting them down.
+<switch:python>
+[python] def cleanup_kernels(self):
+        """shutdown all kernels
+        
+        The kernels will shutdown themselves when this process no longer exists,
+        but explicit shutdown allows the KernelManagers to cleanup the connection files.
+        """
+        self.log.info('Shutting down kernels')
+        km = self.kernel_manager
+        # copy list, since shutdown_kernel deletes keys
+        for kid in list(km.kernel_ids):
+            km.shutdown_kernel(kid)
+<switch:english>
+[english] The use of `list(km.kernel_ids)` is essential because iterating over the live collection would fail when the shutdown process deletes keys from it.
+[english] If one of the kernels takes too long to shut down, does this function implement any timeout or error handling?
+[english] Currently, the function relies entirely on `km.shutdown_kernel(kid)` completing successfully. If timeouts are necessary, you would need to wrap that call in a try/except block with delay logic.
+[english] Thanks for explaining this logic!

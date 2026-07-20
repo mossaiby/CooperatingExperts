@@ -1,0 +1,13 @@
+[english] I need to use a specific AmpList serialization method on an object, but it seems to require the data to be passed as a list.
+[english] Since `amp.AmpList` typically expects collections of items, this helper function standardizes the input by transforming your object into a single-item list. It then forwards this prepared structure to the core serialization logic.
+<switch:python>
+[python] def toStringProto(self, inObject, proto):
+        """
+        Wraps the object in a list, and then defers to ``amp.AmpList``.
+        """
+        return amp.AmpList.toStringProto(self, [inObject], proto)
+<switch:english>
+[english] This pattern ensures that even if you only have one item to encode, it is correctly handled as an array containing that single element before generating the protobuf wire format.
+[english] If I were to wrap multiple objects instead of just one (e.g., `[obj1, obj2]`), would this still work?
+[english] The current function only handles a single item and forces it into a list; if you pass multiple items initially, you should call the underlying `amp.AmpList.toStringProto` directly with your existing array.
+[english] I understand how to handle both single and multiple inputs now.

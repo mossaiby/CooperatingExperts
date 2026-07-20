@@ -1,0 +1,19 @@
+[english] How can I write a routine to check for and safely read uncompressed data records within a custom binary stream parser?
+[english] This function first checks the 'Is uncompressed?' flag. If it's true, it executes specific logic to handle raw data extraction from the stream.
+<switch:python>
+[python] def uncompressed(self):
+        """If true, handle uncompressed data
+        """
+        ISUNCOMPRESSED = self.verboseRead(
+            BoolCode('UNCMPR', description='Is uncompressed?'))
+        if ISUNCOMPRESSED:
+            self.verboseRead(FillerAlphabet(streamPos=self.stream.pos))
+            print('Uncompressed data:')
+            self.output += self.stream.readBytes(self.MLEN)
+            print(outputFormatter(self.output[-self.MLEN:]))
+        return ISUNCOMPRESSED
+<switch:english>
+[english] If the data is found to be uncompressed, the function reads exactly self.MLEN bytes and appends them to a buffer for final formatting.
+[english] What happens if the stream unexpectedly ends while trying to read self.MLEN bytes?
+[english] The current code would raise an EOF error. To handle this safely, you should wrap the reading logic in a try/except block or verify that enough data remains using self.stream.readBytes(self.MLEN).
+[english] Thanks for clearing that up!

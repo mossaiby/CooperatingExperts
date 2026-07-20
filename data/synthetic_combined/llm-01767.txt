@@ -1,0 +1,23 @@
+[english] How can I safely shut down a resource, like a database connection or file handle, used by my object?
+[english] This method provides a safe way to close the 'fridge' instance, ensuring necessary cleanup steps are performed before marking it as closed.
+<switch:python>
+[python] def close(self):
+        """
+        Close the fridge.
+        Calls :meth:`save` and closes the underlying file object unless
+        an already open file was passed to the constructor.
+        This method has no effect if the object is already closed.
+
+        After the fridge is closed :meth:`save` and :meth:`load` will raise an exception
+        but you will still be able to use it as an ordinary dictionary.
+        """
+        if not self.closed:
+            self.save()
+            if self.close_file:
+                self.file.close()
+        self.closed = True
+<switch:english>
+[english] The function ensures that `save()` is called and closes the underlying file if one was initialized during construction, preventing leaks.
+[english] What happens if I call this method multiple times?
+[english] If you call it repeatedly, nothing extra will happen. The first call sets `self.closed = True`, so subsequent calls skip the main logic because of the initial `if not self.closed:` check.
+[english] This makes sense for resource management.

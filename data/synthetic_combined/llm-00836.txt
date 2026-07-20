@@ -1,0 +1,24 @@
+[english] I need a way to safely remove a specific role from my database table using its name.
+[english] This function finds a role record based on its name and checks if it exists before proceeding with deletion. If found, it logs the action, deletes the object, and commits the transaction; otherwise, it raises an error.
+<switch:python>
+[python] def delete_role(self, role_name):
+        """Delete the given Role
+
+        :param role_name: the name of a role in the ab_role table
+        """
+        session = self.get_session
+        role = session.query(sqla_models.Role)\
+                      .filter(sqla_models.Role.name == role_name)\
+                      .first()
+        if role:
+            self.log.info("Deleting role '%s'", role_name)
+            session.delete(role)
+            session.commit()
+        else:
+            raise AirflowException("Role named '{}' does not exist".format(
+                role_name))
+<switch:english>
+[english] The function ensures data integrity by only attempting deletion if the `Role` object is successfully retrieved from the database.
+[english] What happens to associated foreign key constraints if this role is deleted?
+[english] The behavior depends on how the relationships are defined in your SQLAlchemy models. If the roles have cascading deletes set up, dependent records will also be removed upon deletion of the parent role.
+[english] Thanks for clarifying that logic!

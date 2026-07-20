@@ -1,0 +1,37 @@
+[english] How can I retrieve a structured, filtered table of system calls matching a specific pattern and architecture?
+[english] This function retrieves raw data using an internal search method and then processes that list into a human-readable format. It dynamically generates table headers based on the available information before iterating through your matched commands.
+<switch:python>
+[python] def get_table(self, arch, pattern, colored=False, verbose=False):
+        '''
+        This function is used in sys command (when user want to find a specific syscall)
+
+        :param Architecture for syscall table;
+        :param Searching pattern;
+        :param Flag for verbose output
+        :return Return a printable table of matched syscalls
+        '''
+
+        rawtable = self.search(arch, pattern)
+        if len(rawtable) == 0:
+            return None
+
+        used_hd = self.__fetch_used_headers(rawtable, verbose)
+        table   = [self.__make_colored_row(used_hd, 'yellow,bold', upper=True) if colored else used_hd]
+
+        for command in rawtable:
+            cur_tb_field = []
+            for hd in used_hd:
+                value = command[hd]
+                cur_tb_field.append(self.__make_colored_field(value, hd, verbose=verbose))
+            table.append(cur_tb_field)
+        return DoubleTable(table)
+<switch:english>
+[english] The function always returns a `DoubleTable` object if results are found, or None. Note how optional parameters like `colored` alter the entire row as well as individual fields during rendering.
+[english] If `rawtable` is empty, what happens specifically to the return value and how can I check for that?
+[english] The function immediately returns `None` if no matches are found via the initial search. You would typically check its truthiness or explicitly test:
+<switch:python>
+[python] result = get_table(arch, pattern)
+if result is None:
+    print("No syscall matches found.")
+<switch:english>
+[english] Does this handle cases where a command might be missing expected data fields?

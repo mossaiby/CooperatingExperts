@@ -1,0 +1,23 @@
+[english] I have a recursive generator in Python that keeps causing a RecursionError, how can I rewrite it to run iteratively?
+[english] This function acts as a 'trampoline,' which converts deep recursion into an iterative loop. Instead of allowing functions to call themselves infinitely, we intercept the calls and manage the execution flow using a while loop.
+<switch:python>
+[python] def _trampoline(f):
+    """Trampoline a function repeatedly until it is finished recurring to help
+    avoid stack growth."""
+
+    @functools.wraps(f)
+    def trampoline(*args, **kwargs):
+        while True:
+            ret = f(*args, **kwargs)
+            if isinstance(ret, _TrampolineArgs):
+                args = ret.args
+                kwargs = ret.kwargs
+                continue
+            return ret
+
+    return trampoline
+<switch:english>
+[english] The core idea is that the returned value must either be an instance of `_TrampolineArgs` to signify continuation, or it represents the ultimate final result.
+[english] If a recursive call returns a non-argument object (like an integer), what does the loop do?
+[english] If the return type doesn't match `_TrampolineArgs`, the while loop immediately breaks and returns that value as the completion of the sequence. The final line `return ret` handles this base case.
+[english] Perfect, thanks for clarifying how it handles termination.

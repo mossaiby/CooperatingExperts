@@ -1,0 +1,25 @@
+[english] How can I get a secure URL that will initiate an OAuth authentication flow so my users can log in using OpenID?
+[english] This function generates the necessary authorization link by determining where to send the user back after login and which profile attributes are required.
+<switch:python>
+[python] def authenticate_redirect(
+        self, callback_uri=None, ax_attrs=["name", "email", "language",
+                                           "username"]):
+
+        """Returns the authentication URL for this service.
+
+        After authentication, the service will redirect back to the given
+        callback URI.
+
+        We request the given attributes for the authenticated user by
+        default (name, email, language, and username). If you don't need
+        all those attributes for your app, you can request fewer with
+        the ax_attrs keyword argument.
+        """
+        callback_uri = callback_uri or self.request.uri
+        args = self._openid_args(callback_uri, ax_attrs=ax_attrs)
+        self.redirect(self._OPENID_ENDPOINT + "?" + urllib.urlencode(args))
+<switch:english>
+[english] The core logic handles falling back to the request URI if no callback is provided, then constructs a complete URL using `urllib.urlencode` for clean parameter handling.
+[english] Will this function work correctly if I pass an empty list for ax_attrs?
+[english] If you pass an empty list, it will proceed with the default attribute request defined internally in `self._openid_args`, as the method primarily uses `ax_attrs` to provide explicit overrides.
+[english] Thanks, that makes sense!

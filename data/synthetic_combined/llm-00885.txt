@@ -1,0 +1,69 @@
+[english] I need a way to execute an HQL query and write all resulting data directly into a CSV file with predefined formatting.
+[english] This function executes your provided HQL against the target schema, streaming results row by row into a specified path. It handles configuration for delimiters, line endings, and optionally writes a header before processing the main dataset.
+<switch:python>
+[python] def to_csv(
+            self,
+            hql,
+            csv_filepath,
+            schema='default',
+            delimiter=',',
+            lineterminator='\r\n',
+            output_header=True,
+            fetch_size=1000,
+            hive_conf=None):
+        """
+        Execute hql in target schema and write results to a csv file.
+
+        :param hql: hql to be executed.
+        :type hql: str or list
+        :param csv_filepath: filepath of csv to write results into.
+        :type csv_filepath: str
+        :param schema: target schema, default to 'default'.
+        :type schema: str
+        :param delimiter: delimiter of the csv file, default to ','.
+        :type delimiter: str
+        :param lineterminator: lineterminator of the csv file.
+        :type lineterminator: str
+        :param output_header: header of the csv file, default to True.
+        :type output_header: bool
+        :param fetch_size: number of result rows to write into the csv file, default to 1000.
+        :type fetch_size: int
+        :param hive_conf: hive_conf to execute alone with the hql.
+        :type hive_conf: dict
+
+        """
+
+        results_iter = self._get_results(hql, schema,
+                                         fetch_size=fetch_size, hive_conf=hive_conf)
+        header = next(results_iter)
+        message = None
+
+        i = 0
+        with open(csv_filepath, 'wb') as f:
+            writer = csv.writer(f,
+                                delimiter=delimiter,
+                                lineterminator=lineterminator,
+                                encoding='utf-8')
+            try:
+                if output_header:
+                    self.log.debug('Cursor description is %s', header)
+                    writer.writerow([c[0] for c in header])
+
+                for i, row in enumerate(results_iter, 1):
+                    writer.writerow(row)
+                    if i % fetch_size == 0:
+                        self.log.info("Written %s rows so far.", i)
+            except ValueError as exception:
+                message = str(exception)
+
+        if message:
+            # need to clean up the file first
+            os.remove(csv_filepath)
+            raise ValueError(message)
+
+        self.log.info("Done. Loaded a total of %s rows.", i)
+<switch:english>
+[english] The implementation uses Python's standard `csv` library with explicit logging to track progress as rows are processed. If any data retrieval error occurs (ValueError), it performs cleanup by removing the partially written file.
+[english] If the HQL query successfully runs but returns no data, will an empty CSV (or just a header) still be created?
+[english] If no rows are returned, `results_iter` completes without yielding any data after an optional header is written. The final log message will reflect that 'Done' was reached while the row counter remains at its initial state.
+[english] That addresses my concerns; I think this function meets all my requirements.

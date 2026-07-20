@@ -1,0 +1,38 @@
+[english] I need a function to standardize my dataset so that each feature has a mean of 0 and a standard deviation of 1.
+[english] To normalize your data across specific axes, we calculate the Z-score by subtracting the mean from each value and dividing it by the standard deviation. The function handles this standardization dynamically based on the axis provided.
+<switch:python>
+[python] def zscore(data2d, axis=0):
+    """Standardize the mean and variance of the data axis Parameters.
+
+    :param data2d: DataFrame to normalize.
+    :param axis: int, Which axis to normalize across. If 0, normalize across rows,
+                  if 1, normalize across columns. If None, don't change data
+                  
+    :Returns: Normalized DataFrame. Normalized data with a mean of 0 and variance of 1
+              across the specified axis.
+
+    """
+    if axis is None:
+        # normalized to mean and std using entire matrix
+        # z_scored = (data2d - data2d.values.mean()) / data2d.values.std(ddof=1)
+        return data2d
+    assert axis in [0,1]
+    # if axis == 1:
+    #     z_scored = data2d
+    # else:
+    #     z_scored = data2d.T
+
+    # z_scored = (z_scored - z_scored.mean()) / z_scored.std(ddof=1)
+    
+    # if axis == 1:
+    #     return z_scored
+    # else:
+    #     return z_scored.T
+    z_scored = data2d.apply(lambda x: (x-x.mean())/x.std(ddof=1), 
+                            axis=operator.xor(1, axis))
+    return z_scored
+<switch:english>
+[english] The code utilizes `apply` combined with the `operator.xor` utility to ensure the statistical calculations are consistently performed along the intended dimension.
+[english] What happens if my input DataFrame contains missing values (NaN)?
+[english] If a row or column consists entirely of NaN values, both its mean and standard deviation will be NaN, resulting in that entire standardized axis becoming NaN as well. The function relies on pandas' inherent handling of these statistics.
+[english] Got it, I will implement this now.

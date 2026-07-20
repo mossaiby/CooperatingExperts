@@ -1,0 +1,29 @@
+[english] How can I automatically ensure that a defined set of required indexes exists across several database collections by updating them if they are missing or outdated?
+[english] This method systematically iterates through all expected configurations in INDEXES. It first checks for existing entries and drops any matching old indexes before calling `self.db[collection_name].create_indexes(indexes)` to establish the new required set.
+<switch:python>
+[python] def load_indexes(self):
+        """Add the proper indexes to the scout instance.
+
+        All indexes are specified in scout/constants/indexes.py
+
+        If this method is utilised when new indexes are defined those should be added
+
+        """
+        for collection_name in INDEXES:
+            existing_indexes = self.indexes(collection_name)
+            indexes = INDEXES[collection_name]
+            for index in indexes:
+                index_name = index.document.get('name')
+                if index_name in existing_indexes:
+                    LOG.info("Deleting old index: %s" % index_name)
+                    self.db[collection_name].drop_index(index_name)
+            LOG.info("creating indexes for {0} collection: {1}".format(
+                collection_name,
+                ', '.join([index.document.get('name') for index in indexes])
+                ))
+            self.db[collection_name].create_indexes(indexes)
+<switch:english>
+[english] The function enforces a state where only the indexes listed in INDEXES exist on the specified collections after execution.
+[english] If an extraneous index exists on a collection but is not listed within the INDEXES constants, will this method remove it?
+[english] No, this function does not look for or delete extra indices; it only checks if required indexes need to be dropped and then newly created.
+[english] Thanks, that clarifies how index maintenance works!

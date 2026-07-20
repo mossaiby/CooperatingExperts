@@ -1,0 +1,42 @@
+[english] How can I create a specific DynamoDB table named 'run_manifest' if it might already exist?
+[english] This function attempts to build the necessary DynamoDB table by defining its key schema and throughput. It uses a try-except block to gracefully handle situations where the resource is already in use.
+<switch:python>
+[python] def create_manifest_table(dynamodb_client, table_name):
+    """Create DynamoDB table for run manifests
+
+    Arguments:
+    dynamodb_client - boto3 DynamoDB client (not service)
+    table_name - string representing existing table name
+    """
+    try:
+        dynamodb_client.create_table(
+            AttributeDefinitions=[
+                {
+                    'AttributeName': DYNAMODB_RUNID_ATTRIBUTE,
+                    'AttributeType': 'S'
+                },
+            ],
+            TableName=table_name,
+            KeySchema=[
+                {
+                    'AttributeName': DYNAMODB_RUNID_ATTRIBUTE,
+                    'KeyType': 'HASH'
+                },
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            }
+        )
+        dynamodb_client.get_waiter('table_exists').wait(TableName=table_name)
+    except ClientError as e:
+        # Table already exists
+        if e.response['Error']['Code'] == 'ResourceInUseException':
+            pass
+        else:
+            raise e
+<switch:english>
+[english] The code ensures the table is fully operational using `get_waiter('table_exists')` after creation. Note that provisioned capacity units are hardcoded here.
+[english] If the table needs to be created with a different key type, like composite keys, how would I modify this function?
+[english] The current design relies on `DYNAMODB_RUNID_ATTRIBUTE` for a simple primary hash key. To support complex structures, you would need to adjust the `KeySchema` list within the method.
+[english] That makes sense, thank you for explaining how that logic works.

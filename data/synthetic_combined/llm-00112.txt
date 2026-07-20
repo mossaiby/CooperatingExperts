@@ -1,0 +1,50 @@
+[english] How can I load, process, and prepare the CIFAR-10 image dataset for training a convolutional neural network?
+[english] This utility function fetches the CIFAR-10 data from specified URLs, handles Python version dependencies during unpickling, and structures the images and labels into distinct sets.
+<switch:python>
+[python] def load_cifar(flatten=True, labels=False):
+    '''Load the CIFAR10 image dataset.'''
+    def extract(name):
+        print('extracting data from {}'.format(name))
+        h = tar.extractfile(name)
+        if sys.version_info < (3, ):
+            d = pickle.load(h)
+        else:
+            d = pickle.load(h, encoding='bytes')
+            for k in list(d):
+                d[k.decode('utf8')] = d[k]
+        h.close()
+        img = d['data'].reshape(
+            (-1, 3, 32, 32)).transpose((0, 2, 3, 1)).astype('f') / 128 - 1
+        if flatten:
+            img = img.reshape((-1, 32 * 32 * 3))
+        d['data'] = img
+        return d
+
+    fn = find('cifar10.tar.gz', 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz')
+    tar = tarfile.open(fn)
+
+    imgs = []
+    labs = []
+    for i in range(1, 6):
+        d = extract('cifar-10-batches-py/data_batch_{}'.format(i))
+        imgs.extend(d['data'])
+        labs.extend(d['labels'])
+    timg = np.asarray(imgs[:40000])
+    tlab = np.asarray(labs[:40000], 'i')
+    vimg = np.asarray(imgs[40000:])
+    vlab = np.asarray(labs[40000:], 'i')
+
+    d = extract('cifar-10-batches-py/test_batch')
+    simg = d['data']
+    slab = d['labels']
+
+    tar.close()
+
+    if labels:
+        return (timg, tlab), (vimg, vlab), (simg, slab)
+    return (timg, ), (vimg, ), (simg, )
+<switch:english>
+[english] The function returns tuples containing (training_images, training_labels), (validation_images, validation_labels), and (testing_images, testing_labels).
+[english] If I set `flatten=True`, how is the image data reshaped inside the `extract` helper?
+[english] When `flatten=True`, each color image (3x32x32) is converted into a single 1D vector by reshaping it to (-1, 3072), effectively removing the spatial dimensions.
+[english] This looks like exactly what I needed for my data pipeline.

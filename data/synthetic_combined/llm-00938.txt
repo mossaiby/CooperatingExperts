@@ -1,0 +1,22 @@
+[english] How can I update an existing document in Elasticsearch using its resource ID?
+[english] This function handles updating a specific object within Elasticsearch. It starts by logging the action and then uses the underlying driver to index (update) the specified resource.
+<switch:python>
+[python] def update(self, obj, resource_id):
+        """Update object in elasticsearch using the resource_id.
+        :param metadata: new metadata for the transaction.
+        :param resource_id: id of the object to be updated.
+        :return: id of the object.
+        """
+        self.logger.debug('elasticsearch::update::{}'.format(resource_id))
+        return self.driver._es.index(
+            index=self.driver._index,
+            id=resource_id,
+            body=obj,
+            doc_type='_doc',
+            refresh='wait_for'
+        )['_id']
+<switch:english>
+[english] The function returns the `_id` of the document after the operation completes, confirming the successful identification of the record.
+[english] Does this method handle cases where the document ID might not exist in Elasticsearch?
+[english] Yes. Using the `index` call with an existing `resource_id` will update it; if it doesn't exist, it creates a new one (upsert behavior).
+[english] Perfect, that clears up my confusion about updating documents.

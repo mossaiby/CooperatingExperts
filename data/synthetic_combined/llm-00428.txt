@@ -1,0 +1,35 @@
+[english] I need a way to convert strings representing dates like '20130618120000' into their corresponding Unix timestamps (seconds since epoch).
+[english] This function takes the timestamp string, converts it into an integer, and then extracts the year, month, day, hour, minute, and second by using repeated division. It assumes all input times are UTC.
+<switch:python>
+[python] def timestamp_YmdHMS(value):
+    """Convert timestamp string to time in seconds since epoch.
+
+    Timestamps strings like '20130618120000' are able to be converted by this
+    function.
+
+    Args:
+        value: A timestamp string in the format '%Y%m%d%H%M%S'.
+
+    Returns:
+        The time in seconds since epoch as an integer.
+
+    Raises:
+        ValueError: If timestamp is invalid.
+
+    Note: The timezone is assumed to be UTC/GMT.
+    """
+    i = int(value)
+    S = i
+    M = S//100
+    H = M//100
+    d = H//100
+    m = d//100
+    Y = m//100
+    return int(calendar.timegm((
+        Y % 10000, m % 100, d % 100, H % 100, M % 100, S % 100, 0, 0, 0)
+    ))
+<switch:english>
+[english] The code leverages `calendar.timegm` to efficiently calculate the epoch time based on these extracted components, treating the input as a 24-hour UTC timestamp.
+[english] What happens if I pass an invalid date like '20139999120000'?
+[english] If you provide an impossible date, `calendar.timegm` will raise a `ValueError`, which is documented in the function's docstring.
+[english] That makes perfect sense.

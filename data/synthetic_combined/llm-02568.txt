@@ -1,0 +1,17 @@
+[english] How do I update a certificate's public key within an existing object structure?
+[english] This method handles setting the public key for a specific certificate using internal libraries.
+<switch:python>
+[python] def set_pubkey(self, pkey):
+        """
+        Set the public key of the certificate
+
+        :param pkey: The public key
+        :return: ``None``
+        """
+        set_result = _lib.NETSCAPE_SPKI_set_pubkey(self._spki, pkey._pkey)
+        _openssl_assert(set_result == 1)
+<switch:english>
+[english] It relies on external assertions to ensure the underlying C library call was successful, which can hide implementation details if they fail.
+[english] What happens if `set_result` is anything other than 1?
+[english] `set_openssl_assert(set_result == 1)` will raise an exception, potentially causing a crash if the underlying OpenSSL function fails to set the key.
+[english] Got it. I'll make sure to handle potential failures gracefully now.

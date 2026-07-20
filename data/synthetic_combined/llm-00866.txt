@@ -1,0 +1,18 @@
+[english] How do I safely restrict certain methods from being called recursively when they are triggered by an asynchronous callback?
+[english] This decorator enforces reentrancy safety by checking the internal state of the class instance before allowing execution. If a specific lock indicates we are currently inside a callback, it raises an immediate error.
+<switch:python>
+[python] def _not_reentrant(func):
+        """Decorator that prevents callbacks from calling into methods that are
+        not reentrant
+        """
+        def wrap(self, *args, **kws):
+            if self._callback_lock and self._callback_lock.in_callback:
+                m = "Connection %s cannot be invoked from a callback!" % func
+                raise RuntimeError(m)
+            return func(self, *args, **kws)
+        return wrap
+<switch:english>
+[english] Note that the behavior relies on the instance having properly initialized `self._callback_lock` with an object that tracks its execution state.
+[english] What happens if `self._callback_lock` is ever manually set to `None`?
+[english] If it is `None`, the conditional check (`if self._callback_lock and ...`) will fail, and the method will simply run as usual without any reentrancy checks.
+[english] Thanks for explaining how this works.

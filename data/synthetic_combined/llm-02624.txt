@@ -1,0 +1,40 @@
+[english] How can I write a function to strip any text that appears before and includes the sequence '[0m' from a given string?
+[english] This function uses the `partition` method, which is effective for splitting a string based on a specific separator. It attempts to divide the input into three parts: whatever comes before the target sequence, the target sequence itself, and whatever follows it.
+<switch:python>
+[python] def extract_true_string(string_content):
+    """
+    remove extra characters before the actual string we are
+    looking for.  The Jenkins console output is encoded using utf-8.  However, the stupid
+    redirect function can only encode using ASCII.  I have googled for half a day with no
+    results to how to resolve the issue.  Hence, we are going to the heat and just manually
+    get rid of the junk.
+
+    Parameters
+    ----------
+
+    string_content :  str
+        contains a line read in from jenkins console
+
+    :return: str: contains the content of the line after the string '[0m'
+
+    """
+
+    startL,found,endL = string_content.partition('[0m')
+
+    if found:
+        return endL
+    else:
+        return string_content
+<switch:english>
+[english] The logic checks if '[0m' was actually found using the `found` variable returned by partition. If not, the original content is returned unchanged.
+[english] What happens if there are multiple occurrences of '[0m' in the input string?
+[english] Currently, the function only finds and removes the *first* instance it encounters.
+<switch:python>
+[python] def extract_true_string(string_content):
+    startL, found, endL = string_content.partition('[0m')
+    if found:
+        return endL
+    else:
+        return string_content
+<switch:english>
+[english] Got it, thanks for clarifying how that method works.

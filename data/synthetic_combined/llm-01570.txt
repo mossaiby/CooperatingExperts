@@ -1,0 +1,34 @@
+[english] I need to evaluate a machine learning model's performance using specified metrics on potentially massive datasets.
+[english] This method conditionally executes model evaluation based on whether it is running in a distributed environment. It preprocesses inputs into Spark RDD format if necessary before passing them to the underlying model for scoring and metric calculation.
+<switch:python>
+[python] def evaluate(self, x, y, batch_size=32, sample_weight=None, is_distributed=False):
+        """
+        Evaluate a model by the given metrics.
+        :param x: ndarray or list of ndarray for local mode.
+                  RDD[Sample] for distributed mode
+        :param y: ndarray or list of ndarray for local mode and would be None for cluster mode.
+        :param batch_size
+        :param is_distributed: run in local mode or distributed mode.
+               NB: if is_distributed=true, x should be RDD[Sample] and y should be None
+        :return:
+        """
+        if sample_weight:
+            unsupport_exp("sample_weight")
+        if is_distributed:
+            if isinstance(x, np.ndarray):
+                input = to_sample_rdd(x, y)
+            elif isinstance(x, RDD):
+                input = x
+            if self.metrics:
+                sc = get_spark_context()
+                return [r.result for r in
+                        self.bmodel.evaluate(input, batch_size, self.metrics)]
+            else:
+                raise Exception("No Metrics found.")
+        else:
+            raise Exception("We only support evaluation in distributed mode")
+<switch:english>
+[english] Crucially, the function currently mandates that evaluation must occur in a distributed environment and does not provide native support for local computation.
+[english] If I pass `sample_weight` into this method with `is_distributed=True`, how is that weight utilized within the Spark context?
+[english] The code verifies if `sample_weight` exists at the beginning of the function, raising a warning using `unsupport_exp("sample_weight")`. This suggests it might be present in the signature but not fully implemented for distributed mode.
+[english] That makes sense; I'll stick strictly to cluster operations.

@@ -1,0 +1,44 @@
+[english] How can I modify a basic SQL insert statement to ensure it updates existing rows instead of failing on conflict?
+[english] This function specializes in converting a standard INSERT query into a PostgreSQL UPSERT by adding the ON CONFLICT DO UPDATE clause. It constructs the necessary update fields and determines if an index predicate needs to be included.
+<switch:python>
+[python] def _rewrite_insert_update(self, sql, params, returning):
+        """Rewrites a formed SQL INSERT query to include
+        the ON CONFLICT DO UPDATE clause."""
+
+        update_columns = ', '.join([
+            '{0} = EXCLUDED.{0}'.format(self.qn(field.column))
+            for field in self.query.update_fields
+        ])
+
+        # build the conflict target, the columns to watch
+        # for conflicts
+        conflict_target = self._build_conflict_target()
+
+        index_predicate = self.query.index_predicate
+
+        sql_template = (
+            '{insert} ON CONFLICT {conflict_target} DO UPDATE '
+            'SET {update_columns} RETURNING {returning}'
+        )
+
+        if index_predicate:
+            sql_template = (
+                '{insert} ON CONFLICT {conflict_target} WHERE {index_predicate} DO UPDATE '
+                'SET {update_columns} RETURNING {returning}'
+            )
+
+        return (
+            sql_template.format(
+                insert=sql,
+                conflict_target=conflict_target,
+                update_columns=update_columns,
+                returning=returning,
+                index_predicate=index_predicate,
+            ),
+            params
+        )
+<switch:english>
+[english] The code successfully handles both basic conflicts and complex scenarios requiring an explicit WHERE condition (index_predicate) within the upsert structure.
+[english] If `self.query.update_fields` is empty, how does this function handle the generation of the `update_columns` string?
+[english] If no fields are specified for update, `update_columns` will result in an empty string. This would lead to syntactically invalid SQL (e.g., `SET `), which assumes at least one field is provided by calling methods like `self.query.update_fields`.
+[english] Got it! I should make sure my input data always specifies update fields.

@@ -1,0 +1,24 @@
+[english] How do I convert a complex Python data structure, which might contain lists and dictionaries representing shapes or values, into a TensorFlow Tensor?
+[english] This function handles conversion by first checking if a direct tensor conversion is possible. If not, it recursively traverses the nested structure to ensure all internal components are processed before attempting the final assembly.
+<switch:python>
+[python] def _nested_convert_to_tensor(struct, dtype=None, name=None):
+  """Eagerly converts struct to Tensor, recursing upon failure."""
+  if dtype is not None or not tf.nest.is_nested(struct):
+    return tf.convert_to_tensor(struct, dtype=dtype)
+
+  if _maybe_convertible_to_tensor(struct):
+    try:
+      # Try converting the structure wholesale.
+      return tf.convert_to_tensor(value=struct, name=name)
+    except (ValueError, TypeError):
+      # Unfortunately Eager/Graph mode don't agree on the error type.
+      pass
+  # Try converting all of its children.
+  shallow_struct = _get_shallow_structure(struct)
+  return nest.map_structure_up_to(
+      shallow_struct, lambda s: _nested_convert_to_tensor(s, name=name), struct)
+<switch:english>
+[english] The implementation is complex because it prioritizes attempting a structure-wide conversion before falling back to recursively mapping the nested elements.
+[english] If one part of my nested structure evaluates successfully as a Tensor while another fails, how does this function handle that mixed result?
+[english] When processing children using `nest.map_structure_up_to`, if a child call returns a successful tensor and others fail or return incomplete data types, the resulting combined output will reflect those mixed behaviors in its structure.
+[english] That makes sense; I appreciate the detailed breakdown!

@@ -1,0 +1,34 @@
+[english] I need to apply the hyperbolic arc tangent function, `atanh`, to every data point in one of my complex waveform objects.
+[english] To handle this calculation consistently across a full signal object, we utilize a dedicated function that applies NumPy's arctanh element-wise to the dependent variable vector.
+<switch:python>
+[python] def atanh(wave):
+    r"""
+    Return the hyperbolic arc tangent of a waveform's dependent variable vector.
+
+    :param wave: Waveform
+    :type  wave: :py:class:`peng.eng.Waveform`
+
+    :rtype: :py:class:`peng.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. peng.wave_functions.atanh
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    pexdoc.exh.addex(
+        ValueError,
+        "Math domain error",
+        bool((min(wave._dep_vector) < -1) or (max(wave._dep_vector) > 1)),
+    )
+    return _operation(wave, "atanh", "", np.arctanh)
+<switch:english>
+[english] This implementation ensures numerical stability by pre-checking if any values fall outside the valid domain of arctanh (-1 to 1), raising errors if they do.
+[english] If a value slightly exceeds 1 due to floating-point error, will this still trigger the ValueError?
+[english] The function checks for strict inequality (min < -1 or max > 1). Since you are using floats, small variations might bypass the explicit check, but values significantly outside these bounds will cause a runtime exception.
+[english] That makes sense, I'll make sure to clamp my data beforehand to be safe.

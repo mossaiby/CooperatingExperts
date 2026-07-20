@@ -1,0 +1,25 @@
+[english] I need a reliable way to delete a specific resource entry from an Elasticsearch index, ensuring it only tries to delete if it exists.
+[english] This function first checks for the existence of the resource ID within the specified index or raises a ValueError. If the check passes, it proceeds with the actual deletion command.
+<switch:python>
+[python] def delete(self, resource_id):
+        """Delete an object from elasticsearch.
+        :param resource_id: id of the object to be deleted.
+        :return:
+        """
+        self.logger.debug('elasticsearch::delete::{}'.format(resource_id))
+        if self.driver._es.exists(
+                index=self.driver._index,
+                id=resource_id,
+                doc_type='_doc'
+        ) == False:
+            raise ValueError("Resource \"{}\" does not exists".format(resource_id))
+        return self.driver._es.delete(
+            index=self.driver._index,
+            id=resource_id,
+            doc_type='_doc'
+        )
+<switch:english>
+[english] The code uses `doc_type='_doc'` during both checks and deletions; however, newer versions of Elasticsearch often handle document types implicitly.
+[english] If the resource exists but the deletion fails for a server-side reason (like permission issues), what kind of error do I get?
+[english] While this function explicitly handles non-existence with a ValueError, actual operational errors from Elasticsearch will likely be caught as standard HTTP or API exceptions specific to the underlying client library.
+[english] That makes sense. Thanks for explaining how it manages those checks.

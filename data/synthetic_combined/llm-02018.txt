@@ -1,0 +1,16 @@
+[english] How can I create a detached clone of this entity instance without duplicating its primary key dependencies?
+[english] To implement an efficient shallow copy, we first convert the current object into a dictionary using `to_dict()`. We then remove the unique identifier before reconstructing a new instance.
+<switch:python>
+[python] def copy(self):
+        '''
+        Creates a shallow copy of the given entity (any entities that can be
+        retrieved from a OneToMany relationship will not be copied).
+        '''
+        x = self.to_dict()
+        x.pop(self._pkey)
+        return self.__class__(**x)
+<switch:english>
+[english] This method effectively creates a deep-enough replica for simple attributes but maintains references (shallow) to complex relationships. Note that fields from one-to-many relationships are intentionally excluded here.
+[english] If this entity contains mutable defaults, like lists or dictionaries, will their contents be copied?
+[english] Since the copy is shallow, any nested mutable objects referenced by name will still point to the original instance. To clone those deeply embedded items, you would need a deep copy mechanism instead of direct dict unpacking.
+[english] That clarifies how object isolation works here.

@@ -1,0 +1,48 @@
+[english] How can I programmatically retrieve the pipeline string required to execute a specific recipe by its name?
+[english] The function dynamically discovers all available recipes within the `recipes` subpackage. It iterates through modules, extracts classes, and checks for an instance where the internal 'name' attribute matches your input.
+<switch:python>
+[python] def brew_recipe(recipe_name):
+    """Returns a pipeline string from a recipe name.
+
+    Parameters
+    ----------
+    recipe_name : str
+        Name of the recipe. Must match the name attribute in one of the classes
+        defined in :mod:`flowcraft.generator.recipes`
+
+    Returns
+    -------
+    str
+        Pipeline string ready for parsing and processing by flowcraft engine
+    """
+
+    # This will iterate over all modules included in the recipes subpackage
+    # It will return the import class and the module name, algon with the
+    # correct prefix
+    prefix = "{}.".format(recipes.__name__)
+    for importer, modname, _ in pkgutil.iter_modules(recipes.__path__, prefix):
+
+        # Import the current module
+        _module = importer.find_module(modname).load_module(modname)
+
+        # Fetch all available classes in module
+        _recipe_classes = [cls for cls in _module.__dict__.values() if
+                           isinstance(cls, type)]
+
+        # Iterate over each Recipe class, and check for a match with the
+        # provided recipe name.
+        for cls in _recipe_classes:
+            # Create instance of class to allow fetching the name attribute
+            recipe_cls = cls()
+            if getattr(recipe_cls, "name", None) == recipe_name:
+                return recipe_cls.brew()
+
+    logger.error(
+        colored_print("Recipe name '{}' does not exist.".format(recipe_name))
+    )
+    sys.exit(1)
+<switch:english>
+[english] If a matching class is found, it calls its 'brew()' method to return the pipeline string. If no match exists across all imported modules, the function logs an error and halts execution.
+[english] What specifically happens inside this function if the provided recipe name does not exist?
+[english] If a recipe is not found after checking every class, the function calls `logger.error` with a colored message and immediately terminates the program using `sys.exit(1)`.
+[english] I see how robustness against missing recipes is implemented.

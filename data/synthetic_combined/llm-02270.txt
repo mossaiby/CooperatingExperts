@@ -1,0 +1,20 @@
+[english] How do I establish a functional connection object for an MS SQL Server instance using pre-configured settings?
+[english] This function first fetches configuration details from internal state, such as server hosts and credentials. It then utilizes those retrieved attributes to create and return a live database connection.
+<switch:python>
+[python] def get_conn(self):
+        """
+        Returns a mssql connection object
+        """
+        conn = self.get_connection(self.mssql_conn_id)
+        conn = pymssql.connect(
+            server=conn.host,
+            user=conn.login,
+            password=conn.password,
+            database=self.schema or conn.schema,
+            port=conn.port)
+        return conn
+<switch:english>
+[english] The method assumes that the call to self.get_connection() will successfully retrieve a dictionary containing all necessary connection parameters.
+[english] In case both `self.schema` and `conn.schema` exist, which value is actually used for the database name?
+[english] If `self.schema` contains a truthy value (i.e., it is not an empty string or None), that value will be prioritized; otherwise, the connection object's schema (`conn.schema`) is used.
+[english] That makes sense; I appreciate the insight into the prioritization logic.

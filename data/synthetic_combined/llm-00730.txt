@@ -1,0 +1,20 @@
+[english] How can I check if an API call failed and display the error message clearly?
+[english] This function is designed to monitor the outcome of an external API request. It specifically checks if the returned HTTP status code indicates success, which defaults to the requests library's definition of OK.
+<switch:python>
+[python] def _handle_results(self):
+        """
+        Handle the results of the API call
+        """
+
+        # Only process if we get HTTP return code other 200.
+        if self._api_result.status_code != requests.codes.ok:
+            print(self.colorize_json(self._api_result.text))
+<switch:english>
+[english] If the request fails, this logic handles it by printing the error body using colorized formatting to make debugging easier for the user.
+[english] What happens if the API returns a successful status code (200) but no content in the response?
+[english] The current implementation only prints when the status code is non-OK. If you need to handle empty data even on success, you would modify the check:
+<switch:python>
+[python] if self._api_result.status_code != requests.codes.ok or not self._api_result.text:
+    print(self.colorize_json(self._api_result.text))
+<switch:english>
+[english] I see, I'll integrate that empty data check.

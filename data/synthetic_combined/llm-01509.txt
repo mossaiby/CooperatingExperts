@@ -1,0 +1,23 @@
+[english] How can I temporarily configure an alembic environment with specific database settings for running migrations?
+[english] This function generates a temporary configuration file needed by Alembic. It uses context managers to ensure that this setup is created and automatically cleaned up afterward.
+<switch:python>
+[python] def temp_alembic_ini(alembic_dir_location, sqlalchemy_url):
+    """
+    Temporarily write an alembic.ini file for use with alembic migration
+    scripts.
+    """
+    with TemporaryDirectory() as tempdir:
+        alembic_ini_filename = join(tempdir, 'temp_alembic.ini')
+        with open(alembic_ini_filename, 'w') as f:
+            f.write(
+                ALEMBIC_INI_TEMPLATE.format(
+                    alembic_dir_location=alembic_dir_location,
+                    sqlalchemy_url=sqlalchemy_url,
+                )
+            )
+        yield alembic_ini_filename
+<switch:english>
+[english] By using the `with` statement on the generator, you safely manage the temporary file's lifecycle without worrying about manual cleanup.
+[english] If I use this function inside a try-except block, will it still clean up the temporary directory?
+[english] Yes. The context manager provided by TemporaryDirectory() guarantees that the folder and its contents are removed when exiting the `with` block, even if exceptions occur within the block.
+[english] Got it, so cleanup is handled automatically?

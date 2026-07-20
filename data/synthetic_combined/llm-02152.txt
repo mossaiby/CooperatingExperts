@@ -1,0 +1,22 @@
+[english] How can I set up an execution environment for a specific Python module so that it runs correctly with its imports and file context?
+[english] This method is responsible for preparing the execution context for a given module or script. It configures necessary internal metadata, like identifying the script's name and globals, while ensuring the directory containing the script is discoverable.
+<switch:python>
+[python] def init_module(self, run_object):
+        """Initializes profiler with a module."""
+        self.profile = self.profile_module
+        self._run_object, _, self._run_args = run_object.partition(' ')
+        self._object_name = '%s (module)' % self._run_object
+        self._globs = {
+            '__file__': self._run_object,
+            '__name__': '__main__',
+            '__package__': None,
+        }
+        program_path = os.path.dirname(self._run_object)
+        if sys.path[0] != program_path:
+            sys.path.insert(0, program_path)
+        self._replace_sysargs()
+<switch:english>
+[english] The function effectively stages the environment for isolated execution, though globally modifying sys.path can sometimes create unexpected behavior in larger systems.
+[english] If `run_object` points to a script already located on Python's default search path, will this function still try to add its directory?
+[english] The code checks if the program's directory is already at index 0 of sys.path before attempting insertion, so it prevents redundant entries.
+[english] That makes sense; thanks for detailing that crucial environmental logic!

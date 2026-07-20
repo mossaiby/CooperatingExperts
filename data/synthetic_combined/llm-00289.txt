@@ -1,0 +1,31 @@
+[english] How can I automate the process of running FastQC on paired-end or single-end sequencing data and gathering the results into a package?
+[english] This function manages the entire workflow by first retrieving fastq data from file storage, preparing parameters for a dockerized tool execution, and finally packaging the output. It handles both paired-end (R1/R2) and single-end input seamlessly using temporary local directories to stage files.
+<switch:python>
+[python] def run_fastqc(job, r1_id, r2_id):
+    """
+    Run Fastqc on the input reads
+
+    :param JobFunctionWrappingJob job: passed automatically by Toil
+    :param str r1_id: FileStoreID of fastq read 1
+    :param str r2_id: FileStoreID of fastq read 2
+    :return: FileStoreID of fastQC output (tarball)
+    :rtype: str
+    """
+    work_dir = job.fileStore.getLocalTempDir()
+    job.fileStore.readGlobalFile(r1_id, os.path.join(work_dir, 'R1.fastq'))
+    parameters = ['/data/R1.fastq']
+    output_names = ['R1_fastqc.html', 'R1_fastqc.zip']
+    if r2_id:
+        job.fileStore.readGlobalFile(r2_id, os.path.join(work_dir, 'R2.fastq'))
+        parameters.extend(['-t', '2', '/data/R2.fastq'])
+        output_names.extend(['R2_fastqc.html', 'R2_fastqc.zip'])
+    dockerCall(job=job, tool='quay.io/ucsc_cgl/fastqc:0.11.5--be13567d00cd4c586edf8ae47d991815c8c72a49',
+               workDir=work_dir, parameters=parameters)
+    output_files = [os.path.join(work_dir, x) for x in output_names]
+    tarball_files(tar_name='fastqc.tar.gz', file_paths=output_files, output_dir=work_dir)
+    return job.fileStore.writeGlobalFile(os.path.join(work_dir, 'fastqc.tar.gz'))
+<switch:english>
+[english] The final step aggregates all generated quality control reports into a compressed tarball that is written back to global storage for downstream use by other pipeline steps. Note how the output length scales based on whether `r2_id` was provided.
+[english] What happens inside the function if I only provide an R1 ID?
+[english] The code checks `if r2_id:`, so if this parameter is falsy or None, it skips downloading and processing the second read entirely, running FastQC only on the first input file.
+[english] Got it! That makes sense for handling varied input sizes.

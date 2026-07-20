@@ -1,0 +1,34 @@
+[english] How can I configure certain boolean fields shown in a list view to only allow editing through controlled API calls, preventing direct manual data manipulation?
+[english] This function systematically checks every field defined in the display list for special metadata that flags it as an editable boolean. If such a flag is found, it customizes and registers a specialized AJAX-based handler.
+<switch:python>
+[python] def _collect_editable_booleans(self):
+        """
+        Collect all fields marked as editable booleans. We do not
+        want the user to be able to edit arbitrary fields by crafting
+        an AJAX request by hand.
+        """
+        if hasattr(self, '_ajax_editable_booleans'):
+            return
+
+        self._ajax_editable_booleans = {}
+
+        for field in self.list_display:
+            # The ajax_editable_boolean return value has to be assigned
+            # to the ModelAdmin class
+            item = getattr(self.__class__, field, None)
+            if not item:
+                continue
+
+            attr = getattr(item, 'editable_boolean_field', None)
+            if attr:
+                def _fn(self, instance):
+                    return [ajax_editable_boolean_cell(instance, _fn.attr)]
+
+                _fn.attr = attr
+                result_func = getattr(item, 'editable_boolean_result', _fn)
+                self._ajax_editable_booleans[attr] = result_func
+<switch:english>
+[english] The code ensures these handlers are assigned to the instance, allowing them to manage complex state changes triggered by the user interface via JavaScript.
+[english] Does this function strictly require that all fields flagged have both 'editable_boolean_field' and an associated 'editable_boolean_result' attribute defined?
+[english] No. If only the 'editable_boolean_field' marker is present, it uses a default internal anonymous function (`_fn`) for the result.
+[english] I appreciate the detailed walkthrough of how this security mechanism works.

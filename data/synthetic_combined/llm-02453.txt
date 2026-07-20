@@ -1,0 +1,53 @@
+[english] I need a way to align all numeric data in a multi-row structure so that their decimal points line up vertically across a column.
+[english] This function first analyzes all rows to determine the maximum required display width for each float column. Once the max length is known, it calculates and prepends leading spaces to ensure perfect alignment.
+<switch:python>
+[python] def align_decimals(data, headers, column_types=(), **_):
+    """Align numbers in *data* on their decimal points.
+
+    Whitespace padding is added before a number so that all numbers in a
+    column are aligned.
+
+    Outputting data before aligning the decimals::
+
+        1
+        2.1
+        10.59
+
+    Outputting data after aligning the decimals::
+
+         1
+         2.1
+        10.59
+
+    :param iterable data: An :term:`iterable` (e.g. list) of rows.
+    :param iterable headers: The column headers.
+    :param iterable column_types: The columns' type objects (e.g. int or float).
+    :return: The processed data and headers.
+    :rtype: tuple
+
+    """
+    pointpos = len(headers) * [0]
+    data = list(data)
+    for row in data:
+        for i, v in enumerate(row):
+            if column_types[i] is float and type(v) in float_types:
+                v = text_type(v)
+                pointpos[i] = max(utils.intlen(v), pointpos[i])
+
+    def results(data):
+        for row in data:
+            result = []
+            for i, v in enumerate(row):
+                if column_types[i] is float and type(v) in float_types:
+                    v = text_type(v)
+                    result.append((pointpos[i] - utils.intlen(v)) * " " + v)
+                else:
+                    result.append(v)
+            yield result
+
+    return results(data), headers
+<switch:english>
+[english] The logic correctly applies padding only to columns explicitly marked as floats in `column_types`. Keep in mind that this function uses external dependencies like `utils` and assumes specific helper types are available.
+[english] If a row has fewer values than the declared headers, how does the function handle the missing data?
+[english] The current implementation will raise an IndexError when iterating over rows because it expects all rows to match the length of the defined columns/headers.
+[english] I see. I'll just need to ensure my input data is uniformly structured.

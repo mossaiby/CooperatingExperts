@@ -1,0 +1,24 @@
+[english] How do I enable my module to import custom Basilisp source files using standard Python `import` syntax?
+[english] To allow Python to recognize and process non-Python code during the import sequence, we need to register a custom importer. This function checks if it's already registered before adding our specialized importer instance to Python's meta path.
+<switch:python>
+[python] def hook_imports():
+    """Hook into Python's import machinery with a custom Basilisp code
+    importer.
+
+    Once this is called, Basilisp code may be called from within Python code
+    using standard `import module.submodule` syntax."""
+    if any([isinstance(o, BasilispImporter) for o in sys.meta_path]):
+        return
+    sys.meta_path.insert(
+        0, BasilispImporter()  # pylint:disable=abstract-class-instantiated
+    )
+<switch:english>
+[english] This setup ensures that whenever Python attempts an import, the `BasilispImporter` handles the request first. It's crucial to call this once at initialization for the feature to work across your application.
+[english] What happens if another third-party library also tries to add its own importer to sys.meta_path?
+[english] Python iterates through `sys.meta_path` sequentially, so both importers would run during the lookup process:
+<switch:python>
+[python] s for meta in sys.meta_path:
+    if isinstance(meta, BasilispImporter):
+        pass
+<switch:english>
+[english] Got it, I'll add this initialization to my main startup script.

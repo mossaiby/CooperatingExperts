@@ -1,0 +1,48 @@
+[english] I need to implement a dense convolutional neural network for sequential data classification that leverages feature reuse across all layers.
+[english] This function creates a Dense Convolutional Network by iteratively processing the input. In each layer, it concatenates the current layer's features with the outputs of every preceding layer before applying 1D convolution and activation.
+<switch:python>
+[python] def dense_convolutional_network(units: tf.Tensor,
+                                n_hidden_list: List,
+                                filter_width=3,
+                                use_dilation=False,
+                                use_batch_norm=False,
+                                training_ph=None):
+    """ Densely connected convolutional layers. Based on the paper:
+        [Gao 17] https://arxiv.org/abs/1608.06993
+
+        Args:
+            units: a tensorflow tensor with dimensionality [None, n_tokens, n_features]
+            n_hidden_list: list with number of hidden units at the ouput of each layer
+            filter_width: width of the kernel in tokens
+            use_batch_norm: whether to use batch normalization between layers
+            use_dilation: use power of 2 dilation scheme [1, 2, 4, 8 .. ] for layers 1, 2, 3, 4 ...
+            training_ph: boolean placeholder determining whether is training phase now or not.
+                It is used only for batch normalization to determine whether to use
+                current batch average (std) or memory stored average (std)
+        Returns:
+            units: tensor at the output of the last convolutional layer
+                with dimensionality [None, n_tokens, n_hidden_list[-1]]
+        """
+    units_list = [units]
+    for n_layer, n_filters in enumerate(n_hidden_list):
+        total_units = tf.concat(units_list, axis=-1)
+        if use_dilation:
+            dilation_rate = 2 ** n_layer
+        else:
+            dilation_rate = 1
+        units = tf.layers.conv1d(total_units,
+                                 n_filters,
+                                 filter_width,
+                                 dilation_rate=dilation_rate,
+                                 padding='same',
+                                 kernel_initializer=INITIALIZER())
+        if use_batch_norm:
+            units = tf.layers.batch_normalization(units, training=training_ph)
+        units = tf.nn.relu(units)
+        units_list.append(units)
+    return units
+<switch:english>
+[english] The architecture supports specialized context capture through geometric dilation rates when enabled.
+[english] If I set `training_ph=None` while using Batch Normalization, what specific behavior will TF adopt?
+[english] When 'training' is None, the network defaults to inference mode for Batch Normalization. This means it uses the stored moving average and variance calculated during training rather than computing statistics from the current batch.
+[english] That makes sense regarding how BN handles production inference.

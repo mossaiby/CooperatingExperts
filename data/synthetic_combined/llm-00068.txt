@@ -1,0 +1,35 @@
+[english] How can an AI actor move through a 3D environment based on its current rotational state and a specific distance?
+[english] This method calculates movement vectors by converting degrees into radians, then uses sine and cosine functions to determine directional components for each axis.
+<switch:python>
+[python] def move(self,dist):
+        """
+        Moves the actor using standard trigonometry along the current rotational vector.
+        
+        :param float dist: Distance to move
+        
+        .. todo::
+           
+           Test this method, also with negative distances
+        """
+        x, y = self._rot
+        y_angle = math.radians(y)
+        x_angle = math.radians(x)
+        m = math.cos(y_angle)
+        dy = math.sin(y_angle)
+        dy = 0.0
+        dx = math.cos(x_angle)
+        dz = math.sin(x_angle)
+        dx,dy,dz = dx*dist,dy*dist,dz*dist
+        x,y,z = self._pos
+        self.pos = x+dx,y+dy,z+dz
+        return dx,dy,dz
+<switch:english>
+[english] Note that `dy` is explicitly set to 0.0 immediately after calculation, which means motion along the Y-axis based on rotation `y` is currently disabled.
+[english] Since the docstring suggests testing negative distances, how would using a negative distance affect the resulting position update?
+[english] A negative distance simply flips the direction of movement vector components (dx, dy, dz), effectively causing the actor to move backward along its current orientation.
+<switch:python>
+[python] # If dist = -10:
+dx, dy, dz = dx * -10, dy * -10, dz * -10
+self.pos = x+dx, y+dy, z+dz
+<switch:english>
+[english] This clarifies how the function handles direction changes based on sign.

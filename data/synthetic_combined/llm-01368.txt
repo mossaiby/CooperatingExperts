@@ -1,0 +1,73 @@
+[english] I need a function that scans source code comments for specific pragma directives used to globally enable or disable message handling options.
+[english] This function processes tokens, specifically targeting comment sections of the code. It uses regular expressions to parse these pragmas and determines whether they are recognized control options like 'disable' or custom configuration commands.
+<switch:python>
+[python] def process_tokens(self, tokens):
+        """process tokens from the current module to search for module/block
+        level options
+        """
+        control_pragmas = {"disable", "enable"}
+        for (tok_type, content, start, _, _) in tokens:
+            if tok_type != tokenize.COMMENT:
+                continue
+            match = OPTION_RGX.search(content)
+            if match is None:
+                continue
+
+            first_group = match.group(1)
+            if (
+                first_group.strip() == "disable-all"
+                or first_group.strip() == "skip-file"
+            ):
+                if first_group.strip() == "disable-all":
+                    self.add_message(
+                        "deprecated-pragma",
+                        line=start[0],
+                        args=("disable-all", "skip-file"),
+                    )
+                self.add_message("file-ignored", line=start[0])
+                self._ignore_file = True
+                return
+            try:
+                opt, value = first_group.split("=", 1)
+            except ValueError:
+                self.add_message(
+                    "bad-inline-option", args=first_group.strip(), line=start[0]
+                )
+                continue
+            opt = opt.strip()
+            if opt in self._options_methods or opt in self._bw_options_methods:
+                try:
+                    meth = self._options_methods[opt]
+                except KeyError:
+                    meth = self._bw_options_methods[opt]
+                    # found a "(dis|en)able-msg" pragma deprecated suppression
+                    self.add_message(
+                        "deprecated-pragma",
+                        line=start[0],
+                        args=(opt, opt.replace("-msg", "")),
+                    )
+                for msgid in utils._splitstrip(value):
+                    # Add the line where a control pragma was encountered.
+                    if opt in control_pragmas:
+                        self._pragma_lineno[msgid] = start[0]
+
+                    try:
+                        if (opt, msgid) == ("disable", "all"):
+                            self.add_message(
+                                "deprecated-pragma",
+                                line=start[0],
+                                args=("disable=all", "skip-file"),
+                            )
+                            self.add_message("file-ignored", line=start[0])
+                            self._ignore_file = True
+                            return
+                        meth(msgid, "module", start[0])
+                    except exceptions.UnknownMessageError:
+                        self.add_message("bad-option-value", args=msgid, line=start[0])
+            else:
+                self.add_message("unrecognized-inline-option", args=opt, line=start[0])
+<switch:english>
+[english] The function manages deprecation warnings and selectively controls which message IDs are processed based on the recognized inline options found within the tokens.
+[english] What behavior is applied if a pragma contains an option name that doesn't exist in either `self._options_methods` or `self._bw_options_methods`?
+[english] If the option is not recognized, the function calls `self.add_message("unrecognized-inline-option", args=opt, line=start[0])`, logging a warning about the unknown configuration element.
+[english] This makes sense now, thanks for walking through it!

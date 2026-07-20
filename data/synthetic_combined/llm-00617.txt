@@ -1,0 +1,26 @@
+[english] How can I reliably log detailed information about my application's environment, including Python version and external library versions?
+[english] To capture this data conditionally, we first check if debug mode is active. If it is, the function uses `sys.platform` to determine the specific operating system (macOS, Windows, or Linux) before logging various component versions.
+<switch:python>
+[python] def log_current_versions():
+    """Show current installed versions"""
+    if logger.root.isEnabledFor(logging.DEBUG):
+        # MAC OS X
+        if sys.platform == "darwin":
+            os_version = "macOS {0}".format(platform.mac_ver()[0])
+        # Windows
+        elif sys.platform.startswith("win"):
+            os_version = "{0} {1}".format(platform.system(), platform.release())
+        # linux / other
+        else:
+            os_version = platform.platform()
+
+        log.debug("OS:         {0}".format(os_version))
+        log.debug("Python:     {0}".format(platform.python_version()))
+        log.debug("Streamlink: {0}".format(streamlink_version))
+        log.debug("Requests({0}), Socks({1}), Websocket({2})".format(
+            requests.__version__, socks_version, websocket_version))
+<switch:english>
+[english] This approach ensures detailed environment tracking while keeping standard production logs clean. However, this requires that variables like `streamlink_version` are defined in scope.
+[english] What happens when the initial check fails—if `logger.root.isEnabledFor(logging.DEBUG)` returns false?
+[english] If debugging is not enabled, the function immediately skips all OS and version checks and does nothing, preventing unnecessary overhead or warnings.
+[english] Okay, so it's designed to be totally non-intrusive when verbosity isn't needed.

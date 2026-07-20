@@ -1,0 +1,19 @@
+[english] How can I ensure that a big integer object only stores valid integer types when setting its value?
+[english] This approach uses type validation to guarantee data integrity before further processing. The function checks if self.value is present, and then verifies it conforms to expected Python numeric types.
+<switch:python>
+[python] def validate(self):
+        """
+        Verify that the value of the BigInteger is valid.
+
+        Raises:
+            TypeError: if the value is not of type int or long
+        """
+        if self.value is not None:
+            if not isinstance(self.value, six.integer_types):
+                raise TypeError('expected (one of): {0}, observed: {1}'.format(
+                    six.integer_types, type(self.value)))
+<switch:english>
+[english] The use of `six.integer_types` ensures compatibility across different Python versions for handling both standard ints and longs. If the value is unsuitable, a TypeError is raised with descriptive information about what was observed.
+[english] What happens if I try to set self.value to 3.14 (a float) or None?
+[english] The function handles both cases differently. If you assign `None`, nothing happens because of the initial `if self.value is not None:` check. However, setting it to a float will trigger the validation and raise a TypeError.
+[english] That clarifies how type safety is maintained in this class.

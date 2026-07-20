@@ -1,0 +1,37 @@
+[english] How do I implement a reusable utility to fetch an image and then resize it while ensuring it is saved correctly to storage?
+[english] This function orchestrates the entire resizing process by first retrieving the source image data, applying necessary preprocessing steps, and finally executing the resizing logic before saving the manipulated file.
+<switch:python>
+[python] def create_resized_image(self, path_to_image, save_path_on_storage,
+                             width, height):
+        """
+        Create a resized image.
+
+        `path_to_image`: The path to the image with the media directory to
+                         resize. If `None`, the
+                         VERSATILEIMAGEFIELD_PLACEHOLDER_IMAGE will be used.
+        `save_path_on_storage`: Where on self.storage to save the resized image
+        `width`: Width of resized image (int)
+        `height`: Desired height of resized image (int)
+        `filename_key`: A string that will be used in the sized image filename
+                        to signify what operation was done to it.
+                        Examples: 'crop' or 'scale'
+        """
+        image, file_ext, image_format, mime_type = self.retrieve_image(
+            path_to_image
+        )
+
+        image, save_kwargs = self.preprocess(image, image_format)
+
+        imagefile = self.process_image(
+            image=image,
+            image_format=image_format,
+            save_kwargs=save_kwargs,
+            width=width,
+            height=height
+        )
+        self.save_image(imagefile, save_path_on_storage, file_ext, mime_type)
+<switch:english>
+[english] The function relies on several internal methods like `self.retrieve_image` and `self.preprocess`, which will contain the specific implementation details for handling format conversions or placeholder images.
+[english] If `path_to_image` is passed as None, does the method automatically substitute a default image?
+[english] Yes, if you pass None to `path_to_image`, it uses the constant `VERSATILEIMAGEFIELD_PLACEHOLDER_IMAGE` during retrieval. This allows for graceful degradation when no source media is provided.
+[english] That makes sense; relying on defaults simplifies handling missing inputs.

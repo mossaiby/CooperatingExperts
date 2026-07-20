@@ -1,0 +1,17 @@
+[english] How do I retrieve the primary acquire channel associated with a given qubit instance?
+[english] The function first checks if this internal list contains any acquisition channels. If it is not empty, it returns the first element designated as the primary channel.
+<switch:python>
+[python] def acquire(self) -> AcquireChannel:
+        """Return the primary acquire channel of this qubit."""
+        if self._acquires:
+            return self._acquires[0]
+        else:
+            raise PulseError("No acquire channels in q[%d]" % self._index)
+<switch:english>
+[english] This function specifically targets the first available channel stored in the list; it does not provide access to all potential measurement channels.
+[english] If a qubit object somehow has an empty _acquires list, what exact error is raised?
+[english] A PulseError is explicitly raised when no acquire channels are registered for that specific qubit index. This ensures consumers of the function know the hardware configuration is incomplete:
+<switch:python>
+[python] raise PulseError("No acquire channels in q[%d]" % self._index)
+<switch:english>
+[english] Thanks, that makes sense!

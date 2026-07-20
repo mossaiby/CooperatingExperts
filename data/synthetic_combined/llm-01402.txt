@@ -1,0 +1,64 @@
+[english] I need to recursively traverse and flatten a hierarchical data structure defined by TransTmpl objects, yielding specific bit address ranges along with transaction details.
+[english] This function implements a recursive flattening mechanism using the `shouldEnterFn` callback to decide when an object should be yielded or if its contents should be fully explored. It handles different structural types like structs and arrays by iterating over their children and calling itself recursively.
+<switch:python>
+[python] def walkFlatten(self, offset: int=0,
+                    shouldEnterFn=_default_shouldEnterFn,
+                    otherObjItCtx: ObjIteratorCtx =_DummyIteratorCtx()
+                    ) -> Generator[
+            Union[Tuple[Tuple[int, int], 'TransTmpl'], 'OneOfTransaction'],
+            None, None]:
+        """
+        Walk fields in instance of TransTmpl
+
+        :param offset: optional offset for all children in this TransTmpl
+        :param shouldEnterFn: function (transTmpl) which returns True
+            when field should be split on it's children
+        :param shouldEnterFn: function(transTmpl) which should return
+            (shouldEnter, shouldUse) where shouldEnter is flag that means
+            iterator should look inside of this actual object
+            and shouldUse flag means that this field should be used
+            (=generator should yield it)
+        :return: generator of tuples ((startBitAddress, endBitAddress),
+            TransTmpl instance)
+        """
+
+        t = self.dtype
+        base = self.bitAddr + offset
+        end = self.bitAddrEnd + offset
+
+        shouldEnter, shouldYield = shouldEnterFn(self)
+        if shouldYield:
+            yield ((base, end), self)
+
+        if shouldEnter:
+            if isinstance(t, Bits):
+                pass
+            elif isinstance(t, HStruct):
+                for ch in self.children:
+                    with otherObjItCtx(ch.origin.name):
+                        yield from ch.walkFlatten(
+                            offset,
+                            shouldEnterFn,
+                            otherObjItCtx)
+            elif isinstance(t, HArray):
+                itemSize = (self.bitAddrEnd - self.bitAddr) // self.itemCnt
+                for i in range(self.itemCnt):
+                    with otherObjItCtx(i):
+                        yield from self.children.walkFlatten(
+                            base + i * itemSize,
+                            shouldEnterFn,
+                            otherObjItCtx)
+            elif isinstance(t, HUnion):
+                yield OneOfTransaction(self, offset, shouldEnterFn,
+                                       self.children)
+            elif isinstance(t, HStream):
+                assert len(self.children) == 1
+                yield StreamTransaction(self, offset, shouldEnterFn,
+                                        self.children[0])
+            else:
+                raise TypeError(t)
+<switch:english>
+[english] The implementation correctly differentiates between traversable structures (like HStruct/HArray) and terminal transactions (like HUnion/HStream), ensuring proper transaction encapsulation in the final output.
+[english] If a child object of an array item is itself a complex structure, does this function ensure deep flattening occurs for that specific element?
+[english] Yes. The loop that iterates over `self.itemCnt` and recursively calls `walkFlatten` on each offset ensures that if the content (`ch`) is another structural type, it will be fully traversed by subsequent generator yields.
+[english] That makes sense! Thanks for clarifying how the recursion works.

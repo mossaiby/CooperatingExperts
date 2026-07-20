@@ -1,0 +1,20 @@
+[english] How do I safely increase a specific tag value associated with this transaction, especially if it's based on historical data?
+[english] This function handles complex tag arithmetic by converting the existing tag into its constituent trits for manipulation.
+<switch:python>
+[python] def increment_legacy_tag(self):
+        """
+        Increments the transaction's legacy tag, used to fix insecure
+        bundle hashes when finalizing a bundle.
+
+        References:
+
+        - https://github.com/iotaledger/iota.lib.py/issues/84
+        """
+        self._legacy_tag = (
+            Tag.from_trits(add_trits(self.legacy_tag.as_trits(), [1]))
+        )
+<switch:english>
+[english] It uses `add_trits` to perform the actual increment of the tag value before packaging it back into a new Tag object.
+[english] If the legacy tag were already at its maximum capacity, how would this function behave?
+[english] The current implementation of `add_trits` would typically handle overflow or wrapping according to Iota's specification for trits. If it encounters an error during conversion, the transaction finalization may fail.
+[english] Thanks, that clarifies the tag handling process.

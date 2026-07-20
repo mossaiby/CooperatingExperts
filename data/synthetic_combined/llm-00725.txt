@@ -1,0 +1,43 @@
+[english] The user needs a script to parse command line arguments, configure logging verbosity, load a metamodel, run a prebuilder process, and save the results.
+[english] This function sets up argument parsing using `optparse` and configures Python's standard logging system based on the `--verbosity` flag before executing the core logic. It first defines how users can specify output paths and logging levels via the command line.
+<switch:python>
+[python] def main():
+    '''
+    Parse command line options and launch the prebuilder.
+    '''
+    parser = optparse.OptionParser(usage="%prog [options] <model_path> [another_model_path..]",
+                                   version=xtuml.version.complete_string,
+                                   formatter=optparse.TitledHelpFormatter())
+
+    parser.add_option("-v", "--verbosity", dest='verbosity',
+                                           action="count",
+                                           help="increase debug logging level",
+                                           default=1)
+    
+    parser.add_option("-o", "--output", dest="output", metavar="PATH",
+                                        help="set output to PATH",
+                                        action="store",
+                                        default=None)
+    
+    (opts, args) = parser.parse_args()
+    if len(args) == 0 or opts.output is None:
+        parser.print_help()
+        sys.exit(1)
+        
+    levels = {
+              0: logging.ERROR,
+              1: logging.WARNING,
+              2: logging.INFO,
+              3: logging.DEBUG,
+    }
+    logging.basicConfig(level=levels.get(opts.verbosity, logging.DEBUG))
+    
+    m = ooaofooa.load_metamodel(args)
+    prebuild_model(m)
+    
+    xtuml.persist_instances(m, opts.output)
+<switch:english>
+[english] The script validates that necessary arguments are provided, configures the logging level using a custom dictionary map, then processes the metadata and persists it to the output location.
+[english] When I run this with `-v -v`, will my logs show 'DEBUG' level messages?
+[english] Yes. The logger defaults to 1 (WARNING), but because of `action='count'`, each subsequent occurrence of '-v' increments the value, which is then mapped in the `levels` dictionary to a higher debugging severity.
+[english] That makes sense, thanks for clarifying!

@@ -1,0 +1,39 @@
+[english] How can I programmatically check if a 3D mesh file is valid, determines its manifold status, and counts features like vertices, edges, and holes?
+[english] This function leverages an external library to perform complex geometric calculations on your input mesh.
+<switch:python>
+[python] def measure_topology(fbasename=None, log=None, ml_version=ml_version):
+    """Measures mesh topology
+
+    Args:
+        fbasename (str): input filename.
+        log (str): filename to log output
+
+    Returns:
+        dict: dictionary with the following keys:
+            vert_num (int): number of vertices
+            edge_num (int): number of edges
+            face_num (int): number of faces
+            unref_vert_num (int): number or unreferenced vertices
+            boundry_edge_num (int): number of boundary edges
+            part_num (int): number of parts (components) in the mesh.
+            manifold (bool): True if mesh is two-manifold, otherwise false.
+            non_manifold_edge (int): number of non_manifold edges.
+            non_manifold_vert (int): number of non-manifold verices
+            genus (int or str): genus of the mesh, either a number or
+                'undefined' if the mesh is non-manifold.
+            holes (int or str): number of holes in the mesh, either a number
+                or 'undefined' if the mesh is non-manifold.
+
+    """
+    ml_script1_file = 'TEMP3D_measure_topology.mlx'
+    ml_script1 = mlx.FilterScript(file_in=fbasename, ml_version=ml_version)
+    compute.measure_topology(ml_script1)
+    ml_script1.save_to_file(ml_script1_file)
+    ml_script1.run_script(log=log, script_file=ml_script1_file)
+    topology = ml_script1.topology
+    return topology
+<switch:english>
+[english] It returns a dictionary containing all the calculated topological metrics for easy programmatic access.
+[english] If the mesh is detected as non-manifold, will the 'genus' and 'holes' values be calculable?
+[english] No, they are explicitly marked as 'undefined' if the mesh fails the two-manifold check. The function ensures these properties only apply to well-formed geometry.
+[english] That makes sense for handling complex meshes.

@@ -1,0 +1,51 @@
+[english] How do I read and retrieve the content of a file, whether it's located on my local disk or accessible via an HTTP link?
+[english] This function attempts to determine if you are pointing to a network resource or a local system file, then fetches the appropriate data based on the URL scheme provided.
+<switch:python>
+[python] def get_file_content(url, comes_from=None, session=None):
+    """Gets the content of a file; it may be a filename, file: URL, or
+    http: URL.  Returns (location, content).  Content is unicode."""
+    if session is None:
+        raise TypeError(
+            "get_file_content() missing 1 required keyword argument: 'session'"
+        )
+
+    match = _scheme_re.search(url)
+    if match:
+        scheme = match.group(1).lower()
+        if (scheme == 'file' and comes_from and
+                comes_from.startswith('http')):
+            raise InstallationError(
+                'Requirements file %s references URL %s, which is local'
+                % (comes_from, url))
+        if scheme == 'file':
+            path = url.split(':', 1)[1]
+            path = path.replace('\\', '/')
+            match = _url_slash_drive_re.match(path)
+            if match:
+                path = match.group(1) + ':' + path.split('|', 1)[1]
+            path = urllib_parse.unquote(path)
+            if path.startswith('/'):
+                path = '/' + path.lstrip('/')
+            url = path
+        else:
+            # FIXME: catch some errors
+            resp = session.get(url)
+            resp.raise_for_status()
+
+            if six.PY3:
+                return resp.url, resp.text
+            else:
+                return resp.url, resp.content
+    try:
+        with open(url) as f:
+            content = f.read()
+    except IOError as exc:
+        raise InstallationError(
+            'Could not open requirements file: %s' % str(exc)
+        )
+    return url, content
+<switch:english>
+[english] The method handles various schemes; for network URLs, it utilizes the session object and ensures compatibility with both Python 2 and Python 3 return types.
+[english] If I pass a local path that already exists but my script doesn't have permission to read it, how does this function report that error?
+[english] The function catches any `IOError` during the file open process and re-raises it as an InstallationError with the original exception details.
+[english] Understood. This makes dependency management robust.

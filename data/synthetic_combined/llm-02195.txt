@@ -1,0 +1,15 @@
+[english] I need a way to iterate through all defined steps in the parsed file while simultaneously extracting their configuration data and source code location span.
+[english] We can process this by treating the function as a generator that loops over all step functions and decorators available from the parser. For each identified step, we calculate its specific arguments and map it to code spans based on decorator positioning.
+<switch:python>
+[python] def iter_steps(self):
+        """Iterate over steps in the parsed file."""
+        for func, decorator in self._iter_step_func_decorators():
+            step = self._step_decorator_args(decorator)
+            if step:
+                span = self._span_from_pos(decorator.start_pos, func.end_pos)
+                yield step, func.name.value, span
+<switch:english>
+[english] This function effectively yields tuples containing the parsed step data, its symbolic name, and a calculated source code span (location). Since it uses an iterator, you can process steps one by one without loading everything into memory.
+[english] What if two different functions have the same name but map to different steps? How does the generator handle that?
+[english] Based on the current logic, all matching decorated functions are yielded sequentially regardless of name duplicates. If strict uniqueness is required based on step configuration or name, you would need an additional check before yielding.
+[english] Got it, so it maintains order but doesn't guarantee unique names across execution.

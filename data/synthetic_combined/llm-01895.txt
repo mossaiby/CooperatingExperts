@@ -1,0 +1,34 @@
+[english] How can I programmatically create an OIDSet object that is guaranteed to contain only a specific, single OID member?
+[english] This function serves as a factory to initialize a new set of type `cls`. It carefully checks the input types for the OID and then uses CForeign Function Interface (CFFI) calls to add the pointer directly into the blank set.
+<switch:python>
+[python] def singleton_set(cls, single_oid):
+        """
+        Factory function to create a new :class:`OIDSet` with a single member.
+
+        :param single_oid: the OID to use as a member of the new set
+        :type single_oid: :class:`OID`
+        :returns: an OID set with the OID passed in as the only member
+        :rtype: :class:`OIDSet`
+        """
+        new_set = cls()
+        oid_ptr = None
+        if isinstance(single_oid, OID):
+            oid_ptr = ffi.addressof(single_oid._oid)
+        elif isinstance(single_oid, ffi.CData):
+            if ffi.typeof(single_oid) == ffi.typeof('gss_OID_desc'):
+                oid_ptr = ffi.addressof(single_oid)
+            elif ffi.typeof(single_oid) == ffi.typeof('gss_OID'):
+                oid_ptr = single_oid
+        if oid_ptr is None:
+            raise TypeError("Expected a gssapi.oids.OID, got " + str(type(single_oid)))
+
+        minor_status = ffi.new('OM_uint32[1]')
+        retval = C.gss_add_oid_set_member(minor_status, oid_ptr, new_set._oid_set)
+        if GSS_ERROR(retval):
+            raise _exception_for_status(retval, minor_status[0])
+        return new_set
+<switch:english>
+[english] The reliance on underlying C functions makes this code highly dependent on proper external library context, requiring careful error checking via status codes.
+[english] What is the purpose of the extensive type checking for `single_oid` using both `OID` and `ffi.CData`, and what happens if I pass a simple Python string?
+[english] The function requires strict pointer validation because it passes references to C functions which expect memory addresses (`gssapi`). If a non-OID object is passed, the code raises a TypeError: "Expected a gssapi.oids.OID..."
+[english] That makes sense; I need to ensure my input conforms to what the underlying C layer expects.

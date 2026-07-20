@@ -1,0 +1,20 @@
+[english] How can I automatically synchronize data changes from a widget to its associated proxy object?
+[english] This function handles data synchronization between a Widget and its proxy. We first check if an update change exists and the proxy mechanism is active before attempting any updates.
+<switch:python>
+[python] def _update_proxy(self, change):
+        """ Update the proxy widget when the Widget data
+        changes.
+        """
+        #: Try default handler
+        if change['type'] == 'update' and self.proxy_is_active:
+            handler = getattr(self.proxy, 'set_' + change['name'], None)
+            if handler is not None:
+                handler(change['value'])
+            else:
+                self.proxy.set_attribute(change['name'], change['value'])
+            self._notify_modified(change)
+<switch:english>
+[english] If the specific setter method isn't found, it falls back to calling `set_attribute` to guarantee the property gets updated on the proxy object.
+[english] What safety checks are in place if the change name contains characters invalid for a Python attribute?
+[english] The current code uses direct string concatenation (`'set_' + change['name']`). If `change['name']` is not a valid identifier, `getattr` will return None, triggering the generic fallback method.
+[english] I see; I should add stricter validation for incoming data names.

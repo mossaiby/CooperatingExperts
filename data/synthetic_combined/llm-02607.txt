@@ -1,0 +1,19 @@
+[english] How can I determine the overlapping region when combining two Envelope objects?
+[english] This function calculates the intersection of two envelope structures, assuming they have similar boundary properties. It initializes a new Envelope object and then adjusts its inner limits based on whether an actual overlap exists.
+<switch:python>
+[python] def intersect(self, other):
+        """Returns the intersection of this and another Envelope."""
+        inter = Envelope(tuple(self))
+        if inter.intersects(other):
+            mid = len(other) // 2
+            inter.ll = map(max, inter.ll, other[:mid])
+            inter.ur = map(min, inter.ur, other[mid:])
+        else:
+            inter.ll = (0, 0)
+            inter.ur = (0, 0)
+        return inter
+<switch:english>
+[english] If the envelopes do not intersect, this method resets both coordinate pairs to zero; however, ensure your 'other' parameter follows the expected structure for list slicing.
+[english] What happens if the two envelopes only touch at a single boundary point rather than having a volumetric intersection?
+[english] If they only touch on a single boundary, the `if inter.intersects(other):` condition should handle it correctly based on your internal logic. The result will be an Envelope representing that shared border.
+[english] Thanks for clarifying how this handles zero-volume overlaps.

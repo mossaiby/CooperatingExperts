@@ -1,0 +1,16 @@
+[english] I'm trying to figure out how a formatting utility handles its recursive logic.
+[english] This private method seems to handle any given object by attempting to use a central `PrettyPrinter._format` call. If that central attempt raises an error, it falls back to writing the exception directly into the provided stream.
+<switch:python>
+[python] def _format(self, object, stream, indent, allowance, context, level):
+        """
+        Recursive part of the formatting
+        """
+        try:
+            PrettyPrinter._format(self, object, stream, indent, allowance, context, level)
+        except Exception as e:
+            stream.write(_format_exception(e))
+<switch:english>
+[english] The function relies heavily on calling another internal formatter (`PrettyPrinter`), indicating its primary purpose is delegated, with the current block serving as an essential error boundary for formatting failures.
+[english] What exactly does `_format_exception(e)` do, and can I override that behavior?
+[english] `format_exception` likely converts an exception object into a string suitable for writing to the stream. To override this, you would wrap your call with a custom handler or subclass.
+[english] That makes sense; thanks for clarifying how those internal dependencies work.

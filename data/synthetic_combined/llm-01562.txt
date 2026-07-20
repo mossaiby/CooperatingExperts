@@ -1,0 +1,30 @@
+[english] I need a way to calculate the hyperbolic arc cosine of all dependent variable vectors within one of my waveform objects.
+[english] This function applies the mathematical operation `acosh` across the entire waveform's data. It uses numpy's implementation, ensuring efficient vectorized calculations for your signal data.
+<switch:python>
+[python] def acosh(wave):
+    r"""
+    Return the hyperbolic arc cosine of a waveform's dependent variable vector.
+
+    :param wave: Waveform
+    :type  wave: :py:class:`peng.eng.Waveform`
+
+    :rtype: :py:class:`peng.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc()) ]]]
+    .. Auto-generated exceptions documentation for
+    .. peng.wave_functions.acosh
+
+    :raises:
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * ValueError (Math domain error)
+
+    .. [[[end]]]
+    """
+    pexdoc.exh.addex(ValueError, "Math domain error", bool(min(wave._dep_vector) < 1))
+    return _operation(wave, "acosh", "", np.arccosh)
+<switch:english>
+[english] The function explicitly checks that all input values are greater than or equal to one before proceeding. This prevents common math domain errors when calculating $\text{acosh}$.
+[english] If I feed the function a waveform where some, but not all, values fall below 1, how exactly does it handle that?
+[english] The code is designed to raise a `ValueError` during its initial check if the minimum value in the dependent vector (`wave._dep_vector`) is less than 1.
+[english] That makes sense; I should ensure my input data is strictly positive.

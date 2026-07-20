@@ -1,0 +1,18 @@
+[english] I need a method to dynamically retrieve an appropriate error page callback based on the current HTTP response status.
+[english] This function determines which handler to use for displaying errors. It prioritizes retrieving a specific handler matching the current status from `self._error_handlers`. If no specific match is found, it checks if a general fallback handler exists for any error (keyed by None) before falling back.
+<switch:python>
+[python] def _get_error_page_callback(self):
+        """Return an error page for the current response status."""
+        if self.response.status in self._error_handlers:
+            return self._error_handlers[self.response.status]
+        elif None in self._error_handlers:
+            return self._error_handlers[None]
+        else:
+            # Rudimentary error handler if no error handler was found
+            self.response.media_type = 'text/plain'
+            return lambda: self.response.status_line
+<switch:english>
+[english] The final 'else' block provides a very simple default handler. This rudimentarily sets the media type to text/plain and returns a callable that outputs the status line directly.
+[english] If an HTTP status like 503 is encountered, but neither `self._error_handlers[503]` nor `self._error_handlers[None]` exists, what exactly is returned?
+[english] The function executes its final 'else' block. It sets the media type to 'text/plain' and returns a lambda that calls `self.response.status_line` when executed.
+[english] That makes sense, thanks for clarifying.

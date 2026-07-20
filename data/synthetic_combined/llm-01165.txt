@@ -1,0 +1,23 @@
+[english] How can I send an email while allowing my application to switch between different mail backends based on a configuration setting?
+[english] This function centralizes email sending logic by abstracting the transport mechanism. It dynamically retrieves and loads the required backend module using `importlib` before calling the main sender method.
+<switch:python>
+[python] def send_email(to, subject, html_content,
+               files=None, dryrun=False, cc=None, bcc=None,
+               mime_subtype='mixed', mime_charset='utf-8', **kwargs):
+    """
+    Send email using backend specified in EMAIL_BACKEND.
+    """
+    path, attr = configuration.conf.get('email', 'EMAIL_BACKEND').rsplit('.', 1)
+    module = importlib.import_module(path)
+    backend = getattr(module, attr)
+    to = get_email_address_list(to)
+    to = ", ".join(to)
+
+    return backend(to, subject, html_content, files=files,
+                   dryrun=dryrun, cc=cc, bcc=bcc,
+                   mime_subtype=mime_subtype, mime_charset=mime_charset, **kwargs)
+<switch:english>
+[english] The function handles recipient formatting by joining addresses, but it depends heavily on external functions like get_email_address_list for correct list processing.
+[english] If the configured email backend is incorrect or missing, what error will this code raise?
+[english] If `configuration.conf` points to an invalid path, `importlib.import_module(path)` will raise an ImportError. You should wrap the module fetching in a try/except block.
+[english] I see, so robust error handling is necessary here.

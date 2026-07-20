@@ -1,0 +1,84 @@
+[english] I need a function to calculate a guaranteed confidence interval for the mean when my data only consists of two possible discrete outcomes.
+[english] This function uses the Clopper-Pearson method, specifically designed for Bernoulli distributions. It determines the confidence bounds by solving for probabilities using the Binomial distribution's CDF and SF against the specified error rate.
+<switch:python>
+[python] def _clopper_pearson_confidence_interval(samples, error_rate):
+  """Computes a confidence interval for the mean of the given 1-D distribution.
+
+  Assumes (and checks) that the given distribution is Bernoulli, i.e.,
+  takes only two values.  This licenses using the CDF of the binomial
+  distribution for the confidence, which is tighter (for extreme
+  probabilities) than the DKWM inequality.  The method is known as the
+  [Clopper-Pearson method]
+  (https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval).
+
+  Assumes:
+
+  - The given samples were drawn iid from the distribution of interest.
+
+  - The given distribution is a Bernoulli, i.e., supported only on
+    low and high.
+
+  Guarantees:
+
+  - The probability (over the randomness of drawing the given sample)
+    that the true mean is outside the returned interval is no more
+    than the given error_rate.
+
+  Args:
+    samples: `np.ndarray` of samples drawn iid from the distribution
+      of interest.
+    error_rate: Python `float` admissible rate of mistakes.
+
+  Returns:
+    low: Lower bound of confidence interval.
+    high: Upper bound of confidence interval.
+
+  Raises:
+    ValueError: If `samples` has rank other than 1 (batch semantics
+      are not implemented), or if `samples` contains values other than
+      `low` or `high` (as that makes the distribution not Bernoulli).
+  """
+  # TODO(b/78025336) Migrate this confidence interval function
+  # to statistical_testing.py.  In order to do that
+  # - Get the binomial CDF from the Binomial distribution
+  # - Implement scalar root finding in TF.  Batch bisection search
+  #   shouldn't be too hard, and is definitely good enough for this
+  #   problem.  Batching the Brent algorithm (from scipy) that is used
+  #   here may be more involved, but may also not be necessary---it's
+  #   only used here because scipy made it convenient.  In particular,
+  #   robustness is more important than speed here, which may make
+  #   bisection search actively better.
+  # - The rest is just a matter of rewriting in the appropriate style.
+  if optimize is None or stats is None:
+    raise ValueError(
+        "Scipy is required for computing Clopper-Pearson confidence intervals")
+  if len(samples.shape) != 1:
+    raise ValueError("Batch semantics not implemented")
+  n = len(samples)
+  low = np.amin(samples)
+  high = np.amax(samples)
+  successes = np.count_nonzero(samples - low)
+  failures = np.count_nonzero(samples - high)
+  if successes + failures != n:
+    uniques = np.unique(samples)
+    msg = ("Purportedly Bernoulli distribution had distinct samples"
+           " {}, {}, and {}".format(uniques[0], uniques[1], uniques[2]))
+    raise ValueError(msg)
+  def p_small_enough(p):
+    prob = stats.binom.logcdf(successes, n, p)
+    return prob - np.log(error_rate / 2.)
+  def p_big_enough(p):
+    prob = stats.binom.logsf(successes, n, p)
+    return prob - np.log(error_rate / 2.)
+  high_p = optimize.brentq(
+      p_small_enough, float(successes) / n, 1., rtol=1e-9)
+  low_p = optimize.brentq(
+      p_big_enough, 0., float(successes) / n, rtol=1e-9)
+  low_interval = low + (high - low) * low_p
+  high_interval = low + (high - low) * high_p
+  return (low_interval, high_interval)
+<switch:english>
+[english] The calculation relies on numerical solvers like `brentq` to find precise probability roots. Note that it strictly enforces that all samples must be either the defined low or high value.
+[english] If my 'samples' array contained values other than a single minimum and maximum (e.g., 0, 1, and 2), how would the function behave?
+[english] The function checks if `successes + failures == n`. If more than two unique values are present, it raises a ValueError because the Bernoulli assumption is violated.
+[english] That makes sense, I appreciate the thorough error checking.

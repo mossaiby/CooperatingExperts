@@ -1,0 +1,78 @@
+[english] I need a function that consolidates all encryption parameters and key wrapping details into a single standardized dictionary structure.
+[english] To gather the required cryptographic configuration, this function systematically collects attributes related to encryption and MAC signing into structured dictionaries before bundling everything together.
+<switch:python>
+[python] def key_wrapping_data(self):
+        """
+        Retrieve all of the relevant key wrapping data fields and return them
+        as a dictionary.
+        """
+        key_wrapping_data = {}
+        encryption_key_info = {
+            'unique_identifier': self._kdw_eki_unique_identifier,
+            'cryptographic_parameters': {
+                'block_cipher_mode': self._kdw_eki_cp_block_cipher_mode,
+                'padding_method': self._kdw_eki_cp_padding_method,
+                'hashing_algorithm': self._kdw_eki_cp_hashing_algorithm,
+                'key_role_type': self._kdw_eki_cp_key_role_type,
+                'digital_signature_algorithm':
+                    self._kdw_eki_cp_digital_signature_algorithm,
+                'cryptographic_algorithm':
+                    self._kdw_eki_cp_cryptographic_algorithm,
+                'random_iv': self._kdw_eki_cp_random_iv,
+                'iv_length': self._kdw_eki_cp_iv_length,
+                'tag_length': self._kdw_eki_cp_tag_length,
+                'fixed_field_length': self._kdw_eki_cp_fixed_field_length,
+                'invocation_field_length':
+                    self._kdw_eki_cp_invocation_field_length,
+                'counter_length': self._kdw_eki_cp_counter_length,
+                'initial_counter_value':
+                    self._kdw_eki_cp_initial_counter_value
+            }
+        }
+        if not any(encryption_key_info['cryptographic_parameters'].values()):
+            encryption_key_info['cryptographic_parameters'] = {}
+        if not any(encryption_key_info.values()):
+            encryption_key_info = {}
+
+        mac_sign_key_info = {
+            'unique_identifier': self._kdw_mski_unique_identifier,
+            'cryptographic_parameters': {
+                'block_cipher_mode': self._kdw_mski_cp_block_cipher_mode,
+                'padding_method': self._kdw_mski_cp_padding_method,
+                'hashing_algorithm': self._kdw_mski_cp_hashing_algorithm,
+                'key_role_type': self._kdw_mski_cp_key_role_type,
+                'digital_signature_algorithm':
+                    self._kdw_mski_cp_digital_signature_algorithm,
+                'cryptographic_algorithm':
+                    self._kdw_mski_cp_cryptographic_algorithm,
+                'random_iv': self._kdw_mski_cp_random_iv,
+                'iv_length': self._kdw_mski_cp_iv_length,
+                'tag_length': self._kdw_mski_cp_tag_length,
+                'fixed_field_length': self._kdw_mski_cp_fixed_field_length,
+                'invocation_field_length':
+                    self._kdw_mski_cp_invocation_field_length,
+                'counter_length': self._kdw_mski_cp_counter_length,
+                'initial_counter_value':
+                    self._kdw_mski_cp_initial_counter_value
+            }
+        }
+        if not any(mac_sign_key_info['cryptographic_parameters'].values()):
+            mac_sign_key_info['cryptographic_parameters'] = {}
+        if not any(mac_sign_key_info.values()):
+            mac_sign_key_info = {}
+
+        key_wrapping_data['wrapping_method'] = self._kdw_wrapping_method
+        key_wrapping_data['encryption_key_information'] = encryption_key_info
+        key_wrapping_data['mac_signature_key_information'] = mac_sign_key_info
+        key_wrapping_data['mac_signature'] = self._kdw_mac_signature
+        key_wrapping_data['iv_counter_nonce'] = self._kdw_iv_counter_nonce
+        key_wrapping_data['encoding_option'] = self._kdw_encoding_option
+        if not any(key_wrapping_data.values()):
+            key_wrapping_data = {}
+
+        return key_wrapping_data
+<switch:english>
+[english] The code uses defensive checks (like checking if any values exist) to ensure that nested parameter dictionaries are gracefully handled even when certain fields are not populated.
+[english] If the instance has no cryptographic parameters set for a specific key, does the function successfully returns an empty dictionary for those sections?
+[english] Yes. The checks like `if not any(encryption_key_info['cryptographic_parameters'].values()):` ensure that if all parameter values are falsy (e.g., None or empty strings), the corresponding dictionaries are initialized as empty objects.
+[english] That clarifies how it handles missing data points.

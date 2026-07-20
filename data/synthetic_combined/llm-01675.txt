@@ -1,0 +1,30 @@
+[english] I need a clear way to quickly inspect the dimensions, column types, and sample data of my H2OFrame object.
+[english] This helper method is designed to provide a comprehensive overview of your data structure by checking if content exists. It fetches essential metadata like row/column counts and securely pulls a sample of the first ten records from the H2O API.
+<switch:python>
+[python] def describe(self, chunk_summary=False):
+        """
+        Generate an in-depth description of this H2OFrame.
+
+        This will print to the console the dimensions of the frame; names/types/summary statistics for each column;
+        and finally first ten rows of the frame.
+
+        :param bool chunk_summary: Retrieve the chunk summary along with the distribution summary
+        """
+        if self._has_content():
+            res = h2o.api("GET /3/Frames/%s" % self.frame_id, data={"row_count": 10})["frames"][0]
+            self._ex._cache._fill_data(res)
+
+            print("Rows:{}".format(self.nrow))
+            print("Cols:{}".format(self.ncol))
+
+            #The chunk & distribution summaries are not cached, so must be pulled if chunk_summary=True.
+            if chunk_summary:
+                res["chunk_summary"].show()
+                res["distribution_summary"].show()
+            print("\n")
+        self.summary()
+<switch:english>
+[english] The function guarantees that basic dimensions are printed, but detailed distribution summaries require explicitly setting `chunk_summary` to trigger additional API calls.
+[english] What happens if the frame object has not yet loaded any data via the API?
+[english] If self._has_content() returns False, the function simply exits gracefully without making any network requests or printing anything.
+[english] This explains the execution flow much better.

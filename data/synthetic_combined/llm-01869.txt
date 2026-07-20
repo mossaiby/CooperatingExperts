@@ -1,0 +1,17 @@
+[english] How do I execute the internal steps necessary to render and display a document or table structure?
+[english] This method executes a specific sequence of low-level drawing operations required to visualize an object state. It first compiles necessary data, then systematically applies styles like borders and fills before finally rendering all text elements.
+<switch:python>
+[python] def _draw(self):
+        """ Don't use this, use document.draw_table """
+        self._compile()
+        self.rows[0]._advance_first_row()
+        self._set_borders()
+        self._draw_fill()
+        self._draw_borders()
+        self._draw_text()
+        self._set_final_cursor()
+<switch:english>
+[english] It is important to note that this function is explicitly marked as deprecated in its docstring because the system encourages using `document.draw_table` for current functionality.
+[english] Does the call to self._compile() need to be executed prior to calling _draw, or can we skip it if the object data is already finalized?
+[english] Because this method relies on compiled structural information and initial setup, you should ensure `self._compile()` runs successfully before invoking `_draw` to guarantee complete rendering.
+[english] Got it, thanks for clarifying that dependency!

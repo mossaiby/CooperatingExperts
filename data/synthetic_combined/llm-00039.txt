@@ -1,0 +1,32 @@
+[english] How do I create a decorator for template tags that automatically silences or provides default values if environment variables like 'PROJECT_HOME_NAMESPACE' aren't set?
+[english] This decorator acts as a wrapper to check if project configuration is available at runtime. If the necessary namespace isn't defined, it ensures the tag won't crash by returning an empty string.
+<switch:python>
+[python] def silence_without_namespace(f):
+    """Decorator to silence template tags if 'PROJECT_HOME_NAMESPACE' is
+    not defined in settings.
+
+    Usage Example:
+        from django import template
+
+
+        register = template.Library()
+
+        @register.simple_tag
+        @silence_without_namespace
+        def a_template_tag(*args):
+            ...
+    """
+    @wraps(f)
+    def wrapped(label=None):
+        if not home_namespace:
+            return ''
+        if label:
+            return f(label)
+        else:
+            return f(home_label)
+    return wrapped
+<switch:english>
+[english] This approach makes the template tag robust against incomplete project setups. It functions primarily as a 'fails silently' safety mechanism.
+[english] If both `home_namespace` and the provided `label` are missing, what happens when this wrapped function is called?
+[english] The code relies on accessing variables like `home_label`, which must be globally available in the scope where `wrapped` executes. If they aren't defined, it will raise a NameError.
+[english] Thanks for clarifying how I can make my templates more resilient.

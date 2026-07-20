@@ -1,0 +1,12 @@
+[english] I need a way to find the position of the value within an array that is numerically closest to a given target number.
+[english] We can solve this by calculating all absolute differences between every element in `xarr` and `val`. Then, we use NumPy's `argmin` function to efficiently retrieve the index corresponding to the smallest difference found.
+<switch:python>
+[python] def closest(xarr, val):
+    """ Return the index of the closest in xarr to value val """
+    idx_closest = np.argmin(np.abs(np.array(xarr) - val))
+    return idx_closest
+<switch:english>
+[english] This implementation leverages NumPy for quick, vectorized calculations over the entire array. It's highly efficient but requires the `numpy` library to be installed.
+[english] If there are multiple values in `xarr` that are exactly the same distance from `val`, which one will this function return?
+[english] `np.argmin` is designed to return the index of the first occurrence it finds that matches the minimum value, so ties are broken by returning the leftmost index.
+[english] That makes sense; thanks for clarifying how the tie-breaker works.

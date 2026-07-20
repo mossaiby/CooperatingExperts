@@ -1,0 +1,31 @@
+[english] I need a way to convert my internal coordinate system objects into the industry-standard Proj4 string or an easily parsable dictionary format.
+[english] This function converts your defined datum and prime meridian attributes into a standardized Proj4 format. It uses the `toplevel` flag to decide whether to provide a complete, ready-to-use CRS definition or just the core parameters.
+<switch:python>
+[python] def to_proj4(self, as_dict=False, toplevel=True):
+        """
+        Returns the CS as a proj4 formatted string or dict.
+
+        Arguments:
+
+        - **as_dict** (optional): If True, returns the proj4 string as a dict (defaults to False).
+        - **toplevel** (optional): If True, treats this CS as the final toplevel CS and adds the necessary proj4 elements (defaults to True).
+        """
+        # dont parse axis to proj4, because in proj4, axis only applies to the cs, ie the projcs (not the geogcs, where wkt can specify with axis)
+        # also proj4 cannot specify angular units
+        if toplevel:
+            string = "+proj=longlat %s %s +nodef" % (self.datum.to_proj4(), self.prime_mer.to_proj4())
+        else:
+            string = "%s %s" % (self.datum.to_proj4(), self.prime_mer.to_proj4())
+        if as_dict:
+            return dict([
+                        entry.lstrip('+').split('=')
+                        for entry in string.split()
+                        if entry != "+no_defs"
+                         ])
+        else:
+            return string
+<switch:english>
+[english] The method flexibly returns either a raw string or a list of key=value pairs in a dictionary. Note that it filters out common boilerplate elements like '+no_defs' during dict conversion.
+[english] If I pass invalid data for my datum, specifically something that doesn't implement `to_proj4()`, how will the function handle it?
+[english] The code relies entirely on objects having a defined `.to_proj4()` method. If either `self.datum` or `self.prime_mer` does not possess this method, the program will raise an AttributeError when attempting to format the string.
+[english] That makes sense, thank you for clarifying the dependencies.

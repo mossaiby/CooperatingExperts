@@ -1,0 +1,47 @@
+[english] I need to convert a Choi matrix representation of an entanglement channel into its corresponding superoperator in the Pauli basis.
+[english] This function maps the input Choi matrix by iterating over all possible tensor products of Pauli operators. It essentially calculates the expected value of each target generalized Pauli operator against the input channel.
+<switch:python>
+[python] def choi_to_rauli(choi, order=1):
+    """
+    Convert a Choi-matrix to a Pauli-basis superoperator.
+
+    Note that this function assumes that the Choi-matrix
+    is defined in the standard column-stacking convention
+    and is normalized to have trace 1. For a channel E this
+    is defined as: choi = (I \\otimes E)(bell_state).
+
+    The resulting 'rauli' R acts on input states as
+    |rho_out>_p = R.|rho_in>_p
+    where |rho> = vectorize(rho, method='pauli') for order=1
+    and |rho> = vectorize(rho, method='pauli_weights') for order=0.
+
+    Args:
+        choi (matrix): the input Choi-matrix.
+        order (int): ordering of the Pauli group vector.
+            order=1 (default) is standard lexicographic ordering.
+                Eg: [II, IX, IY, IZ, XI, XX, XY,...]
+            order=0 is ordered by weights.
+                Eg. [II, IX, IY, IZ, XI, XY, XZ, XX, XY,...]
+
+    Returns:
+        np.array: A superoperator in the Pauli basis.
+    """
+    if order == 0:
+        order = 'weight'
+    elif order == 1:
+        order = 'tensor'
+
+    # get number of qubits'
+    num_qubits = int(np.log2(np.sqrt(len(choi))))
+    pgp = pauli_group(num_qubits, case=order)
+    rauli = []
+    for i in pgp:
+        for j in pgp:
+            pauliop = np.kron(j.to_matrix().T, i.to_matrix())
+            rauli += [np.trace(np.dot(choi, pauliop))]
+    return np.array(rauli).reshape(4 ** num_qubits, 4 ** num_qubits)
+<switch:english>
+[english] The resulting Rauli representation is a dense matrix that allows this quantum process to be treated as a linear transformation within the defined Pauli basis space.
+[english] If my Choi matrix has a trace other than 1 due to numerical errors, will the output superoperator still represent the correct channel?
+[english] No, since the function assumes normalization (trace=1) per the input constraints, non-normalized Choi matrices will result in scaled outputs. You might need explicit normalization before calling this.
+[english] Thanks for clarifying that implementation detail.

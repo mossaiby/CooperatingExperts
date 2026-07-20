@@ -1,0 +1,74 @@
+[english] How do I process and decompress large textual responses from an NNTP server that are compressed using yEnc and zlib protocols?
+[english] This function is a generator designed to handle the specific decoding of compressed NNTP info messages. It extracts data block by block, handling both yEnc parsing and subsequent zlib decompression.
+<switch:python>
+[python] def __info_yenczlib_gen(self):
+        """Generator for the lines of a compressed info (textual) response.
+
+        Compressed responses are an extension to the NNTP protocol supported by
+        some usenet servers to reduce the bandwidth of heavily used range style
+        commands that can return large amounts of textual data. The server
+        returns that same data as it would for the uncompressed versions of the
+        command the difference being that the data is zlib deflated and then
+        yEnc encoded.
+
+        This function will produce that same output as the info_gen()
+        function. In other words it takes care of decoding and decompression.
+
+        Yields:
+            A line of the info response.
+
+        Raises:
+            NNTPError: If data is required to be read from the socket and fails.
+            NNTPDataError: When there is an error parsing the yEnc header or
+                trailer, if the CRC check fails or decompressing data fails.
+        """
+
+        escape = 0
+        dcrc32 = 0
+        inflate = zlib.decompressobj(-15)
+
+        # header
+        header = next(self.__info_plain_gen())
+        if not header.startswith("=ybegin"):
+            raise NNTPDataError("Bad yEnc header")
+
+        # data
+        buf, trailer = fifo.Fifo(), ""
+        for line in self.__info_plain_gen():
+            if line.startswith("=yend"):
+                trailer = line
+                continue
+            data, escape, dcrc32 = yenc.decode(line, escape, dcrc32)
+            try:
+                data = inflate.decompress(data)
+            except zlib.error:
+                raise NNTPDataError("Decompression failed")
+            if not data:
+                continue
+            buf.write(data)
+            for l in buf:
+                yield l
+
+        # trailer
+        if not trailer:
+            raise NNTPDataError("Missing yEnc trailer")
+
+        # expected crc32
+        ecrc32 = yenc.crc32(trailer)
+        if ecrc32 is None:
+            raise NNTPDataError("Bad yEnc trailer")
+
+        # check crc32
+        if ecrc32 != dcrc32 & 0xffffffff:
+            raise NNTPDataError("Bad yEnc CRC")
+<switch:english>
+[english] The function meticulously manages state variables like escape sequences and CRC calculations throughout the stream processing. Note that it relies heavily on internal generators (`__info_plain_gen`) to read raw protocol lines sequentially.
+[english] What happens internally if a data block in the compressed response is corrupted during decompression?
+[english] If zlib detects corruption, the `try...except` block catches the error and raises an NNTPDataError with the message 'Decompression failed'.
+<switch:python>
+[python] try:
+                data = inflate.decompress(data)
+            except zlib.error:
+                raise NNTPDataError("Decompression failed")
+<switch:english>
+[english] This helps clarify how data integrity is checked during decompression.

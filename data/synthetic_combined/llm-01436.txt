@@ -1,0 +1,17 @@
+[english] How can I get a nicely formatted string representation of an object instead of it just dumping all its attributes?
+[english] This function uses StringIO to capture output in memory and relies on a specialized RepresentationPrinter class to handle the complex formatting logic. You can configure how verbose or wide the resulting string should be.
+<switch:python>
+[python] def pretty(obj, verbose=False, max_width=79, newline='\n'):
+    """
+    Pretty print the object's representation.
+    """
+    stream = StringIO()
+    printer = RepresentationPrinter(stream, verbose, max_width, newline)
+    printer.pretty(obj)
+    printer.flush()
+    return stream.getvalue()
+<switch:english>
+[english] The printing is handled by an internal printer object that manages indentation and wrapping based on those parameters. Keep in mind that this function requires the custom printer implementation to actually do the work of breaking down the data into lines.
+[english] What happens if the original object has extremely deep or deeply nested structures, like a large tree?
+[english] Deep nesting could cause a RecursionError within the internal print logic. To prevent this, you might need to implement recursion depth checks inside the RepresentationPrinter class.
+[english] That makes sense; I'll need to be careful about recursive calls during formatting!

@@ -1,0 +1,14 @@
+[english] How can I retrieve a dictionary mapping column names to their types while ensuring the underlying metadata cache is current?
+[english] This function checks if the internal data cache has been invalidated. If it needs updating, the code invalidates and refreshes the necessary frame before returning.
+<switch:python>
+[python] def types(self):
+        """The dictionary of column name/type pairs."""
+        if not self._ex._cache.types_valid():
+            self._ex._cache.flush()
+            self._frame(fill_cache=True)
+        return dict(self._ex._cache.types)
+<switch:english>
+[english] By using `fill_cache=True`, this method guarantees that even if the cache is missing or stale, the column types are refreshed from the source.
+[english] What would happen if we called this function repeatedly without any intervening data changes?
+[english] The internal check `types_valid()` ensures subsequent calls will only re-run expensive operations like flushing and rebuilding if the underlying data has actually changed or been modified.
+[english] That helps me understand how the caching strategy works!

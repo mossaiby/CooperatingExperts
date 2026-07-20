@@ -1,0 +1,42 @@
+[english] How can I listen for data updates on a specific stream, while optionally specifying if it should be a downlink stream?
+[english] This method acts as a wrapper to subscribe to streams within the underlying database object (`self.db`). It first determines the full streampath by checking for the `downlink` flag before passing all parameters like the callback and transform along.
+<switch:python>
+[python] def subscribe(self, callback, transform="", downlink=False):
+        """Subscribes to the stream, running the callback function each time datapoints are inserted into
+        the given stream. There is an optional transform to the datapoints, and a downlink parameter.::
+
+            s = cdb["mystream"]
+
+            def subscription_callback(stream,data):
+                print stream, data
+
+            s.subscribe(subscription_callback)
+
+        The downlink parameter is for downlink streams - it allows to subscribe to the downlink substream,
+        before it is acknowledged. This is especially useful for something like lights - have lights be
+        a boolean downlink stream, and the light itself be subscribed to the downlink, so that other
+        devices can write to the light, turning it on and off::
+
+            def light_control(stream,data):
+                light_boolean = data[0]["d"]
+                print "Setting light to", light_boolean
+                set_light(light_boolean)
+
+                #Acknowledge the write
+                return True
+
+            # We don't care about intermediate values, we only want the most recent setting
+            # of the light, meaning we want the "if last" transform
+            s.subscribe(light_control, downlink=True, transform="if last")
+
+        """
+        streampath = self.path
+        if downlink:
+            streampath += "/downlink"
+
+        return self.db.subscribe(streampath, callback, transform)
+<switch:english>
+[english] The function relies entirely on `self.db.subscribe`, meaning configuration of subscriptions is handled externally, while this method manages path construction and parameter forwarding.
+[english] If I call subscribe without providing a 'transform' argument, what behavior does it assume?
+[english] If no transform is provided, the system likely assumes default behavior or passes None directly to `self.db.subscribe(streampath, callback, None)`, allowing raw data delivery.
+[english] Got it, thanks for clarifying.

@@ -1,0 +1,25 @@
+[english] How can I format a dictionary into human-readable strings when logging or displaying data?
+[english] This function helps clarify how dictionaries are displayed inside other programs, offering two different formatting options.
+<switch:python>
+[python] def emphasis(obj, align=True):
+    ''' Clearer data printing '''
+    if isinstance(obj, dict):
+        if align:
+            pretty_msg = os.linesep.join(
+                ["%25s: %s" % (k, obj[k]) for k in sorted(obj.keys())])
+        else:
+            pretty_msg = json.dumps(obj, indent=4, sort_keys=True)
+    else:
+        return obj
+    return pretty_msg
+<switch:english>
+[english] It sorts keys alphabetically by default and uses line breaks for readability; be aware it requires `json` and `os` to be imported.
+[english] What happens if the dictionary values themselves contain complex objects?
+[english] If a dict value is another object, `json.dumps` will serialize it as a JSON string or error depending on its structure.
+<switch:python>
+[python] import pprint
+c = emphasis({'a': [1, 2], 'b': {'c': 3}}, align=False)
+# c would be the nicely structured json string
+pprint(c)  # Note: the function returns a string, not raw objects
+<switch:english>
+[english] This makes log messages much cleaner than standard print statements!

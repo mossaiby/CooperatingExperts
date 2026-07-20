@@ -1,0 +1,48 @@
+[english] How can I generate a detailed, human-readable string representation of an object that tracks type signatures and resolution details?
+[english] This function generates a formatted output by combining structured sections: it starts with the base signature, then iterates through sorted keys in `self.resolution` to detail specific type matches or unresolved elements.
+<switch:python>
+[python] def to_fmt(self):
+    """
+    Return an Fmt representation for pretty-printing
+    """
+    qual = "evalctx"
+    lseval = []
+    block = fmt.block(":\n", "", fmt.tab(lseval))
+    txt = fmt.sep(" ", [qual, block])
+    lseval.append(self._sig.to_fmt())
+    if len(self.resolution) > 0:
+        lsb = []
+        for k in sorted(self.resolution.keys()):
+            s = self.resolution[k]
+            if s is not None:
+                lsb.append(
+                    fmt.end(
+                        "\n",
+                        ["'%s': %s (%s)" % (k, s, s().show_name())]
+                    )
+                )
+            else:
+                lsb.append(fmt.end("\n", ["'%s': Unresolved" % (k)]))
+        if self._translate_to is not None:
+            lsb.append("use translator:")
+            lsb.append(self._translate_to.to_fmt())
+        if self._variadic_types is not None:
+            lsb.append("variadic types:\n")
+            arity = self._sig.arity
+            for t in self._variadic_types:
+                lsb.append("[%d] : %s\n" % (arity, t))
+                arity += 1
+        lseval.append(fmt.block("\nresolution :\n", "", fmt.tab(lsb)))
+    return txt
+<switch:english>
+[english] The overall effect is pretty-printing complex internal state into a readable format, leveraging custom formatting utilities like `fmt.block` and `fmt.tab`. Note that it relies heavily on the implementation of an external `fmt` module.
+[english] If there are no entries in self.resolution, what does the function look like to end up?
+[english] In that scenario, the resolution block is skipped entirely, leaving only the base signature and variadic types if present:
+<switch:python>
+[python] def to_fmt(self):
+    qual = "evalctx"
+    lseval = []
+    block = fmt.block(":\n", "", fmt.tab(lseval))
+    txt = fmt.sep(" ", [qual, block]) # ... rest of logic continues here
+<switch:english>
+[english] That makes much more sense, thanks!

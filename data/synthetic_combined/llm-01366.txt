@@ -1,0 +1,49 @@
+[english] I need a way to quickly change all negative numbers in a specific column of my data to their positive counterparts.
+[english] This function calculates the absolute value for every element within the specified column. It smartly handles whether you want to overwrite the original column or create a new one with the results.
+<switch:python>
+[python] def absolute_values(df, *, column: str, new_column: str = None):
+    """
+    Get the absolute numeric value of each element of a column
+
+    ---
+
+    ### Parameters
+
+    *mandatory :*
+    - `column` (*str*): name of the column
+
+    *optional :*
+    - `new_column` (*str*): name of the column containing the result.
+      By default, no new column will be created and `column` will be replaced.
+
+    ---
+
+    ### Example
+
+    **Input**
+
+    | ENTITY | VALUE_1 | VALUE_2 |
+    |:------:|:-------:|:-------:|
+    | A      | -1.512  | -1.504  |
+    | A      | 0.432   | 0.14    |
+<switch:english>
+[english] cson
+    absolute_values:
+      column: 'VALUE_1'
+      new_column: 'Pika'
+<switch:python>
+[python] **Output**
+
+    | ENTITY | VALUE_1 | VALUE_2 | Pika  |
+    |:------:|:-------:|:-------:|:-----:|
+    | A      | -1.512  | -1.504  | 1.512 |
+    | A      | 0.432   | 0.14    | 0.432 |
+    """
+    new_column = new_column or column
+    df[new_column] = abs(df[column])
+    return df
+<switch:english>
+[english] The code uses `abs()` on the selected Series and updates the DataFrame directly, which is an efficient way to perform this vectorized operation in Pandas.
+[english] What happens if both `column` and `new_column` are provided but are strings that already exist as columns in the DataFrame?
+[english] If both arguments exist, the function will overwrite the data in the column named by `new_column`. This is because of the line where it uses `df[new_column] = abs(df[column])`.
+[english] That makes sense. I'll test this out now.

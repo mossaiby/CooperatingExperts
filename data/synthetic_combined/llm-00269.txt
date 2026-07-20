@@ -1,0 +1,12 @@
+[english] I need to define a publicly accessible reference from a symbolic name to a specific variable within my current scope's namespace.
+[english] To add this association, first we check if the target variable is private. If it isn't, we then modify the internal references structure to link the symbol and variable together.
+<switch:python>
+[python] def add_refer(self, sym: sym.Symbol, var: Var) -> None:
+        """Refer var in this namespace under the name sym."""
+        if not var.is_private:
+            self._refers.swap(lambda s: s.assoc(sym, var))
+<switch:english>
+[english] This method ensures that only non-private variables are globally referenced in the current context via a symbolic key.
+[english] What happens if I try to call `add_refer` with a private variable?
+[english] If `var.is_private` is True, the function immediately exits without making any changes because it prevents internal implementation details from being exposed externally.
+[english] That makes sense. Thanks for clarifying.

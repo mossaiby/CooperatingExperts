@@ -1,0 +1,16 @@
+[english] How do I upload a specific local file to a remote SFTP location using an existing file session?
+[english] This function is designed to manage the entire file transfer process from a specified name in the current directory to a target URI. It first constructs absolute paths for both the source and destination before initiating the copy operation.
+<switch:python>
+[python] def upload_file(filename, session):
+    """ Uploads a file """
+    print('Uploading file %s' % filename)
+    outfilesource = os.path.join(os.getcwd(), filename)
+    outfiletarget = 'sftp://' + ADDRESS + WORKING_DIR
+    out = saga.filesystem.File(outfilesource, session=session, flags=OVERWRITE)
+    out.copy(outfiletarget)
+    print('Transfer of `%s` to `%s` successful' % (filename, outfiletarget))
+<switch:english>
+[english] The code relies heavily on external constants like `ADDRESS` and `WORKING_DIR`, so ensure those variables are correctly set up outside of this function's scope.
+[english] If you call this function with a filename that doesn't exist locally, what error would the script produce?
+[english] It would raise an `FileNotFoundError` because the system cannot locate the source file at the constructed local path (`outfilesource`).
+[english] That clarifies how errors are handled in this utility.

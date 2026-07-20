@@ -1,0 +1,31 @@
+[english] How can I set up my device to receive specific command messages published in an MQTT topic?
+[english] This method first checks if the application is running in QuickStart mode, which doesn't support commands. Otherwise, it constructs a hierarchical MQTT topic using the provided parameters and registers the subscription.
+<switch:python>
+[python] def subscribeToDeviceCommands(self, typeId="+", deviceId="+", commandId="+", msgFormat="+"):
+        """
+        Subscribe to device command messages
+
+        # Parameters
+        typeId (string): typeId for the subscription, optional.  Defaults to all device types (MQTT `+` wildcard)
+        deviceId (string): deviceId for the subscription, optional.  Defaults to all devices (MQTT `+` wildcard)
+        commandId (string): commandId for the subscription, optional.  Defaults to all commands (MQTT `+` wildcard)
+        msgFormat (string): msgFormat for the subscription, optional.  Defaults to all formats (MQTT `+` wildcard)
+        qos (int): MQTT quality of service level to use (`0`, `1`, or `2`)
+
+        # Returns
+        int: If the subscription was successful then the return Message ID (mid) for the subscribe request
+            will be returned. The mid value can be used to track the subscribe request by checking against
+            the mid argument if you register a subscriptionCallback method.
+            If the subscription fails then the return value will be `0`
+        """
+        if self._config.isQuickstart():
+            self.logger.warning("QuickStart applications do not support commands")
+            return 0
+
+        topic = "iot-2/type/%s/id/%s/cmd/%s/fmt/%s" % (typeId, deviceId, commandId, msgFormat)
+        return self._subscribe(topic, 0)
+<switch:english>
+[english] The function calls an internal _subscribe method to register the listener. A return value of 0 signifies that the subscription failed.
+[english] Since it relies on `self._subscribe`, what happens if a required dependency or connection fails during this process?
+[english] If the underlying MQTT operation fails, the method will likely fail internally or propagate an error, but based on the current structure, it returns 0 upon failure.
+[english] That clarifies the subscription mechanics for me.

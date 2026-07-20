@@ -1,0 +1,54 @@
+[english] How can I programmatically determine the canonical tautomer of a given chemical compound by scoring its possible forms?
+[english] We first enumerate every possible tautomeric form of the input molecule. We then calculate a custom score for each form based on structural features, such as aromatic rings and specific substructure matches defined in `self.scores`.
+<switch:python>
+[python] def canonicalize(self, mol):
+        """Return a canonical tautomer by enumerating and scoring all possible tautomers.
+
+        :param mol: The input molecule.
+        :type mol: rdkit.Chem.rdchem.Mol
+        :return: The canonical tautomer.
+        :rtype: rdkit.Chem.rdchem.Mol
+        """
+        # TODO: Overload the mol parameter to pass a list of pre-enumerated tautomers
+        tautomers = self._enumerate_tautomers(mol)
+        if len(tautomers) == 1:
+            return tautomers[0]
+        # Calculate score for each tautomer
+        highest = None
+        for t in tautomers:
+            smiles = Chem.MolToSmiles(t, isomericSmiles=True)
+            log.debug('Tautomer: %s', smiles)
+            score = 0
+            # Add aromatic ring scores
+            ssr = Chem.GetSymmSSSR(t)
+            for ring in ssr:
+                btypes = {t.GetBondBetweenAtoms(*pair).GetBondType() for pair in pairwise(ring)}
+                elements = {t.GetAtomWithIdx(idx).GetAtomicNum() for idx in ring}
+                if btypes == {BondType.AROMATIC}:
+                    log.debug('Score +100 (aromatic ring)')
+                    score += 100
+                    if elements == {6}:
+                        log.debug('Score +150 (carbocyclic aromatic ring)')
+                        score += 150
+            # Add SMARTS scores
+            for tscore in self.scores:
+                for match in t.GetSubstructMatches(tscore.smarts):
+                    log.debug('Score %+d (%s)', tscore.score, tscore.name)
+                    score += tscore.score
+            # Add (P,S,Se,Te)-H scores
+            for atom in t.GetAtoms():
+                if atom.GetAtomicNum() in {15, 16, 34, 52}:
+                    hs = atom.GetTotalNumHs()
+                    if hs:
+                        log.debug('Score %+d (%s-H bonds)', -hs, atom.GetSymbol())
+                        score -= hs
+            # Set as highest if score higher or if score equal and smiles comes first alphabetically
+            if not highest or highest['score'] < score or (highest['score'] == score and smiles < highest['smiles']):
+                log.debug('New highest tautomer: %s (%s)', smiles, score)
+                highest = {'smiles': smiles, 'tautomer': t, 'score': score}
+        return highest['tautomer']
+<switch:english>
+[english] The function selects the tautomer with the highest calculated score. If two forms tie for the maximum score, it uses lexicographical comparison of their SMILES strings to ensure a single, deterministic canonical result.
+[english] What precise rule does the code use when multiple different tautomers end up sharing the exact same final computed score?
+[english] If scores are equal (`highest['score'] == score`), the function chooses the one whose SMILES comes first alphabetically. This ensures determinism regardless of other scoring criteria.
+[english] Got it, thanks for clearing that up!

@@ -1,0 +1,79 @@
+[english] How can I dynamically replace or update a trailing set of dimensions (the 'event shape') within an existing TensorFlow tensor's rank-1 shape representation?
+[english] The function handles dynamic shapes by splitting the input into its fixed parts and the events to be replaced. It then validates the remaining event part against known expected values before concatenating segments with the new target dimensions.
+<switch:python>
+[python] def _replace_event_shape_in_shape_tensor(
+    input_shape, event_shape_in, event_shape_out, validate_args):
+  """Replaces the rightmost dims in a `Tensor` representing a shape.
+
+  Args:
+    input_shape: a rank-1 `Tensor` of integers
+    event_shape_in: the event shape expected to be present in rightmost dims
+      of `shape_in`.
+    event_shape_out: the event shape with which to replace `event_shape_in` in
+      the rightmost dims of `input_shape`.
+    validate_args: Python `bool` indicating whether arguments should
+      be checked for correctness.
+
+  Returns:
+    output_shape: A rank-1 integer `Tensor` with the same contents as
+      `input_shape` except for the event dims, which are replaced with
+      `event_shape_out`.
+  """
+  output_tensorshape, is_validated = _replace_event_shape_in_tensorshape(
+      tensorshape_util.constant_value_as_shape(input_shape),
+      event_shape_in,
+      event_shape_out)
+
+  # TODO(b/124240153): Remove map(tf.identity, deps) once tf.function
+  # correctly supports control_dependencies.
+  validation_dependencies = (
+      map(tf.identity, (event_shape_in, event_shape_out))
+      if validate_args else ())
+
+  if (tensorshape_util.is_fully_defined(output_tensorshape) and
+      (is_validated or not validate_args)):
+    with tf.control_dependencies(validation_dependencies):
+      output_shape = tf.convert_to_tensor(
+          value=output_tensorshape, name='output_shape', dtype_hint=tf.int32)
+    return output_shape, output_tensorshape
+
+  with tf.control_dependencies(validation_dependencies):
+    event_shape_in_ndims = (
+        tf.size(input=event_shape_in)
+        if tensorshape_util.num_elements(event_shape_in.shape) is None else
+        tensorshape_util.num_elements(event_shape_in.shape))
+    input_non_event_shape, input_event_shape = tf.split(
+        input_shape, num_or_size_splits=[-1, event_shape_in_ndims])
+
+  additional_assertions = []
+  if is_validated:
+    pass
+  elif validate_args:
+    # Check that `input_event_shape` and `event_shape_in` are compatible in the
+    # sense that they have equal entries in any position that isn't a `-1` in
+    # `event_shape_in`. Note that our validations at construction time ensure
+    # there is at most one such entry in `event_shape_in`.
+    mask = event_shape_in >= 0
+    explicit_input_event_shape = tf.boolean_mask(
+        tensor=input_event_shape, mask=mask)
+    explicit_event_shape_in = tf.boolean_mask(
+        tensor=event_shape_in, mask=mask)
+    additional_assertions.append(
+        assert_util.assert_equal(
+            explicit_input_event_shape,
+            explicit_event_shape_in,
+            message='Input `event_shape` does not match `event_shape_in`.'))
+    # We don't explicitly additionally verify
+    # `tf.size(input_shape) > tf.size(event_shape_in)` since `tf.split`
+    # already makes this assertion.
+
+  with tf.control_dependencies(additional_assertions):
+    output_shape = tf.concat([input_non_event_shape, event_shape_out], axis=0,
+                             name='output_shape')
+
+  return output_shape, output_tensorshape
+<switch:english>
+[english] It uses conditional logic based on whether the tensor is fully defined, falling back to graph operations (like tf.split and tf.concat) if necessary for dynamic shapes. `tf.control_dependencies` ensures validation steps execute correctly within the computational graph.
+[english] If I set validate_args=False, does the function still perform any structural checks on the sizes of event_shape_in or input_event_shape?
+[english] No explicit size comparison is performed if `is_validated` is false and validation is skipped. The code relies on previous internal validations and assumes compatibility for a successful replacement.
+[english] Is there a way to see where we could make this logic even more efficient?

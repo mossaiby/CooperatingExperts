@@ -1,0 +1,24 @@
+[english] How can I automatically register my custom parsing classes with a central registry using a decorator?
+[english] This function acts as a decorator factory to automate the registration of parser components. It captures either an explicit name or derives one from the decorated object's metadata, then adds it to a global collection.
+<switch:python>
+[python] def directive(directname=None):
+    """Attach a class to a parsing class and register it as a parser directive.
+
+        The class is registered with its name unless directname is provided.
+    """
+    global _directives
+    class_dir_list = _directives
+
+    def wrapper(f):
+        nonlocal directname
+        if directname is None:
+            directname = f.__name__
+        f.ns_name = directname
+        set_one(class_dir_list, directname, f)
+        return f
+    return wrapper
+<switch:english>
+[english] The `wrapper` function modifies the passed object directly and relies on the external `_directives` variable for persistence. If no custom name is provided, it uses the standard Python naming conventions derived from the function signature.
+[english] What if I pass a class with two methods that should both be registered under the same directive?
+[english] The current implementation registers the entire decorated object (the class itself), not individual methods like `parse()` or `validate()`. To register specific methods, you would need to target and wrap those functions individually.
+[english] Got it, I'll modify how I apply this decorator.

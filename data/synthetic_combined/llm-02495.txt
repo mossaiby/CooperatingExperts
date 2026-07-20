@@ -1,0 +1,20 @@
+[english] I have a complex dictionary where some values are objects that contain expressions, and I need a function to process all those expressions.
+[english] This method iterates over the items in self.value and checks if each value supports its own expression resolution by using hasattr(). If it finds such a capability, it calls that specific resolver's method.
+<switch:python>
+[python] def resolve_expression(self, *args, **kwargs):
+        """Resolves expressions inside the dictionary."""
+
+        result = dict()
+        for key, value in self.value.items():
+            if hasattr(value, 'resolve_expression'):
+                result[key] = value.resolve_expression(
+                    *args, **kwargs)
+            else:
+                result[key] = value
+
+        return HStoreValue(result)
+<switch:english>
+[english] The function ensures consistency by wrapping the final processed dictionary within an HStoreValue object upon completion.
+[english] What happens if two different values in the dictionary implement their own `resolve_expression` but they require different sets of arguments?
+[english] Since this method accepts arbitrary *args and **kwargs and passes them to every child resolver, a conflict could arise. The calling context must ensure all required parameters are present for any potential specialized resolution.
+[english] That makes sense; how can I make sure the overall process doesn't fail if a required argument is missing?

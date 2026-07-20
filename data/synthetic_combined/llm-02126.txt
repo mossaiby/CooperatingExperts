@@ -1,0 +1,27 @@
+[english] How can I list either all registered templates or a specific template name based on command-line arguments?
+[english] This function acts as a CLI handler, first initializing a non-storage client via `get_client`. It checks if the template name was provided through `args.commands` before proceeding to list them.
+<switch:python>
+[python] def templates(args, template_name=None):
+    '''list a specific template (if a name is provided) or all templates
+       available.
+
+       Parameters
+       ==========
+       args: the argparse object to look for a template name
+       template_name: if not set, show all
+
+    '''
+    from sregistry.main import get_client
+
+    # We don't need storage/compute connections
+    cli = get_client(init=False)
+
+    if len(args.commands) > 0:
+        template_name = args.commands.pop(0)
+    cli.list_templates(template_name)
+    sys.exit(0)
+<switch:english>
+[english] The primary purpose of this code is to interface with the SRegistry API endpoint for displaying available templates using an initialized client.
+[english] If no arguments are passed via `args.commands`, what happens if `template_name` was explicitly set to 'all'?
+[english] If a specific name like 'all' is provided, the function will pass that string directly to `list_templates(name)` which presumably filters results accordingly or lists everything based on the client implementation.
+[english] Thanks for clarifying how the templates are handled!

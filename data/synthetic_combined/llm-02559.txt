@@ -1,0 +1,62 @@
+[english] I need a function that translates user-friendly short names like 'res' or patterned run identifiers like 'run_5' into their full, system-used configuration paths.
+[english] This function maps shortcuts by checking if the input is an integer, matches specific patterns for runs and trajectory sets (like 'r_X'), or belongs to a predefined set of short aliases.
+<switch:python>
+[python] def _translate_shortcut(self, name):
+        """Maps a given shortcut to corresponding name
+
+        * 'run_X' or 'r_X' to 'run_XXXXXXXXX'
+
+        * 'crun' to the current run name in case of a
+          single run instance if trajectory is used via `v_crun`
+
+        * 'par' 'parameters'
+
+        * 'dpar' to 'derived_parameters'
+
+        * 'res' to 'results'
+
+        * 'conf' to 'config'
+
+        :return: True or False and the mapped name.
+
+        """
+
+        if isinstance(name, int):
+            return True, self._root_instance.f_wildcard('$', name)
+
+        if name.startswith('run_') or name.startswith('r_'):
+            split_name = name.split('_')
+            if len(split_name) == 2:
+                index = split_name[1]
+                if index.isdigit():
+                    return True, self._root_instance.f_wildcard('$', int(index))
+                elif index == 'A':
+                    return True, self._root_instance.f_wildcard('$', -1)
+
+        if name.startswith('runtoset_') or name.startswith('rts_'):
+            split_name = name.split('_')
+            if len(split_name) == 2:
+                index = split_name[1]
+                if index.isdigit():
+                    return True, self._root_instance.f_wildcard('$set', int(index))
+                elif index == 'A':
+                    return True, self._root_instance.f_wildcard('$set', -1)
+
+        if name in SHORTCUT_SET:
+            if name == 'par':
+                return True, 'parameters'
+            elif name == 'dpar':
+                return True, 'derived_parameters'
+            elif name == 'res':
+                return True, 'results'
+            elif name == 'conf':
+                return True, 'config'
+            else:
+                raise RuntimeError('You shall not pass!')
+
+        return False, name
+<switch:english>
+[english] It successfully translates all specified conventions while defaulting to returning the original name if none of the strict pattern matches or shortcuts apply.
+[english] If I provide a string like 'run_par', which translation logic does it utilize, and what is the resulting output?
+[english] The input 'run_par' fails the specific numeric/special character checks within the run patterns. Since 'par' is not explicitly handled in the structural definitions, the function will ultimately return (False, 'run_par').
+[english] This logic makes sense for maintaining a clean translation hierarchy.

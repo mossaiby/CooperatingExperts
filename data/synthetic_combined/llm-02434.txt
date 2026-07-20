@@ -1,0 +1,98 @@
+[english] I need to generate quadrature points and associated probabilities for integration over a $(K-1)$-simplex using the SoftmaxNormal distribution structure.
+[english] This function constructs a numerical integration scheme by leveraging the quantiles derived from a standard Normal distribution. It transforms these normal quantiles using a specialized `SoftmaxCenteredBijector` to map them onto the simplex grid, effectively creating weighted points for approximation.
+<switch:python>
+[python] def quadrature_scheme_softmaxnormal_quantiles(
+    normal_loc, normal_scale, quadrature_size,
+    validate_args=False, name=None):
+  """Use SoftmaxNormal quantiles to form quadrature on `K - 1` simplex.
+
+  A `SoftmaxNormal` random variable `Y` may be generated via
+<switch:english>
+[english] Y = SoftmaxCentered(X),
+  X = Normal(normal_loc, normal_scale)
+<switch:python>
+[python] Args:
+    normal_loc: `float`-like `Tensor` with shape `[b1, ..., bB, K-1]`, B>=0.
+      The location parameter of the Normal used to construct the SoftmaxNormal.
+    normal_scale: `float`-like `Tensor`. Broadcastable with `normal_loc`.
+      The scale parameter of the Normal used to construct the SoftmaxNormal.
+    quadrature_size: Python `int` scalar representing the number of quadrature
+      points.
+    validate_args: Python `bool`, default `False`. When `True` distribution
+      parameters are checked for validity despite possibly degrading runtime
+      performance. When `False` invalid inputs may silently render incorrect
+      outputs.
+    name: Python `str` name prefixed to Ops created by this class.
+
+  Returns:
+    grid: Shape `[b1, ..., bB, K, quadrature_size]` `Tensor` representing the
+      convex combination of affine parameters for `K` components.
+      `grid[..., :, n]` is the `n`-th grid point, living in the `K - 1` simplex.
+    probs:  Shape `[b1, ..., bB, K, quadrature_size]` `Tensor` representing the
+      associated with each grid point.
+  """
+  with tf.name_scope(name or "softmax_normal_grid_and_probs"):
+    normal_loc = tf.convert_to_tensor(value=normal_loc, name="normal_loc")
+    dt = dtype_util.base_dtype(normal_loc.dtype)
+    normal_scale = tf.convert_to_tensor(
+        value=normal_scale, dtype=dt, name="normal_scale")
+
+    normal_scale = maybe_check_quadrature_param(
+        normal_scale, "normal_scale", validate_args)
+
+    dist = normal.Normal(loc=normal_loc, scale=normal_scale)
+
+    def _get_batch_ndims():
+      """Helper to get rank(dist.batch_shape), statically if possible."""
+      ndims = tensorshape_util.rank(dist.batch_shape)
+      if ndims is None:
+        ndims = tf.shape(input=dist.batch_shape_tensor())[0]
+      return ndims
+    batch_ndims = _get_batch_ndims()
+
+    def _get_final_shape(qs):
+      """Helper to build `TensorShape`."""
+      bs = tensorshape_util.with_rank_at_least(dist.batch_shape, 1)
+      num_components = tf.compat.dimension_value(bs[-1])
+      if num_components is not None:
+        num_components += 1
+      tail = tf.TensorShape([num_components, qs])
+      return bs[:-1].concatenate(tail)
+
+    def _compute_quantiles():
+      """Helper to build quantiles."""
+      # Omit {0, 1} since they might lead to Inf/NaN.
+      zero = tf.zeros([], dtype=dist.dtype)
+      edges = tf.linspace(zero, 1., quadrature_size + 3)[1:-1]
+      # Expand edges so its broadcast across batch dims.
+      edges = tf.reshape(
+          edges,
+          shape=tf.concat(
+              [[-1], tf.ones([batch_ndims], dtype=tf.int32)], axis=0))
+      quantiles = dist.quantile(edges)
+      quantiles = softmax_centered_bijector.SoftmaxCentered().forward(quantiles)
+      # Cyclically permute left by one.
+      perm = tf.concat([tf.range(1, 1 + batch_ndims), [0]], axis=0)
+      quantiles = tf.transpose(a=quantiles, perm=perm)
+      tensorshape_util.set_shape(
+          quantiles, _get_final_shape(quadrature_size + 1))
+      return quantiles
+    quantiles = _compute_quantiles()
+
+    # Compute grid as quantile midpoints.
+    grid = (quantiles[..., :-1] + quantiles[..., 1:]) / 2.
+    # Set shape hints.
+    tensorshape_util.set_shape(grid, _get_final_shape(quadrature_size))
+
+    # By construction probs is constant, i.e., `1 / quadrature_size`. This is
+    # important, because non-constant probs leads to non-reparameterizable
+    # samples.
+    probs = tf.fill(
+        dims=[quadrature_size], value=1. / tf.cast(quadrature_size, dist.dtype))
+
+    return grid, probs
+<switch:english>
+[english] The resulting probabilities (`probs`) are uniformly constant because the integration scheme is constructed specifically to maintain reparameterizability when shifting between different sampling techniques. This ensures simplified handling of the weights in numerical solvers.
+[english] If `normal_loc` has a leading batch dimension, how does the function handle broadcasting if `normal_scale` is not compatible with that dimension?
+[english] The function relies on standard TensorFlow broadcasting rules after converting inputs to tensors. You ensure compatibility by making sure `normal_scale` can be broadcast onto the shape defined by `normal_loc`, which typically has a shape ending in $[K-1]$. If dimensions don't match, you might need explicit reshaping:
+[english] That makes sense; I should check my tensor shapes carefully before calling this.

@@ -1,0 +1,48 @@
+[english] How can I define and save a new process configuration detailing its command, arguments, environment variables, and user identifiers?
+[english] The function first constructs the complete execution command by combining `cmd` with `args`. It then systematically builds a dictionary called `details`, adding specific operational parameters like UID or custom environment maps derived from input strings.
+<switch:python>
+[python] def add(places, name, cmd, args, env=None, uid=None, gid=None, extras=None,
+        env_inherit=None):
+    """Add a process.
+
+    :param places: a Places instance
+    :param name: string, the logical name of the process
+    :param cmd: string, executable
+    :param args: list of strings, command-line arguments
+    :param env: dictionary mapping strings to strings
+         (will be environment in subprocess)
+    :param uid: integer, uid to run the new process as
+    :param gid: integer, gid to run the new process as
+    :param extras: a dictionary with additional parameters
+    :param env_inherit: a list of environment variables to inherit
+    :returns: None
+    """
+    args = [cmd]+args
+    config = filepath.FilePath(places.config)
+    fle = config.child(name)
+    details = dict(args=args)
+    if env is not None:
+        newEnv = {}
+        for thing in env:
+            name, value = thing.split('=', 1)
+            newEnv[name] = value
+        details['env'] = newEnv
+    if uid is not None:
+        details['uid'] = uid
+    if gid is not None:
+        details['gid'] = gid
+    if env_inherit is not None:
+        details['env_inherit'] = env_inherit
+    if extras is not None:
+        details.update(extras)
+    content = _dumps(details)
+    fle.setContent(content)
+<switch:english>
+[english] Once all details are collected, they are serialized using the `_dumps` function and permanently saved to the process's configuration file via `fle.setContent()`. Note that this implementation expects the environment dictionary (`env`) to be passed as a list of 'key=value' strings.
+[english] If I pass a standard Python dictionary for the `env` parameter, will the current code correctly assign it?
+[english] No, because the logic relies on string splitting:
+<switch:python>
+[python] for thing in env:
+    name, value = thing.split('=', 1)
+<switch:english>
+[english] Thanks for explaining this function and its behavior!

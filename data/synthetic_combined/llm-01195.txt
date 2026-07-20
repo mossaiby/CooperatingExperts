@@ -1,0 +1,32 @@
+[english] I need a function that can randomly select an item from a list based on predefined weights instead of uniform probability.
+[english] This function determines weighted random selection by calculating the sum of all weights and then picking a random integer within that total range. It iterates through your choices, subtracting each weight until a negative remainder signals which choice was selected.
+<switch:python>
+[python] def weighted_choice(choices):
+    """
+    Supposes that choices is sequence of two elements items,
+    where first one is the probability and second is the
+    result object or callable
+
+    >>> result = weighted_choice([(20,'x'), (100, 'y')])
+    >>> result in ['x', 'y']
+    True
+    """
+    total = sum([weight for (weight, _) in choices])
+    i = random.randint(0, total - 1)
+    for weight, choice in choices:
+        i -= weight
+        if i < 0: 
+            if callable(choice):
+                return choice()
+            return choice
+    raise Exception('Bug')
+<switch:english>
+[english] The logic successfully handles both static values and callables (like functions) as return types, though it assumes `random` is imported in the scope where this function is used.
+[english] What happens if one of the weights provided in the input list is zero?
+[english] If a weight is zero, that choice will effectively never be selected because subtracting $0$ from the remainder does not affect the current index iteration.
+<switch:python>
+[python] total = sum([weight for (weight, _) in choices]) # total remains unchanged
+i -= 0 # i decreases by nothing
+# The loop continues to the next item.
+<switch:english>
+[english] That makes sense!

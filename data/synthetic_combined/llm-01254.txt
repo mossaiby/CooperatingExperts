@@ -1,0 +1,24 @@
+[english] How can I write a script to rename an existing snapshot within an application?
+[english] The function first retrieves the snapshot using the old name and verifies it exists; then, it checks if a snapshot with the desired new name is already present before performing the renaming operation.
+<switch:python>
+[python] def rename(old_name, new_name):
+    """Renames a snapshot"""
+    app = get_app()
+
+    snapshot = app.get_snapshot(old_name)
+    if not snapshot:
+        click.echo("Couldn't find snapshot %s" % old_name)
+        sys.exit(1)
+
+    new_snapshot = app.get_snapshot(new_name)
+    if new_snapshot:
+        click.echo("Snapshot with name %s already exists" % new_name)
+        sys.exit(1)
+
+    app.rename_snapshot(snapshot, new_name)
+    click.echo("Renamed snapshot %s to %s" % (old_name, new_name))
+<switch:english>
+[english] This approach ensures data integrity by preventing accidental overwrites or attempting to operate on non-existent resources. Note that this relies on external utilities like `get_app()` and `click` being correctly imported.
+[english] How does this function handle exceptions, such as a network error when trying to connect to the application?
+[english] Currently, it assumes all calls succeed after basic existence checks. To add robust error handling, you could wrap the logic in a try...except block around `app = get_app()` and the renaming call.
+[english] That makes sense for preventing crashes.

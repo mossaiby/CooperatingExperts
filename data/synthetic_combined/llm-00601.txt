@@ -1,0 +1,82 @@
+[english] I need a function that fetches a specific number of 'question' items from an external Kitsune API, handling pagination and potential network errors.
+[english] This generator systematically retrieves questions by calculating offsets based on item counts per page. It iteratively calls the client methods to pull raw data, manages JSON parsing, and yields structured question objects as they are processed.
+<switch:python>
+[python] def fetch_items(self, category, **kwargs):
+        """Fetch questions from the Kitsune url
+
+        :param category: the category of items to fetch
+        :param kwargs: backend arguments
+
+        :returns: a generator of items
+        """
+        offset = kwargs['offset']
+
+        logger.info("Looking for questions at url '%s' using offset %s",
+                    self.url, str(offset))
+
+        nquestions = 0  # number of questions processed
+        tquestions = 0  # number of questions from API data
+        equestions = 0  # number of questions dropped by errors
+
+        # Always get complete pages so the first item is always
+        # the first one in the page
+        page = int(offset / KitsuneClient.ITEMS_PER_PAGE)
+        page_offset = page * KitsuneClient.ITEMS_PER_PAGE
+        # drop questions from page before the offset
+        drop_questions = offset - page_offset
+        current_offset = offset
+
+        questions_page = self.client.get_questions(offset)
+
+        while True:
+            try:
+                raw_questions = next(questions_page)
+            except StopIteration:
+                break
+            except requests.exceptions.HTTPError as e:
+                # Continue with the next page if it is a 500 error
+                if e.response.status_code == 500:
+                    logger.exception(e)
+                    logger.error("Problem getting Kitsune questions. "
+                                 "Loosing %i questions. Going to the next page.",
+                                 KitsuneClient.ITEMS_PER_PAGE)
+                    equestions += KitsuneClient.ITEMS_PER_PAGE
+                    current_offset += KitsuneClient.ITEMS_PER_PAGE
+                    questions_page = self.client.get_questions(current_offset)
+                    continue
+                else:
+                    # If it is another error just propagate the exception
+                    raise e
+
+            try:
+                questions_data = json.loads(raw_questions)
+                tquestions = questions_data['count']
+                questions = questions_data['results']
+            except (ValueError, KeyError) as ex:
+                logger.error(ex)
+                cause = ("Bad JSON format for mozilla_questions: %s" % (raw_questions))
+                raise ParseError(cause=cause)
+
+            for question in questions:
+                if drop_questions > 0:
+                    # Remove extra questions due to page base retrieval
+                    drop_questions -= 1
+                    continue
+                question['offset'] = current_offset
+                current_offset += 1
+                question['answers_data'] = []
+                for raw_answers in self.client.get_question_answers(question['id']):
+                    answers = json.loads(raw_answers)['results']
+                    question['answers_data'] += answers
+                yield question
+                nquestions += 1
+
+            logger.debug("Questions: %i/%i", nquestions + offset, tquestions)
+
+        logger.info("Total number of questions: %i (%i total)", nquestions, tquestions)
+        logger.info("Questions with errors dropped: %i", equestions)
+<switch:english>
+[english] The function tracks dropped items due to API failures or offset adjustments, making it useful for robust, resumable data collection from potentially faulty endpoints.
+[english] How does the function ensure that only 'offset' questions are returned when dealing with partially retrieved pages?
+[english] It uses `drop_questions` to skip items at the beginning of each full page fetch if those items precede the required starting offset, ensuring precise data slicing.
+[english] This looks much cleaner than standard HTTP requests.

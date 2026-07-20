@@ -1,0 +1,16 @@
+[english] I need to convert a JTensor object into a standard NumPy ndarray for further numerical processing.
+[english] This method first ensures that the tensor isn't a SparseTensor, as large arrays could crash memory. It then converts the internal storage data from the specialized type and reshapes it using the predefined dimensions of the object.
+<switch:python>
+[python] def to_ndarray(self):
+        """
+        Transfer JTensor to ndarray.
+        As SparseTensor may generate an very big ndarray, so we don't support this function for SparseTensor.
+        :return: a ndarray
+        """
+        assert self.indices is None, "sparseTensor to ndarray is not supported"
+        return np.array(self.storage, dtype=get_dtype(self.bigdl_type)).reshape(self.shape)
+<switch:english>
+[english] The conversion uses `np.array()` on the stored data, casting it with a specific data type derived from your tensor's configuration before fitting it into the expected shape.
+[english] What happens if I call this function without `self` being an instance of the class?
+[english] This method is defined using `self`, meaning it must be called as an instance method (e.g., `tensor_instance.to_ndarray()`). It cannot be called directly on the class itself.
+[english] That makes sense, thanks for clarifying.

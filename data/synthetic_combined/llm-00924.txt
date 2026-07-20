@@ -1,0 +1,76 @@
+[english] I need a function to reconstruct the original input matrix $X$ after I have calculated its combined LU and permutation factors using TensorFlow.
+[english] This function reverses the `tf.linalg.lu` operation. It splits the lower-upper factor into separate L and U matrices, multiplies them together, and then applies the necessary inverse permutations to recover $X$.
+<switch:python>
+[python] def lu_reconstruct(lower_upper, perm, validate_args=False, name=None):
+  """The inverse LU decomposition, `X == lu_reconstruct(*tf.linalg.lu(X))`.
+
+  Args:
+    lower_upper: `lu` as returned by `tf.linalg.lu`, i.e., if
+      `matmul(P, matmul(L, U)) = X` then `lower_upper = L + U - eye`.
+    perm: `p` as returned by `tf.linag.lu`, i.e., if
+      `matmul(P, matmul(L, U)) = X` then `perm = argmax(P)`.
+    validate_args: Python `bool` indicating whether arguments should be checked
+      for correctness.
+      Default value: `False` (i.e., don't validate arguments).
+    name: Python `str` name given to ops managed by this object.
+      Default value: `None` (i.e., "lu_reconstruct").
+
+  Returns:
+    x: The original input to `tf.linalg.lu`, i.e., `x` as in,
+      `lu_reconstruct(*tf.linalg.lu(x))`.
+
+  #### Examples
+<switch:english>
+[english] python
+  import numpy as np
+  import tensorflow as tf
+  import tensorflow_probability as tfp
+
+  x = [[[3., 4], [1, 2]],
+       [[7., 8], [3, 4]]]
+  x_reconstructed = tfp.math.lu_reconstruct(*tf.linalg.lu(x))
+  tf.assert_near(x, x_reconstructed)
+  # ==> True
+<switch:python>
+[python] """
+  with tf.compat.v1.name_scope(name, 'lu_reconstruct', [lower_upper, perm]):
+    lower_upper = tf.convert_to_tensor(
+        value=lower_upper, dtype_hint=tf.float32, name='lower_upper')
+    perm = tf.convert_to_tensor(value=perm, dtype_hint=tf.int32, name='perm')
+
+    assertions = _lu_reconstruct_assertions(lower_upper, perm, validate_args)
+    if assertions:
+      with tf.control_dependencies(assertions):
+        lower_upper = tf.identity(lower_upper)
+        perm = tf.identity(perm)
+
+    shape = tf.shape(input=lower_upper)
+
+    lower = tf.linalg.set_diag(
+        tf.linalg.band_part(lower_upper, num_lower=-1, num_upper=0),
+        tf.ones(shape[:-1], dtype=lower_upper.dtype))
+    upper = tf.linalg.band_part(lower_upper, num_lower=0, num_upper=-1)
+    x = tf.matmul(lower, upper)
+
+    if lower_upper.shape.ndims is None or lower_upper.shape.ndims != 2:
+      # We either don't know the batch rank or there are >0 batch dims.
+      batch_size = tf.reduce_prod(input_tensor=shape[:-2])
+      d = shape[-1]
+      x = tf.reshape(x, [batch_size, d, d])
+      perm = tf.reshape(perm, [batch_size, d])
+      perm = tf.map_fn(tf.math.invert_permutation, perm)
+      batch_indices = tf.broadcast_to(
+          tf.range(batch_size)[:, tf.newaxis],
+          [batch_size, d])
+      x = tf.gather_nd(x, tf.stack([batch_indices, perm], axis=-1))
+      x = tf.reshape(x, shape)
+    else:
+      x = tf.gather(x, tf.math.invert_permutation(perm))
+
+    x.set_shape(lower_upper.shape)
+    return x
+<switch:english>
+[english] The code includes logic to determine if the input is batched or not, ensuring that the final permutation step correctly handles matrix indices across all dimensions.
+[english] Does this function handle cases where the LU decomposition results are already in a batch format (e.g., [Batch, MatrixSize] times number of batches)?
+[english] Yes, if `lower_upper` is multi-dimensional and not exactly rank 2, it detects batch dimensions using `tf.reduce_prod(input_tensor=shape[:-2])`, allowing the permutation to be applied correctly via `tf.map_fn` and `tf.gather_nd`.
+[english] That clarifies how batching is managed within this reconstruction method.

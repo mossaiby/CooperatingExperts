@@ -1,0 +1,12 @@
+[english] How do I programmatically create and request a new receiver link using this class?
+[english] The function handles the creation process in two steps, first getting a unique identifier for the link, then completing the final request.
+<switch:python>
+[python] def new_receiver(self, name):
+        """Create a new receiver link."""
+        pn_link = self._pn_session.receiver(name)
+        return self.request_receiver(pn_link)
+<switch:english>
+[english] It uses an internal session object to generate the link and then passes that generated link through a public request method.
+[english] If `self._pn_session` is unavailable, will this function correctly manage the error?
+[english] No, it implicitly relies on `self._pn_session` being defined. To handle errors explicitly,
+[english] Got it, thanks for the clarification.

@@ -1,0 +1,22 @@
+[english] I am running a Python script on Windows that handles locale-specific character sets, but I keep getting encoding lookup errors.
+[english] This function first checks if the operating system is Windows (`win32`). It then retrieves the default system locale and attempts to create an alias for it so Python can recognize encodings not natively supported in its cache.
+<switch:python>
+[python] def aliasmbcs():
+    """On Windows, some default encodings are not provided by Python,
+    while they are always available as "mbcs" in each locale. Make
+    them usable by aliasing to "mbcs" in such a case."""
+    if sys.platform == 'win32':
+        import locale, codecs
+        enc = locale.getdefaultlocale()[1]
+        if enc.startswith('cp'):            # "cp***" ?
+            try:
+                codecs.lookup(enc)
+            except LookupError:
+                import encodings
+                encodings._cache[enc] = encodings._unknown
+                encodings.aliases.aliases[enc] = 'mbcs'
+<switch:english>
+[english] By directly manipulating `encodings.aliases`, this utility forces Python to treat specific 'cp' code pages as 'mbcs', which resolves lookup errors but modifies the module's internal state.
+[english] If the default encoding on Windows starts with something other than 'cp', will this function have any effect?
+[english] No. The core logic is gated by `if enc.startswith('cp'):`, meaning it specifically targets common CP code pages and skips other custom locales.
+[english] That helps me understand the scope of the fix.

@@ -1,0 +1,22 @@
+[english] How do I find the single longest sequence of characters that appears in every string within a given list?
+[english] This function iterates through all possible substrings found in the first string, checking if each is present in all other strings.
+<switch:python>
+[python] def long_substr(data):
+    """Return the longest common substring in a list of strings.
+    
+    Credit: http://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings-python
+    """
+    substr = ''
+    if len(data) > 1 and len(data[0]) > 0:
+        for i in range(len(data[0])):
+            for j in range(len(data[0])-i+1):
+                if j > len(substr) and all(data[0][i:i+j] in x for x in data):
+                    substr = data[0][i:i+j]
+    elif len(data) == 1:
+        substr = data[0]
+    return substr
+<switch:english>
+[english] The logic relies on generating substrings from the first element and using a generator (`all(...)`) to verify membership in all other strings simultaneously.
+[english] What happens if the input list `data` is empty?
+[english] If the input list is empty, the function checks `len(data) > 1` (False) and `len(data) == 1` (False), so it returns an empty string based on initialization.
+[english] That makes sense!

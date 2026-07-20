@@ -1,0 +1,17 @@
+[english] I need a quick way to determine if a specific service key has been registered in my internal system.
+[english] The most straightforward approach is a simple membership test against the known services. This function checks for the existence of the `key` within the private attributes.
+<switch:python>
+[python] def has(self, key: str) -> bool:
+        """
+        Returns True is set() has been called for a key. The cached value may be of type 'None'.
+        :param key:
+        :return:
+        """
+        if key in self._services:
+            return True
+        return False
+<switch:english>
+[english] This implementation uses direct lookups, which are highly efficient (O(1)) when checking membership in a set or dictionary keys.
+[english] What should happen if `self._services` is never initialized and throws an attribute error?
+[english] To prevent errors during initial calls, you could add a check for the existence of the internal service list before attempting the lookup:
+[english] That safer implementation looks much more robust!

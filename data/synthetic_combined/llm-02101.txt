@@ -1,0 +1,14 @@
+[english] I need to safely set a configuration file path while ensuring the value provided is always a valid string.
+[english] We can implement this by creating an internal method that accepts the desired path. This approach handles various inputs, defaulting to an empty string if the input is falsy.
+<switch:python>
+[python] def config_path(self, value):
+        """Set config_path"""
+        self._config_path = value or ''
+        if not isinstance(self._config_path, str):
+            raise BadArgumentError("config_path must be string: {}".format(
+                self._config_path))
+<switch:english>
+[english] This function effectively enforces data integrity by checking the type immediately after attempting assignment, ensuring `self._config_path` is always a string.
+[english] If I pass a non-string value like `None` or an integer, how does the validation logic handle that?
+[english] The initial line uses the `or ''` operator to set the path. However, if you pass something other than a string in the first place, the subsequent type check will catch it and raise the specific BadArgumentError.
+[english] Helpful explanation of how the validation works!

@@ -1,0 +1,50 @@
+[english] How do I reliably establish an SSH connection to a remote server, handling both password and public key authentication?
+[english] This function utilizes the Paramiko library to set up an SSH client. It first initializes the client and then applies security settings based on class attributes like `self.allow_host_key_change` and `self.no_host_key_check`. The connection is established either via a password or a key file, configuring various networking parameters before returning the active client.
+<switch:python>
+[python] def get_conn(self):
+        """
+        Opens a ssh connection to the remote host.
+
+        :rtype: paramiko.client.SSHClient
+        """
+
+        self.log.debug('Creating SSH client for conn_id: %s', self.ssh_conn_id)
+        client = paramiko.SSHClient()
+        if not self.allow_host_key_change:
+            self.log.warning('Remote Identification Change is not verified. '
+                             'This wont protect against Man-In-The-Middle attacks')
+            client.load_system_host_keys()
+        if self.no_host_key_check:
+            self.log.warning('No Host Key Verification. This wont protect '
+                             'against Man-In-The-Middle attacks')
+            # Default is RejectPolicy
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        if self.password and self.password.strip():
+            client.connect(hostname=self.remote_host,
+                           username=self.username,
+                           password=self.password,
+                           key_filename=self.key_file,
+                           timeout=self.timeout,
+                           compress=self.compress,
+                           port=self.port,
+                           sock=self.host_proxy)
+        else:
+            client.connect(hostname=self.remote_host,
+                           username=self.username,
+                           key_filename=self.key_file,
+                           timeout=self.timeout,
+                           compress=self.compress,
+                           port=self.port,
+                           sock=self.host_proxy)
+
+        if self.keepalive_interval:
+            client.get_transport().set_keepalive(self.keepalive_interval)
+
+        self.client = client
+        return client
+<switch:english>
+[english] The code includes crucial logging for host key behavior; specifically, if security checks are disabled (`self.no_host_key_check` is true), it issues warnings because this configuration exposes the connection to Man-In-The-Middle (MITM) attacks.
+[english] What specific method controls whether a password or an SSH key file is used for authentication in this function?
+[english] Authentication relies on checking if `self.password` contains any value after stripping whitespace. If it exists, the connection uses a password; otherwise, it proceeds using `self.key_file`. The relevant code block is:
+[english] That clarifies how authentication is handled!

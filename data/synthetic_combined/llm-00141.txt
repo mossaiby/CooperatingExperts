@@ -1,0 +1,18 @@
+[english] How do I monitor the peak load of my task queue within a ThreadPoolExecutor subclass?
+[english] This method wraps the standard submission process to gather metrics. It leverages `self._work_queue.qsize()` immediately after submission to track how busy the system is at that moment.
+<switch:python>
+[python] def submit(self, fn, *args, **kwargs):
+        """Submits a callable to be executed with the given arguments.
+
+        Count maximum reached work queue size in ThreadPoolExecutor.max_queue_size_reached.
+        """
+        future = super().submit(fn, *args, **kwargs)
+        work_queue_size = self._work_queue.qsize()
+        if work_queue_size > self.max_queue_size_reached:
+            self.max_queue_size_reached = work_queue_size
+        return future
+<switch:english>
+[english] By comparing the current `work_queue_size` to `self.max_queue_size_reached`, you ensure that the tracker always holds the highest load encountered since initialization.
+[english] Does this tracking happen correctly if tasks are submitted in rapid succession, potentially leading to concurrent checks?
+[english] Since the check happens synchronously within the submission method before the work is picked up by a worker, it accurately reflects the size at the moment of queuing for that specific call.
+[english] This implementation makes tracking queue spikes much easier.

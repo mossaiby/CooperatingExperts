@@ -1,0 +1,27 @@
+[english] How can I implement custom logic in my Python SSL context handler when a client sends a specific IP address or hostname?
+[english] This function interfaces with OpenSSL's C API to register a callback that executes immediately upon receiving a Server Name Indication (SNI) request from a client. It creates a Python wrapper around your provided function and exposes it to the underlying C library layers using generated bindings.
+<switch:python>
+[python] def set_tlsext_servername_callback(self, callback):
+        """
+        Specify a callback function to be called when clients specify a server
+        name.
+
+        :param callback: The callback function.  It will be invoked with one
+            argument, the Connection instance.
+
+        .. versionadded:: 0.13
+        """
+        @wraps(callback)
+        def wrapper(ssl, alert, arg):
+            callback(Connection._reverse_mapping[ssl])
+            return 0
+
+        self._tlsext_servername_callback = _ffi.callback(
+            "int (*)(SSL *, int *, void *)", wrapper)
+        _lib.SSL_CTX_set_tlsext_servername_callback(
+            self._context, self._tlsext_servername_callback)
+<switch:english>
+[english] The core logic relies on converting the Python `wrapper` function into a C-pointer type understood by OpenSSL. Remember that this callback is called at the lower C/TLS level rather than in standard application flow.
+[english] What does the '0' returned inside the wrapper signify, and are there other values you could return to influence the connection process?
+[english] Returning 0 signals to OpenSSL that the server successfully handled the client SNI request. Other non-zero return values can signal errors or specific behaviors during initialization.
+[english] This makes perfect sense; thanks for clarifying how the C callback integrates with Python.

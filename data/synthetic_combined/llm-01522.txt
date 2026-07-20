@@ -1,0 +1,21 @@
+[english] How can I programmatically select a specific property within my UI's property grid for editing?
+[english] The function systematically attempts to find a target property by iterating through a set of standard property names. It breaks the loop as soon as it successfully retrieves a matching property object from the grid.
+<switch:python>
+[python] def edit(self, name=""):
+        "Programatically select a (default) property to start editing it"
+        # for more info see DoSelectAndEdit in propgrid.cpp
+        for name in (name, "label", "value", "text", "title", "filename", 
+                           "name"):
+            prop = self.pg.GetPropertyByName(name)
+            if prop is not None:
+                break
+        self.Parent.SetFocus()
+        self.Parent.Raise()
+        self.pg.SetFocus()
+        # give time to the ui to show the prop grid and set focus:
+        wx.CallLater(250, self.select, prop.GetName())
+<switch:english>
+[english] The use of wx.CallLater(250, ...) introduces a delay in executing `self.select`, which is necessary to allow the UI time to properly render and set focus on the property grid after other elements are raised.
+[english] What happens if none of the listed names match any properties within self.pg?
+[english] If no matching property is found, the loop finishes without finding a target object. The function will still attempt to call Parent methods like SetFocus and Raise() before reaching its end.
+[english] I appreciate the detailed explanation on that timing issue.

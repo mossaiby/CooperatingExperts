@@ -1,0 +1,25 @@
+[english] How can I extract all email addresses from this vCard structure and categorize them by their type?
+[english] This function iterates through the vCard components to specifically find 'EMAIL' types. It uses external helper logic to determine if an email is, for example, related to 'internet' or 'work', then groups it accordingly.
+<switch:python>
+[python] def get_email_addresses(self):
+        """
+        : returns: dict of type and email address list
+        :rtype: dict(str, list(str))
+        """
+        email_dict = {}
+        for child in self.vcard.getChildren():
+            if child.name == "EMAIL":
+                type = helpers.list_to_string(
+                    self._get_types_for_vcard_object(child, "internet"), ", ")
+                if type not in email_dict:
+                    email_dict[type] = []
+                email_dict[type].append(child.value)
+        # sort email address lists
+        for email_list in email_dict.values():
+            email_list.sort()
+        return email_dict
+<switch:english>
+[english] The method ensures consistent output by sorting all discovered email address lists alphabetically before they are returned.
+[english] What happens if the vCard contains multiple entries of the same email type but different addresses?
+[english] All addresses belonging to that specific category will be collected into a list and returned under the corresponding key. For example, {'internet': ['a@example.com', 'b@corp.net']}.
+[english] That makes perfect sense.

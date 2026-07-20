@@ -1,0 +1,20 @@
+[english] How do I update a package metadata file with additional requirements pulled from my setup.cfg?
+[english] This function is designed to fetch packages defined in configuration files, read existing data from your local metadata path, and then overwrite specific keys like extra dependencies.
+<switch:python>
+[python] def add_requirements(self, metadata_path):
+        """Add additional requirements from setup.cfg to file metadata_path"""
+        additional = list(self.setupcfg_requirements())
+        if not additional: return
+        pkg_info = read_pkg_info(metadata_path)
+        if 'Provides-Extra' in pkg_info or 'Requires-Dist' in pkg_info:
+            warnings.warn('setup.cfg requirements overwrite values from setup.py')
+            del pkg_info['Provides-Extra']
+            del pkg_info['Requires-Dist']
+        for k, v in additional:
+            pkg_info[k] = v
+        write_pkg_info(metadata_path, pkg_info)
+<switch:english>
+[english] By iterating through `additional` requirements, the function ensures that any existing dependency entries are replaced with values sourced from setup.cfg.
+[english] If read_pkg_info fails because of a corrupted metadata file, does this method handle it gracefully?
+[english] No, if `read_pkg_info(metadata_path)` encounters an issue, the function will raise an exception and stop execution immediately since there is no try/except block.
+[english] That makes sense, I should add robust error handling.

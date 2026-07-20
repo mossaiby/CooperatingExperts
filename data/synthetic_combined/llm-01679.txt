@@ -1,0 +1,25 @@
+[english] How can I automatically restructure a list that contains both single mathematical expressions and tuples representing factorizations into a unified symbolic representation?
+[english] This function recursively processes its input to handle mixed data types. It identifies existing scripts while treating factorization tuples as elements requiring recursive unpacking and multiplicative wrapping. The final result is either the resulting object itself or an AdditiveScript containing all processed parts.
+<switch:python>
+[python] def pack_factorisation(facto_list):
+    """
+    :param facto_list: list of parser or tuple of factorisation
+    :return:
+    """
+    _sum = []
+    for f in facto_list:
+        if isinstance(f, Script):
+            _sum.append(f)
+        else:
+            # tuple of factorisation
+            _sum.append(MultiplicativeScript(children=(pack_factorisation(l_f) for l_f in f)))
+
+    if len(_sum) == 1:
+        return _sum[0]
+    else:
+        return AdditiveScript(children=_sum)
+<switch:english>
+[english] The goal of this implementation is always to return a single structured object, preventing nested lists in the output hierarchy. Remember that its functionality depends on helper classes like Script, MultiplicativeScript, and AdditiveScript being defined elsewhere.
+[english] If the input list contains only tuples with multiple sub-elements, will it always result in an AdditiveScript?
+[english] Yes, because each tuple is processed into a `MultiplicativeScript` within the loop. If there are two or more of these resulting multiplicative structures, they will be wrapped by the final `AdditiveScript` (the 'else' block).
+[english] That makes sense regarding how the additive structure forms.

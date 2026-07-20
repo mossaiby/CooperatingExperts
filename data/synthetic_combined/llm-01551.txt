@@ -1,0 +1,57 @@
+[english] I need to process my mash output CSV file and filter the results based on a specific percentage threshold.
+[english] This function iterates through a tab-delimited input string, extracts sequence identifiers and hash data, and uses the `hash_cutoff` parameter to determine if any similarity metrics should be kept for the final record. It calculates a 'percentage of shared hashes' using division on the last column.
+<switch:python>
+[python] def main(mash_output, hash_cutoff, sample_id, assembly_file):
+    """
+    Main function that allows to dump a mash dist txt file to a json file
+
+    Parameters
+    ----------
+    mash_output: str
+        A string with the input file.
+    hash_cutoff: str
+        the percentage cutoff for the percentage of shared hashes between query
+        and plasmid in database that is allowed for the plasmid to be reported
+        to the results outputs
+    sample_id: str
+        The name of the sample.
+    """
+
+    input_f = open(mash_output, "r")
+
+    master_dict = {}
+
+    for line in input_f:
+
+        tab_split = line.split("\t")
+        current_seq = tab_split[1].strip()
+        ref_accession = "_".join(tab_split[0].strip().split("_")[0:3])
+        mash_dist = tab_split[2].strip()
+        hashes_list = tab_split[-1].strip().split("/")
+
+        # creates a percentage of the shared hashes between the sample and the
+        # reference
+        perc_hashes = float(hashes_list[0]) / float(hashes_list[1])
+
+        # if ref_accession already in dict, i.e., if the same accession number
+        # matches more than one contig.
+        if ref_accession in master_dict.keys():
+            current_seq += ", {}".format(master_dict[ref_accession][-1])
+
+        # assures that only the hashes with a given shared percentage are
+        # reported to json file
+        if perc_hashes > float(hash_cutoff):
+
+            master_dict[ref_accession] = [
+                round(1 - float(mash_dist), 2),
+                round(perc_hashes, 2),
+                current_seq
+            ]
+
+    # assures that file is closed in last iteration of the loop
+    send_to_output(master_dict, mash_output, sample_id, assembly_file)
+<switch:english>
+[english] The function aggregates sequences belonging to the same reference accession, ensuring duplicates are merged before calling an external export utility.
+[english] What happens if multiple different mash runs produce output with the same `sample_id`?
+[english] Since this function builds a new dictionary (`master_dict`) from scratch each time it is called. you would get separate records for each run unless you pass an existing dictionary into the function.
+[english] Got it, thanks for explaining that.

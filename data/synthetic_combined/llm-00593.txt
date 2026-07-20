@@ -1,0 +1,22 @@
+[english] How can I start my web application server using a default port within this class?
+[english] This function acts as a unified entry point for serving your application. It checks if a custom server has been provided; otherwise, it automatically defaults to running on port 8000 using Python's built-in `wsgiref` module.
+<switch:python>
+[python] def serve(self, server=None):
+        """Serve app using wsgiref or provided server.
+
+        Args:
+        - server (callable): An callable
+        """
+        if server is None:
+            from wsgiref.simple_server import make_server
+            server = lambda app: make_server('', 8000, app).serve_forever()
+            print('Listening on 0.0.0.0:8000')
+        try:
+            server(self)
+        finally:
+            server.socket.close()
+<switch:english>
+[english] The try/finally structure ensures that even if the server encounters an error during execution, it attempts to close the underlying network socket for resource cleanup.
+[english] If I pass a custom synchronous HTTP server instance instead of a callable function, how should its setup look?
+[english] Your custom server must be initialized before calling serve and must accept `self` as its first argument. The closure logic in the finally block will only work if your server object exposes a `.socket` attribute.
+[english] This clarifies how resource management works with custom servers.

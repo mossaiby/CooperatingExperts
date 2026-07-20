@@ -1,0 +1,54 @@
+[english] I have a complex XML entry for a service bus rule and need to convert it into a structured Python Rule object.
+[english] This function systematically parses the provided XML element by traversing its deep, namespace-defined hierarchy to extract specific configuration details.
+<switch:python>
+[python] def _convert_etree_element_to_rule(entry_element):
+    ''' Converts entry element to rule object.
+
+    The format of xml for rule:
+<entry xmlns='http://www.w3.org/2005/Atom'>
+<content type='application/xml'>
+<RuleDescription
+    xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect">
+    <Filter i:type="SqlFilterExpression">
+        <SqlExpression>MyProperty='XYZ'</SqlExpression>
+    </Filter>
+    <Action i:type="SqlFilterAction">
+        <SqlExpression>set MyProperty2 = 'ABC'</SqlExpression>
+    </Action>
+</RuleDescription>
+</content>
+</entry>
+    '''
+    rule = Rule()
+
+    rule_element = entry_element.find('./atom:content/sb:RuleDescription', _etree_sb_feed_namespaces)
+    if rule_element is not None:
+        filter_element = rule_element.find('./sb:Filter', _etree_sb_feed_namespaces)
+        if filter_element is not None:
+            rule.filter_type = filter_element.attrib.get(
+                _make_etree_ns_attr_name(_etree_sb_feed_namespaces['i'], 'type'), None)
+            sql_exp_element = filter_element.find('./sb:SqlExpression', _etree_sb_feed_namespaces)
+            if sql_exp_element is not None:
+                rule.filter_expression = sql_exp_element.text
+
+        action_element = rule_element.find('./sb:Action', _etree_sb_feed_namespaces)
+        if action_element is not None:
+            rule.action_type = action_element.attrib.get(
+                _make_etree_ns_attr_name(_etree_sb_feed_namespaces['i'], 'type'), None)
+            sql_exp_element = action_element.find('./sb:SqlExpression', _etree_sb_feed_namespaces)
+            if sql_exp_element is not None:
+                rule.action_expression = sql_exp_element.text
+
+
+    # extract id, updated and name value from feed entry and set them of rule.
+    for name, value in _ETreeXmlToObject.get_entry_properties_from_element(
+            entry_element, True, '/rules').items():
+        setattr(rule, name, value)
+
+    return rule
+<switch:english>
+[english] The conversion relies on explicit checks for nested elements. If an expected component is missing, the rule fields remain unset rather than causing a crash.
+[english] What happens if the required `Filter` or `Action` elements are missing entirely from an entry?
+[english] The function handles this gracefully by using explicit `if element is not None:` checks throughout the logic. If a filter or action is absent, the corresponding attributes on the rule object will simply remain unset.
+[english] That explains how the robust error handling works. Thanks!

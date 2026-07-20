@@ -1,0 +1,23 @@
+[english] How can I create a new instance of an annotation object that only includes data within a specific time range?
+[english] This function generates a deep copy of the current state so it doesn't modify the original data. It then iterates through all tiers to check each annotation against your specified start and end times.
+<switch:python>
+[python] def extract(self, start, end):
+        """Extracts the selected time frame as a new object.
+
+        :param int start: Start time.
+        :param int end: End time.
+        :returns: class:`pympi.Elan.Eaf` object containing the extracted frame.
+        """
+        from copy import deepcopy
+        eaf_out = deepcopy(self)
+        for t in eaf_out.get_tier_names():
+            for ab, ae, value in eaf_out.get_annotation_data_for_tier(t):
+                if ab > end or ae < start:
+                    eaf_out.remove_annotation(t, (start-end)//2, False)
+        eaf_out.clean_time_slots()
+        return eaf_out
+<switch:english>
+[english] After filtering, the function calls `clean_time_slots()` to finalize the structure before returning the extracted object.
+[english] How does this logic handle an existing annotation that partially overlaps with the requested time range?
+[english] The current implementation only removes annotations (`if ab > end or ae < start:`) if they fall entirely outside the window. Annotations with partial overlap remain in the `eaf_out` object.
+[english] This makes sense for isolating complete items rather than slicing existing segments.

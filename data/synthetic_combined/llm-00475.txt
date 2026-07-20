@@ -1,0 +1,29 @@
+[english] How can I programmatically find and insert special autosummary items into a Table of Contents tree while preventing the creation of standard toctree lists?
+[english] This function performs a recursive crawl over the document's AST (Abstract Syntax Tree) structure. It specifically looks for 'autosummary_toc' nodes and bypasses regular section checks to handle specialized TOC generation.
+<switch:python>
+[python] def process_autosummary_toc(app, doctree):
+    """Insert items described in autosummary:: to the TOC tree, but do
+    not generate the toctree:: list.
+    """
+    env = app.builder.env
+    crawled = {}
+    def crawl_toc(node, depth=1):
+        crawled[node] = True
+        for j, subnode in enumerate(node):
+            try:
+                if (isinstance(subnode, autosummary_toc)
+                    and isinstance(subnode[0], addnodes.toctree)):
+                    env.note_toctree(env.docname, subnode[0])
+                    continue
+            except IndexError:
+                continue
+            if not isinstance(subnode, nodes.section):
+                continue
+            if subnode not in crawled:
+                crawl_toc(subnode, depth+1)
+    crawl_toc(doctree)
+<switch:english>
+[english] The helper function 'crawl_toc' manages the recursion and state, ensuring that content isn't processed multiple times to maintain tree integrity. Using a dictionary `crawled` prevents infinite loops during traversal.
+[english] Does this code handle nested sections within an autosummary block correctly?
+[english] The existing logic focuses on the immediate children of nodes, so if a TOC entry were deeply nested, it might be missed unless those intermediate sections are explicitly handled by the subsequent recursion steps. The current check `if not isinstance(subnode, nodes.section): continue` prevents traversal into non-section content.
+[english] That clarifies how the depth is handled.

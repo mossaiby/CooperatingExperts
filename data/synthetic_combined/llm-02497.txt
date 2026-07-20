@@ -1,0 +1,15 @@
+[english] How do I get the `institute` and `case` objects corresponding to a given institute ID and case name from my data store?
+[english] To find the required reports, we first rely on the external function `institute_and_case`. This helper function is responsible for locating both the institution and the case using your provided identifiers.
+<switch:python>
+[python] def multiqc(store, institute_id, case_name):
+    """Find MultiQC report for the case."""
+    institute_obj, case_obj = institute_and_case(store, institute_id, case_name)
+    return dict(
+        institute=institute_obj,
+        case=case_obj,
+    )
+<switch:english>
+[english] The main function then packages these two retrieved objects into a single dictionary for easy retrieval later in the workflow.
+[english] If `institute_and_case` fails to find matching data, what will happen when this is called?
+[english] Since error handling isn't defined here, if `institute_and_case` raises an exception (like KeyError or ValueError), this function will propagate that same error without modification.
+[english] Thanks for the clarification on how errors would be handled!

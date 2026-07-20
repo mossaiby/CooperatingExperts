@@ -1,0 +1,14 @@
+[english] I need a way to determine if a specific identifier is referenced anywhere within a list of variadic argument definitions.
+[english] To check for usage, we iterate through all the structures in `variadics`. We use Python's `any()` function to quickly stop and return True as soon as we find even one match that satisfies our conditions.
+<switch:python>
+[python] def _is_name_used_as_variadic(name, variadics):
+    """Check if the given name is used as a variadic argument."""
+    return any(
+        variadic.value == name or variadic.value.parent_of(name)
+        for variadic in variadics
+    )
+<switch:english>
+[english] This approach efficiently handles both direct matches (`variadic.value == name`) and cases where the target name might be nested inside another definition using `.parent_of()`. It returns a boolean indicating usage.
+[english] What happens if `variadics` is an empty list, should it raise an error?
+[english] If `variadics` is empty, the generator will produce no elements. Since there are no matches, the `any()` function correctly returns False without raising an exception.
+[english] Perfect, that clears things up.

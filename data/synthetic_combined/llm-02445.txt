@@ -1,0 +1,26 @@
+[english] I need a way to set up my application's logging system so that messages appear both in the operating system's syslog and on the console, depending on how verbose I want to be.
+[english] This function automates log setup by initializing two types of handlers: one designed to forward logs directly to the system logger, and an optional second handler for printing output to standard streams like the terminal. It allows you to control how detailed the logging is using 'quiet' and 'debug' flags.
+<switch:python>
+[python] def init_log( quiet, debug ):
+   '''
+   setup system logging to desired verbosity.
+   '''
+   from logging.handlers import SysLogHandler
+   fmt = logging.Formatter( os.path.basename(sys.argv[0]) +
+         ".%(name)s %(levelname)s - %(message)s")
+   facility = SysLogHandler.LOG_DAEMON
+   syslog = SysLogHandler(address='/dev/log',facility=facility)
+   syslog.setFormatter( fmt )
+   log.addHandler(syslog)
+   if not quiet:
+      console = logging.StreamHandler()
+      console.setFormatter( fmt )
+      log.addHandler(console)
+      log.setLevel(logging.INFO)
+      if debug:
+         log.setLevel(logging.DEBUG)
+<switch:english>
+[english] The function correctly formats log messages using the script name, but note that relying on `/dev/log` requires appropriate system privileges to interact with the syslog service successfully.
+[english] If I call this setup function multiple times during my application run, will it cause duplicate log entries?
+[english] Yes, calling it repeatedly adds new handlers every time. If you need to reconfigure logging, you should clear existing handlers first:
+[english] That makes sense; I'll make sure to initialize the logger only once.

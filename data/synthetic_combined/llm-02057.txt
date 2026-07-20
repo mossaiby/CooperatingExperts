@@ -1,0 +1,39 @@
+[english] I need a decorator that checks user permissions to either edit or read a specific DAG within my application.
+[english] This approach uses a decorator to wrap view functions and employs AppBuilder's `has_access` method. It grants access if the user has 'can_dag_edit' permission on all dags, or specifically for the provided dag ID, falling back to 'can_dag_read' if editing isn't required.
+<switch:python>
+[python] def has_dag_access(**dag_kwargs):
+    """
+    Decorator to check whether the user has read / write permission on the dag.
+    """
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(self, *args, **kwargs):
+            has_access = self.appbuilder.sm.has_access
+            dag_id = request.args.get('dag_id')
+            # if it is false, we need to check whether user has write access on the dag
+            can_dag_edit = dag_kwargs.get('can_dag_edit', False)
+
+            # 1. check whether the user has can_dag_edit permissions on all_dags
+            # 2. if 1 false, check whether the user
+            #    has can_dag_edit permissions on the dag
+            # 3. if 2 false, check whether it is can_dag_read view,
+            #    and whether user has the permissions
+            if (
+                has_access('can_dag_edit', 'all_dags') or
+                has_access('can_dag_edit', dag_id) or (not can_dag_edit and
+                                                       (has_access('can_dag_read',
+                                                                   'all_dags') or
+                                                        has_access('can_dag_read',
+                                                                   dag_id)))):
+                return f(self, *args, **kwargs)
+            else:
+                flash("Access is Denied", "danger")
+                return redirect(url_for(self.appbuilder.sm.auth_view.
+                                        __class__.__name__ + ".login"))
+        return wrapper
+    return decorator
+<switch:english>
+[english] The structure uses a single complex conditional statement to manage both read and write access levels. Note that this relies heavily on calling external objects like `request` from the global scope.
+[english] If 'can_dag_edit' is requested, but the user only has general read permissions, will they be blocked if I forget to pass a parameter?
+[english] Yes, they will be blocked. The logic prioritizes edit access; if `has_access('can_dag_edit', ...)` fails (and `can_dag_edit` is true), the function proceeds only to check for read permissions.
+[english] This makes sense how the flow of checks works!

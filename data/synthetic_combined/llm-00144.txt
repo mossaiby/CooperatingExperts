@@ -1,0 +1,87 @@
+[english] I need a Python function that can automatically determine an optimized chunking plan for a NumPy array based on target sizes or explicit dimension counts.
+[english] This logic identifies chunk strategies by starting with a default one-chunk plan and adjusting dimensions according to your requirements. It handles different input types, converting 'KB' strings into byte calculations for size estimation.
+<switch:python>
+[python] def getplan(self, size="150", axes=None, padding=None):
+        """
+        Identify a plan for chunking values along each dimension.
+
+        Generates an ndarray with the size (in number of elements) of chunks
+        in each dimension. If provided, will estimate chunks for only a
+        subset of axes, leaving all others to the full size of the axis.
+
+        Parameters
+        ----------
+        size : string or tuple
+             If str, the average size (in KB) of the chunks in all value dimensions.
+             If int/tuple, an explicit specification of the number chunks in
+             each moving value dimension.
+
+        axes : tuple, optional, default=None
+              One or more axes to estimate chunks for, if provided any
+              other axes will use one chunk.
+
+        padding : tuple or int, option, default=None
+            Size over overlapping padding between chunks in each dimension.
+            If tuple, specifies padding along each chunked dimension; if int,
+            all dimensions use same padding; if None, no padding
+        """
+        from numpy import dtype as gettype
+
+        # initialize with all elements in one chunk
+        plan = self.vshape
+
+        # check for subset of axes
+        if axes is None:
+            if isinstance(size, str):
+                axes = arange(len(self.vshape))
+            else:
+                axes = arange(len(size))
+        else:
+            axes = asarray(axes, 'int')
+
+        # set padding
+        pad = array(len(self.vshape)*[0, ])
+        if padding is not None:
+            pad[axes] = padding
+
+        # set the plan
+        if isinstance(size, tuple):
+            plan[axes] = size
+
+        elif isinstance(size, str):
+            # convert from kilobytes
+            size = 1000.0 * float(size)
+
+            # calculate from dtype
+            elsize = gettype(self.dtype).itemsize
+            nelements = prod(self.vshape)
+            dims = self.vshape[self.vmask(axes)]
+
+            if size <= elsize:
+                s = ones(len(axes))
+
+            else:
+                remsize = 1.0 * nelements * elsize
+                s = []
+                for (i, d) in enumerate(dims):
+                    minsize = remsize/d
+                    if minsize >= size:
+                        s.append(1)
+                        remsize = minsize
+                        continue
+                    else:
+                        s.append(min(d, floor(size/minsize)))
+                        s[i+1:] = plan[i+1:]
+                        break
+
+            plan[axes] = s
+
+        else:
+            raise ValueError("Chunk size not understood, must be tuple or int")
+
+        return plan, pad
+<switch:english>
+[english] The function manages both fixed chunk counts (tuple/int) and calculated average sizes based on the array's element count and data type. Be aware that complex size calculations rely on accurate knowledge of `self.vshape` and `self.dtype` to estimate chunks accurately.
+[english] If I only provide a string for 'size', what happens if the initial calculation suggests a chunk size smaller than the required item size?
+[english] The function includes an explicit check: if the calculated average size is less than or equal to the element's byte size (`elsize`), it defaults to setting those dimensions to one chunk instead of producing invalid small chunks.
+[english] That clarification helps me understand the limitations when using string-based sizing.

@@ -1,0 +1,15 @@
+[english] I need to configure a regex splitter that recognizes specific characters from a list as custom line delimiters.
+[english] To achieve this, we first construct a regular expression character class by escaping every provided delimiter. This ensures that special regex characters are treated literally when they appear in the input string.
+<switch:python>
+[python] def delims(self, delims):
+        """Set the delimiters for line splitting."""
+        expr = '[' + ''.join('\\'+ c for c in delims) + ']'
+        self._delim_re = re.compile(expr)
+        self._delims = delims
+        self._delim_expr = expr
+<switch:english>
+[english] This method compiles the final pattern into `self._delim_re`, which allows subsequent methods to use efficient regex matching based on these custom line breaks.
+[english] If one of my input delimiters is a newline character (`
+`), will this function correctly recognize it?
+[english] Yes, the current logic handles newlines because your list comprehension prepends a backslash to every character, resulting in an expression that treats `\n` as a literal match for the newline sequence.
+[english] That makes sense; I'm confident this setup is flexible enough to handle most edge cases.

@@ -1,0 +1,20 @@
+[english] How do I retrieve all submission data for a specific assignment within a known course using the Canvas API?
+[english] This function constructs the precise URL needed to target assignments submissions, then uses an internal helper method to handle any necessary pagination across multiple API responses.
+<switch:python>
+[python] def get_submissions_by_course_and_assignment(
+            self, course_id, assignment_id, params={}):
+        """
+        https://canvas.instructure.com/doc/api/submissions.html#method.submissions_api.index
+        """
+        url = COURSES_API.format(course_id)
+        url += "/assignments/{}/submissions".format(assignment_id)
+
+        submissions = []
+        for data in self._get_paged_resource(url, params=params):
+            submissions.append(Submission(data=data))
+        return submissions
+<switch:english>
+[english] The core logic relies on `self._get_paged_resource` which ensures that if there are hundreds of submissions, they are all fetched correctly and wrapped in a Submission object.
+[english] Will this function still work correctly if I only want to retrieve submissions from a specific date range?
+[english] Currently, it fetches *all* submissions. To filter by dates, you would need to pass the start and end date parameters into the `params` dictionary when calling the method.
+[english] That makes sense!

@@ -1,0 +1,31 @@
+[english] Can you write a Python function to generate random strings with specific character sets, like letters, digits, or punctuation?
+[english] This function constructs a set of allowed characters based on your parameters. It then uses randomness to build a string matching the desired length from that pool.
+<switch:python>
+[python] def generate_random_string(
+    length, using_digits=False, using_ascii_letters=False, using_punctuation=False
+):
+    """
+    Example:
+        opting out for 50 symbol-long, [a-z][A-Z][0-9] string
+        would yield log_2((26+26+50)^50) ~= 334 bit strength.
+    """
+    if not using_sysrandom:
+        return None
+
+    symbols = []
+    if using_digits:
+        symbols += string.digits
+    if using_ascii_letters:
+        symbols += string.ascii_letters
+    if using_punctuation:
+        all_punctuation = set(string.punctuation)
+        # These symbols can cause issues in environment variables
+        unsuitable = {"'", '"', "\\", "$"}
+        suitable = all_punctuation.difference(unsuitable)
+        symbols += "".join(suitable)
+    return "".join([random.choice(symbols) for _ in range(length)])
+<switch:english>
+[english] Note that this implementation includes a check for `using_sysrandom` which is not defined within the scope provided, implying it relies on an external configuration.
+[english] If I pass `length=0`, will the function return an empty string or raise an error?
+[english] It will return an empty string because the list comprehension `[random.choice(symbols) for _ in range(length)]` simply runs zero times when length is 0.
+[english] Perfect, thanks for clarifying how edge cases are handled.

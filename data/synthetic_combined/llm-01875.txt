@@ -1,0 +1,53 @@
+[english] How can I lazily compute and retrieve specific audio features like framesync or beat synchronization data when running an analysis?
+[english] This method acts as a getter that ensures the necessary features are calculated only upon first request (lazy loading). It prioritizes reading pre-computed files, falling back to full computation if those files are missing or unusable.
+<switch:python>
+[python] def features(self):
+        """This getter will compute the actual features if they haven't
+        been computed yet.
+
+        Returns
+        -------
+        features: np.array
+            The actual features. Each row corresponds to a feature vector.
+        """
+        # Compute features if needed
+        if self._features is None:
+            try:
+                self.read_features()
+            except (NoFeaturesFileError, FeaturesNotFound,
+                    WrongFeaturesFormatError, FeatureParamsError) as e:
+                try:
+                    self._compute_all_features()
+                    self.write_features()
+                except IOError:
+                    if isinstance(e, FeaturesNotFound) or \
+                            isinstance(e, FeatureParamsError):
+                        msg = "Computation of the features is needed for " \
+                            "current parameters but no audio file was found." \
+                            "Please, change your parameters or add the audio" \
+                            " file in %s"
+                    else:
+                        msg = "Couldn't find audio file in %s"
+                    raise NoAudioFileError(msg % self.file_struct.audio_file)
+
+        # Choose features based on type
+        if self.feat_type is FeatureTypes.framesync:
+            self._features = self._framesync_features
+        elif self.feat_type is FeatureTypes.est_beatsync:
+            self._features = self._est_beatsync_features
+        elif self.feat_type is FeatureTypes.ann_beatsync:
+            if self._ann_beatsync_features is None:
+                raise FeatureTypeNotFound(
+                    "Feature type %s is not valid because no annotated beats "
+                    "were found" % self.feat_type)
+            self._features = self._ann_beatsync_features
+        else:
+            raise FeatureTypeNotFound("Feature type %s is not valid." %
+                                      self.feat_type)
+
+        return self._features
+<switch:english>
+[english] The function handles multiple feature types, ensuring the correct pre-computed or computed array is returned based on `self.feat_type`. It also includes robust error handling for missing audio files during computation.
+[english] If a specific required feature type (like anim_beatsync) doesn't have pre-calculated data and subsequent computation fails due to an IO issue, will it attempt to retry the calculation automatically?
+[english] No, if `self._compute_all_features()` raises an `IOError`, the current implementation halts execution without automatic retries. To add retry logic, you would need to wrap that specific call in a loop with error handling and backoff.
+[english] Thanks for clarifying how the internal state management works!

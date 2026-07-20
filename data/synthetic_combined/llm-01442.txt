@@ -1,0 +1,86 @@
+[english] I need a function that takes raw gene information and validates/structures it into a standard 'panel_gene' data object.
+[english] This function constructs a standardized dictionary representation of a gene panel object based on input info. It begins by ensuring the required HGNC ID exists before using an adapter to fetch official, validated database details.
+<switch:python>
+[python] def build_gene(gene_info, adapter):
+    """Build a panel_gene object
+    
+    Args:
+        gene_info(dict)
+    
+    Returns:
+        gene_obj(dict)
+    
+        panel_gene = dict(
+            hgnc_id = int, # required
+            symbol = str, 
+
+            disease_associated_transcripts = list, # list of strings that represent refseq transcripts
+            reduced_penetrance = bool, 
+            mosaicism = bool, 
+            database_entry_version = str,
+
+            ar = bool,
+            ad = bool,
+            mt = bool,
+            xr = bool,
+            xd = bool,
+            x = bool,
+            y = bool,
+        )
+
+    """
+    symbol = gene_info.get('hgnc_symbol')
+    try:
+        # A gene has to have a hgnc id
+        hgnc_id = gene_info['hgnc_id']
+        if not hgnc_id:
+            raise KeyError()
+        gene_obj = dict(hgnc_id=hgnc_id)
+    except KeyError as err:
+        raise KeyError("Gene {0} is missing hgnc id. Panel genes has to have hgnc_id".format(symbol))
+    
+    hgnc_gene = adapter.hgnc_gene(hgnc_id)
+    if hgnc_gene is None:
+        raise IntegrityError("hgnc_id {0} is not in the gene database!".format(hgnc_id))
+    
+    gene_obj['symbol'] = hgnc_gene['hgnc_symbol']
+    if symbol != gene_obj['symbol']:
+        LOG.warning("Symbol in database does not correspond to symbol in panel file for gene %s", hgnc_id)
+        LOG.warning("Using symbol %s for gene %s, instead of %s" % 
+                    (hgnc_gene['hgnc_symbol'], hgnc_id, symbol))
+
+    if gene_info.get('transcripts'):
+        gene_obj['disease_associated_transcripts'] = gene_info['transcripts']
+    
+    if gene_info.get('reduced_penetrance'):
+        gene_obj['reduced_penetrance'] = True
+    
+    if gene_info.get('mosaicism'):
+        gene_obj['mosaicism'] = True
+    
+    if gene_info.get('database_entry_version'):
+        gene_obj['database_entry_version'] = gene_info['database_entry_version']
+    
+    if gene_info.get('inheritance_models'):
+        for model in gene_info['inheritance_models']:
+            if model == 'AR':
+                gene_obj['ar'] = True
+            if model == 'AD':
+                gene_obj['ad'] = True
+            if model == 'MT':
+                gene_obj['mt'] = True
+            if model == 'XR':
+                gene_obj['xr'] = True
+            if model == 'XD':
+                gene_obj['xd'] = True
+            if model == 'X':
+                gene_obj['x'] = True
+            if model == 'Y':
+                gene_obj['y'] = True
+
+    return gene_obj
+<switch:english>
+[english] The process includes symbol validation and logging warnings if the provided input symbol deviates from the canonical version found in the database.
+[english] How does this function handle cases where multiple inheritance models might be listed for a single gene?
+[english] Because the code uses sequential 'if' statements to set model attributes (e.g., `if model == 'AR':`), any duplicate or redundant entries in `inheritance_models` will simply confirm the existing boolean value of `True` without causing an error.
+[english] That makes sense, thanks for the clarification!

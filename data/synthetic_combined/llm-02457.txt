@@ -1,0 +1,18 @@
+[english] I have a 16-bit unsigned integer I need to send over MQTT; how can I reliably convert this number into two separate bytes?
+[english] The function first ensures the input is treated as an integer, then splits it into high and low bytes using bitwise shifting. By assigning these components to a bytearray in order, we achieve standard Big Endian network serialization.
+<switch:python>
+[python] def encode16Int(value):
+    '''
+    Encodes a 16 bit unsigned integer into MQTT format.
+    Returns a bytearray
+    '''
+    value      = int(value)
+    encoded    = bytearray(2)
+    encoded[0] = value >> 8
+    encoded[1] = value & 0xFF
+    return encoded
+<switch:english>
+[english] This method efficiently encodes the value without relying on string conversions or dedicated libraries like struct. It works perfectly for 16-bit unsigned values between 0 and 65535.
+[english] If I pass a negative number, like -1 (implying two's complement), will this encoding still work?
+[english] The current implementation treats the input as an abstract integer; while it performs bitwise operations, negative inputs will likely not result in standard network representations for signed types. For 16-bit signed integers, you would need a more specific handling method.
+[english] That clarifies how to handle endianness and potential overflow!

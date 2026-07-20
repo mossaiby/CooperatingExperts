@@ -1,0 +1,32 @@
+[english] How can I split a comma-separated string into tokens while ensuring that commas nested within parentheses are treated as part of a single segment?
+[english] This function uses an iterative approach to track nesting levels. It monitors parenthesis balance and only considers a character at the top level—where bracket count is zero—as a valid delimiter for splitting.
+<switch:python>
+[python] def _parse_siblings(s, **kw):
+    """
+    http://stackoverflow.com/a/26809037
+    """
+    bracket_level = 0
+    current = []
+
+    # trick to remove special-case of trailing chars
+    for c in (s + ","):
+        if c == "," and bracket_level == 0:
+            yield parse_node("".join(current), **kw)
+            current = []
+        else:
+            if c == "(":
+                bracket_level += 1
+            elif c == ")":
+                bracket_level -= 1
+            current.append(c)
+<switch:english>
+[english] The generator collects characters in the `current` list until an unnested comma is found, at which point it yields a structured node.
+[english] If the input string has unbalanced parentheses, for example, 'a(b,' what behavior should I expect from this parsing logic?
+[english] The function will continue to accumulate characters into `current` until the end of the string is reached because an unnested comma was never found. If unbalanced brackets are a concern, you might add a check:
+<switch:python>
+[python] def _parse_siblings(s, **kw):
+    # ... (rest of function)
+    if bracket_level != 0:
+        raise ValueError("Unbalanced parentheses detected.")
+<switch:english>
+[english] That makes sense. I'll incorporate that check into my parser.

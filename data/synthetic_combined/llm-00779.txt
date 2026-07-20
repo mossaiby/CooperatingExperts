@@ -1,0 +1,23 @@
+[english] How can I implement logic to safely load the next item from a job queue, ensuring the system handles an empty queue gracefully and tracks active jobs?
+[english] This method checks if there is another job available in the sequence. It uses exception handling to determine when the iterator is exhausted and prepares the data for processing.
+<switch:python>
+[python] def _load_job(self):
+        """
+        If there is still a job in the job iterator, loads it and increments
+        the active job count.
+        """
+
+        try:
+            next_job = next(self._jobs)
+        except StopIteration:
+            self._on_deck = None
+        else:
+            if not isinstance(next_job, Job):
+                next_job = DefaultJob(next_job)
+            self._on_deck = next_job
+            self._active_jobs += 1
+<switch:english>
+[english] Note that it includes a type check, converting any non-Job object into a DefaultJob instance before activation; this allows for flexible job definition.
+[english] What happens if _jobs is not an iterator but a simple list?
+[english] If _jobs were a list, the code would still work because `next()` iterates over sequences. However, this specific structure suggests `_jobs` is designed to behave like an iterable.
+[english] I see! This makes sense now.

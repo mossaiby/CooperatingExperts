@@ -1,0 +1,20 @@
+[english] How can I safely remove a specific connection between two instances stored within a network structure?
+[english] This function implements a safe removal strategy by first confirming that both target objects are present in the data structure before attempting any modification.
+<switch:python>
+[python] def disconnect(self, instance, another_instance):
+        '''
+        Disconnect an *instance* from *another_instance*.
+        '''
+        if instance not in self:
+            return False
+        
+        if another_instance not in self[instance]: 
+            return False
+
+        self[instance].remove(another_instance)
+        return True
+<switch:english>
+[english] The method successfully removes the relationship, but users should consider if they need to handle bidirectional connections manually outside of this function.
+[english] If `self` is an empty dictionary when this function is called, what does it return?
+[english] It returns False because the initial check 'if instance not in self:' will fail since no instances exist as keys.
+[english] Got it; that clarifies how the safety checks work.

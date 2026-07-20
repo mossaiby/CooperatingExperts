@@ -1,0 +1,42 @@
+[english] I need a function that traces a specific forked process back through an entire pipeline configuration to determine which lane it belongs to.
+[english] This function looks at your list of pipeline connections and iterates backward, checking if the final process in `fork_process` exists as an output. It then validates the surrounding processes within that potential lane against a signature derived from the fork data.
+<switch:python>
+[python] def get_source_lane(fork_process, pipeline_list):
+    """Returns the lane of the last process that matches fork_process
+
+    Parameters
+    ----------
+    fork_process : list
+        List of processes before the fork.
+    pipeline_list : list
+        List with the pipeline connection dictionaries.
+
+    Returns
+    -------
+    int
+        Lane of the last process that matches fork_process
+    """
+
+    fork_source = fork_process[-1]
+    fork_sig = [x for x in fork_process if x != "__init__"]
+
+    for position, p in enumerate(pipeline_list[::-1]):
+
+        if p["output"]["process"] == fork_source:
+
+            lane = p["output"]["lane"]
+            logger.debug("Possible source match found in position {} in lane"
+                         " {}".format(position, lane))
+            lane_sequence = [x["output"]["process"] for x in pipeline_list
+                             if x["output"]["lane"] == lane]
+            logger.debug("Testing lane sequence '{}' against fork signature"
+                         " '{}'".format(lane_sequence, fork_sig))
+            if lane_sequence == fork_sig:
+                return p["output"]["lane"]
+
+    return 0
+<switch:english>
+[english] The logic successfully finds a matching lane by confirming that the entire sequence of processes assigned to that single lane aligns precisely with your expected fork signature.
+[english] Does this function handle cases where `fork_process` contains multiple elements beyond just the final process ID?
+[english] Yes, it uses list comprehension to build a 'signature' (`fork_sig`) containing every element in `fork_process` except for '__init__', ensuring that the lane must match your entire sequence.
+[english] That clarifies how the signature is verified; thanks!

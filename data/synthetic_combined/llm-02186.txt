@@ -1,0 +1,19 @@
+[english] How can I convert a specific AST node operation into executable Python source code formatted as an alternation?
+[english] This function is designed to transform complex AST operations related to 'alternation' into string representations of Python calls. It first filters the operands to ensure only those marked for hoisting are processed.
+<switch:python>
+[python] def _ast_op_alternate_to_code(self, opr, **kwargs):
+    """Convert an AST alternate op to python source code."""
+    hoist_target = OP_ALTERNATE
+    operands = self._hoist_operands(opr.operands, lambda t: isinstance(t, OptreeNode) and t.opnode.operator is hoist_target)
+
+    lines = ["alternation(["]
+    for op in operands:
+      lines.extend(self._indent(self._ast_to_code(op)))
+      lines[-1] += ","
+    lines.append("])")
+    return lines
+<switch:english>
+[english] The core logic iterates through the filtered nodes, converting each suitable operand into source code and joining them within an `alternation([...])` structure.
+[english] What happens if none of the provided operands meet the criteria to be included in alternation?
+[english] If no operands match the required 'hoist_target', the function will still generate a call wrapping an empty list, like alternation([]).
+[english] Got it. Thanks for clarifying the edge cases.

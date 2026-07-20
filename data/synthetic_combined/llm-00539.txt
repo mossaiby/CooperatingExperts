@@ -1,0 +1,17 @@
+[english] How can I apply a conditional selection (like tf.where) when my input data is structured using nested Python tuples?
+[english] Since the function needs to handle both standard TensorFlow tensors and complex, structured tuple types, it employs recursion to process matching elements in the input tuple sets.
+<switch:python>
+[python] def val_where(cond, tval, fval):
+  """Like tf.where but works on namedtuples."""
+  if isinstance(tval, tf.Tensor):
+    return tf.where(cond, tval, fval)
+  elif isinstance(tval, tuple):
+    cls = type(tval)
+    return cls(*(val_where(cond, t, f) for t, f in zip(tval, fval)))
+  else:
+    raise Exception(TypeError)
+<switch:english>
+[english] The function leverages `type(tval)` to automatically reconstruct the original named tuple or custom class structure after applying the conditional logic recursively.
+[english] If one of the elements within a nested tuple pair is not an instance of tf.Tensor but a standard Python scalar, will the function throw an error?
+[english] Yes, if it encounters anything that isn't a tensor at the terminal level (after recursion finishes processing tuples), it will raise an exception because the final `else` block only allows tensors or tuples.
+[english] Thanks for explaining how this structure works!

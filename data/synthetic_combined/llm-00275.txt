@@ -1,0 +1,15 @@
+[english] How can I implement specific validation rules for inputs intended for a Slack Post object?
+[english] This function acts as an input validator by checking that certain attributes like 'channel' are strictly strings and ensuring that complex fields, such as 'attachments', conform to expected formats.
+<switch:python>
+[python] def validate_slackpost(attr, value):
+    """SlackPost input validator function."""
+    if attr in ("channel", "credentials"):
+        if not isinstance(value, str):
+            raise InvalidMessageInputError("SlackPost", attr, value, "string")
+    elif attr in ("attachments"):
+        check_valid("SlackPost", attr, value, validus.isurl, "url")
+<switch:english>
+[english] The logic uses conditional checks on the attribute name (`attr`) before applying specific type validation or calling helper functions like `check_valid` for structural requirements.
+[english] What happens if I pass an attribute name that is not listed in any of those conditions, such as 'text'?
+[english] If the function receives an attribute name that doesn't match 'channel', 'credentials', or 'attachments', it simply completes execution without performing any validation checks.
+[english] That clarifies how the system handles unknown attributes.

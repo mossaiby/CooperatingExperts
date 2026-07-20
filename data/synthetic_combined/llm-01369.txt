@@ -1,0 +1,31 @@
+[english] I am building a console widget and need to implement logic that correctly tracks command history while preventing duplicates.
+[english] To manage command history effectively, this function first delegates execution to its parent class. If the command is successful and not suppressed, it proceeds to verify if the input should be saved.
+<switch:python>
+[python] def execute(self, source=None, hidden=False, interactive=False):
+        """ Reimplemented to the store history.
+        """
+        if not hidden:
+            history = self.input_buffer if source is None else source
+
+        executed = super(HistoryConsoleWidget, self).execute(
+            source, hidden, interactive)
+
+        if executed and not hidden:
+            # Save the command unless it was an empty string or was identical
+            # to the previous command.
+            history = history.rstrip()
+            if history and (not self._history or self._history[-1] != history):
+                self._history.append(history)
+
+            # Emulate readline: reset all history edits.
+            self._history_edits = {}
+
+            # Move the history index to the most recent item.
+            self._history_index = len(self._history)
+
+        return executed
+<switch:english>
+[english] The code ensures that only non-empty commands unique from the immediate preceding entry are added, keeping the history clean before resetting any ongoing edit states.
+[english] If `source` is provided as an empty string during execution, will a record of it appear in `self._history`?
+[english] No. The check `if history:` ensures that if the input results in an empty string after stripping whitespace, the command is ignored and not appended to `self._history`.
+[english] That clarifies how duplicate or null inputs are handled.

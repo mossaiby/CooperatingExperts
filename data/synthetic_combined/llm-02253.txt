@@ -1,0 +1,54 @@
+[english] How can I export a ConnectorDB user's data, including all their sub-devices, into a structured directory for later import?
+[english] This function systematically manages the export process by first verifying and initializing the root export directory structure. It then creates a dedicated subdirectory for the specific user before exporting that user’s metadata and recursively exporting all linked devices.
+<switch:python>
+[python] def export(self, directory):
+        """Exports the ConnectorDB user into the given directory.
+        The resulting export can be imported by using the import command(cdb.import(directory)),
+
+        Note that Python cannot export passwords, since the REST API does
+        not expose password hashes. Therefore, the imported user will have
+        password same as username.
+
+        The user export function is different than device and stream exports because
+        it outputs a format compatible directly with connectorDB's import functionality:
+
+            connectordb import < mydatabase > <directory >
+
+        This also means that you can export multiple users into the same directory without issue
+        """
+
+        exportInfoFile = os.path.join(directory, "connectordb.json")
+        if os.path.exists(directory):
+            # Ensure that there is an export there already, and it is version 1
+            if not os.path.exists(exportInfoFile):
+                raise FileExistsError(
+                    "The export directory already exsits, and is not a ConnectorDB export.")
+            with open(exportInfoFile) as f:
+                exportInfo = json.load(f)
+            if exportInfo["Version"] != 1:
+                raise ValueError(
+                    "Could not export to directory: incompatible export versions.")
+        else:
+            # The folder doesn't exist. Make it.
+            os.mkdir(directory)
+
+            with open(exportInfoFile, "w") as f:
+                json.dump(
+                    {"Version": 1, "ConnectorDB": self.db.get("meta/version").text}, f)
+
+        # Now we create the user directory
+        udir = os.path.join(directory, self.name)
+        os.mkdir(udir)
+
+        # Write the user's info
+        with open(os.path.join(udir, "user.json"), "w") as f:
+            json.dump(self.data, f)
+
+        # Now export the devices one by one
+        for d in self.devices():
+            d.export(os.path.join(udir, d.name))
+<switch:english>
+[english] The code ensures data integrity by validating the `connectordb.json` file version if the target directory already exists. Remember, passwords cannot be exported because the underlying API does not expose them.
+[english] What error occurs if a user attempts to export into a folder that was created manually outside of this function?
+[english] If you try to export into an externally created directory without the required `connectordb.json` or if it has an incompatible version, the function will raise a FileExistsError or ValueError.
+[english] I see how those robust checks prevent bad imports!

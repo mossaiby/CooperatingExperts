@@ -1,0 +1,22 @@
+[english] How do I set a custom background color or change the styling of this container widget?
+[english] This function dynamically sets the background based on whether you provide a list/tuple for color or one of predefined style strings.
+<switch:python>
+[python] def setBackground(self,bg):
+        """
+        Sets the background of the Container.
+        
+        Similar to :py:meth:`peng3d.gui.SubMenu.setBackground()`\ , but only effects the region covered by the Container.
+        """
+        self.bg = bg
+        if isinstance(bg,list) or isinstance(bg,tuple):
+            if len(bg)==3 and isinstance(bg,list):
+                bg.append(255)
+            self.bg_vlist.colors = bg*4
+        elif bg in ["flat","gradient","oldshadow","material"]:
+            self.bg = ContainerButtonBackground(self,borderstyle=bg,batch=self.batch2d)
+            self.redraw()
+<switch:english>
+[english] If you pass RGB values, it expands them to RGBA and applies them; otherwise, it instantiates a specialized background class and forces a redraw.
+[english] What happens if I try setting the background using an existing tuple like (10, 20) instead of [10, 20]?
+[english] If you use a tuple that is not length-3, it skips the color expansion logic and does nothing with the provided values.
+[english] That makes sense! Thanks for clarifying how the background types are handled.

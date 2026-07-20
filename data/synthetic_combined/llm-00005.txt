@@ -1,0 +1,13 @@
+[english] How can I write a function that retrieves specific genetic variant data based on an institute, case name, and variant ID, and returns it as a JSON response?
+[english] This function begins by using `institute_and_case` to establish contextual objects before calling `store.variant(variant_id)` to fetch the primary data object.
+<switch:python>
+[python] def variant(institute_id, case_name, variant_id):
+    """Display a specific SNV variant."""
+    institute_obj, case_obj = institute_and_case(store, institute_id, case_name)
+    variant_obj = store.variant(variant_id)
+    return Response(json_util.dumps(variant_obj), mimetype='application/json')
+<switch:english>
+[english] By calling `json_util.dumps` and wrapping the result in a `Response`, you guarantee that only valid JSON data is returned with the correct content type.
+[english] What error will occur if the provided `variant_id` does not exist within `store`?
+[english] If the variant ID is invalid, `store.variant(variant_id)` will likely raise a 'KeyError' or return None, depending on how the store is implemented.
+[english] Got it, I should check for existence before calling that method.

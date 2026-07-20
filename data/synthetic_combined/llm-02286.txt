@@ -1,0 +1,66 @@
+[english] How can we automatically identify tasks ready to run within a specific DAG instance?
+[english] This function systematically checks currently running instances of a given Directed Acyclic Graph (DAG). It iterates through valid runs, validates them against business rules like execution time, and then evaluates every task for dependency readiness.
+<switch:python>
+[python] def _process_task_instances(self, dag, queue, session=None):
+        """
+        This method schedules the tasks for a single DAG by looking at the
+        active DAG runs and adding task instances that should run to the
+        queue.
+        """
+
+        # update the state of the previously active dag runs
+        dag_runs = DagRun.find(dag_id=dag.dag_id, state=State.RUNNING, session=session)
+        active_dag_runs = []
+        for run in dag_runs:
+            self.log.info("Examining DAG run %s", run)
+            # don't consider runs that are executed in the future
+            if run.execution_date > timezone.utcnow():
+                self.log.error(
+                    "Execution date is in future: %s",
+                    run.execution_date
+                )
+                continue
+
+            if len(active_dag_runs) >= dag.max_active_runs:
+                self.log.info("Number of active dag runs reached max_active_run.")
+                break
+
+            # skip backfill dagruns for now as long as they are not really scheduled
+            if run.is_backfill:
+                continue
+
+            # todo: run.dag is transient but needs to be set
+            run.dag = dag
+            # todo: preferably the integrity check happens at dag collection time
+            run.verify_integrity(session=session)
+            run.update_state(session=session)
+            if run.state == State.RUNNING:
+                make_transient(run)
+                active_dag_runs.append(run)
+
+        for run in active_dag_runs:
+            self.log.debug("Examining active DAG run: %s", run)
+            # this needs a fresh session sometimes tis get detached
+            tis = run.get_task_instances(state=(State.NONE,
+                                                State.UP_FOR_RETRY,
+                                                State.UP_FOR_RESCHEDULE))
+
+            # this loop is quite slow as it uses are_dependencies_met for
+            # every task (in ti.is_runnable). This is also called in
+            # update_state above which has already checked these tasks
+            for ti in tis:
+                task = dag.get_task(ti.task_id)
+
+                # fixme: ti.task is transient but needs to be set
+                ti.task = task
+
+                if ti.are_dependencies_met(
+                        dep_context=DepContext(flag_upstream_failed=True),
+                        session=session):
+                    self.log.debug('Queuing task: %s', ti)
+                    queue.append(ti.key)
+<switch:english>
+[english] This process ensures that applicable tasks are added to the processing queue only if all upstream dependencies have been successfully met. There is a noted performance bottleneck in checking dependencies during this function run.
+[english] How does `max_active_runs` prevent resource overload when handling many concurrent DAG runs?
+[english] The function contains a check that breaks the iteration over DAG runs once the count of active runs reaches the maximum allowed value specified by the DAG configuration, preventing queue overflow.
+[english] That clarifies how run limits are enforced.

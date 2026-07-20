@@ -1,0 +1,19 @@
+[english] I need a reliable way to determine the default external editor for a file, prioritizing system preferences.
+[english] This script intelligently checks environment variables like 'XML_EDITOR' or 'EDITOR'. If they aren't set, it falls back to an OS-specific default that is defined based on whether you are using Windows.
+<switch:python>
+[python] def get_editor(filepath):
+		"""
+		Give preference to an XML_EDITOR or EDITOR defined in the
+		environment. Otherwise use notepad on Windows and edit on other
+		platforms.
+		"""
+		default_editor = ['edit', 'notepad'][sys.platform.startswith('win32')]
+		return os.environ.get(
+			'XML_EDITOR',
+			os.environ.get('EDITOR', default_editor),
+		)
+<switch:english>
+[english] The function successfully handles common editor overrides while providing reliable cross-platform fallbacks. Remember this requires importing `sys` and `os` for full functionality.
+[english] What exactly happens to the 'default_editor' string if I am running this on Linux?
+[english] If you are not on Windows, the code assigns the string 'edit' to the default editor. This allows your program to call 'edit' directly from the command line.
+[english] That makes sense, thank you for clarifying how it handles platform differences.

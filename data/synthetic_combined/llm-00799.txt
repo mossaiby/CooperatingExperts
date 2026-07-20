@@ -1,0 +1,16 @@
+[english] How can I verify if a quantum operation is completely positive and trace preserving (CPTP) using this method?
+[english] This function checks for CPTP properties by first transforming the object's representation into its Choi form. It then utilizes internal helper methods to validate both the complete positivity and trace-preserving nature independently.
+<switch:python>
+[python] def is_cptp(self, atol=None, rtol=None):
+        """Return True if completely-positive trace-preserving (CPTP)."""
+        choi = _to_choi(self.rep, self._data, *self.dim)
+        return self._is_cp_helper(choi, atol, rtol) and self._is_tp_helper(
+            choi, atol, rtol)
+<switch:english>
+[english] The function returns True only if both constraints—complete positivity and trace preservation—are satisfied simultaneously within the provided numerical tolerances.
+[english] What happens internally if I call is_cptp() without passing any values for atol or rtol?
+[english] If you omit parameters, the function uses system-defined default absolute and relative tolerances. For example, it might effectively run a check similar to this:
+<switch:python>
+[python] is_cptp(atol=default_abs_toll, rtol=default_rel_toll)
+<switch:english>
+[english] That helps me understand the parameter logic much better.

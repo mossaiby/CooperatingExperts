@@ -1,0 +1,23 @@
+[english] How do I programmatically find parent classes in a method resolution order that meet specific configuration criteria?
+[english] This function iterates through all ancestors of an input class using its Method Resolution Order (MRO). For each ancestor, it checks if the class is derived from SingletonConfigurable while making sure we exclude the base configuration type itself.
+<switch:python>
+[python] def _walk_mro(cls):
+        """Walk the cls.mro() for parent classes that are also singletons
+
+        For use in instance()
+        """
+
+        for subclass in cls.mro():
+            if issubclass(cls, subclass) and \
+                    issubclass(subclass, SingletonConfigurable) and \
+                    subclass != SingletonConfigurable:
+                yield subclass
+<switch:english>
+[english] The logic relies heavily on Python's internal MRO to identify relevant ancestors, which means the function strictly follows the defined inheritance hierarchy.
+[english] What happens if an ancestor meets the singleton criteria but was not directly derived from SingletonConfigurable?
+[english] If the ancestor is not a subclass of SingletonConfigurable, it will fail the second conditional check and is simply skipped by the generator. For example:
+<switch:python>
+[python] # The non_config parent would be excluded
+pass
+<switch:english>
+[english] That clarifies how the filtering works.

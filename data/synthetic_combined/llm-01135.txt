@@ -1,0 +1,20 @@
+[english] I need to apply a standard scikit-learn transformer (like PCA) to my data stored in this object while handling whether I need to transpose the inputs during the transformation.
+[english] This method handles applying any compatible transformer to the internal data structure. It intelligently checks the `transpose` flag to ensure that the input dimensions match what the external scikit-learn transformer expects before fitting and transforming.
+<switch:python>
+[python] def transform(self, transformer, transpose=False):
+        ''' Apply a transformation to the Clusterable instance. Accepts any
+        scikit-learn-style class that implements a fit_transform() method. '''
+        data = self.data.T if transpose else self.data
+        data = transformer.fit_transform(data)
+        self.data = data.T if transpose else data
+        return self
+<switch:english>
+[english] The final output is then appropriately transposed back if necessary, maintaining consistency with how the original data was structured in `self.data`. Note that this function modifies `self.data` in place.
+[english] What happens to the internal data structure (`self.data`) if I don't set `transpose` but my transformer requires columns (features)?
+[english] If you apply a non-transposed transform, your columns are assumed to be features, and the code proceeds directly:
+<switch:python>
+[python] data = self.data
+transformed_data = transformer.fit_transform(data)
+self.data = transformed_data
+<switch:english>
+[english] Got it, that makes much more sense for dimension alignment.

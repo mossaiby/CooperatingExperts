@@ -1,0 +1,16 @@
+[english] How do I retrieve detailed information for a card by calling an external API endpoint?
+[english] To fetch data from a remote server, this function calls the internal helper method `self.fetch_json`. It smartly ensures that even if no extra query parameters are provided, it defaults to an empty dictionary so the request is always valid.
+<switch:python>
+[python] def get_card_information(self, query_params=None):
+        '''
+        Get information for this card. Returns a dictionary of values.
+        '''
+        return self.fetch_json(
+            uri_path=self.base_uri,
+            query_params=query_params or {}
+        )
+<switch:english>
+[english] This implementation relies on `self.fetch_json` to manage network requests and handle JSON parsing. Using 'or {}' provides a concise way to set default inputs without explicit checks.
+[english] What happens if I need these parameters to be strongly typed instead of just dictionaries?
+[english] Since the function simply passes arguments through, strong typing would need to happen upstream or within `self.fetch_json`. If you needed validation, you could type-check `query_params` before making the call.
+[english] Thanks for walking me through that logic.

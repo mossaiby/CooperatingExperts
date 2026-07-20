@@ -1,0 +1,22 @@
+[english] I need a robust way to load configuration settings from an external TOML file into my Python class.
+[english] To handle this, we check if the specified configuration file exists. If it does, we attempt to parse its contents using `toml.load()` and implement error handling for invalid syntax.
+<switch:python>
+[python] def read_config_(self, cfile):
+        """Read a config file and set config values accordingly.
+
+        Returns:
+            dict: content of config file.
+        """
+        if not cfile.exists():
+            return {}
+        try:
+            conf_dict = toml.load(str(cfile))
+        except toml.TomlDecodeError:
+            return None
+        self.update_(conf_dict)
+        return conf_dict
+<switch:english>
+[english] The function not only parses the configuration into a dictionary but also calls `self.update_` to merge those settings into the object's state before returning them.
+[english] What will happen if the TOML file is present and valid, but it contains absolutely no key-value pairs?
+[english] If the TOML file exists and is syntactically correct, `toml.load` will typically return an empty dictionary (`{}`), which this method then processes via `self.update_`.
+[english] Thanks for clarifying how those edge cases are handled!

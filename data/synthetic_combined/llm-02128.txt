@@ -1,0 +1,22 @@
+[english] How do I gracefully shut down an event listener that uses multiple threads and queues?
+[english] This method implements a graceful shutdown sequence by first signaling termination to the event processing queue, then waiting for dependent components to finish their cleanup.
+<switch:python>
+[python] def deactivate(self):
+        """When deactivated the :class:`PortEventListener` will not run
+        anything.
+        """
+        self.event_queue.put(self.TERMINATE_SIGNAL)
+        self.dispatcher.join()
+        self.detector.terminate()
+        self.detector.join()
+<switch:english>
+[english] The function ensures proper resource cleanup by sending a specific signal to the queue and then using `.join()` on both the dispatcher and detector after calling termination methods.
+[english] If the detector fails to join, should I add error handling around `self.detector.join()`?
+[english] It is wise to wrap the join calls in a try/except block to prevent uncaught exceptions from crashing the shutdown process if processes hang or fail.
+<switch:python>
+[python] try:
+    self.detector.join()
+except Exception as e:
+    print(f"Detector failed during shutdown: {e}")
+<switch:english>
+[english] That makes perfect sense for robust service management.

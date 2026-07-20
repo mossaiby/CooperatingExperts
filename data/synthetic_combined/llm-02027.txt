@@ -1,0 +1,23 @@
+[english] How can I write a method that updates frequency, channel count, and start time in my data record based on the current selection?
+[english] This function is designed to keep your internal file headers synchronized with live settings found in the container object.
+<switch:python>
+[python] def __update_header(self):
+        """ Updates the header information from the original file to the selection.
+        """
+
+        #Updating frequency of first channel from selection
+        if self.header[b'foff'] < 0:
+            self.header[b'fch1'] = self.container.f_stop
+        else:
+            self.header[b'fch1'] = self.container.f_start
+
+        #Updating number of coarse channels.
+        self.header[b'nchans'] = self.container.selection_shape[self.freq_axis]
+
+        #Updating time stamp for first time bin from selection
+        self.header[b'tstart'] = self.container.populate_timestamps(update_header=True)
+<switch:english>
+[english] It relies heavily on the `self.container` having accurate frequency and timestamp calculation methods, so ensure that external object is well maintained.
+[english] What happens if both 'foff' and other relevant bits in the header are zero?
+[english] If self.header[b'foff'] is non-negative (including zero), the function defaults to utilizing the container's configured start value (f_start) for the first channel frequency.
+[english] Thanks for clarifying that logic!

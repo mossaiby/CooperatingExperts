@@ -1,0 +1,23 @@
+[english] How can I dynamically set a maximum number of concurrent requests allowed per connection reader?
+[english] This function updates the concurrency limit after ensuring the input is an integer. It then takes different actions based on whether the new limit is zero or positive.
+<switch:python>
+[python] def set_max_in_flight(self, max_in_flight):
+        """Dynamically adjust the reader max_in_flight. Set to 0 to immediately disable a Reader"""
+        assert isinstance(max_in_flight, int)
+        self.max_in_flight = max_in_flight
+
+        if max_in_flight == 0:
+            # set RDY 0 to all connections
+            for conn in itervalues(self.conns):
+                if conn.rdy > 0:
+                    logger.debug('[%s:%s] rdy: %d -> 0', conn.id, self.name, conn.rdy)
+                    self._send_rdy(conn, 0)
+            self.total_rdy = 0
+        else:
+            self.need_rdy_redistributed = True
+            self._redistribute_rdy_state()
+<switch:english>
+[english] If `max_in_flight` is set to 0, all active connections immediately have their read readiness signaled as unavailable. Setting it positively triggers a redistribution of current state among all connections.
+[english] What happens if I call this function multiple times in quick succession with different values?
+[english] The function simply overrides the previous value and executes the block corresponding to the new input. For example, setting it to 5 then 0 will immediately disable reads after redistributing the state for 5.
+[english] This clarifies how the concurrency limits are managed across connections.

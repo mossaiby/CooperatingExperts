@@ -1,0 +1,25 @@
+[english] How can I safely retrieve Athena query results once a given execution ID has been submitted?
+[english] This function first verifies if the specified query ID is in a valid state using `check_query_status`. It then conditionally proceeds to fetch results only if the execution hasn't failed or is still pending.
+<switch:python>
+[python] def get_query_results(self, query_execution_id):
+        """
+        Fetch submitted athena query results. returns none if query is in intermediate state or
+        failed/cancelled state else dict of query output
+
+        :param query_execution_id: Id of submitted athena query
+        :type query_execution_id: str
+        :return: dict
+        """
+        query_state = self.check_query_status(query_execution_id)
+        if query_state is None:
+            self.log.error('Invalid Query state')
+            return None
+        elif query_state in self.INTERMEDIATE_STATES or query_state in self.FAILURE_STATES:
+            self.log.error('Query is in {state} state. Cannot fetch results'.format(state=query_state))
+            return None
+        return self.conn.get_query_results(QueryExecutionId=query_execution_id)
+<switch:english>
+[english] The logic prevents resource waste by returning None for bad states and successfully handles error logging upon failure. Note that the specific fetching mechanism relies on the connection object, `self.conn`.
+[english] How does this function behave if the query status changes rapidly while polling?
+[english] The function only checks the state once per call; it cannot guarantee detection of rapid transitions. Robust solutions usually involve wrapping this method in a loop that repeatedly calls it while waiting for success.
+[english] This is very helpful, I will try structuring my polling logic around this.

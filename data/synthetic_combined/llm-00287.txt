@@ -1,0 +1,31 @@
+[english] How do I update a list of channel destinations with a new sink while ensuring proper initialization and command formatting?
+[english] The function first checks if any primary forks exist; if not, it initializes them using the internal output channel. It then appends the new `sink` to this list and dynamically constructs complex shell commands based on how many targets are present.
+<switch:python>
+[python] def update_main_forks(self, sink):
+        """Updates the forks attribute with the sink channel destination
+
+        Parameters
+        ----------
+        sink : str
+            Channel onto which the main input will be forked to
+
+        """
+
+        if not self.main_forks:
+            self.main_forks = [self.output_channel]
+            self.output_channel = "_{}".format(self.output_channel)
+        self.main_forks.append(sink)
+
+        # fork_lst = self.forks + self.main_forks
+        operator = "set" if len(self.main_forks) == 1 else "into"
+        self.forks = ["\n{}.{}{{ {} }}\n".format(
+            self.output_channel, operator, ";".join(self.main_forks))]
+
+        self._context = {**self._context,
+                         **{"forks": "".join(self.forks),
+                            "output_channel": self.output_channel}}
+<switch:english>
+[english] By modifying `self._context`, this method effectively populates a structured set of operations that define where the main output should be directed.
+[english] If I call this function repeatedly with different sinks, will those previous paths remain active in the final generated commands?
+[english] Yes, because the code uses `.append(sink)`, every new sink is added to `self.main_forks` and consequently included in the next formatted command string.
+[english] That clarifies how the state evolves. Thanks!

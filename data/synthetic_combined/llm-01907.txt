@@ -1,0 +1,24 @@
+[english] I need a way to programmatically add a new entry, along with its associated values and metadata, into an existing controlled vocabulary within my system.
+[english] This function ensures all provided language references are valid first by iterating through all input entries. After validation, it securely maps the new entry ID to the stored data structure.
+<switch:python>
+[python] def add_cv_entry(self, cv_id, cve_id, values, ext_ref=None):
+        """Add an entry to a controlled vocabulary.
+
+        :param str cv_id: Name of the controlled vocabulary to add an entry.
+        :param str cve_id: Name of the entry.
+        :param list values: List of values of the form:
+            ``(value, lang_ref, description)`` where description can be
+            ``None``.
+        :param str ext_ref: External reference.
+        :throws KeyError: If there is no controlled vocabulary with that id.
+        :throws ValueError: If a language in one of the entries doesn't exist.
+        """
+        for value, lang_ref, description in values:
+            if lang_ref not in self.languages:
+                raise ValueError('Language not present: {}'.format(lang_ref))
+        self.controlled_vocabularies[cv_id][1][cve_id] = (values, ext_ref)
+<switch:english>
+[english] The function assigns a tuple containing the entire `values` list and the optional external reference (`ext_ref`) to the specific entry ID within the vocabulary.
+[english] What happens if I try to add an entry using a `cv_id` that hasn't been created yet?
+[english] The function assumes the controlled vocabulary already exists. If you pass an invalid `cv_id`, it will raise a KeyError because of how Python dictionaries work when trying to access non-existent keys.
+[english] That clarifies its dependencies; thanks for explaining!

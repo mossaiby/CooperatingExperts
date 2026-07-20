@@ -1,0 +1,21 @@
+[english] How can I remove a specific custom image filter from my application's registry safely?
+[english] This function handles the removal of an entry by checking if the attribute exists in the internal dictionary first. It then proceeds to delete the associated key-value pair only if the key is found.
+<switch:python>
+[python] def unregister_filter(self, attr_name):
+        """
+        Unregister the FilteredImage subclass currently assigned to attr_name.
+
+        If a FilteredImage subclass isn't already registered to filters.
+        `attr_name` NotRegistered will raise.
+        """
+        if attr_name not in self._filter_registry:
+            raise NotRegistered(
+                'No FilteredImage subclass is registered to %s' % attr_name
+            )
+        else:
+            del self._filter_registry[attr_name]
+<switch:english>
+[english] The function ensures the removal process is safe by raising an immediate exception if you attempt to unregister a non-existent item.
+[english] If the registry accidentally contained something that wasn't originally registered, could I catch this error elsewhere?
+[english] Yes, since it raises a custom `NotRegistered` exception, any calling code can wrap the function call in a try-except block to handle missing keys gracefully.
+[english] That makes perfect sense, thank you!

@@ -1,0 +1,52 @@
+[english] How do I schedule a set of compiler passes while allowing them to run conditionally or iteratively?
+[english] This function registers one or more passes for execution within a larger framework, handling specific configuration options like iteration counts and dependencies.
+<switch:python>
+[python] def append(self, passes, ignore_requires=None, ignore_preserves=None, max_iteration=None,
+               **flow_controller_conditions):
+        """
+        Args:
+            passes (list[BasePass] or BasePass): pass(es) to be added to schedule
+            ignore_preserves (bool): ignore the preserves claim of passes. Default: False
+            ignore_requires (bool): ignore the requires need of passes. Default: False
+            max_iteration (int): max number of iterations of passes. Default: 1000
+            flow_controller_conditions (kwargs): See add_flow_controller(): Dictionary of
+            control flow plugins. Default:
+
+                * do_while (callable property_set -> boolean): The passes repeat until the
+                  callable returns False.
+                  Default: `lambda x: False # i.e. passes run once`
+
+                * condition (callable property_set -> boolean): The passes run only if the
+                  callable returns True.
+                  Default: `lambda x: True # i.e. passes run`
+
+        Raises:
+            TranspilerError: if a pass in passes is not a proper pass.
+        """
+
+        passset_options = {'ignore_requires': ignore_requires,
+                           'ignore_preserves': ignore_preserves,
+                           'max_iteration': max_iteration}
+
+        options = self._join_options(passset_options)
+
+        if isinstance(passes, BasePass):
+            passes = [passes]
+
+        for pass_ in passes:
+            if not isinstance(pass_, BasePass):
+                raise TranspilerError('%s is not a pass instance' % pass_.__class__)
+
+        for name, param in flow_controller_conditions.items():
+            if callable(param):
+                flow_controller_conditions[name] = partial(param, self.fenced_property_set)
+            else:
+                raise TranspilerError('The flow controller parameter %s is not callable' % name)
+
+        self.working_list.append(
+            FlowController.controller_factory(passes, options, **flow_controller_conditions))
+<switch:english>
+[english] It processes the inputs, validates them, modifies the flow controller conditions using `partial`, and then appends a structured FlowController to the internal working list.
+[english] What exactly does it do if I supply passes that are not proper BasePass instances during the iteration?
+[english] The code checks every item in the input iterable; if an item is not a BasePass, it raises a TranspilerError, ensuring only valid pass objects are scheduled.
+[english] That makes sense for maintaining type safety when scheduling.

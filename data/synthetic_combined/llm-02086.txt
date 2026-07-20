@@ -1,0 +1,32 @@
+[english] How can I delete an SDX policy by providing only its friendly name instead of needing to look up its unique ID first?
+[english] This function first retrieves all policies from the API endpoint by fetching a list. It then iterates through that data structure, comparing each policy's stored name with the input name.
+<switch:python>
+[python] def delete_policy_name(self, name):
+        '''**Description**
+            Delete the policy with the given name.
+
+        **Arguments**
+            - name: the name of the policy to delete
+
+        **Success Return Value**
+            The JSON object representing the now-deleted policy.
+
+        **Example**
+            `examples/delete_policy.py <https://github.com/draios/python-sdc-client/blob/master/examples/delete_policy.py>`_
+
+        '''
+        res = requests.get(self.url + '/api/policies', headers=self.hdrs, verify=self.ssl_verify)
+        if not self._checkResponse(res):
+            return [False, self.lasterr]
+
+        # Find the policy with the given name and delete it
+        for policy in res.json()["policies"]:
+            if policy["name"] == name:
+                return self.delete_policy_id(policy["id"])
+
+        return [False, "No policy with name {}".format(name)]
+<switch:english>
+[english] The workflow relies on calling `self.delete_policy_id` once the matching ID is successfully located during iteration.
+[english] If multiple policies happen to share the exact same name, which one will be deleted?
+[english] Since the function returns immediately after finding a match, it will delete and act on the first policy encountered that matches the given name in the API response list.
+[english] I understand how the logic handles potential duplicate names.

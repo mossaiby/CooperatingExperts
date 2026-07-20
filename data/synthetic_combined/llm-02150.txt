@@ -1,0 +1,18 @@
+[english] How can I ensure my session data is loaded only when needed, even if it's missing?
+[english] This method implements lazy loading to avoid unnecessary computations while ensuring a dictionary structure is always returned.
+<switch:python>
+[python] def data(self):
+        """
+        Gets session data lazily.
+        """
+        if not self._data:
+            self._data = self._get_data()
+        # Always return a dict, even if deserialization returned nothing
+        if self._data is None:
+            self._data = {}
+        return self._data
+<switch:english>
+[english] If the internal function returns None, this ensures that an empty dictionary is stored and subsequently used instead.
+[english] What happens if `self._get_data()` raises an exception?
+[english] The exception will propagate up because there is no try/except block to handle it. If you wanted to avoid crashing, you would wrap the call in a try-block.
+[english] That makes sense.

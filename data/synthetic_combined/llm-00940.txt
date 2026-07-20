@@ -1,0 +1,19 @@
+[english] I need a way to automatically set up a logger within my Python class instances. How can I ensure every instance has its own dedicated logging setup without manually specifying the name?
+[english] This helper method simplifies log configuration by automatically determining the appropriate logger name for the current class if one isn't explicitly provided. It generates a scope based on both the module and the class where it is used.
+<switch:python>
+[python] def _set_logger(self, name=None):
+        """Adds a logger with a given `name`.
+
+        If no name is given, name is constructed as
+        `type(self).__name__`.
+
+        """
+        if name is None:
+            cls = self.__class__
+            name = '%s.%s' % (cls.__module__, cls.__name__)
+        self._logger = logging.getLogger(name)
+<switch:english>
+[english] This relies on the `logging` module's factory pattern to retrieve or create a named logger. Be sure that `import logging` is present at the top of your file context.
+[english] If two different instances of my class call this method with a custom name, will they share the same underlying log handler?
+[english] The core `logging.getLogger(name)` mechanism ensures they refer to the exact same logger instance in memory. Each instance's `self._logger` attribute simply holds a reference to that shared object.
+[english] That clarifies how state is managed across instances, thanks for the help!

@@ -1,0 +1,21 @@
+[english] I need to programmatically load a list of exon feature dictionaries, ensuring they have proper gene context, and insert them into my database collection.
+[english] This method handles batch loading by iterating through all provided exon data. It first ensures associated gene information is available before constructing individual exon objects ready for insertion.
+<switch:python>
+[python] def load_exons(self, exons, genes=None, build='37'):
+        """Create exon objects and insert them into the database
+        
+        Args:
+            exons(iterable(dict))
+        """
+        genes = genes or self.ensembl_genes(build)
+        for exon in exons:
+            exon_obj = build_exon(exon, genes)
+            if not exon_obj:
+                continue
+            
+            res = self.exon_collection.insert_one(exon_obj)
+<switch:english>
+[english] The function gracefully manages incomplete data by checking if `build_exon` returns a valid object, skipping entries that are missing necessary components or fail validation.
+[english] If the required gene metadata cannot be retrieved from self.ensembl_genes(build), does the entire load operation halt?
+[english] No. Since the genes are fetched at the start of the function execution using `genes = genes or self.ensembl_genes(build)`, a failure during that initial retrieval would cause an exception, but individual exon processing continues based on the resulting object set.
+[english] That makes sense, so context validation must happen early.

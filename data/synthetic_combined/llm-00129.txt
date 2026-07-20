@@ -1,0 +1,18 @@
+[english] I need a way to reliably fetch a description for my command objects, using an explicit attribute if available but defaulting to the first sentence of the help documentation.
+[english] Since we want robust fallbacks, this function prioritizes a custom `self.description` field. If that is missing, it smartly parses the docstring to pull a concise description.
+<switch:python>
+[python] def get_description(self):
+        """
+        Gets the description of the command. If its not supplied the first sentence of the doc string is used.
+        """
+        if self.description:
+            return self.description
+        elif self.__doc__ and self.__doc__.strip():
+            return self.__doc__.strip().split('.')[0] + '.'
+        else:
+            return ''
+<switch:english>
+[english] This design ensures every command has some textual representation even if the user forgets to set an explicit attribute.
+[english] What happens if I have a long docstring but no periods in it?
+[english] If there are no periods, `split('.')[0]` will return the entire stripped docstring without modification. The code still ensures a period is appended for grammatical completeness outside of the split logic.
+[english] That makes sense; this will help make my command line interface much cleaner.

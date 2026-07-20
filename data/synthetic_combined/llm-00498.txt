@@ -1,0 +1,17 @@
+[english] How can I provide a method to remove one or more items, which might be passed as either a single class reference or an iterable of classes, from my internal registration list in case they were previously added?
+[english] This function first ensures that the input `gadgets` is always treated as a list for consistent processing. It then iterates through this list and removes each item from `self._registry` while it continues to be present.
+<switch:python>
+[python] def unregister(self, gadgets):
+        """
+        Unregisters the specified gadget(s) if it/they has/have already been registered.
+        "gadgets" can be a single class or a tuple/list of classes to unregister.
+        """
+        gadgets = maintenance.ensure_list(gadgets)
+        for gadget in gadgets:
+            while gadget in self._registry:
+                self._registry.remove(gadget)
+<switch:english>
+[english] The use of a `while` loop instead of a simple `if...remove()` handles cases where an item might somehow be redundantly registered multiple times in the internal registry.
+[english] What happens if one of the gadgets is not actually found in the self._registry list?
+[english] If an item is not in `self._registry`, the condition `gadget in self._registry` will stay false, and the loop for that specific gadget will simply terminate without making any changes. While robust, it might be slightly more efficient to check membership first before entering the while loop.
+[english] This makes sense; thanks for clearing that up!

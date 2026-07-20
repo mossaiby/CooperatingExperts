@@ -1,0 +1,38 @@
+[english] How can I programmatically configure the appearance and behavior of an X-axis in my visualization?
+[english] This function is designed to define and store specific configurations for a chart's axis, allowing you to customize labels or format tick marks based on whether they represent dates or have custom formats.
+<switch:python>
+[python] def create_x_axis(self, name, label=None, format=None, date=False, custom_format=False):
+        """Create X-axis"""
+        axis = {}
+        if custom_format and format:
+            axis['tickFormat'] = format
+        elif format:
+            if format == 'AM_PM':
+                axis['tickFormat'] = "function(d) { return get_am_pm(parseInt(d)); }"
+            else:
+                axis['tickFormat'] = "d3.format(',%s')" % format
+
+        if label:
+            axis['axisLabel'] = "'" + label + "'"
+
+        # date format : see https://github.com/mbostock/d3/wiki/Time-Formatting
+        if date:
+            self.dateformat = format
+            axis['tickFormat'] = ("function(d) { return d3.time.format('%s')"
+                                  "(new Date(parseInt(d))) }\n"
+                                  "" % self.dateformat)
+            # flag is the x Axis is a date
+            if name[0] == 'x':
+                self.x_axis_date = True
+
+        # Add new axis to list of axis
+        self.axislist[name] = axis
+
+        # Create x2Axis if focus_enable
+        if name == "xAxis" and self.focus_enable:
+            self.axislist['x2Axis'] = axis
+<switch:english>
+[english] The method cleverly uses conditional logic to apply data formatting rules, ensuring that date values are processed differently than standard categorical strings. This allows the function to dynamically setup features like secondary axes if needed.
+[english] If I initialize this with `name='myCustomAxis'`, does it still create an 'x2Axis' even if `self.focus_enable` is true?
+[english] No, the code specifically checks if the function receives a name equal to "xAxis" (`if name == "xAxis"`), so custom axis names will never trigger the creation of a secondary axis.
+[english] That makes sense; I appreciate the clarification!

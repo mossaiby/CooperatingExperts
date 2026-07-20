@@ -1,0 +1,12 @@
+[english] How can I define a specific difference calculation between parent and daughter values within my current class architecture?
+[english] This method defines a simple subtraction operation using a lambda function to capture the core mathematical relationship needed. It then passes this logic, along with predefined strategy parameters, into your derived function.
+<switch:python>
+[python] def q_beta(self):
+        """Return Q_beta"""
+        f = lambda parent, daugther: parent - daugther
+        return self.derived('Q_beta', (1, -1), f)
+<switch:english>
+[english] This approach relies heavily on how self.derived interprets the provided arguments and the difference logic f.
+[english] What would happen if I had two daughter fields instead of a singular one?
+[english] The current structure is designed for subtraction; adding more daughters would require modifying the lambda function to aggregate those differences into a single result.
+[english] Got it, so that's how I set up my differential.

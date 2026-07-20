@@ -1,0 +1,31 @@
+[english] How do I parse a lipid definition string to populate attributes like head group, link type, tail composition, and charge?
+[english] This method parses a comma-separated configuration string into distinct attribute assignments. It iterates through key-value pairs, dynamically assigning values based on whether the key ends with 'head', 'link', or 'tail'.
+<switch:python>
+[python] def parse(self, string):
+        """
+        Parse lipid definition from string:
+
+            alhead=C P, allink=A A, altail=TCC CCCC, alname=DPSM, charge=0.0
+        """
+        fields = [i.split("=") for i in string.split(', ')]
+        for what, val in fields:
+            what = what.strip()
+            val  = val.split()
+            if what.endswith("head"):
+                self.head = val
+            elif what.endswith("link"):
+                self.link = val
+            elif what.endswith("tail"):
+                self.tail = val
+            elif what == "charge":
+                self.charge = float(val[0])
+            elif what.endswith("name") and not self.name:
+                self.name = val[0]
+        if self.charge is None:
+            # Infer charge from head groups
+            self.charge = sum([headgroup_charges[bead] for bead in self.head])
+<switch:english>
+[english] If the `charge` key is missing, the code automatically infers the total charge by summing predefined charges of individual beads within the assigned head group.
+[english] What happens if the list used to infer charge (`headgroup_charges`) isn't defined or accessible?
+[english] The function will raise a NameError because `headgroup_charges` is an undefined external dependency. You must ensure this dictionary is available in the scope of the class or method.
+[english] Thanks, that makes perfect sense!

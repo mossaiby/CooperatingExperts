@@ -1,0 +1,35 @@
+[english] I need to write a Python function that uploads a GIF from my local file system to Giphy and applies specific tags.
+[english] This function manages the upload process by first compiling necessary API parameters like `api_key` and joining the provided list of tags into a comma-separated string. It then sends a multipart POST request using the `requests` library, ensuring robust error handling before returning the unique ID of the uploaded GIF.
+<switch:python>
+[python] def upload(self, tags, file_path, username=None):
+        """
+        Uploads a gif from the filesystem to Giphy.
+
+        :param tags: Tags to apply to the uploaded image
+        :type tags: list
+        :param file_path: Path at which the image can be found
+        :type file_path: string
+        :param username: Your channel username if not using public API key
+        """
+        params = {
+            'api_key': self.api_key,
+            'tags': ','.join(tags)
+        }
+        if username is not None:
+            params['username'] = username
+
+        with open(file_path, 'rb') as f:
+            resp = requests.post(
+                GIPHY_UPLOAD_ENDPOINT, params=params, files={'file': f})
+
+        resp.raise_for_status()
+
+        data = resp.json()
+        self._check_or_raise(data.get('meta', {}))
+
+        return self.gif(data['data']['id'])
+<switch:english>
+[english] After successfully uploading the image to Giphy, the function validates metadata via `self._check_or_raise` and uses the final `data['data']['id']` to call a helper method that likely fetches the complete GIF object.
+[english] If the 'username' parameter is not provided in the request, how does the API know which user or application to attribute the upload to?
+[english] If `username` is omitted, the function relies on the `self.api_key`. This key must be configured with Giphy credentials that are already associated with your channel.
+[english] Thanks for clarifying how authentication works!

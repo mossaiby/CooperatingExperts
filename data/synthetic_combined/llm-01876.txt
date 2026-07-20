@@ -1,0 +1,39 @@
+[english] How can I combine two tensor network components operating on multiple subsystems, especially considering permutation and dimension matching?
+[english] This function handles the composition of subsystem operations by adjusting indices and dimensions using `qargs`. It calculates how the input and output dimensions must be modified to merge the sub-components correctly.
+<switch:python>
+[python] def _compose_subsystem(self, other, qargs, front=False):
+        """Return the composition channel."""
+        # Compute tensor contraction indices from qargs
+        input_dims = list(self.input_dims())
+        output_dims = list(self.output_dims())
+        if front:
+            num_indices = len(self.input_dims())
+            shift = 2 * len(self.output_dims())
+            right_mul = True
+            for pos, qubit in enumerate(qargs):
+                input_dims[qubit] = other._input_dims[pos]
+        else:
+            num_indices = len(self.output_dims())
+            shift = 0
+            right_mul = False
+            for pos, qubit in enumerate(qargs):
+                output_dims[qubit] = other._output_dims[pos]
+        # Reshape current matrix
+        # Note that we must reverse the subsystem dimension order as
+        # qubit 0 corresponds to the right-most position in the tensor
+        # product, which is the last tensor wire index.
+        tensor = np.reshape(self.data, self._shape)
+        mat = np.reshape(other.data, other._shape)
+        # Add first set of indicies
+        indices = [2 * num_indices - 1 - qubit for qubit in qargs
+                   ] + [num_indices - 1 - qubit for qubit in qargs]
+        final_shape = [np.product(output_dims)**2, np.product(input_dims)**2]
+        data = np.reshape(
+            self._einsum_matmul(tensor, mat, indices, shift, right_mul),
+            final_shape)
+        return SuperOp(data, input_dims, output_dims)
+<switch:english>
+[english] The function computes new global dimensions and uses internal tensor operations (`einsum_matmul`) to perform the contraction required for composition. Note that it heavily relies on `np` being available in the scope.
+[english] What does 'front=True' specifically enable regarding how the index shifting or dimension assignment occurs during this composition?
+[english] When `front` is True, it modifies input dimensions first and sets a non-zero shift value. This suggests that subsystem operations are assigned to occupy specific front positions in the overall tensor structure.
+[english] This was helpful for understanding complex tensor assembly.

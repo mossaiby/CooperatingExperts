@@ -1,0 +1,43 @@
+[english] I need a reliable way to extract username and password components from a URL so I can sanitize it for public display without losing that sensitive data.
+[english] This function uses Python's standard library to analyze the structure of the provided url. It specifically isolates the user and password parts before reconstructing the rest of the address, stripping away the authentication details.
+<switch:python>
+[python] def remove_url_auth(url):
+    """
+    Removes the user & password and returns them along with a new url.
+
+    :param str url: the URL to sanitize
+    :return: a :class:`tuple` containing the authorization portion and
+        the sanitized URL.  The authorization is a simple user & password
+        :class:`tuple`.
+
+    >>> auth, sanitized = remove_url_auth('http://foo:bar@example.com')
+    >>> auth
+    ('foo', 'bar')
+    >>> sanitized
+    'http://example.com'
+
+    The return value from this function is simple named tuple with the
+    following fields:
+
+    - *auth* the username and password as a tuple
+    - *username* the username portion of the URL or :data:`None`
+    - *password* the password portion of the URL or :data:`None`
+    - *url* the sanitized URL
+
+    >>> result = remove_url_auth('http://me:secret@example.com')
+    >>> result.username
+    'me'
+    >>> result.password
+    'secret'
+    >>> result.url
+    'http://example.com'
+
+    """
+    parts = parse.urlsplit(url)
+    return RemoveUrlAuthResult(auth=(parts.username or None, parts.password),
+                               url=rewrite_url(url, user=None, password=None))
+<switch:english>
+[english] The core logic relies on two external helpers: `parse.urlsplit` for analysis and `rewrite_url` for generating the clean output.
+[english] What happens if I pass a URL that already contains no credentials, like 'http://example.com/api'?
+[english] If the URL has no authentication, `parts.username or None` will result in None, and the subsequent call to rewrite_url ensures the original url is returned unchanged.
+[english] That makes perfect sense; I appreciate the clarification on how it handles null inputs.

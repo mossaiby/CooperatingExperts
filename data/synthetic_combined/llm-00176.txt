@@ -1,0 +1,26 @@
+[english] How can I create a connection object for the Vaex remote server API using just its URL?
+[english] This function helps abstract networking by taking any valid Vaex server URL and parsing its components (scheme, host, port). It then initializes the necessary ServerRest object to prepare for interacting with the remote data.
+<switch:python>
+[python] def server(url, **kwargs):
+    """Connect to hostname supporting the vaex web api.
+
+    :param str hostname: hostname or ip address of server
+    :return vaex.dataframe.ServerRest: returns a server object, note that it does not connect to the server yet, so this will always succeed
+    :rtype: ServerRest
+    """
+    from vaex.remote import ServerRest
+    url = urlparse(url)
+    if url.scheme == "ws":
+        websocket = True
+    else:
+        websocket = False
+    assert url.scheme in ["ws", "http"]
+    port = url.port
+    base_path = url.path
+    hostname = url.hostname
+    return vaex.remote.ServerRest(hostname, base_path=base_path, port=port, websocket=websocket, **kwargs)
+<switch:english>
+[english] The logic ensures that critical parts like hostname and scheme are correctly identified from the URL. Note that this function only sets up the connection parameters; it does not actually attempt an immediate network handshake.
+[english] What happens if I pass arguments using `**kwargs` in the server call; do they get incorporated into the Vaex object?
+[english] Yes, any extra keyword arguments passed to `server()` are forwarded directly as parameters to the internal vaex.remote.ServerRest constructor, allowing you to customize settings like timeout.
+[english] That makes perfect sense for handling custom configurations!

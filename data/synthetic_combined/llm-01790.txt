@@ -1,0 +1,20 @@
+[english] I need a function that can reset a client's network connection, wait for it to be ready, and then re-send all its configured channel data.
+[english] This function first initiates a reconnection attempt on the server. It then enters a waiting loop until the internal state confirms the connection is successfully set up.
+<switch:python>
+[python] def reset(self):
+        """Reset the client.
+
+        :return:
+        """
+        self.conn.reconnect()
+        while not self.conn.connected.is_set():
+            log.info("reset(): Waiting for connection to be set up..")
+            time.sleep(1)
+
+        for key in self.channel_configs:
+            self.conn.send(**self.channel_configs[key])
+<switch:english>
+[english] Once connected, the method iterates through saved channel configurations to resync by sending commands for every active key in self.channel_configs.
+[english] If reconnection fails permanently, how long will this function keep waiting in the 'while' loop?
+[english] The current code includes no timeout mechanism and will block indefinitely if self.conn.connected never becomes True. To prevent freezing, you should add a maximum retry count or implement a wait with a defined time limit.
+[english] I appreciate the clarification on potential blocking issues.

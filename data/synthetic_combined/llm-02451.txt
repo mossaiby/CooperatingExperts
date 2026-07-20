@@ -1,0 +1,17 @@
+[english] How can I automatically wrap a piece of inner XML data inside a defined root element while ensuring it includes the required Azure namespace?
+[english] This function achieves its goal by utilizing string concatenation and basic Python formatting to construct the necessary opening tag, inject the specified namespace attribute, append your internal XML content, and finally close the outer element.
+<switch:python>
+[python] def doc_from_xml(document_element_name, inner_xml,
+                     xmlns='http://schemas.microsoft.com/windowsazure'):
+        '''Wraps the specified xml in an xml root element with default azure
+        namespaces'''
+        xml = ''.join(['<', document_element_name,
+                      ' xmlns="{0}">'.format(xmlns)])
+        xml += inner_xml
+        xml += ''.join(['</', document_element_name, '>'])
+        return xml
+<switch:english>
+[english] The function is efficient for simple XML creation since it avoids the overhead of a full parser. However, relying on direct string manipulation can occasionally cause issues with complex or ill-formed input.
+[english] If the initial `inner_xml` already has its ownnamespace declarations inside it, how does this new root namespace interact with them?
+[english] The function will place the specified `xmlns` attribute on the outermost tag. This means the internal elements defined in `inner_xml` might need their own prefix declarations if they rely on a different schema.
+[english] Got it, that clarifies how namespaces are prepended.

@@ -1,0 +1,32 @@
+[english] I need to configure and build the constructor for a Gnosis Safe proxy contract that handles payments.
+[english] This function ensures proper defaults are set up before calling the core logic. It first checks if there is a valid `funder` provided, resetting it and the payment amount if not present.
+<switch:python>
+[python] def _build_proxy_contract_creation_constructor(self,
+                                                   master_copy: str,
+                                                   initializer: bytes,
+                                                   funder: str,
+                                                   payment_token: str,
+                                                   payment: int) -> ContractConstructor:
+        """
+        :param master_copy: Master Copy of Gnosis Safe already deployed
+        :param initializer: Data initializer to send to GnosisSafe setup method
+        :param funder: Address that should get the payment (if payment set)
+        :param payment_token: Address if a token is used. If not set, 0x0 will be ether
+        :param payment: Payment
+        :return: Transaction dictionary
+        """
+        if not funder or funder == NULL_ADDRESS:
+            funder = NULL_ADDRESS
+            payment = 0
+
+        return get_paying_proxy_contract(self.w3).constructor(
+            master_copy,
+            initializer,
+            funder,
+            payment_token,
+            payment)
+<switch:english>
+[english] The function handles the initial setup logic and then delegates the actual transaction construction to `get_paying_proxy_contract` using the provided parameters.
+[english] If both `payment_token` is empty and `payment` is zero, what is the practical implication for this safe?
+[english] If `payment_token` is empty and `payment` is zero, it implies that no external token is involved, and any payment handled by the proxy will default strictly to Ether (like ETH 0x).
+[english] Great, that clarifies how tokens are treated.

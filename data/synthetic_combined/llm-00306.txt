@@ -1,0 +1,26 @@
+[english] How can I retrieve a full dot-separated name hierarchy for an object that has parent references?
+[english] This function traverses the object's ancestor chain by following `_parent` attributes until it hits a terminal base class. It systematically collects and orders the names found along this path.
+<switch:python>
+[python] def _getFullName(self):
+        """get all name hierarchy separated by '.' """
+        name = ""
+        tmp = self
+        while isinstance(tmp, (InterfaceBase, HObjList)):
+            if hasattr(tmp, "_name"):
+                n = tmp._name
+            else:
+                n = ''
+            if name == '':
+                name = n
+            else:
+                name = n + '.' + name
+            if hasattr(tmp, "_parent"):
+                tmp = tmp._parent
+            else:
+                tmp = None
+        return name
+<switch:english>
+[english] The method ensures the final path is correctly ordered from the deepest level to the root by progressively prepending each name with a period.
+[english] If an object in the chain does not have a `_name` attribute, how does it affect the final output?
+[english] It defaults to using an empty string for that segment. As seen in the code block below, this ensures the structure remains consistent even when names are missing.
+[english] Thanks for clarifying!

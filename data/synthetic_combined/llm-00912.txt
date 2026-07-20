@@ -1,0 +1,12 @@
+[english] How do I create a client instance using predefined settings for URL and archive status?
+[english] This function acts as an initialization helper, instantiating the AskbotClient. It accepts configuration details from `self` to ensure the new client is working correctly.
+<switch:python>
+[python] def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return AskbotClient(self.url, self.archive, from_archive)
+<switch:english>
+[english] The function returns the fully configured client object and uses the `from_archive` flag to determine if historical data should be prioritized.
+[english] Is there any way to provide default values for url or archive inside this method in case they aren't set?
+[english] Currently, it relies entirely on those attributes being present. If you needed safety nets, you could use the get() method like `self.url or 'default_url'`, but that might hide configuration errors.
+[english] This makes perfect sense now.

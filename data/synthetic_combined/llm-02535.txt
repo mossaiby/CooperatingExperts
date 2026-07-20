@@ -1,0 +1,18 @@
+[english] How can I properly stop my performance profiler and mark my process as finished?
+[english] To handle cleanup, we need a method that gracefully stops internal tracking, changes the state of the object, and signals completion to whatever called this function.
+<switch:python>
+[python] def delete(self):
+        """Stop the profiler."""
+        CProfileWrapper.profiler.disable()
+        self.running = False
+        self.set_status(204)
+        self.finish()
+<switch:english>
+[english] This method ensures all necessary system resources are released by stopping the profiler before exiting the current execution context.
+[english] What happens if CProfileWrapper.profiler was already disabled?
+[english] If disabled, calling disable() probably does nothing as it only acts on an active instance of the profiler.
+<switch:python>
+[python] CProfileWrapper.profiler.disable() 
+# No observable effect if state is 'disabled'
+<switch:english>
+[english] Got it, this makes sense for cleanup.

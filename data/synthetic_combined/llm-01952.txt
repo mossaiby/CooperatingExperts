@@ -1,0 +1,28 @@
+[english] How do I expand a compressed, partial sequence at a given tree node?
+[english] This method takes a potentially reduced sequence stored in a tree node and expands it back to its full length based on specific parameters.
+<switch:python>
+[python] def expanded_sequence(self, node, include_additional_constant_sites=False):
+        """
+        Expand a nodes compressed sequence into the real sequence
+
+        Parameters
+        ----------
+        node : PhyloTree.Clade
+           Tree node
+
+        Returns
+        -------
+        seq : np.array
+           Sequence as np.array of chars
+        """
+        if include_additional_constant_sites:
+            L = self.seq_len
+        else:
+            L = self.seq_len - self.additional_constant_sites
+
+        return node.cseq[self.full_to_reduced_sequence_map[:L]]
+<switch:english>
+[english] The function effectively maps the compressed indices into the full sequence using `self.full_to_reduced_sequence_map` before returning the final array.
+[english] What happens if my sequence is already at maximum length, meaning no constant sites need to be removed?
+[english] If a site starts as maximally expanded (or a node with no compression), $L$ will be set to `self.seq_len`, and the map ensures all original indices are retrieved.
+[english] That makes sense!

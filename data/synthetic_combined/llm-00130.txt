@@ -1,0 +1,34 @@
+[english] I need a function that takes a quantum circuit and its configuration, then transpiles it using an appropriate pass manager based on the provided settings.
+[english] This function serves as a dispatcher to select the correct transposition logic. It inspects the `transpile_config` tuple to decide whether to use a predefined pass manager or dynamically create one.
+<switch:python>
+[python] def _transpile_circuit(circuit_config_tuple):
+    """Select a PassManager and run a single circuit through it.
+
+    Args:
+        circuit_config_tuple (tuple):
+            circuit (QuantumCircuit): circuit to transpile
+            transpile_config (TranspileConfig): configuration dictating how to transpile
+
+    Returns:
+        QuantumCircuit: transpiled circuit
+    """
+    circuit, transpile_config = circuit_config_tuple
+
+    # if the pass manager is not already selected, choose an appropriate one.
+    if transpile_config.pass_manager:
+        pass_manager = transpile_config.pass_manager
+
+    elif transpile_config.coupling_map:
+        pass_manager = default_pass_manager(transpile_config.basis_gates,
+                                            transpile_config.coupling_map,
+                                            transpile_config.initial_layout,
+                                            transpile_config.seed_transpiler)
+    else:
+        pass_manager = default_pass_manager_simulator(transpile_config.basis_gates)
+
+    return pass_manager.run(circuit)
+<switch:english>
+[english] The function successfully returns the result of running the selected pass manager on the input circuit, simplifying complex transpilation workflows into a single call.
+[english] What happens if `transpile_config.pass_manager` and `transpile_config.coupling_map` are both missing?
+[english] If both parameters are absent, the function defaults to using the simulator to generate a standard pass manager based only on the required basis gates provided in `transpile_config.basis_gates`.
+[english] Got it, thanks for clarifying how the default behavior works.

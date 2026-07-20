@@ -1,0 +1,20 @@
+[english] How do I generate just the internal HTML markup for a component that includes its necessary JS configuration?
+[english] This method is responsible for assembling the core parts of your content before rendering it. It first builds any required container structure and then initializes specific chart-related JavaScript components.
+<switch:python>
+[python] def buildcontent(self):
+        """Build HTML content only, no header or body tags. To be useful this
+        will usually require the attribute `juqery_on_ready` to be set which
+        will wrap the js in $(function(){<regular_js>};)
+        """
+        self.buildcontainer()
+        # if the subclass has a method buildjs this method will be
+        # called instead of the method defined here
+        # when this subclass method is entered it does call
+        # the method buildjschart defined here
+        self.buildjschart()
+        self.htmlcontent = self.template_content_nvd3.render(chart=self)
+<switch:english>
+[english] It's important to note that this function relies heavily on internal subclass methods like `buildjschart` for complete functionality, as it only handles the final HTML template rendering itself.
+[english] The docstring mentions `juqery_on_ready`. How is that interactivity actually tied into the resulting HTML?
+[english] Interactivity is handled externally; if you set the attribute `juqery_on_ready`, an external wrapper will wrap any included JavaScript in a standard jQuery ready function to ensure proper execution.
+[english] Got it, so I need external setup for dynamic behavior then.

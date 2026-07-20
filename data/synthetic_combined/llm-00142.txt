@@ -1,0 +1,34 @@
+[english] I need to deploy a new proxy contract, but I have to go through a specific factory process first. How do I set this up?
+[english] This function automates the deployment of a transparent proxy pattern. It handles both private key and unlocked account authentication before calling the necessary blockchain functions.
+<switch:python>
+[python] def deploy_proxy_contract(self, initializer=b'', deployer_account=None, deployer_private_key=None) -> str:
+        """
+        Deploy proxy contract using the `Proxy Factory Contract`.
+        Takes deployer_account (if unlocked in the node) or the deployer private key
+        :param initializer: Initializer
+        :param deployer_account: Unlocked ethereum account
+        :param deployer_private_key: Private key of an ethereum account
+        :return: deployed contract address
+        """
+        assert deployer_account or deployer_private_key
+        deployer_address = deployer_account or self.ethereum_client.private_key_to_address(deployer_private_key)
+
+        proxy_factory_contract = get_proxy_factory_contract(self.w3, self.proxy_factory_address)
+        create_proxy_fn = proxy_factory_contract.functions.createProxy(self.master_copy_address, initializer)
+        contract_address = create_proxy_fn.call()
+        tx = create_proxy_fn.buildTransaction({'from': deployer_address})
+
+        tx_hash = self.ethereum_client.send_unsigned_transaction(tx, private_key=deployer_private_key,
+                                                                  public_key=deployer_account)
+        tx_receipt = self.ethereum_client.get_transaction_receipt(tx_hash, timeout=120)
+        assert tx_receipt.status
+        return contract_address
+<switch:english>
+[english] The use of `call()` in line 10 is purely for metadata retrieval, not execution; the actual transaction build happens later.
+[english] If `deployer_private_key` is None, how does the function know which key to use when sending the final transaction?
+[english] If `deployer_private_key` is missing, the function relies on a previously derived `deployer_address`. The subsequent block demonstrates that the private key must be provided for signing:
+<switch:python>
+[python] tx_hash = self.ethereum_client.send_unsigned_transaction(tx, private_key=deployer_private_key,
+pub_key=deployer_account)
+<switch:english>
+[english] That makes sense; I'll make sure the private key is passed correctly.

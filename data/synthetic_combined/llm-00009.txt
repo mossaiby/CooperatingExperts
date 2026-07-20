@@ -1,0 +1,20 @@
+[english] How can I reliably retrieve detailed information for a specific Vimeo account using API requests?
+[english] This method uses a two-step process: first, it gets an initial access response. It then extracts the User ID from that complicated nested structure before attempting to make a second, dedicated request for user details.
+<switch:python>
+[python] def _access_user_info(self):
+        """
+        Vimeo requires the user ID to access the user info endpoint, so we need
+        to make two requests: one to get user ID and second to get user info.
+        """
+        response = super(Vimeo, self)._access_user_info()
+        uid = response.data.get('oauth', {}).get('user', {}).get('id')
+        if uid:
+            return self.access('http://vimeo.com/api/v2/{0}/info.json'
+                               .format(uid))
+        return response
+<switch:english>
+[english] If the User ID is successfully extracted, this code executes a second API call to retrieve specific user data; otherwise, it returns the initial access response.
+[english] What is returned if the 'id' key cannot be found in the response structure?
+[english] If the user ID cannot be found (i.e., `uid` remains None), the function skips the second call and simply returns the original object received from super()._access_user_info() through this line:
+        return response
+[english] Understood, that clarifies the fallback behavior.

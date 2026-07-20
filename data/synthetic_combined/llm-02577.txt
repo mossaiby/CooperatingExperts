@@ -1,0 +1,14 @@
+[english] How can I wrap a service definition inside a managed group that also includes integrated health checks?
+[english] To implement this, we first create an instance of the MultiService container using `taservice`. We then designate our existing service as a child of this new container before applying any heart monitoring logic.
+<switch:python>
+[python] def wrapHeart(service):
+    """Wrap a service in a MultiService with a heart"""
+    master = taservice.MultiService()
+    service.setServiceParent(master)
+    maybeAddHeart(master)
+    return master
+<switch:english>
+[english] The function successfully creates and returns the wrapper. Keep in mind that the actual behavior of 'heart' depends entirely on the definition inside the helper function `maybeAddHeart`.
+[english] If another service were passed to wrapHeart, would it also be placed under this same new master container?
+[english] No, since each call creates a brand-new instance of MultiService and sets that as the parent for only one specific service. You would need to call `wrapHeart` again for subsequent services.
+[english] That clarifies how the wrapping process scales, thanks!

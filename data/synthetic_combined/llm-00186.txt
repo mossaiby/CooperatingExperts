@@ -1,0 +1,92 @@
+[english] I have background data and need to calculate interpolated values for specific analytes across uniform time points.
+[english] This function calculates the final processed values by interpolating summary statistics from pre-existing background regions. It initializes a uniform time axis (`bkg_t`) using `pad` and then iterates through specified analytes.
+<switch:python>
+[python] def bkg_calc_interp1d(self, analytes=None, kind=1, n_min=10, n_max=None, cstep=None,
+                          bkg_filter=False, f_win=7, f_n_lim=3, focus_stage='despiked'):
+        """
+        Background calculation using a 1D interpolation.
+
+        scipy.interpolate.interp1D is used for interpolation.
+
+        Parameters
+        ----------
+        analytes : str or iterable
+            Which analyte or analytes to calculate.
+        kind : str or int
+            Integer specifying the order of the spline interpolation
+            used, or string specifying a type of interpolation.
+            Passed to `scipy.interpolate.interp1D`
+        n_min : int
+            Background regions with fewer than n_min points
+            will not be included in the fit.
+        cstep : float or None
+            The interval between calculated background points.
+        filter : bool
+            If true, apply a rolling filter to the isolated background regions
+            to exclude regions with anomalously high values. If True, two parameters
+            alter the filter's behaviour:
+        f_win : int
+            The size of the rolling window
+        f_n_lim : float
+            The number of standard deviations above the rolling mean
+            to set the threshold.
+        focus_stage : str
+            Which stage of analysis to apply processing to. 
+            Defaults to 'despiked' if present, or 'rawdata' if not. 
+            Can be one of:
+            * 'rawdata': raw data, loaded from csv file.
+            * 'despiked': despiked data.
+            * 'signal'/'background': isolated signal and background data.
+              Created by self.separate, after signal and background
+              regions have been identified by self.autorange.
+            * 'bkgsub': background subtracted data, created by 
+              self.bkg_correct
+            * 'ratios': element ratio data, created by self.ratio.
+            * 'calibrated': ratio data calibrated to standards, created by self.calibrate.            
+        """
+        if analytes is None:
+            analytes = self.analytes
+            self.bkg = Bunch()
+        elif isinstance(analytes, str):
+            analytes = [analytes]
+
+        self.get_background(n_min=n_min, n_max=n_max,
+                            bkg_filter=bkg_filter,
+                            f_win=f_win, f_n_lim=f_n_lim, focus_stage=focus_stage)
+
+        def pad(a, lo=None, hi=None):
+            if lo is None:
+                lo = [a[0]]
+            if hi is None:
+                hi = [a[-1]]
+            return np.concatenate((lo, a, hi))
+
+        if 'calc' not in self.bkg.keys():
+            # create time points to calculate background
+            # if cstep is None:
+                # cstep = self.bkg['raw']['uTime'].ptp() / 100
+            # bkg_t = np.arange(self.bkg['summary']['uTime']['mean'].min(),
+            #                   self.bkg['summary']['uTime']['mean'].max(),
+            #                   cstep)
+
+            bkg_t = pad(self.bkg['summary'].loc[:, ('uTime', 'mean')], [0], [self.max_time])
+
+            self.bkg['calc'] = Bunch()
+            self.bkg['calc']['uTime'] = bkg_t
+
+        d = self.bkg['summary']
+        with self.pbar.set(total=len(analytes), desc='Calculating Analyte Backgrounds') as prog:
+            for a in analytes:
+                self.bkg['calc'][a] = {'mean': pad(d.loc[:, (a, 'mean')].values),
+                                    'std': pad(d.loc[:, (a, 'std')].values),
+                                    'stderr': pad(d.loc[:, (a, 'stderr')].values)}
+                prog.update()
+
+        self.bkg['calc']
+
+        return
+<switch:english>
+[english] The logic builds the 'calc' dictionary inside self.bkg, storing mean, std, and stderr values aligned with the generated background time points.
+[english] If I provide an analyte name in the arguments that isn't present in `self.bkg['summary']`, does the code handle it gracefully or will it error?
+[english] The function assumes all requested analytes are present in the summary data; requesting a missing key would result in a KeyError when accessing `d.loc[:, (a, 'mean')]`.
+[english] Thanks for clarifying how that handles edge cases!

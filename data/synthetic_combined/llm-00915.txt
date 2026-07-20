@@ -1,0 +1,20 @@
+[english] How do I take a collection of image URLs and format them as standard attachments within a user message object?
+[english] This method first checks if any attachments are provided. If they exist, it ensures the data format is a list, then iterates through the URLs to create structured attachment dictionaries before applying any extra parameters.
+<switch:python>
+[python] def _add_attachments(self):
+        """Add attachments."""
+        if self.attachments:
+            if not isinstance(self.attachments, list):
+                self.attachments = [self.attachments]
+
+            self.message["attachments"] = [
+                {"image_url": url, "author_name": ""} for url in self.attachments
+            ]
+            if self.params:
+                for attachment in self.message["attachments"]:
+                    attachment.update(self.params)
+<switch:english>
+[english] Note that the initial attachment structure sets `author_name` to an empty string; you can customize this globally using the optional `self.params` dictionary.
+[english] What happens if I pass only a single attachment URL but forget to define `self.params`?
+[english] It will correctly wrap the single URL into a list containing one attachment dictionary with an empty author name, as no parameters were supplied to update it.
+[english] That makes sense, thanks for the help!

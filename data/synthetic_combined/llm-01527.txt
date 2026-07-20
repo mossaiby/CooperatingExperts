@@ -1,0 +1,21 @@
+[english] I need a function that takes a city name and API token to retrieve a list of station IDs from an external AQI database.
+[english] This function performs an HTTP GET request using the provided city name as a search keyword. It then checks if the API response indicates success before parsing the data structure for valid codes.
+<switch:python>
+[python] def findStationCodesByCity(city_name, token):
+    """Lookup AQI database for station codes in a given city."""
+    req = requests.get(
+        API_ENDPOINT_SEARCH,
+        params={
+            'token': token,
+            'keyword': city_name
+        })
+
+    if req.status_code == 200 and req.json()["status"] == "ok":
+        return [result["uid"] for result in req.json()["data"]]
+    else:
+        return []
+<switch:english>
+[english] The code returns specific UIDs only upon successful retrieval from the JSON 'data' array, otherwise it safely defaults to an empty list.
+[english] What happens if the city name doesn't exist in the database, or what if the token is invalid?
+[english] If the API call fails (status code != 200) or returns a non-'ok' status, the function immediately returns an empty list. You can confirm this logic by adding error logging around the request.
+[english] That makes sense, thank you for clarifying how failure is handled.

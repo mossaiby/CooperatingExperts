@@ -1,0 +1,18 @@
+[english] How do I parse an input string into an Abstract Syntax Tree (AST) using the existing class methods?
+[english] This method wraps the parsing process in a thread-safe block to ensure concurrent access is handled correctly.
+<switch:python>
+[python] def t_parse(self, s):
+        """Parses the input string, and returns a reference to the created AST's root"""
+        # self.root = None
+        # self.path = s
+        with self.lock:
+            try:
+                return self.parser.parse(s, lexer=self.lexer, debug=False)
+            except CannotParse as e:
+                e.s = s
+                raise e
+<switch:english>
+[english] It specifically catches and augments error messages, allowing you to pinpoint which exact input caused the failure.
+[english] What happens if the `CannotParse` exception occurs without an associated string `s`?
+[english] The code attempts to set a new attribute `e.s` on the caught exception instance so that when the user sees the error, they know exactly what failed.
+[english] Thanks for clarifying how error handling is managed!

@@ -1,0 +1,36 @@
+[english] How can I visualize multiple data series stored within a custom object using Matplotlib?
+[english] This method generates plots by interpreting the first and last columns of your data as X and Y axes, respectively. It uses `reduce` to gather coordinates from all available series before calling `plt.plot`.
+<switch:python>
+[python] def plot(self, title=None, **kwargs):
+        """Generates a pylab plot from the result set.
+
+        ``matplotlib`` must be installed, and in an
+        IPython Notebook, inlining must be on::
+
+            %%matplotlib inline
+
+        The first and last columns are taken as the X and Y
+        values.  Any columns between are ignored.
+
+        :param title: plot title, defaults to names of Y value columns
+
+        Any additional keyword arguments will be passsed
+        through to ``matplotlib.pylab.plot``.
+        """
+        if not plt:
+            raise ImportError("Try installing matplotlib first.")
+        self.guess_plot_columns()
+        self.x = self.x or range(len(self.ys[0]))
+        coords = reduce(operator.add, [(self.x, y) for y in self.ys])
+        plot = plt.plot(*coords, **kwargs)
+        if hasattr(self.x, 'name'):
+            plt.xlabel(self.x.name)
+        ylabel = ", ".join(y.name for y in self.ys)
+        plt.title(title or ylabel)
+        plt.ylabel(ylabel)
+        return plot
+<switch:english>
+[english] The function automatically sets the axis labels and title using metadata from your data object, ensuring the resulting plot is clearly labeled.
+[english] If `self.ys` contained hundreds or thousands of columns, would this approach be efficient?
+[english] Since `coords` collects all series into a single tuple/list argument for `plt.plot`, memory and processing time will scale linearly with the number of data points across your entire dataset.
+[english] Does that help you understand how it handles large datasets?

@@ -1,0 +1,26 @@
+[english] How can I iterate over all sections, options, and their corresponding values within a configuration object?
+[english] This generator method is designed to flatten the nested structure of sections and options. It iterates through available options and yields tuples containing the section name, option key, and its associated value.
+<switch:python>
+[python] def opt_vals_(self):
+        """Iterator over sections, option names, and option values.
+
+        This iterator is also implemented at the section level. The two loops
+        produce the same output::
+
+            for sct, opt, val in conf.opt_vals_():
+                print(sct, opt, val)
+
+            for sct in conf.sections_():
+                for opt, val in conf[sct].opt_vals_():
+                    print(sct, opt, val)
+
+        Yields:
+            tuples with sections, option names, and option values.
+        """
+        for sct, opt in self.options_():
+            yield sct, opt, self[sct][opt]
+<switch:english>
+[english] The logic relies on `self.options_()` providing pairs of section names and option keys that exist in the configuration object. This allows access to the specific value using dictionary-like key lookups (`self[sct][opt]`).
+[english] What happens if an option is defined but has no value assigned to it within a particular section?
+[english] If you attempt to access a non-existent key, `self[sct][opt]` will raise a KeyError. You would need error handling or additional checks to manage missing values gracefully.
+[english] Thanks for clarifying how errors are handled!

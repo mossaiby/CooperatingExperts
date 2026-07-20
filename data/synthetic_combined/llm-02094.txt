@@ -1,0 +1,39 @@
+[english] How do I check if specific attributes on an object match complex regex patterns or simply exist?
+[english] This function determines if an instance matches a filter string, supporting three modes: general regex matching across all attributes, existence checks for specific properties, and detailed attribute value filtering.
+<switch:python>
+[python] def matches(self, _filter):
+        """
+        Returns whether the instance matches the given filter text.
+
+        :param _filter: A regex filter. If it starts with `<identifier>:`, then
+                        the part before the colon will be used as an attribute
+                        and the part after will be applied to that attribute.
+        :type _filter: ``basestring``
+
+        :return: True if the entry matches the filter.
+        :rtype: ``bool``
+        """
+        within_attrib = re.match(r'^([a-z_.]+):(.*)', _filter)
+        having_attrib = re.match(r'^([a-z_.]+)\?$', _filter)
+        if within_attrib is not None:
+            # Then we're matching against a specific attribute.
+            val = self._get_attrib(within_attrib.group(1))
+            sub_regex = within_attrib.group(2)
+            if len(sub_regex) > 0:
+                sub_regex = re.compile(sub_regex, re.IGNORECASE)
+                return _match_regex(sub_regex, val)
+            else:
+                # Then we are matching on the value being empty.
+                return val == '' or val is None or val == []
+        elif having_attrib is not None:
+            # Then we're searching for anything that has a specific attribute.
+            val = self._get_attrib(having_attrib.group(1))
+            return val != '' and val is not None and val != []
+        else:
+            regex = re.compile(_filter, re.IGNORECASE)
+            return _match_regex(regex, vars(self))
+<switch:english>
+[english] The implementation cleverly uses regular expressions to parse the filter, allowing it to handle complex cases like checking if an attribute exists or if its value conforms to a certain pattern.
+[english] What happens if I provide a filter that only specifies an attribute name without any regex?
+[english] If you use 'attribute:', it checks if the corresponding value is empty, None, or is an empty list. For example, `matches('status:')` would return True if the status attribute is unset.
+[english] That clarifies how to handle optional attributes!

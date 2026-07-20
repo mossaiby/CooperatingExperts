@@ -1,0 +1,21 @@
+[english] How can I create a temporary file, write some initial content to it, and retrieve its name?
+[english] This function uses the `NamedTemporaryFile` context manager from the `tempfile` module to safely generate a unique file. By setting `delete=False`, we ensure the file persists after the block exits while writing starts.
+<switch:python>
+[python] def write_temp_file(text=""):
+    """Create a new temporary file and write some initial text to it.
+
+    :param text: the text to write to the temp file
+    :type text: str
+    :returns: the file name of the newly created temp file
+    :rtype: str
+
+    """
+    with NamedTemporaryFile(mode='w+t', suffix='.yml', delete=False) \
+         as tempfile:
+        tempfile.write(text)
+        return tempfile.name
+<switch:english>
+[english] The function returns the file's name immediately after writing the input text using `tempfile.write(text)` inside the context manager.
+[english] What happens to the temporary file if I call this function twice quickly with different inputs?
+[english] Since `delete=False` is used, the operating system retains the file until manually removed. If you run it again, a new unique file will be created and overwritten by your subsequent calls.
+[english] I understand; thanks for clarifying how to manage temporary files!

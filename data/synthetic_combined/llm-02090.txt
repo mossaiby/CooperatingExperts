@@ -1,0 +1,18 @@
+[english] How do I set or retrieve a specific title pattern in this system?
+[english] This function executes an 'XGTITLE' command against the server using the provided `pattern`. It verifies the response code to ensure the operation succeeded before retrieving final information.
+<switch:python>
+[python] def xgtitle(self, pattern=None):
+        """XGTITLE command.
+        """
+        args = pattern
+
+        code, message = self.command("XGTITLE", args)
+        if code != 282:
+            raise NNTPReplyError(code, message)
+
+        return self.info(code, message)
+<switch:english>
+[english] The method checks if the returned code matches 282, which seems to be the expected success status for this operation. If not, it raises an error.
+[english] What happens if `pattern` is passed as None?
+[english] If `pattern` is None, the function executes the XGTITLE command without specifying a value; however, if the server expects a required argument missing from the call, the initial `self.command()` will likely fail.
+[english] That makes sense.

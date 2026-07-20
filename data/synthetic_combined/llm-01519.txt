@@ -1,0 +1,22 @@
+[english] I need to write a Python utility that sniffs network packets using a callback function, filtering them as needed.
+[english] This function leverages `sniff` from Scapy to capture network traffic in real time. It passes your provided filter string and callback function directly to the sniffing loop for processing.
+<switch:python>
+[python] def scan_devices(fn, lfilter, iface=None):
+    """Sniff packages
+
+    :param fn: callback on packet
+    :param lfilter: filter packages
+    :return: loop
+    """
+    try:
+        sniff(prn=fn, store=0,
+              # filter="udp",
+              filter="arp or (udp and src port 68 and dst port 67 and src host 0.0.0.0)",
+              lfilter=lfilter, iface=iface)
+    except PermissionError:
+        raise SocketPermissionError
+<switch:english>
+[english] The code also includes error handling for permissions issues, specifically raising a SocketPermissionError if necessary privileges aren't available during execution.
+[english] What kind of input does `lfilter` expect?
+[english] `lfilter` takes an expression string compatible with libpcap/Bpf syntax to further narrow down which packets are processed by the sniffing library itself.
+[english] Got it, thanks for explaining.

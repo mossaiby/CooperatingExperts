@@ -1,0 +1,23 @@
+[english] I want to ensure that the GZIP feature is set on an account using the XFEATURE COMPRESS command.
+[english] This function handles sending a specific NNTP command (`XFEATURE COMPRESS GZIP`) and checks for a required success code.
+It first defines optional arguments based on whether you need a terminator flag, then executes the command via `self.command()` and validates that the response matches the expected status (290).
+<switch:python>
+[python] def xfeature_compress_gzip(self, terminator=False):
+        """XFEATURE COMPRESS GZIP command.
+        """
+        args = "TERMINATOR" if terminator else None
+
+        code, message = self.command("XFEATURE COMPRESS GZIP", args)
+        if code != 290:
+            raise NNTPReplyError(code, message)
+
+        return True
+<switch:english>
+[english] The core logic is centered around validating the `code` returned by the underlying command execution method to guarantee proper feature setting.
+[english] If I wanted to pass a different, non-terminator argument like 'level=1' to this function, how would I adjust the logic?
+[english] You can change how the `args` variable is defined. For example, you could modify it before calling `self.command()`:
+
+```python
+        args = "level=1" if terminator else None
+``
+[english] I see! That makes perfect sense.

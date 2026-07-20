@@ -1,0 +1,13 @@
+[english] I need a function that determines if all data series within an internal list use time variables for a specified axis.
+[english] This helper method checks every object in `self._series` to see if the requested `axis` attribute corresponds to a `TimeVariable`. It utilizes a generator expression within `all()` to efficiently confirm consistency across all components.
+<switch:python>
+[python] def _get_axis_mode(self, axis):
+        "will get the axis mode for the current series"
+        if all([isinstance(getattr(s, axis), TimeVariable) for s in self._series]):
+            return 'time'
+        return None
+<switch:english>
+[english] When this condition is met, it confirms that the axis should be treated as time-based. If any series fails the type check, the function simply returns None.
+[english] What happens if one of the series uses a TimeVariable but another one uses a standard numeric variable for the same axis?
+[english] If there is even one series that does not match the `TimeVariable` type for that axis, the `all()` function fails and the method returns `None`. This forces external logic to handle heterogeneous data.
+[english] Got it, so returning None acts as a default failure or mixed-mode indicator.

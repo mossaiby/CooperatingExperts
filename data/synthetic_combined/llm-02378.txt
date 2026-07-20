@@ -1,0 +1,16 @@
+[english] How can I load all patch definitions from a specified series file?
+[english] This function handles loading data by first initializing temporary structures, then checking if the input file exists before iterating over it.
+<switch:python>
+[python] def read(self):
+        """ Reads all patches from the series file """
+        self.patchlines = []
+        self.patch2line = dict()
+        if self.exists():
+            with open(self.series_file, "r") as f:
+                for line in f:
+                    self.add_patch(line)
+<switch:english>
+[english] The function processes the file line by line and uses an assumed helper method, `self.add_patch`, to build its internal representations.
+[english] Is there any risk if 'self.exists()' returns true but the file is empty or improperly formatted?
+[english] If the file exists, it attempts to read every line; however, proper data validation should ideally happen inside the `self.add_patch` method to handle malformed content.
+[english] Got it, this makes sense for sequential processing.

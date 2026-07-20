@@ -1,0 +1,50 @@
+[english] How can I continuously stream logs from Elasticsearch for a specific task instance, handling pagination and detecting when the log source is finished?
+[english] This function tracks the reading progress by maintaining an 'offset' in the `metadata`. It uses this offset to pull new log entries from the database (`self.es_read`) and updates the state accordingly.
+<switch:python>
+[python] def _read(self, ti, try_number, metadata=None):
+        """
+        Endpoint for streaming log.
+        :param ti: task instance object
+        :param try_number: try_number of the task instance
+        :param metadata: log metadata,
+                         can be used for steaming log reading and auto-tailing.
+        :return: a list of log documents and metadata.
+        """
+        if not metadata:
+            metadata = {'offset': 0}
+        if 'offset' not in metadata:
+            metadata['offset'] = 0
+
+        offset = metadata['offset']
+        log_id = self._render_log_id(ti, try_number)
+
+        logs = self.es_read(log_id, offset)
+
+        next_offset = offset if not logs else logs[-1].offset
+
+        metadata['offset'] = next_offset
+        # end_of_log_mark may contain characters like '\n' which is needed to
+        # have the log uploaded but will not be stored in elasticsearch.
+        metadata['end_of_log'] = False if not logs \
+            else logs[-1].message == self.end_of_log_mark.strip()
+
+        cur_ts = pendulum.now()
+        # Assume end of log after not receiving new log for 5 min,
+        # as executor heartbeat is 1 min and there might be some
+        # delay before Elasticsearch makes the log available.
+        if 'last_log_timestamp' in metadata:
+            last_log_ts = timezone.parse(metadata['last_log_timestamp'])
+            if cur_ts.diff(last_log_ts).in_minutes() >= 5:
+                metadata['end_of_log'] = True
+
+        if offset != next_offset or 'last_log_timestamp' not in metadata:
+            metadata['last_log_timestamp'] = str(cur_ts)
+
+        message = '\n'.join([log.message for log in logs])
+
+        return message, metadata
+<switch:english>
+[english] The logic successfully determines stream termination, not just through final markers but also by implementing a 5-minute inactivity timeout based on the last received timestamp.
+[english] What happens if `self.es_read()` fails or times out while trying to fetch logs?
+[english] Currently, there is no error handling for failures in `self.es_read()`. To make it robust, you should implement a try/except block around the log fetching call and potentially add retry logic.
+[english] Thanks for clarifying that method's lifecycle management.

@@ -1,0 +1,28 @@
+[english] How can I reliably guess the Unicode encoding of a JSON text sample using only the first few bytes?
+[english] This function determines the potential Unicode encoding of a JSON string by analyzing the positions of null bytes (0) within its initial four bytes.
+<switch:python>
+[python] def determine_json_encoding(cls, sample):
+        """
+        Determine which Unicode encoding the JSON text sample is encoded with
+
+        RFC4627 (http://www.ietf.org/rfc/rfc4627.txt) suggests that the encoding of JSON text can be determined
+        by checking the pattern of NULL bytes in first 4 octets of the text.
+        :param sample: a sample of at least 4 bytes of the JSON text
+        :return: the most likely encoding of the JSON text
+        """
+        nulls_at = [i for i, j in enumerate(bytearray(sample[:4])) if j == 0]
+        if nulls_at == [0, 1, 2]:
+            return "UTF-32BE"
+        elif nulls_at == [0, 2]:
+            return "UTF-16BE"
+        elif nulls_at == [1, 2, 3]:
+            return "UTF-32LE"
+        elif nulls_at == [1, 3]:
+            return "UTF-16LE"
+        else:
+            return "UTF-8"
+<switch:english>
+[english] The logic relies on specific patterns defined in RFC 4627 to assign an encoding, defaulting to UTF-8 if no pattern matches.
+[english] What is the role of a `bytearray` here instead of a regular list or string?
+[english] Using `bytearray(sample[:4])` ensures that the input sample is treated as raw sequence of bytes, allowing direct comparison with the null byte (0).
+[english] That makes sense!

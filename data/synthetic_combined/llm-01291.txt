@@ -1,0 +1,38 @@
+[english] How do I efficiently retrieve the confirmed balances for a specific list of cryptocurrency addresses based on a minimum confirmation standard?
+[english] This function utilizes an internal blockchain adapter's command structure to fetch all requested account balances. It passes both the list of target addresses and the required confirmation depth directly to the core service.
+<switch:python>
+[python] def get_balances(self, addresses, threshold=100):
+        # type: (Iterable[Address], int) -> dict
+        """
+        Similar to :py:meth:`get_inclusion_states`. Returns the
+        confirmed balance which a list of addresses have at the latest
+        confirmed milestone.
+
+        In addition to the balances, it also returns the milestone as
+        well as the index with which the confirmed balance was
+        determined.  The balances are returned as a list in the same
+        order as the addresses were provided as input.
+
+        :param addresses:
+            List of addresses to get the confirmed balance for.
+
+        :param threshold:
+            Confirmation threshold.
+
+        References:
+
+        - https://iota.readme.io/docs/getbalances
+        """
+        return core.GetBalancesCommand(self.adapter)(
+            addresses=addresses,
+            threshold=threshold,
+        )
+<switch:english>
+[english] It is important to note that these returned balances are confirmed up to a specific milestone index rather than representing the absolute, instantaneous ledger balance.
+[english] If multiple addresses are passed in, how does the function handle cases where one address is invalid or unrecognized by the network?
+[english] The underlying adapter handles errors; typically, if an address isn't found, the system will return a confirmed balance of zero for that specific entry.
+
+```python
+cumulatively_balances = get_balances([valid_addr, invalid_addr], threshold=5)
+# expected: [..., 0]
+[english] Thanks, this helps me anticipate potential issues with my input list.

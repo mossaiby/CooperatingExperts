@@ -1,0 +1,22 @@
+[english] I need a robust asynchronous endpoint that fetches and returns a Twitter feed for a specific handle provided via request parameters.
+[english] This function serves as an async API handler. It first validates the input parameter (`handle`) against missing values, ensuring that requests for unknown handles fail early with a 404 status.
+<switch:python>
+[python] async def api_twitter(request):
+    """
+    Gets the twitter feed from a given handle.
+    :return: The feed in json format.
+    """
+    handle = request.match_info.get('handle', None)
+    if handle is None:
+        raise web.HTTPNotFound(body="Not found.")
+
+    try:
+        posts = await fetch_twitter(handle)
+    except ApiError as e:
+        raise web.HTTPInternalServerError(body=e.status)
+    return str_json_response(posts)
+<switch:english>
+[english] The code handles potential API issues by catching `ApiError` and mapping it to a 500 Internal Server Error, effectively communicating the error status back to the client.
+[english] What mechanism should I add if `fetch_twitter` raises an exception that is not of type ApiError?
+[english] To catch unexpected failures, you must wrap the entire core logic in a general try/except block. This ensures any unforeseen issues are logged and returned as server errors:
+[english] Perfect, adding generic error handling will make this much safer.

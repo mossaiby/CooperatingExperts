@@ -1,0 +1,34 @@
+[english] How can I convert a Python traceback object into a structured dictionary that's easy to serialize?
+[english] This method recursively converts each part of a traceback (frame, line number, etc.) into a dictionary for easier consumption or serialization. It handles nested tracebacks by calling its own conversion logic on `tb_next` if it exists.
+<switch:python>
+[python] def to_dict(self):
+        """Convert a Traceback into a dictionary representation"""
+        if self.tb_next is None:
+            tb_next = None
+        else:
+            tb_next = self.tb_next.to_dict()
+
+        code = {
+            'co_filename': self.tb_frame.f_code.co_filename,
+            'co_name': self.tb_frame.f_code.co_name,
+        }
+        frame = {
+            'f_globals': self.tb_frame.f_globals,
+            'f_code': code,
+        }
+        return {
+            'tb_frame': frame,
+            'tb_lineno': self.tb_lineno,
+            'tb_next': tb_next,
+        }
+<switch:english>
+[english] The function effectively maps the attributes of `TracebackType` objects (`self`, `self.tb_lineno`) and associated frame data, allowing complex traceback information to be easily accessed as a standard dictionary.
+[english] What happens if a traceback object has no nested 'next' or subsequent frames?
+[english] In this function, the initial check handles missing next tracebacks by setting `tb_next` directly to None. The recursion stops there because of that explicit initial conditional logic:
+<switch:python>
+[python] if self.tb_next is None:
+    tb_next = None
+else:
+    tb_next = self.tb_next.to_dict()
+<switch:english>
+[english] Thanks, this makes debugging much cleaner!

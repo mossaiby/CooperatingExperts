@@ -1,0 +1,34 @@
+[english] I need a helper that attempts multiple text extraction strategies using various extractors and automatically selects the one that yields the longest resulting text.
+[english] This function iterates through all provided extractors, attempting to run each one on the input text while ignoring any that fail. It then compares all successful candidates collected into the `candidates` list and chooses the winner based on length.
+<switch:python>
+[python] def _get_alternation(extractors, text):
+  """Tries each extractor on the given text and returns the 'best fit'.
+
+  Best fit is defined by as the extractor whose result consumed the most text. If more than one
+  extractor is the best fit, the result of the one that appeared earliest in the list is returned.
+
+  If all extractors raise a DeadEnd, this method too will raise a DeadEnd.
+  """
+  candidates = []
+
+  for extractor in extractors:
+    try:
+      candidates.append(_call_extractor(extractor, text))
+    except DeadEnd:
+      pass
+
+  if not candidates:
+    raise DeadEnd
+
+  result, *remaining = candidates
+
+  for candidate in remaining:
+    if len(candidate) > len(result):
+      result = candidate
+
+  return result
+<switch:english>
+[english] The logic ensures that in case of a tie for the longest extracted segment, the result from the extractor listed earliest is automatically returned.
+[english] What happens if every single one of my provided extractors raises a DeadEnd exception?
+[english] If no successful candidates are found after attempting all extractors, the function executes `raise DeadEnd` to signal that extraction failed entirely.
+[english] That clarifies how failure is handled; thank you for explaining this logic.

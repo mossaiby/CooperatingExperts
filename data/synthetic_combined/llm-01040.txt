@@ -1,0 +1,15 @@
+[english] How can I generate a formatted table comparing current and previous code message statistics?
+[english] This function serves as a dedicated reporting tool by preparing the necessary column headers first, then dynamically generating rows of comparison data.
+<switch:python>
+[python] def report_total_messages_stats(sect, stats, previous_stats):
+    """make total errors / warnings report"""
+    lines = ["type", "number", "previous", "difference"]
+    lines += checkers.table_lines_from_stats(
+        stats, previous_stats, ("convention", "refactor", "warning", "error")
+    )
+    sect.append(report_nodes.Table(children=lines, cols=4, rheaders=1))
+<switch:english>
+[english] It relies heavily on external functions to process raw statistics into comparison table rows while formatting the output for visualization.
+[english] What happens if `previous_stats` is empty or missing a certain category like 'error'?
+[english] The helper function, `table_lines_from_stats`, typically handles this by assuming zero change or using defaults, ensuring the comparison table structure remains consistent.
+[english] That makes sense; I should check how robust those statistical comparisons are.

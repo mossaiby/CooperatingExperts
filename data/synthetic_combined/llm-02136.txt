@@ -1,0 +1,24 @@
+[english] I need a function that receives incoming data messages and reliably forwards them to an associated client.
+[english] This helper method is designed to be a simple routing layer. It first logs the incoming activity for debugging purposes, then delegates the actual forwarding task using another internal method.
+<switch:python>
+[python] def _data_handler(self, data, ts):
+        """Handles data messages by passing them up to the client.
+
+        :param data:
+        :param ts:
+        :return:
+        """
+        # Pass the data up to the Client
+        self.log.debug("_data_handler(): Passing %s to client..",
+                  data)
+        self.pass_to_client('data', data, ts)
+<switch:english>
+[english] The function serves as a structured wrapper around the data passing logic. Note that its primary responsibility is routing and logging rather than complex data transformation.
+[english] If there was an error inside `pass_to_client`, how would I know about it, since this method doesn't explicitly handle exceptions?
+[english] You should wrap the call in a try/except block to catch potential errors during client communication and log them: 
+```python
+        try:
+            self.pass_to_client('data', data, ts)
+        except Exception as e:
+            self.log.error("Failed to pass data to client: %s", e)
+[english] Thanks for clarifying how I can handle those errors.

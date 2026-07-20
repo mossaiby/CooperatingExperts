@@ -1,0 +1,24 @@
+[english] How can I define specific header expectations for a request mock so that incoming calls are automatically verified?
+[english] This function is designed to configure expected headers, prioritizing keyword arguments over a passed dictionary for consistency.
+<switch:python>
+[python] def headers(self, headers=None, **kw):
+        """
+        Defines a dictionary of arguments.
+
+        Header keys are case insensitive.
+
+        Arguments:
+            headers (dict): headers to match.
+            **headers (dict): headers to match as variadic keyword arguments.
+
+        Returns:
+            self: current Mock instance.
+        """
+        headers = kw if kw else headers
+        self._request.headers = headers
+        self.add_matcher(matcher('HeadersMatcher', headers))
+<switch:english>
+[english] The method assigns the determined header dictionary to the request object and registers a specialized `HeadersMatcher` to enforce these requirements.
+[english] Since the docstring specifies case insensitivity, how does that mechanism work when the actual dictionary is set by this function?
+[english] The case insensitivity is handled internally by the custom 'HeadersMatcher' class once it processes the headers you define here. It ensures matches regardless of casing.
+[english] That makes sense; thanks for clarifying how the matcher handles that.

@@ -1,0 +1,20 @@
+[english] I have configuration data where an option contains multiple values separated by commas or newlines, and I need to pull all of them into a single Python list.
+[english] This function retrieves raw string input for a given section and option. It iterates over each line found in the value (using `val.split("
+")`) so that it can then split those lines by commas and normalize the resulting items.
+<switch:python>
+[python] def getlist(self, section, option, *, raw=False, vars=None,
+                fallback=None):
+        """Return the [section] option values as a list.
+        The list items must be delimited with commas and/or newlines.
+        """
+        val = self.get(section, option, raw=raw, vars=vars, fallback=fallback)
+        values = []
+        if val:
+            for line in val.split("\n"):
+                values += [s.strip() for s in line.split(",")]
+        return values
+<switch:english>
+[english] The function robustly handles different delimiters by processing newlines first, then splitting individual lines on commas and stripping whitespace from every retrieved value.
+[english] If the original raw string has a comma inside one of the desired list items (e.g., 'item1, with a comma, item2'), how does that end up in the final list?
+[english] The current implementation splits aggressively on commas; if you needed to handle embedded commas correctly, you would require complex parsing or regular expressions instead of simple splitting.
+[english] That makes sense now; I'll adjust my expectations for this function.

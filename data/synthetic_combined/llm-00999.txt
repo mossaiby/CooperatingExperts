@@ -1,0 +1,30 @@
+[english] How can I reliably compress a local file or directory into a gzipped tarball and stream it directly to an S3 bucket?
+[english] This function handles the process by first identifying all files, then creating a temporary in-memory buffer. It uses this buffer as the target for generating the compressed archive.
+<switch:python>
+[python] def tar_and_s3_upload(self, path, key, bucket):
+        """
+        Tar the local file or directory and upload to s3
+
+        :param path: local file or directory
+        :type path: str
+        :param key: s3 key
+        :type key: str
+        :param bucket: s3 bucket
+        :type bucket: str
+        :return: None
+        """
+        with tempfile.TemporaryFile() as temp_file:
+            if os.path.isdir(path):
+                files = [os.path.join(path, name) for name in os.listdir(path)]
+            else:
+                files = [path]
+            with tarfile.open(mode='w:gz', fileobj=temp_file) as tar_file:
+                for f in files:
+                    tar_file.add(f, arcname=os.path.basename(f))
+            temp_file.seek(0)
+            self.s3_hook.load_file_obj(temp_file, key, bucket, replace=True)
+<switch:english>
+[english] Once the tarball is fully created and seeked to zero, it's uploaded via the S3 hook using the file object stream instead of writing to disk.
+[english] Does using `arcname=os.path.basename(f)` mean that if I archive a directory like 'docs/reports', only the files inside will appear, and the 'docs' folder structure itself won't be preserved in the tarball name?
+[english] Yes, because of how `tar_file.add` is called, it flattens the structure by replacing the full path with just the file or directory base name.
+[english] That makes sense; I need to ensure my upload key accounts for the missing folder hierarchy.

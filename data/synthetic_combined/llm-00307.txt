@@ -1,0 +1,90 @@
+[english] How can I programmatically create and initialize an Azure SDK client using a configuration dictionary that contains credentials like client ID and secret?
+[english] This function automates the complex process of initializing an Azure SDK client from a raw JSON dictionary. It intelligently maps configuration keys into required service parameters, including constructing authentication tokens if they aren't provided explicitly.
+<switch:python>
+[python] def get_client_from_json_dict(client_class, config_dict, **kwargs):
+    """Return a SDK client initialized with a JSON auth dict.
+
+    The easiest way to obtain this content is to call the following CLI commands:
+
+    .. code:: bash
+
+        az ad sp create-for-rbac --sdk-auth
+
+    This method will fill automatically the following client parameters:
+    - credentials
+    - subscription_id
+    - base_url
+    - tenant_id
+
+    Parameters provided in kwargs will override parameters and be passed directly to the client.
+
+    :Example:
+
+    .. code:: python
+
+        from azure.common.client_factory import get_client_from_auth_file
+        from azure.mgmt.compute import ComputeManagementClient
+        config_dict = {
+            "clientId": "ad735158-65ca-11e7-ba4d-ecb1d756380e",
+            "clientSecret": "b70bb224-65ca-11e7-810c-ecb1d756380e",
+            "subscriptionId": "bfc42d3a-65ca-11e7-95cf-ecb1d756380e",
+            "tenantId": "c81da1d8-65ca-11e7-b1d1-ecb1d756380e",
+            "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+            "resourceManagerEndpointUrl": "https://management.azure.com/",
+            "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+            "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+            "galleryEndpointUrl": "https://gallery.azure.com/",
+            "managementEndpointUrl": "https://management.core.windows.net/"
+        }
+        client = get_client_from_json_dict(ComputeManagementClient, config_dict)
+
+    .. versionadded:: 1.1.7
+
+    :param client_class: A SDK client class
+    :param dict config_dict: A config dict.
+    :return: An instantiated client
+    """
+    is_graphrbac = client_class.__name__ == 'GraphRbacManagementClient'
+    parameters = {
+        'subscription_id': config_dict.get('subscriptionId'),
+        'base_url': config_dict.get('resourceManagerEndpointUrl'),
+        'tenant_id': config_dict.get('tenantId')  # GraphRbac
+    }
+    if is_graphrbac:
+        parameters['base_url'] = config_dict['activeDirectoryGraphResourceId']
+
+    if 'credentials' not in kwargs:
+        # Get the right resource for Credentials
+        if is_graphrbac:
+            resource = config_dict['activeDirectoryGraphResourceId']
+        else:
+            if "activeDirectoryResourceId" not in config_dict and 'resourceManagerEndpointUrl' not in config_dict:
+                raise ValueError("Need activeDirectoryResourceId or resourceManagerEndpointUrl key")
+            resource = config_dict.get('activeDirectoryResourceId', config_dict['resourceManagerEndpointUrl'])
+
+        authority_url = config_dict['activeDirectoryEndpointUrl']
+        is_adfs = bool(re.match('.+(/adfs|/adfs/)$', authority_url, re.I))
+        if is_adfs:
+            authority_url = authority_url.rstrip('/')  # workaround: ADAL is known to reject auth urls with trailing /
+        else:
+            authority_url = authority_url + '/' + config_dict['tenantId']
+
+        context = adal.AuthenticationContext(
+            authority_url,
+            api_version=None,
+            validate_authority=not is_adfs
+        )
+        parameters['credentials'] = AdalAuthentication(
+            context.acquire_token_with_client_credentials,
+            resource,
+            config_dict['clientId'],
+            config_dict['clientSecret']
+        )
+
+    parameters.update(kwargs)
+    return _instantiate_client(client_class, **parameters)
+<switch:english>
+[english] The function handles specific logic for credential initialization but relies on external dependencies like `re` and `adal`. Ensure these are appropriately imported in your calling script.
+[english] What happens if a user passes credentials via the 'credentials' parameter in kwargs, but also provides all authentication details (clientId/clientSecret) in config_dict? Does one take priority?
+[english] If 'credentials' is passed in `kwargs`, it is applied directly in the final step. Because this function only generates internal credentials if the key is missing from `kwargs`, your provided credential object will always override internally generated ones.
+[english] That makes sense, thanks for clarifying how the parameter merging works!

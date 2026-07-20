@@ -1,0 +1,49 @@
+[english] I need a function that takes an ordered list of process names and connects them sequentially into a structured format I can use for workflow definitions.
+[english] To solve this, the function iterates through the provided list of processes. It keeps track of the previously processed item to establish a link between it and the current element in each step.
+<switch:python>
+[python] def linear_connection(plist, lane):
+    """Connects a linear list of processes into a list of dictionaries
+
+    Parameters
+    ----------
+    plist : list
+        List with process names. This list should contain at least two entries.
+    lane : int
+        Corresponding lane of the processes
+
+    Returns
+    -------
+    res : list
+        List of dictionaries with the links between processes
+    """
+
+    logger.debug(
+        "Establishing linear connection with processes: {}".format(plist))
+
+    res = []
+    previous = None
+
+    for p in plist:
+        # Skip first process
+        if not previous:
+            previous = p
+            continue
+
+        res.append({
+            "input": {
+                "process": previous,
+                "lane": lane
+            },
+            "output": {
+                "process": p,
+                "lane": lane
+            }
+        })
+        previous = p
+
+    return res
+<switch:english>
+[english] This method successfully maps sequential dependencies by creating input/output dictionaries for every adjacent pair of processes. If the process list has only one entry, no connections will be recorded.
+[english] What happens if the initial `plist` input contains fewer than two items? Does it throw an error?
+[english] The function gracefully handles inputs with zero or one item by returning an empty list. The logic relies on checking if a 'previous' process exists before creating a new connection.
+[english] That makes sense, good catch on the edge case handling.

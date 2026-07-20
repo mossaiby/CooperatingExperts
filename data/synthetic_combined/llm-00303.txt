@@ -1,0 +1,22 @@
+[english] I need a way to consolidate my widget's overall size, its screen position, and its defined border dimensions into one consistent data structure.
+[english] To format this information for vertex generation, we first pull the basic dimensions and location directly from self.widget, then retrieve the specific boundary values from self.border, combining them into a single 6-tuple.
+<switch:python>
+[python] def getPosSize(self):
+        """
+        Helper function converting the actual widget position and size into a usable and offsetted form.
+        
+        This function should return a 6-tuple of ``(sx,sy,x,y,bx,by)`` where sx and sy are the size, x and y the position and bx and by are the border size.
+        
+        All values should be in pixels and already include all offsets, as they are used directly for generation of vertex data.
+        
+        This method can also be overridden to limit the background to a specific part of its widget.
+        """
+        sx,sy = self.widget.size
+        x,y = self.widget.pos
+        bx,by = self.border
+        return sx,sy,x,y,bx,by
+<switch:english>
+[english] This function provides all necessary pixel values, assuming that both `self.widget` properties (`size`, `pos`) and `self.border` are always defined on the instance.
+[english] If I haven't explicitly set a border (i.e., self.border is None), what behavior would getPosSize exhibit?
+[english] Assuming proper fallback logic, accessing individual elements of 'None' results in an error; however, if `self.border` defaults to a tuple of zeros when not set, the function will correctly return zero values for bx and by.
+[english] Got it, makes sense!

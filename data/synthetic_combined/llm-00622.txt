@@ -1,0 +1,42 @@
+[english] How do I generate a continuous unnormalized Gaussian pulse over a given range of time points?
+[english] This function calculates the standard Gaussian distribution values across your provided `times` array and sets up various normalization options.
+<switch:python>
+[python] def gaussian(times: np.ndarray, amp: complex, center: float, sigma: float,
+             zeroed_width: Union[None, float] = None, rescale_amp: bool = False,
+             ret_x: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    r"""Continuous unnormalized gaussian pulse.
+
+    Integrated area under curve is $\Omega_g(amp, sigma) = amp \times np.sqrt(2\pi \sigma^2)$
+
+    Args:
+        times: Times to output pulse for.
+        amp: Pulse amplitude at `center`. If `zeroed_width` is set pulse amplitude at center
+            will be $amp-\Omega_g(center\pm zeroed_width/2)$ unless `rescale_amp` is set,
+            in which case all samples will be rescaled such that the center
+            amplitude will be `amp`.
+        center: Center (mean) of pulse.
+        sigma: Width (standard deviation) of pulse.
+        zeroed_width: Subtract baseline to gaussian pulses to make sure
+                 $\Omega_g(center \pm zeroed_width/2)=0$ is satisfied. This is used to avoid
+                 large discontinuities at the start of a gaussian pulse.
+        rescale_amp: If `zeroed_width` is not `None` and `rescale_amp=True` the pulse will
+                     be rescaled so that $\Omega_g(center)-\Omega_g(center\pm zeroed_width/2)=amp$.
+        ret_x: Return centered and standard deviation normalized pulse location.
+               $x=(times-center)/sigma.
+    """
+    times = np.asarray(times, dtype=np.complex_)
+    x = (times-center)/sigma
+    gauss = amp*np.exp(-x**2/2).astype(np.complex_)
+
+    if zeroed_width is not None:
+        gauss = _fix_gaussian_width(gauss, amp=amp, center=center, sigma=sigma,
+                                    zeroed_width=zeroed_width, rescale_amp=rescale_amp)
+
+    if ret_x:
+        return gauss, x
+    return gauss
+<switch:english>
+[english] The `gauss` variable holds the raw Gaussian pulse. You can further normalize it using `zeroed_width` if you need to counteract baseline shifts.
+[english] What happens when I set both `rescale_amp=True` and provide a specific `zeroed_width` value?
+[english] When `rescale_amp=True`, the function ensures the amplitude at `center` equals `amp` even after applying baseline correction from `zeroed_width`. This means it removes discontinuities while maintaining the peak height specified by the `amp` parameter.
+[english] That makes sense, thank you for explaining how those parameters interact.

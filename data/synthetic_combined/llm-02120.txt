@@ -1,0 +1,17 @@
+[english] How can I check if a given piece of data ends with any of several predefined line terminator characters?
+[english] The function iterates through self.LINE_TERMINATORS, checking each one against the input `data`. It returns the first matching terminal it finds.
+<switch:python>
+[python] def suffix_line_terminator(self, data):
+        """
+        Return line terminator data ends with or None.
+        """
+        for t in self.LINE_TERMINATORS:
+            if data.endswith(t):
+                return t
+
+        return None
+<switch:english>
+[english] If no terminators match the end of the string, it safely falls back to returning None.
+[english] What happens if a piece of data technically ends with two different defined terminators?
+[english] The function will return the terminator that appears earliest in the self.LINE_TERMINATORS list definition.
+[english] Thanks for clarifying how the priority is handled.

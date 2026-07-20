@@ -1,0 +1,37 @@
+[english] How do I extract version details and duration from a StarCraft II replay header file?
+[english] This function reads the user data header content, first verifying if it belongs to an SC2 replay using regex. If valid, it uses table parsing to pull key metadata like version numbers and duration.
+<switch:python>
+[python] def _parse_header(self):
+        """Parse the user data header portion of the replay."""
+        header = OrderedDict()
+        user_data_header = self.archive.header['user_data_header']['content']
+        if re.search(r'StarCraft II replay', user_data_header):
+            user_data_header = StringIO.StringIO(user_data_header)
+            user_data_header.seek(30) # Just skip the beginning.
+            header.update(read_table(user_data_header, ['release_flag',
+                                                        'major_version',
+                                                        'minor_version',
+                                                        'maintenance_version',
+                                                        'build_number',
+                                                        'unknown',
+                                                        'unknown',
+                                                        'duration']))
+
+            # Some post processing is required.
+            header['version'] = '%s.%s.%s.%s' % (header['major_version'],
+                                                 header['minor_version'],
+                                                 header['maintenance_version'],
+                                                 header['build_number'])
+            if not header['release_flag']:
+                header['version'] += ' (dev)'
+
+            # Duration is actually stored as 1/16th of a seconds. Go figure.
+            header['duration'] /= 16
+        else:
+            raise ValueError("The given file is not a StarCraft II replay.")
+        return header
+<switch:english>
+[english] Note that the recorded duration is scaled by a factor of 16 during processing, and final version formatting depends on the release flag status.
+[english] If `release_flag` were present but empty (not false), how would the function handle constructing the final 'version' string?
+[english] The current logic relies solely on the boolean state of `release_flag`. If it were truthy, no '(dev)' suffix would be added during version formatting.
+[english] That makes sense, thanks for clearing that up.

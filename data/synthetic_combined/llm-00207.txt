@@ -1,0 +1,22 @@
+[english] How can I transfer all properties and retrieval times from a source cluster object to my current object, ensuring the source object's data fields are cleared afterward?
+[english] This method achieves a state transfer by directly copying critical attributes—like configuration properties and timestamps—from the input object (`other`) into `self`. After successfully moving this data, it intentionally resets those specific attributes on the source object.
+<switch:python>
+[python] def _fill_from_h2ocluster(self, other):
+        """
+        Update information in this object from another H2OCluster instance.
+
+        :param H2OCluster other: source of the new information for this object.
+        """
+        self._props = other._props
+        self._retrieved_at = other._retrieved_at
+        other._props = {}
+        other._retrieved_at = None
+<switch:english>
+[english] It is important to note that this function modifies the `other` instance by clearing its state for these fields, meaning the initial source object becomes effectively dormant after use.
+[english] If I have another copy of a cluster and call this method again using an object with already empty properties, will it still attempt to clear things?
+[english] Yes, it will execute the clearing steps regardless of whether data is present. The state setting code executes unconditionally:
+<switch:python>
+[python] other._props = {}
+        other._retrieved_at = None
+<switch:english>
+[english] Perfect, that clarifies how it handles subsequent calls!

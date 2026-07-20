@@ -1,0 +1,20 @@
+[english] How do I correctly convert a complex database object into a serializable string representation for use in an older or newer version of Django?
+[english] This function prepares objects for serialization by checking the installed Django version. It dynamically selects the appropriate internal method to extract the value based on whether the version is above 1.9.
+<switch:python>
+[python] def value_to_string(self, obj):
+        """Prepare field for serialization."""
+        if DJANGO_VERSION > (1, 9):
+            value = self.value_from_object(obj)
+        else:
+            value = self._get_val_from_obj(obj)
+        return self.get_prep_value(value)
+<switch:english>
+[english] The main logic handles version compatibility before finally applying standard preparation.
+The function delegates the actual data transformation to `self.get_prep_value` after determining the correct extraction method.
+[english] What happens if DJANGO_VERSION is exactly (1, 9)?
+[english] If it's exactly (1, 9), the condition `DJANGO_VERSION > (1, 9)` evaluates to False.
+<switch:python>
+[python] else:
+            value = self._get_val_from_obj(obj)
+<switch:english>
+[english] That makes sense. Thanks for clarifying how this handles versioning.

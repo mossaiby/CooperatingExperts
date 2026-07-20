@@ -1,0 +1,39 @@
+[english] How can I safely validate that an encryption scheme provided in a configuration settings object is configured correctly?
+[english] This function validates the specified encryption scheme by first fetching it from the config, then verifying its AES mode against allowed values. It uses structured error handling to raise specific exceptions if the key is missing or invalid.
+<switch:python>
+[python] def _check_scheme(self, config):
+        """
+        check for a valid scheme
+
+        raise AttributeError if missing
+        raise ValueError if not valid
+        """
+        try:
+            scheme = config.get(
+                escape_for_ini('keyring-setting'),
+                escape_for_ini('scheme'),
+            )
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            raise AttributeError("Encryption scheme missing")
+
+        # extract AES mode
+        aesmode = scheme[-3:]
+        if aesmode not in self._get_mode():
+            raise ValueError("Encryption scheme invalid: %s" % (aesmode))
+
+        # setup AES mode
+        self.aesmode = aesmode
+
+        # remove pointless crypto module name
+        if scheme.startswith('PyCryptodome '):
+            scheme = scheme[13:]
+
+        # check other scheme properties
+        if scheme != self.scheme:
+            raise ValueError("Encryption scheme mismatch "
+                             "(exp.: %s, found: %s)" % (self.scheme, scheme))
+<switch:english>
+[english] The code removes a common prefix ('PyCryptodome ') from the scheme name for easier comparison with other properties. This ensures that the encryption scheme adheres strictly to defined internal standards.
+[english] What happens if a valid AES mode is found, but the scheme still doesn't match `self.scheme` after removing the 'PyCryptodome' prefix?
+[english] If they don't match after normalization, the function raises a ValueError to prevent usage with an unexpected or mismatched encryption setup.
+[english] Perfect, this clarifies how the scheme is enforced.

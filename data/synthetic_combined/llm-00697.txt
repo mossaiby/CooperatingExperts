@@ -1,0 +1,25 @@
+[english] How can I convert a raw database record containing file metadata into a standardized application model?
+[english] This function extracts necessary information from a database record to build a structure representing a file within the system. It first determines the unique path and sets the fundamental properties of the model, like its type and timestamps.
+<switch:python>
+[python] def _file_model_from_db(self, record, content, format):
+        """
+        Build a file model from database record.
+        """
+        # TODO: Most of this is shared with _notebook_model_from_db.
+        path = to_api_path(record['parent_name'] + record['name'])
+        model = base_model(path)
+        model['type'] = 'file'
+        model['last_modified'] = model['created'] = record['created_at']
+        if content:
+            bcontent = record['content']
+            model['content'], model['format'], model['mimetype'] = from_b64(
+                path,
+                bcontent,
+                format,
+            )
+        return model
+<switch:english>
+[english] The code checks for existing content before attempting decryption or decoding using `from_b64`, ensuring that the model is correctly populated with format and MIME type when data exists.
+[english] What happens if a database record comes through where the 'content' field is null or missing?
+[english] If the 'content' is null, the function skips the `if content:` block entirely. Therefore, the model object will be initialized without any values for `model['content']`, `model['format']`, or `model['mimetype']`.
+[english] That makes sense, thanks for the detailed breakdown.

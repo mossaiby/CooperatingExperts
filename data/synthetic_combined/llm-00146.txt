@@ -1,0 +1,38 @@
+[english] How can I find all active data streams that match a specific property and value, like finding all 'EEG' type channels?
+[english] This function uses the underlying C library via FFI bindings (`lib`) to efficiently search for matching stream handles. It passes the desired property name and its associated string value directly into the system resolving function.
+<switch:python>
+[python] def resolve_byprop(prop, value, minimum=1, timeout=FOREVER):
+    """Resolve all streams with a specific value for a given property.
+
+    If the goal is to resolve a specific stream, this method is preferred over 
+    resolving all streams and then selecting the desired one.
+    
+    Keyword arguments:
+    prop -- The StreamInfo property that should have a specific value (e.g.,   
+            "name", "type", "source_id", or "desc/manufaturer").
+    value -- The string value that the property should have (e.g., "EEG" as 
+             the type property).
+    minimum -- Return at least this many streams. (default 1)
+    timeout -- Optionally a timeout of the operation, in seconds. If the 
+               timeout expires, less than the desired number of streams 
+               (possibly none) will be returned. (default FOREVER)
+               
+    Returns a list of matching StreamInfo objects (with empty desc field), any 
+    of which can subsequently be used to open an inlet.
+    
+    Example: results = resolve_Stream_byprop("type","EEG")
+
+    """
+    # noinspection PyCallingNonCallable
+    buffer = (c_void_p*1024)()
+    num_found = lib.lsl_resolve_byprop(byref(buffer), 1024,
+                                       c_char_p(str.encode(prop)),
+                                       c_char_p(str.encode(value)),
+                                       minimum,
+                                       c_double(timeout))
+    return [StreamInfo(handle=buffer[k]) for k in range(num_found)]
+<switch:english>
+[english] The method returns a list of `StreamInfo` objects, which are wrapper classes around the raw handle pointers found by the resolver.
+[english] What happens if I set the 'minimum' parameter to 5 but only two streams actually match?
+[english] If fewer than five matching streams are found within the specified timeout, the function will return all available matches (two), provided there were any. It cannot guarantee a minimum number of results.
+[english] That makes sense; I should be careful when relying on minimum counts.

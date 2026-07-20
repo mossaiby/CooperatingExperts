@@ -1,0 +1,34 @@
+[english] How can I securely encrypt a sensitive plaintext message using my Google Cloud KMS key?
+[english] This function uses the Google Cloud KMS client library through `self.get_conn().projects()` to prepare and execute an encryption request. It structures the body with base64 encoded data.
+<switch:python>
+[python] def encrypt(self, key_name, plaintext, authenticated_data=None):
+        """
+        Encrypts a plaintext message using Google Cloud KMS.
+
+        :param key_name: The Resource Name for the key (or key version)
+                         to be used for encyption. Of the form
+                         ``projects/*/locations/*/keyRings/*/cryptoKeys/**``
+        :type key_name: str
+        :param plaintext: The message to be encrypted.
+        :type plaintext: bytes
+        :param authenticated_data: Optional additional authenticated data that
+                                   must also be provided to decrypt the message.
+        :type authenticated_data: bytes
+        :return: The base 64 encoded ciphertext of the original message.
+        :rtype: str
+        """
+        keys = self.get_conn().projects().locations().keyRings().cryptoKeys()
+        body = {'plaintext': _b64encode(plaintext)}
+        if authenticated_data:
+            body['additionalAuthenticatedData'] = _b64encode(authenticated_data)
+
+        request = keys.encrypt(name=key_name, body=body)
+        response = request.execute(num_retries=self.num_retries)
+
+        ciphertext = response['ciphertext']
+        return ciphertext
+<switch:english>
+[english] The function completes the process by executing the API call and extracting the resulting ciphertext from the KMS service, which is returned as a base64 string.
+[english] What must I ensure I have ready if you decide to provide authenticated data?
+[english] If using `authenticated_data`, it functions like an integrity check. This data must be exactly matched during decryption; otherwise, the KMS service will reject the attempt and throw a failure error.
+[english] Thanks for clarifying how that request handling works!

@@ -1,0 +1,15 @@
+[english] I need a flexible way to search for all previous siblings using an existing method in my object.
+[english] This function uses the `operator.methodcaller` utility to dynamically create a callable that invokes your desired method.
+It then wraps this call within a multi-process helper to apply it broadly across different contexts.
+<switch:python>
+[python] def find_previous_siblings(self, *args, **kwargs):
+        """
+        Like :meth:`find_all`, but searches through :attr:`previous_siblings`
+        """
+        op = operator.methodcaller('find_previous_siblings', *args, **kwargs)
+        return self._wrap_multi(op)
+<switch:english>
+[english] In short, it acts as a dynamic proxy for finding previous siblings so you don't have to explicitly reference the method name everywhere. This approach assumes the `find_previous_siblings` method exists on the instance this is called upon.
+[english] What happens if the original object doesn't actually define a 'find_previous_siblings' method?
+[english] If the method does not exist, Python will raise an `AttributeError`. You could add error handling within your multi-wrap to catch this gracefully.
+[english] That makes sense; I appreciate the clarity on its behavior.

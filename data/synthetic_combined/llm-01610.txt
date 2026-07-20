@@ -1,0 +1,25 @@
+[english] In bioinformatics, how can I programmatically extract all gene symbols from an HPO dataset that exhibit incomplete penetrance?
+[english] The function first calls a helper to parse the raw input lines into a comprehensive dictionary of gene attributes. It then iterates through every identified gene symbol in this collection.
+<switch:python>
+[python] def get_incomplete_penetrance_genes(hpo_lines):
+    """Get a set with all genes that have incomplete penetrance according to HPO
+    
+    Args:
+        hpo_lines(iterable(str))
+    
+    Returns:
+        incomplete_penetrance_genes(set): A set with the hgnc symbols of all 
+                                          genes with incomplete penetrance
+        
+    """
+    genes = parse_hpo_genes(hpo_lines)
+    incomplete_penetrance_genes = set()
+    for hgnc_symbol in genes:
+        if genes[hgnc_symbol].get('incomplete_penetrance'):
+            incomplete_penetrance_genes.add(hgnc_symbol)
+    return incomplete_penetrance_genes
+<switch:english>
+[english] This method ensures only genes flagged with 'incomplete_penetrance' are captured, returning a resulting set that may be empty if no such genes exist within the provided HPO data.
+[english] What happens if one of the input lines is missing the entire 'incomplete_penetrance' key for a particular gene?
+[english] The code safely handles this by utilizing the `.get('incomplete_penetrance')` method inside the loop, which returns `None` (or another default value) rather than raising an error when the key does not exist.
+[english] That makes sense. Thanks for clarifying.

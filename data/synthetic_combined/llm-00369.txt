@@ -1,0 +1,21 @@
+[english] How do I connect my code to Opsgenie and send a new alert using their API?
+[english] To execute an alert, this function first retrieves your required API key and then constructs the necessary HTTP request parameters.
+<switch:python>
+[python] def execute(self, payload={}):
+        """
+        Execute the Opsgenie Alert call
+
+        :param payload: Opsgenie API Create Alert payload values
+            See https://docs.opsgenie.com/docs/alert-api#section-create-alert
+        :type payload: dict
+        """
+        api_key = self._get_api_key()
+        return self.run(endpoint='v2/alerts',
+                        data=json.dumps(payload),
+                        headers={'Content-Type': 'application/json',
+                                 'Authorization': 'GenieKey %s' % api_key})
+<switch:english>
+[english] The function dynamically builds a request by serializing the input `payload` into JSON and securely including an authorization header.
+[english] What happens if the payload is missing required fields that Opsgenie needs to accept the alert?
+[english] If critical fields are missing, Opsgenie will return an API error. To handle this, you should wrap the call in a try-except block and check the response status code from self.run() to catch validation issues.
+[english] That makes sense, thanks for clarifying how the auth works.

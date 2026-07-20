@@ -1,0 +1,20 @@
+[english] I need a method that handles sending HTTP requests to different URLs and retrieves only the body content of the response.
+[english] This function acts as an abstraction over underlying network calls by leveraging `self.fetch`. It accepts a target URL and any optional parameters needed for the request payload, handling the connection logic internally before returning the data.
+<switch:python>
+[python] def __send_request(self, url, params=None):
+        """Send request"""
+
+        r = self.fetch(url, payload=params)
+        return r.text
+<switch:english>
+[english] The method simplifies usage by immediately extracting and returning the response body as a raw string via `.text`. However, it does not explicitly handle HTTP status codes or network errors itself.
+[english] What happens if the server returns an error code like 404 or 500?
+[english] Currently, the function assumes success and blindly calls `r.text`, which might raise an exception if the request failed dramatically. To handle this, you should check the response status code:
+<switch:python>
+[python] def __send_request(self, url, params=None):
+    r = self.fetch(url, payload=params)
+    if r.status_code != 200:
+        raise ConnectionError(f"Request failed with status {r.status_code}")
+    return r.text
+<switch:english>
+[english] Perfect, adding that check will make the code much more robust.

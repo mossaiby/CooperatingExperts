@@ -1,0 +1,33 @@
+[english] Write a function that scrapes all available IPv4 and IPv6 addresses from the system's network interfaces, ensuring private or link-local IPs are ignored.
+[english] This approach iterates over every registered network adapter to extract both IPv4 and IPv6 configurations. It applies specific filtering logic to exclude common local management IP ranges like 169.254/16 (IPv4) and fe80::/32 or any addresses including interface names for IPv6.
+<switch:python>
+[python] def get_addresses():
+    """
+    Get all IP addresses.
+
+    Returns list of addresses.
+    """
+    addresses = set()
+
+    for iface in ifaddr.get_adapters():
+        for addr in iface.ips:
+            # Filter out link-local addresses.
+            if addr.is_IPv4:
+                ip = addr.ip
+
+                if not ip.startswith('169.254.'):
+                    addresses.add(ip)
+            elif addr.is_IPv6:
+                # Sometimes, IPv6 addresses will have the interface name
+                # appended, e.g. %eth0. Handle that.
+                ip = addr.ip[0].split('%')[0].lower()
+
+                if not ip.startswith('fe80:'):
+                    addresses.add('[{}]'.format(ip))
+
+    return sorted(list(addresses))
+<switch:english>
+[english] The code handles tricky edge cases, such as cleaning up interface names appended to IPv6 addresses. Remember that this relies on the availability and correct configuration of a network identity provider (`ifaddr` in this case).
+[english] If an IP address appears multiple times (e.g., bound to different ports), does the current code handle duplicates?
+[english] Yes, because it stores all collected IPs within a Python `set()`, any duplicate addresses are automatically filtered out before the final list is returned.
+[english] This is helpful; thanks for reviewing my network utility.

@@ -1,0 +1,46 @@
+[english] I need a way to automatically send DMARC forensic reports to Splunk so we can monitor email authentication failures.
+[english] This function processes forensic report data and prepares it for transmission to an endpoint using the HTTP Event Collector (HEC) API. It standardizes the headers, handles non-list inputs, and serializes the JSON payload before attempting the POST request.
+<switch:python>
+[python] def save_forensic_reports_to_splunk(self, forensic_reports):
+        """
+        Saves forensic DMARC reports to Splunk
+
+        Args:
+            forensic_reports (list):  A list of forensic report dictionaries
+            to save in Splunk
+        """
+        logger.debug("Saving forensic reports to Splunk")
+        if type(forensic_reports) == dict:
+            forensic_reports = [forensic_reports]
+
+        if len(forensic_reports) < 1:
+            return
+
+        json_str = ""
+        for report in forensic_reports:
+            data = self._common_data.copy()
+            data["sourcetype"] = "dmarc:forensic"
+            timestamp = human_timestamp_to_timestamp(
+                report["arrival_date_utc"])
+            data["time"] = timestamp
+            data["event"] = report.copy()
+            json_str += "{0}\n".format(json.dumps(data))
+
+        if not self.session.verify:
+            logger.debug("Skipping certificate verification for Splunk HEC")
+        try:
+            response = self.session.post(self.url, data=json_str,
+                                         timeout=self.timeout)
+            response = response.json()
+        except Exception as e:
+            raise SplunkError(e.__str__())
+        if response["code"] != 0:
+            raise SplunkError(response["text"])
+<switch:english>
+[english] The code efficiently formats the reports by appending them as newline-separated JSON strings; however, the repeated string concatenation within the loop could be optimized for very large report batches for better performance.
+[english] What happens if a user passes an input that is neither a list nor a dictionary of forensic reports?
+[english] The function currently only explicitly checks for `dict` and fails silently on other types. If you wanted to ensure robustness, you could add more validation at the start like this:
+<switch:python>
+[python] if not isinstance(forensic_reports, (list, dict)): raise TypeError(...)
+<switch:english>
+[english] That makes sense; better type checking is a good idea.

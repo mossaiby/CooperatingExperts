@@ -1,0 +1,27 @@
+[english] How can I safely write data into a specific segment or slice of an existing file while ensuring I don't exceed that section's defined size?
+[english] This method handles writing within a designated 'slice' using boundary checks. It starts by confirming the object isn't closed and then validates if the intended write operation fits within `self.size`.
+<switch:python>
+[python] def write(self, b):
+        '''
+        Same as `file.write()` but for the slice.
+        
+        raises:
+            EOFError if the new seek position is > `self.size`.
+        '''
+        if self.closed:
+            raise ValueError('I/O operation on closed file.')
+        
+        if self.pos + len(b) > self.size:
+            raise EOFError('new position ({}) will fall outside the file slice range (0-{})'.format(self.pos + len(b), self.size))
+        
+        with self.lock:
+            self.f.seek(self.start + self.pos)
+            result = self.f.write(b)
+            self.seek(self.pos + len(b))
+        
+        return result
+<switch:english>
+[english] Thread safety is managed via `with self.lock`. This wrapper translates the internal slice coordinates (`self.pos`) into actual OS file pointers before performing the write and updating the position.
+[english] If I attempt a write that goes past `self.size`, what specific error message will the function return?
+[english] It raises an `EOFError` with a detailed message, like 'new position (X) will fall outside the file slice range (0-Y)', as defined by the bounds check: if self.pos + len(b) > self.size.
+[english] That makes sense; it's important to know how boundary errors are handled.

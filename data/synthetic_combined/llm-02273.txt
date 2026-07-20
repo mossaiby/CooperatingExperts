@@ -1,0 +1,28 @@
+[english] How can I retrieve a specific team based on its name from my existing data structure?
+[english] This method relies on an internal `self.get_teams(name)` call to fetch potential results. It then checks the boolean status of that request before iterating through the returned list.
+<switch:python>
+[python] def get_team(self, name):
+        '''**Description**
+            Return the team with the specified team name, if it is present.
+
+        **Arguments**
+            - **name**: the name of the team to return
+
+        **Success Return Value**
+            The requested team.
+
+        **Example**
+            `examples/user_team_mgmt.py <https://github.com/draios/python-sdc-client/blob/master/examples/user_team_mgmt.py>`_
+        '''
+        res = self.get_teams(name)
+        if res[0] == False:
+            return res
+        for t in res[1]:
+            if t['name'] == name:
+                return [True, t]
+        return [False, 'Could not find team']
+<switch:english>
+[english] The function returns a standardized format of a list: [True, team_object] if found, or [False, message/data] otherwise. Be aware that it assumes `self.get_teams` follows this specific nested return structure.
+[english] If there are multiple teams with the same name, how many would the function successfully return?
+[english] The current implementation only returns the first matching team found during iteration. If duplicates exist, you would need to modify the loop to collect all matches instead of returning immediately.
+[english] That makes sense for handling potential data conflicts.

@@ -1,0 +1,55 @@
+[english] I need a way to dynamically generate or update complex filter configurations based on optional user inputs like compression level and shuffle settings.
+[english] The function starts by extracting specific filtering parameters from `kwargs`. It checks if these provided values differ from the object's current state, setting internal flags (`self._filters = None`) if a change is detected to force recreation.
+<switch:python>
+[python] def _all_get_filters(self, kwargs=None):
+        """Makes filters
+
+        Pops filter arguments from `kwargs` such that they are not passed
+        on to other functions also using kwargs.
+
+        """
+        if kwargs is None:
+            kwargs = {}
+        complib = kwargs.pop('complib', None)
+        complevel = kwargs.pop('complevel', None)
+        shuffle = kwargs.pop('shuffle', None)
+        fletcher32 = kwargs.pop('fletcher32', None)
+        if complib is not None:
+            self._filters = None
+        else:
+            complib = self._complib
+        if complevel is not None:
+            self._filters = None
+        else:
+            complevel = self._complevel
+        if shuffle is not None:
+            self._filters = None
+        else:
+            shuffle = self._shuffle
+        if fletcher32 is not None:
+            self._filters = None
+        else:
+            fletcher32 = self._fletcher32
+
+        if self._filters is None:
+            # Recreate the filters if something was changed
+            self._filters = pt.Filters(complib=complib, complevel=complevel,
+                                       shuffle=shuffle, fletcher32=fletcher32)
+            self._hdf5file.filters = self._filters
+            self._hdf5store._filters = self._filters
+            self._hdf5store._complevel = complevel
+            self._hdf5store._complib = complib
+            self._hdf5store._fletcher32 = fletcher32
+
+        return self._filters
+<switch:english>
+[english] If any parameter was updated, it reconstructures the filters and ensures all connected methods (like HDF5 storage) are consistent with the new configuration. This guarantees synchronization across components.
+[english] What happens when I call this function but provide no filtering arguments?
+[english] If no arguments change state, the existing `self._filters` object is returned immediately without unnecessary reconstruction or updating the associated attributes.
+<switch:python>
+[python] def _all_get_filters(self, kwargs=None):
+    # ... logic to find no changes ...
+    if self._filters is not None: 
+        return self._filters
+<switch:english>
+[english] That makes perfect sense for handling state management.

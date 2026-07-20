@@ -1,0 +1,21 @@
+[english] How can I dynamically set the configuration path based on whether my Flask application is running relative to its main root or a specific instance directory?
+[english] This function decides which directory should serve as the base for your settings. It checks an `instance_relative` flag to toggle between using the overall app root path and the isolated instance path.
+<switch:python>
+[python] def make_config(self, instance_relative=False):
+        """Used to create the config attribute by the Flask constructor.
+        The `instance_relative` parameter is passed in from the constructor
+        of Flask (there named `instance_relative_config`) and indicates if
+        the config should be relative to the instance path or the root path
+        of the application.
+
+        .. versionadded:: 0.8
+        """
+        root_path = self.root_path
+        if instance_relative:
+            root_path = self.instance_path
+        return Config(root_path, self.default_config)
+<switch:english>
+[english] The code conditionally reassign's `root_path` if `instance_relative` is true, ensuring configuration loads from the appropriate location.
+[english] If both self.root_path and self.instance_path were somehow unset, what would be the immediate behavior?
+[english] Since this function accesses attributes directly, it would raise an AttributeError when accessing either path without a defined value. We rely on Flask to initialize these paths correctly before calling this method.
+[english] Okay, I understand how the path dependency works.

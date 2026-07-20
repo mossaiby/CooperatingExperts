@@ -1,0 +1,28 @@
+[english] How do I set up command-line arguments for controlling report directories and plot generation in GSEApy?
+[english] This function uses Python's `argparse` library to define a series of optional flags that allow users to customize output settings when running a script.
+<switch:python>
+[python] def add_output_option(parser):
+    """output option"""
+
+    parser.add_argument("-o", "--outdir", dest="outdir", type=str, default='GSEApy_reports',
+                        metavar='', action="store",
+                        help="The GSEApy output directory. Default: the current working directory")
+    parser.add_argument("-f", "--format", dest="format", type=str, metavar='', action="store",
+                        choices=("pdf", "png", "jpeg", "eps", "svg"), default="pdf",
+                        help="File extensions supported by Matplotlib active backend,\
+                              choose from {'pdf', 'png', 'jpeg','ps', 'eps','svg'}. Default: 'pdf'.")
+    parser.add_argument("--fs", "--figsize", action='store', nargs=2, dest='figsize',
+                        metavar=('width', 'height'),type=float, default=(6.5, 6),
+                        help="The figsize keyword argument need two parameters to define. Default: (6.5, 6)")
+    parser.add_argument("--graph", dest = "graph", action="store", type=int, default=20, metavar='int',
+                        help="Numbers of top graphs produced. Default: 20")
+    parser.add_argument("--no-plot", action='store_true', dest='noplot', default=False,
+                        help="Speed up computing by suppressing the plot output."+\
+                             "This is useful only if data are interested. Default: False.")
+    parser.add_argument("-v", "--verbose", action="store_true", default=False, dest='verbose',
+                        help="Increase output verbosity, print out progress of your job", )
+<switch:english>
+[english] These defined parameters control where reports are saved, what file format is used for plots, and how verbose the execution should be.
+[english] If I pass '--no-plot', does it prevent any plotting or just suppress output?
+[english] It prevents plot generation entirely by suppressing matplotlib calls. The `action='store_true'` sets the destination variable to True when this flag is present in your arguments.
+[english] That makes sense, thanks for clarifying how that specific switch works now.

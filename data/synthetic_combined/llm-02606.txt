@@ -1,0 +1,38 @@
+[english] How do I create a topic on an Azure service bus using Python?
+[english] This function handles creating a new topic resource by constructing an appropriate HTTP request to the Azure API.
+<switch:python>
+[python] def create_topic(self, topic_name, topic=None, fail_on_exist=False):
+        '''
+        Creates a new topic. Once created, this topic resource manifest is
+        immutable.
+
+        topic_name:
+            Name of the topic to create.
+        topic:
+            Topic object to create.
+        fail_on_exist:
+            Specify whether to throw an exception when the topic exists.
+        '''
+        _validate_not_none('topic_name', topic_name)
+        request = HTTPRequest()
+        request.method = 'PUT'
+        request.host = self._get_host()
+        request.path = '/' + _str(topic_name) + ''
+        request.body = _get_request_body(_convert_topic_to_xml(topic))
+        request.path, request.query = self._httpclient._update_request_uri_query(request)  # pylint: disable=protected-access
+        request.headers = self._update_service_bus_header(request)
+        if not fail_on_exist:
+            try:
+                self._perform_request(request)
+                return True
+            except AzureHttpError as ex:
+                _dont_fail_on_exist(ex)
+                return False
+        else:
+            self._perform_request(request)
+            return True
+<switch:english>
+[english] The successful creation is determined by whether the request completes without error, unless failure handling logic is active. Here is how it works:
+[english] What happens if I set fail_on_exist=False but the topic still doesn't exist yet?
+[english] If fails on exist is False and the topic doesn't exist (i.e., a 404 error occurs from Azure), this function will return True, allowing you to continue without raising an exception.
+[english] Got it, thanks!

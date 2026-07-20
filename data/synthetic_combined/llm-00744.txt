@@ -1,0 +1,23 @@
+[english] How do I ensure my GUI progress indicator label is accurately updated when the underlying progress variables change?
+[english] This method calculates the completion percentage using current properties like start, end, and current values of your widget.
+<switch:python>
+[python] def update_progressbar(self):
+        """
+        Updates the progressbar by re-calculating the label.
+        
+        It is not required to manually call this method since setting any of the
+        properties of this class will automatically trigger a re-calculation.
+        """
+        n,nmin,nmax = self.wprogressbar.n,self.wprogressbar.nmin,self.wprogressbar.nmax
+        if (nmax-nmin)==0:
+            percent = 0 # prevents ZeroDivisionError
+        else:
+            percent = max(min((n-nmin)/(nmax-nmin),1.),0.)*100
+        dat = {"value":round(n,4),"n":round(n,4),"nmin":round(nmin,4),"nmax":round(nmax,4),"percent":round(percent,4),"p":round(percent,4)}
+        txt = self._label_progressbar.format(**dat)
+        self.wprogresslabel.label = txt
+<switch:english>
+[english] The function safely handles zero range to prevent division errors and uses rounding for precise label formatting.
+[english] What happens if 'n' exceeds 'nmax'? Does the result display a percentage greater than 100?
+[english] No, it doesn't. The `min((n-nmin)/(nmax-nmin),1.)` logic ensures that even if 'n' is higher, the calculated percent will never exceed 100%.
+[english] That makes sense, thanks for clarifying!

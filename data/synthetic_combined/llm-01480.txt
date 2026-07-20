@@ -1,0 +1,36 @@
+[english] How can I programmatically construct a message with multiple attachments?
+[english] This function begins by constructing the main message using private helpers, sends that initial content via an API call, and then checks for any attached files to send.
+<switch:python>
+[python] def send(self):
+        """Start sending the message and attachments."""
+        self._construct_message()
+
+        if self.verbose:
+            print(
+                "Debugging info"
+                "\n--------------"
+                "\n{} Message created.".format(timestamp())
+            )
+
+        self._send_content("/sendMessage")
+
+        if self.attachments:
+            if isinstance(self.attachments, str):
+                self.attachments = [self.attachments]
+            for a in self.attachments:
+                self.message["document"] = a
+                self._send_content(method="/sendDocument")
+
+        if self.verbose:
+            print(
+                timestamp(),
+                type(self).__name__ + " info:",
+                self.__str__(indentation="\n * "),
+            )
+
+        print("Message sent.")
+<switch:english>
+[english] The method intelligently handles attachment input, ensuring it processes both single string inputs and lists of attachments correctly.
+[english] If I pass a list containing only image URLs instead of document paths, will the function still attempt to send them as documents?
+[english] Yes, because the code explicitly sets `self.message["document"] = a` for every item in the attachment loop. To support images, you would need separate logic for different media types.
+[english] Got it, thanks for the clear breakdown!

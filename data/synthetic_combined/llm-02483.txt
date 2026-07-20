@@ -1,0 +1,24 @@
+[english] How can I easily clear all existing task instances belonging to a specific set of performance test DAG IDs?
+[english] To achieve this, we query the database for every TaskInstance linked to our target DAG IDs. The function then iterates through these found records and removes each one individually before committing the changes.
+<switch:python>
+[python] def clear_dag_task_instances():
+    """
+    Remove any existing task instances for the perf test DAGs.
+    """
+    session = settings.Session()
+    TI = TaskInstance
+    tis = (
+        session
+        .query(TI)
+        .filter(TI.dag_id.in_(DAG_IDS))
+        .all()
+    )
+    for ti in tis:
+        logging.info('Deleting TaskInstance :: {}'.format(ti))
+        session.delete(ti)
+    session.commit()
+<switch:english>
+[english] This approach ensures that all specified instances are fully deleted from the database in a single transaction once the iteration is complete. Be mindful of ensuring `DAG_IDS` contains exactly what you wish to remove.
+[english] What happens if none of the DAG IDs provided in `DAG_IDS` have any associated task instances currently recorded?
+[english] If no matching records are found, the query returns an empty list. The loop will simply not execute, and the function safely calls `session.commit()` without performing any deletion.
+[english] Thanks for clarifying how that handles an empty dataset!

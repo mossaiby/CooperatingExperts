@@ -1,0 +1,33 @@
+[english] How do I find all content identifiers (IDs) that possess a specific feature value within a designated keyword field?
+[english] This function performs a low-level scan by iterating over all possible indexed names for the given feature, constructing an 'or' filter condition to match any of them.
+<switch:python>
+[python] def index_scan_ids(self, fname, val):
+        '''Low-level keyword index scan for ids.
+
+        Retrieves identifiers of FCs that have a feature value
+        ``val`` in the feature named ``fname``. Note that
+        ``fname`` must be indexed.
+
+        :param str fname: Feature name.
+        :param str val: Feature value.
+        :rtype: Iterable of ``content_id``
+        '''
+        disj = []
+        for fname2 in self.indexes[fname]['feature_names']:
+            disj.append({'term': {fname_to_idx_name(fname2): val}})
+        query = {
+            'constant_score': {
+                'filter': {'or': disj},
+            },
+        }
+        hits = scan(self.conn, index=self.index, doc_type=self.type, query={
+            '_source': False,
+            'query': query,
+        })
+        for hit in hits:
+            yield did(hit['_id'])
+<switch:english>
+[english] The function executes an Elasticsearch scan with the complex query and yields every document ID (`did(hit['_id'])`) that matches your filter criteria.
+[english] What happens if `fname` is not present in `self.indexes`, or if no documents actually match this value?
+[english] If `fname` isn't indexed, the code will raise a KeyError when accessing `self.indexes[fname]`. If matches are found but none satisfy the query, the function will simply complete without yielding any IDs.
+[english] Thanks for clarifying how the error handling and matching process works here.

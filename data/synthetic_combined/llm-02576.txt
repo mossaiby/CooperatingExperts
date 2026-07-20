@@ -1,0 +1,61 @@
+[english] How can I resolve the text directional flow of neutral characters within a complex layout structure according to Bidi rules?
+[english] This function processes character runs, implementing Unicode's N1 and N2 resolution rules. It checks sequences of 'neutral' characters against their strong neighbors ('AN', 'EN') to decide if they inherit directionality or use an embedding rule.
+<switch:python>
+[python] def resolve_neutral_types(storage, debug):
+    """Resolving neutral types. Implements N1 and N2
+
+    See: http://unicode.org/reports/tr9/#Resolving_Neutral_Types
+
+    """
+
+    for run in storage['runs']:
+        start, length = run['start'], run['length']
+        # use sor and eor
+        chars = [{'type': run['sor']}] + storage['chars'][start:start+length] +\
+                [{'type': run['eor']}]
+        total_chars = len(chars)
+
+        seq_start = None
+        for idx in range(total_chars):
+            _ch = chars[idx]
+            if _ch['type'] in ('B', 'S', 'WS', 'ON'):
+                # N1. A sequence of neutrals takes the direction of the
+                # surrounding strong text if the text on both sides has the same
+                # direction. European and Arabic numbers act as if they were R
+                # in terms of their influence on neutrals. Start-of-level-run
+                # (sor) and end-of-level-run (eor) are used at level run
+                # boundaries.
+                if seq_start is None:
+                    seq_start = idx
+                    prev_bidi_type = chars[idx-1]['type']
+            else:
+                if seq_start is not None:
+                    next_bidi_type = chars[idx]['type']
+
+                    if prev_bidi_type in ('AN', 'EN'):
+                        prev_bidi_type = 'R'
+
+                    if next_bidi_type in ('AN', 'EN'):
+                        next_bidi_type = 'R'
+
+                    for seq_idx in range(seq_start, idx):
+                        if prev_bidi_type == next_bidi_type:
+                            chars[seq_idx]['type'] = prev_bidi_type
+                        else:
+                            # N2. Any remaining neutrals take the embedding
+                            # direction. The embedding direction for the given
+                            # neutral character is derived from its embedding
+                            # level: L if the character is set to an even level,
+                            # and R if the level is odd.
+                            chars[seq_idx]['type'] = \
+                                _embedding_direction(chars[seq_idx]['level'])
+
+                    seq_start = None
+
+    if debug:
+        debug_storage(storage)
+<switch:english>
+[english] The final type assignment for neutrals relies entirely on whether adjacent strong text matches; otherwise, it falls back to a specific embedding direction derived from the character's level.
+[english] What happens if a sequence of neutral characters is at the very beginning or end of the entire run without any preceding or succeeding directional characters?
+[english] If there are no strong neighbors, the function cannot satisfy N1 (matching directions) and will proceed to use the embedding direction defined by calling _embedding_direction(level).
+[english] That clarifies how the neutral types are assigned.

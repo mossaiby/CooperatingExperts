@@ -1,0 +1,46 @@
+[english] How can I standardize and configure exception handling policies across numerous functions in my application?
+[english] This decorator factory is designed to register metadata onto a function rather than wrapping it immediately. By using `setattr`, you attach specific error configurations like caught exceptions or custom processors for later consumption by an engine.
+<switch:python>
+[python] def wrap_errors(errors=None, processor=None, *args):
+    """
+    Decorator. Wraps given exceptions into
+    :class:`~argh.exceptions.CommandError`. Usage::
+
+        @wrap_errors([AssertionError])
+        def foo(x=None, y=None):
+            assert x or y, 'x or y must be specified'
+
+    If the assertion fails, its message will be correctly printed and the
+    stack hidden. This helps to avoid boilerplate code.
+
+    :param errors:
+        A list of exception classes to catch.
+    :param processor:
+        A callable that expects the exception object and returns a string.
+        For example, this renders all wrapped errors in red colour::
+
+            from termcolor import colored
+
+            def failure(err):
+                return colored(str(err), 'red')
+
+            @wrap_errors(processor=failure)
+            def my_command(...):
+                ...
+
+    """
+
+    def wrapper(func):
+        if errors:
+            setattr(func, ATTR_WRAPPED_EXCEPTIONS, errors)
+
+        if processor:
+            setattr(func, ATTR_WRAPPED_EXCEPTIONS_PROCESSOR, processor)
+
+        return func
+    return wrapper
+<switch:english>
+[english] The decorator effectively mutates the target function object, adding configuration attributes (like ATTR_WRAPPED_EXCEPTIONS) that external logic can read when execution occurs. This cleanly separates declaration from runtime handling.
+[english] If I use a processor like `failure` but define an empty list for errors (`errors=[]`), will my custom string formatting still be applied to the logged exceptions?
+[english] Yes, the processor is registered independently of the error list check in the function header via separate if statements within the wrapper. If you provide a processor, it is attached regardless of whether `errors` is populated or empty.
+[english] Perfect, I see how this keeps configuration meta-data decoupled from actual execution logic.

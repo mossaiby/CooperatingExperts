@@ -1,0 +1,67 @@
+[english] How can we ensure a client configuration has all its required secrets defined before proceeding with operations?
+[english] This function first verifies the existence of a secrets file and the specific client within it. If any basic setup exists, it then iterates over provided parameters to confirm each requested key is present and not empty.
+<switch:python>
+[python] def require_secrets(self, params=None):
+    '''require secrets ensures that the client has the secrets file, and
+       specifically has one or more parameters defined. If params is None,
+       only a check is done for the file.
+
+       Parameters
+       ==========
+       params: a list of keys to lookup in the client secrets, eg:
+ 
+         secrets[client_name][params1] should not be in [None,''] or not set
+
+    '''
+    name = self.client_name                
+
+    # Check 1: the client must have secrets, period
+    has_secrets = True
+
+    # Secrets file not asked for (incorrectly) but still wanted
+    # The client shouldn't be calling this function if didn't init secrets
+    if not hasattr(self,'secrets'):
+        has_secrets = False
+
+    # Secret file was not found, period
+    elif hasattr(self,'secrets'):
+        if self.secrets is None: 
+            has_secrets = False
+
+    # The client isn't defined in the secrets file
+    elif self.client_name not in self.secrets: 
+        has_secrets = False
+
+    # Missing file or client secrets, fail
+    if has_secrets is False:
+        message = '%s requires client secrets.' %name
+        bot.error(message)
+        sys.exit(1)
+
+    # Check 2: we have secrets and lookup, do we have all needed params?
+    if params is not None:
+
+        # Assume list so we can always parse through
+        if not isinstance(params,list):
+            params = [params]
+
+        for param in params:
+
+            # The parameter is not a key for the client
+            if param not in self.secrets[name]: 
+                has_secrets = False
+
+            # The parameter is a key, but empty or undefined
+            elif self.secrets[name][param] in [None,'']: 
+                has_secrets=False
+
+        # Missing parameter, exit on fail
+        if has_secrets is False:
+            message = 'Missing %s in client secrets.' %param
+            bot.error(message)
+            sys.exit(1)
+<switch:english>
+[english] It validates both the existence of the secret and then checks for a specific set of required parameters, ensuring they are not None or empty strings.
+[english] What is the behavior if `params` contains duplicates?
+[english] Because it iterates over a list but doesn't check uniqueness, duplicate entries in `params` will simply result in redundant checks without affecting the outcome.
+[english] Got it, thanks for explaining this logic!

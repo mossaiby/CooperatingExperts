@@ -1,0 +1,21 @@
+[english] I need a flexible function to perform matrix multiplication in NumPy where I can optionally transpose or take the adjoint of one or both input matrices.
+[english] This function acts as a specialized wrapper around numpy's matmul capability. Its primary approach is to check boolean flags for transposing or applying the adjoint, and if necessary, it calls an internal matrix transpose helper on inputs A and B before running the multiplication.
+<switch:python>
+[python] def _matmul(a, b,
+            transpose_a=False, transpose_b=False,
+            adjoint_a=False, adjoint_b=False,
+            a_is_sparse=False, b_is_sparse=False,
+            name=None):  # pylint: disable=unused-argument
+  """Numpy matmul wrapper."""
+  if a_is_sparse or b_is_sparse:
+    raise NotImplementedError('Numpy backend does not support sparse matmul.')
+  if transpose_a or adjoint_a:
+    a = _matrix_transpose(a, conjugate=adjoint_a)
+  if transpose_b or adjoint_b:
+    b = _matrix_transpose(b, conjugate=adjoint_b)
+  return np.matmul(a, b)
+<switch:english>
+[english] It cleanly delegates the math to `np.matmul`, but critically, it currently enforces a restriction against sparse matrices to prevent runtime errors.
+[english] When should I use the `adjoint_a` flag instead of just setting `transpose_a=True`?
+[english] The 'adjoint' operation is equivalent to a transpose combined with taking the complex conjugate. You should use `adjoint_a` specifically for non-real matrices where conjugation is mathematically necessary.
+[english] This greatly simplifies handling linear algebra operations.

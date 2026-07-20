@@ -1,0 +1,24 @@
+[english] How can I enforce that input sample tensors maintain unit length and adhere to specific dimensional shapes before they are processed by the model?
+[english] This function conditionally validates incoming `samples`. It uses TensorFlow's control dependencies (`tf.control_dependencies`) to ensure that required assertions execute during graph construction or runtime if validation is enabled.
+<switch:python>
+[python] def _maybe_assert_valid_sample(self, samples):
+    """Check counts for proper shape, values, then return tensor version."""
+    if not self.validate_args:
+      return samples
+    with tf.control_dependencies([
+        assert_util.assert_near(
+            1.,
+            tf.linalg.norm(tensor=samples, axis=-1),
+            message='samples must be unit length'),
+        assert_util.assert_equal(
+            tf.shape(input=samples)[-1:],
+            self.event_shape_tensor(),
+            message=('samples must have innermost dimension matching that of '
+                     '`self.mean_direction`')),
+    ]):
+      return tf.identity(samples)
+<switch:english>
+[english] If validation is skipped via `self.validate_args`, the function returns samples immediately; otherwise, it ensures constraints are met before returning a tensor identity.
+[english] What exactly happens if one of these assertions fails when self.validate_args is true?
+[english] The assertion utilities typically raise an error within the TensorFlow execution graph if the condition (e.g., norm not being 1) is violated, halting execution.
+[english] I see how that dependency block works.

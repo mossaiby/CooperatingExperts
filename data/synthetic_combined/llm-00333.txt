@@ -1,0 +1,12 @@
+[english] How can I set up and return a properly configured client instance using existing configuration attributes?
+[english] This function acts as an initialization wrapper by creating and returning a new `MozillaClubClient`. It captures the necessary connection details from `self` to correctly instantiate the required class.
+<switch:python>
+[python] def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return MozillaClubClient(self.url, self.archive, from_archive)
+<switch:english>
+[english] The method directly constructs a `MozillaClubClient`, passing `from_archive` which informs the client how to handle loading data.
+[english] If `url` or `archive` are not defined on self before calling this, what happens?
+[english] The function assumes these attributes exist on the class instance (`self`). If they are missing, a Python attribute error will occur when trying to pass them to the client constructor.
+[english] Got it, I'll make sure those prerequisites are handled.

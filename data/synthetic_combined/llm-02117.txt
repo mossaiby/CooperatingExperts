@@ -1,0 +1,20 @@
+[english] How can I implement a method to remove a tier from a list based on whether I know its numerical position or its specific name?
+[english] This function intelligently handles removal by checking if the input is an integer. If it's an int, it uses 1-based indexing; otherwise, it filters the list.
+<switch:python>
+[python] def remove_tier(self, name_num):
+        """Remove a tier, when multiple tiers exist with that name only the
+        first is removed.
+
+        :param name_num: Name or number of the tier to remove.
+        :type name_num: int or str
+        :raises IndexError: If there is no tier with that number.
+        """
+        if isinstance(name_num, int):
+            del(self.tiers[name_num-1])
+        else:
+            self.tiers = [i for i in self.tiers if i.name != name_num]
+<switch:english>
+[english] When provided a string, this code iterates through and removes all entries matching that name rather than just the first one mentioned in the docstring.
+[english] If I provide a negative number as input for the tier index, what happens?
+[english] The function is designed assuming positive 1-based indexing. Passing a negative integer would likely raise an IndexError since list indices must be within valid bounds or specifically configured for reverse access.
+[english] That makes sense!

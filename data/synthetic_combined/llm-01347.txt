@@ -1,0 +1,33 @@
+[english] How can I prepare the necessary loop-level variables for sequence processing within this class?
+[english] This function initializes all required internal state by gathering keys from sequences, outputs, and non-sequences. It first generates a set of dummy tensors using an external helper and then converts them into structured NeuralVariables.
+<switch:python>
+[python] def _build_loop_vars(self):
+        """
+        Create inner loop variables.
+        """
+        from theano.tensor.var import TensorVariable
+        from deepy.core.neural_var import NeuralVariable
+        if not self._loop_vars:
+            self._ordered_out_keys = self._outputs.keys()
+            seq_keys = self._sequences.keys()
+            filled_out_keys = [k for k in self._ordered_out_keys if self._outputs[k]]
+            nonseq_keys = self._non_sequences.keys()
+            dummy_tensors, self._scan_local_vars = get_dummy_args(
+                sequences=[self._sequences[k].tensor for k in seq_keys],
+                outputs_info=[self._outputs[k].tensor for k in self._ordered_out_keys],
+                non_sequences=[self._non_sequences[k].tensor for k in nonseq_keys],
+                **self._kwargs
+            )
+            dummy_map = dict(zip(seq_keys + filled_out_keys + nonseq_keys, dummy_tensors))
+            arg_map = self._sequences.copy()
+            arg_map.update(self._outputs)
+            arg_map.update(self._non_sequences)
+            self._loop_vars = LoopVars()
+            for k, dummy_tensor in dummy_map.items():
+                dummy_var = NeuralVariable(dummy_tensor, dim=arg_map[k].dim())
+                self._loop_vars[k] = dummy_var
+<switch:english>
+[english] Note that the logic prevents re-initialization if `self._loop_vars` already exists, ensuring efficiency during subsequent calls to the method.
+[english] If multiple keys have identical tensor dimensions, how does the function ensure they remain distinct loop variables?
+[english] The variables are made distinct because each key (from sequences, outputs, or non-sequences) is independently mapped within `dummy_map` and assigned a new unique `NeuralVariable` instance based on its own dimension defined in the source structure.
+[english] That makes sense. Thanks for clarifying.

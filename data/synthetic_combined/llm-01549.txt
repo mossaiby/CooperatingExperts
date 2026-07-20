@@ -1,0 +1,19 @@
+[english] How do I convert a list of 3D peak coordinates into a volumetric image representation using spheres?
+[english] This function maps discrete spatial data onto a fixed-size 3D grid. It initializes an empty volume and then iterates through every focus point in your input list.
+<switch:python>
+[python] def map_peaks_to_image(peaks, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91),
+                       header=None):
+    """ Take a set of discrete foci (i.e., 2-D array of xyz coordinates)
+    and generate a corresponding image, convolving each focus with a
+    hard sphere of radius r."""
+    data = np.zeros(dims)
+    for p in peaks:
+        valid = get_sphere(p, r, vox_dims, dims)
+        valid = valid[:, ::-1]
+        data[tuple(valid.T)] = 1
+    return nifti1.Nifti1Image(data, None, header=header)
+<switch:english>
+[english] The resulting output is essentially a binary mask built from overlapping spherical volumes, which might appear sharper than standard smoothed peak distributions.
+[english] Will this function handle an empty `peaks` list gracefully?
+[english] Yes, the loop will simply not execute if `peaks` is empty, so it correctly returns a volumetric image filled entirely with zeros.
+[english] That clarifies how the mapping works!

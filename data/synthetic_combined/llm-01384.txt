@@ -1,0 +1,16 @@
+[english] How do I select a single record from my database pool, potentially applying filters or sorting?
+[english] To handle this, we apply any provided query operators to our storage mechanism first. Then, we iterate over the resulting set and return the very next item found.
+<switch:python>
+[python] def select_one(self, *args):
+        '''
+        Select a single instance from the instance pool. Query operators such as
+        where_eq(), order_by() or filter functions may be passed as optional
+        arguments.
+        '''
+        s = apply_query_operators(self.storage, args)
+        return next(iter(s), None)
+<switch:english>
+[english] Using `next(iter(s), None)` efficiently retrieves a single element from an iterable, gracefully handling cases where no match is found by returning `None` instead of raising StopIteration.
+[english] What happens if multiple records satisfy the query operators?
+[english] Since this function uses `next()`, it only returns the first record that satisfies your criteria. If you need more than one, you would use a different method to retrieve all results.
+[english] That makes perfect sense.

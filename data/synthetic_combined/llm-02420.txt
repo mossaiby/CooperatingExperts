@@ -1,0 +1,30 @@
+[english] I need a function that can automatically determine and return the height and width of an image file given its data type and path.
+[english] To solve this, we first check if the `image_type` is recognized (PNG or TIFF). We then use specific modules to load the image into memory and calculate its dimensions using NumPy's shape function. Finally, the resulting tuple of dimensions is reversed for standard height/width output.
+<switch:python>
+[python] def identify_imagesize(self, image_type, image_path='/tmp/img.'):
+        """
+        Identify the image size using the data location and other parameters
+        """
+        dims = ()
+        try:
+            if (image_type.lower() == 'png'):
+                dims = np.shape(ndpng.load('{}{}'.format(
+                    image_path, image_type
+                )))
+            elif (image_type.lower() == 'tif' or image_type.lower() == 'tiff'):
+                dims = np.shape(ndtiff.load('{}{}'.format(
+                    image_path, image_type
+                )))
+            else:
+                raise ValueError("Unsupported image type.")
+        except:
+            raise OSError('The file was not accessible at {}{}'.format(
+                image_path,
+                image_type
+            ))
+        return dims[::-1]
+<switch:english>
+[english] The implementation includes error handling to catch issues like unsupported formats or inaccessible files. Note that it explicitly reverses the dimension tuple before returning it to ensure the order is correctly interpreted.
+[english] If I pass an image type that isn't PNG or TIFF, how does the function react?
+[english] The function will raise a ValueError because those types are not supported by the defined conditional logic in the code block. This ensures only expected file formats are processed.
+[english] That makes sense; error handling is crucial for robust image processing.

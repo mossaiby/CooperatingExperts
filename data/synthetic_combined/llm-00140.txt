@@ -1,0 +1,40 @@
+[english] I need a way to automatically sync tasks from external issue trackers into my Taskwarrior list.
+[english] To pull down your external tasks, this function loads configuration and acquires a proper PIDLockFile to prevent simultaneous runs using `lockfile.acquire` and a designated path derived from the config.
+<switch:python>
+[python] def pull(dry_run, flavor, interactive, debug):
+    """ Pull down tasks from forges and add them to your taskwarrior tasks.
+
+    Relies on configuration in bugwarriorrc
+    """
+
+    try:
+        main_section = _get_section_name(flavor)
+        config = _try_load_config(main_section, interactive)
+
+        lockfile_path = os.path.join(get_data_path(config, main_section),
+                                     'bugwarrior.lockfile')
+        lockfile = PIDLockFile(lockfile_path)
+        lockfile.acquire(timeout=10)
+        try:
+            # Get all the issues.  This can take a while.
+            issue_generator = aggregate_issues(config, main_section, debug)
+
+            # Stuff them in the taskwarrior db as necessary
+            synchronize(issue_generator, config, main_section, dry_run)
+        finally:
+            lockfile.release()
+    except LockTimeout:
+        log.critical(
+            'Your taskrc repository is currently locked. '
+            'Remove the file at %s if you are sure no other '
+            'bugwarrior processes are currently running.' % (
+                lockfile_path
+            )
+        )
+    except RuntimeError as e:
+        log.exception("Aborted (%s)" % e)
+<switch:english>
+[english] The logic uses structured try-finally blocks around the main synchronization code to ensure that even if processing fails, the lock is always released via `lockfile.release()` in the finally block.
+[english] If `aggregate_issues` encounters a network failure or data error, does the function handle it gracefully without crashing?
+[english] Major issues are caught by the dedicated `RuntimeError` block which logs them using exception details (`log.exception`), but specialized network errors would typically be handled within the underlying functions called by `aggregate_issues`.
+[english] Thanks for clarifying that.

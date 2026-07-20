@@ -1,0 +1,23 @@
+[english] Write a function to extract the value of a specific query parameter from a given URL.
+[english] To solve this, we need to first break the URL apart using `urlparse` and then parse the resulting query string into a dictionary with `parse_qs`. Finally, we access the desired key within that parsed result.
+<switch:python>
+[python] def parse_query_param(url, param):
+    """Parses the query string of a URL and returns the value of a parameter.
+
+    Args:
+        url: A URL.
+        param: A string representing the name of the parameter.
+
+    Returns:
+        The value of the parameter.
+    """
+
+    try:
+        return parse.parse_qs(parse.urlparse(url).query)[param][0]
+    except:
+        return None
+<switch:english>
+[english] The function returns `None` upon any parsing or lookup error. Note that because `parse_qs` returns lists for parameter values, this implementation specifically grabs only the first value in the list.
+[english] What happens if a URL has multiple instances of the same query parameter?
+[english] Since `parse_qs` groups all occurrences into a list, and we access it with `[0]`, the function will currently only return the first occurrence. To get all values, you would change it to `list(value)` instead.
+[english] Can this function handle parameters that don't exist without crashing?

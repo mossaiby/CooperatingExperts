@@ -1,0 +1,13 @@
+[english] How do I properly implement a method in my class that is responsible for loading raw data from a byte array into a string?
+[english] This function acts as an abstract template, indicating that subclasses must provide their own implementation for byte conversion.
+<switch:python>
+[python] def loadByteArray(self, page, returnError):
+        """Must be overridden. Must return a string with the loaded data."""
+        returnError.contents.value = self.IllegalStateError
+        raise NotImplementedError("You must override this method.")
+        return ''
+<switch:english>
+[english] The function immediately raises an error if called directly, ensuring that any concrete subclass overrides it.
+[english] Can I pass a specific byte conversion flag into the page parameter?
+[english] Currently, the `page` argument is unused for logic. To handle flags or options, you would typically expand its definition to accept keywords or configuration objects in your overridden method's signature.
+[english] Got it, so I definitely need to override this before running any tests.

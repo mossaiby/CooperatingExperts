@@ -1,0 +1,43 @@
+[english] How can I retrieve a dictionary containing all the positional and keyword arguments passed to the function that called me?
+[english] This function uses Python's introspection capabilities to examine the execution stack. Specifically, it inspects the calling frame to pull out the argument names and their corresponding values.
+<switch:python>
+[python] def parent_frame_arguments():
+  """Returns parent frame arguments.
+
+  When called inside a function, returns a dictionary with the caller's function
+  arguments. These are positional arguments and keyword arguments (**kwargs),
+  while variable arguments (*varargs) are excluded.
+
+  When called at global scope, this will return an empty dictionary, since there
+  are no arguments.
+
+  WARNING: If caller function argument names are overloaded before invoking
+  this method, then values will reflect the overloaded value. For this reason,
+  we recommend calling `parent_frame_arguments` at the beginning of the
+  function.
+  """
+  # All arguments and the names used for *varargs, and **kwargs
+  arg_names, variable_arg_name, keyword_arg_name, local_vars = (
+      tf_inspect._inspect.getargvalues(  # pylint: disable=protected-access
+          # Get the first frame of the caller of this method.
+          tf_inspect._inspect.stack()[1][0]))  # pylint: disable=protected-access
+
+  # Remove the *varargs, and flatten the **kwargs. Both are
+  # nested lists.
+  local_vars.pop(variable_arg_name, {})
+  keyword_args = local_vars.pop(keyword_arg_name, {})
+
+  final_args = {}
+  # Copy over arguments and their values. In general, local_vars
+  # may contain more than just the arguments, since this method
+  # can be called anywhere in a function.
+  for arg_name in arg_names:
+    final_args[arg_name] = local_vars.pop(arg_name)
+  final_args.update(keyword_args)
+
+  return final_args
+<switch:english>
+[english] Note that as warned in the docstring, this logic is sensitive to how arguments are defined or overloaded in the parent scope, so timing matters when calling it inside a function.
+[english] If I call this function globally instead of within another function, what result can I expect?
+[english] The documentation states that calling it at global scope returns an empty dictionary because there are no arguments to retrieve from any caller.
+[english] That makes sense; frame inspection definitely requires a valid execution context.

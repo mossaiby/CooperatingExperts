@@ -1,0 +1,28 @@
+[english] How can I convert this H2OFrame object into a conventional Pandas DataFrame or a simple nested Python list?
+[english] This function provides flexible conversion options depending on whether the `pandas` library is available and if you prefer a structured DataFrame over a raw nested list output.
+<switch:python>
+[python] def as_data_frame(self, use_pandas=True, header=True):
+        """
+        Obtain the dataset as a python-local object.
+
+        :param bool use_pandas: If True (default) then return the H2OFrame as a pandas DataFrame (requires that the
+            ``pandas`` library was installed). If False, then return the contents of the H2OFrame as plain nested
+            list, in a row-wise order.
+        :param bool header: If True (default), then column names will be appended as the first row in list
+
+        :returns: A python object (a list of lists of strings, each list is a row, if use_pandas=False, otherwise
+            a pandas DataFrame) containing this H2OFrame instance's data.
+        """ 
+        if can_use_pandas() and use_pandas:
+            import pandas
+            return pandas.read_csv(StringIO(self.get_frame_data()), low_memory=False, skip_blank_lines=False)
+        from h2o.utils.csv.readers import reader
+        frame = [row for row in reader(StringIO(self.get_frame_data()))]
+        if not header:
+            frame.pop(0)
+        return frame
+<switch:english>
+[english] If pandas is unavailable, the function utilizes a custom CSV reader to return data as a list of lists, carefully removing the presumed header row if `header=False`.
+[english] When using the default settings (use_pandas=True, header=True), how does the output look when I print it?
+[english] The function returns a standard Pandas DataFrame where the first row of data is interpreted as the column names, allowing for easy manipulation and indexing.
+[english] Thank you for clarifying how this conversion works.

@@ -1,0 +1,21 @@
+[english] How do I retrieve motion settings for a specific camera using this API wrapper?
+[english] This method constructs an API request to fetch event-based motion configurations. It builds a payload including the device and version details before making the call.
+<switch:python>
+[python] def camera_event_motion_enum(self, camera_id, **kwargs):
+        """Return motion settings matching camera_id."""
+        api = self._api_info['camera_event']
+        payload = dict({
+            '_sid': self._sid,
+            'api': api['name'],
+            'method': 'MotionEnum',
+            'version': api['version'],
+            'camId': camera_id,
+        }, **kwargs)
+        response = self._get_json_with_retry(api['url'], payload)
+
+        return MotionSetting(camera_id, response['data']['MDParam'])
+<switch:english>
+[english] The function returns a MotionSetting object containing the parameters fetched from the response data.
+[english] What happens if `self._get_json_with_retry` fails multiple times?
+[english] If the retry mechanism exhausts its attempts, it should raise an exception to indicate that the API call could not be completed successfully.
+[english] That makes sense. Thanks for clarifying.

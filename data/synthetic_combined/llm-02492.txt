@@ -1,0 +1,22 @@
+[english] I need a helper function that can retrieval specific data points from a stored scan result using keys provided as arguments.
+[english] This method dynamically gathers outputs based on the input arguments. It uses `map` to call `.get` for each key passed in, allowing you to retrieve specific variables or return all of them.
+<switch:python>
+[python] def get_outputs(self, *args):
+        """
+        Get the outputs of the loop.
+        Return specific variables by passing the keys to the arguments.
+        :rtype: MapDict
+        """
+        if args:
+            output_vars = map(self._scan_outputs.get, args)
+            if len(output_vars) == 1:
+                return output_vars[0]
+            else:
+                return output_vars
+        else:
+            return self._scan_outputs
+<switch:english>
+[english] The function checks if only a single output variable was requested; otherwise, it returns an iterable of results. This prevents unnecessary overhead when just one item is needed.
+[english] What happens if I pass an argument that isn't actually in `self._scan_outputs`?
+[english] Since it uses `.get`, Python will return `None` for any missing keys, which you should handle in your calling code. If `args = ['missing']`, the output will be `(None,)`.
+[english] That makes perfect sense.

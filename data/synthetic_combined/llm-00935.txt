@@ -1,0 +1,18 @@
+[english] How can I extract sliding windows of a specific size, N, from an existing sequence generator?
+[english] This function generates overlapping tuples by creating multiple independent copies of the input iterator using `itertools.tee`. It then progressively advances each copy so that when zipped together, they form contiguous n-tuples.
+<switch:python>
+[python] def nwise(iter, n):
+	"""
+	Like pairwise, except returns n-tuples of adjacent items.
+	s -> (s0,s1,...,sn), (s1,s2,...,s(n+1)), ...
+	"""
+	iterset = [iter]
+	while len(iterset) < n:
+		iterset[-1:] = itertools.tee(iterset[-1])
+		next(iterset[-1], None)
+	return six.moves.zip(*iterset)
+<switch:english>
+[english] The implementation smartly handles the offsetting internally using state management within the list, ensuring all necessary iterators are aligned before returning a zip object.
+[english] What happens if the input iterator has fewer than 'n' elements?
+[english] If the sequence length is less than N, `zip` will naturally stop immediately and return an empty iterator because it cannot fulfill the requirement of creating full n-tuples.
+[english] That makes sense. Thanks for the clear explanation.

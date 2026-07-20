@@ -1,0 +1,30 @@
+[english] I need a way to extract specific private data fields from a collection of child objects and group them by type.
+[english] This function iterates through all children, filtering for names starting with 'x-', which typically indicates custom or extended metadata. It maps these children into a dictionary structure based on predefined supported object types.
+<switch:python>
+[python] def _get_private_objects(self):
+        """
+        :rtype: dict(str, list(str))
+        """
+        private_objects = {}
+        for child in self.vcard.getChildren():
+            if child.name.lower().startswith("x-"):
+                try:
+                    key_index = [
+                        x.lower() for x in self.supported_private_objects
+                    ].index(child.name[2:].lower())
+                except ValueError:
+                    pass
+                else:
+                    key = self.supported_private_objects[key_index]
+                    if key not in private_objects:
+                        private_objects[key] = []
+                    private_objects[key].append(child.value)
+        # sort private object lists
+        for value in private_objects.values():
+            value.sort()
+        return private_objects
+<switch:english>
+[english] The function ensures that the list of values associated with each private key is sorted alphabetically before returning the complete mapping. This makes the output predictable and standardized.
+[english] What happens if 'child.name' starts with 'x-' but doesn't match any supported keys in `self.supported_private_objects`?
+[english] The function uses a try/except block around the key lookup; if no match is found, it silently passes and excludes that specific child object from the final result.
+[english] Thanks for clarifying how the filtering works!

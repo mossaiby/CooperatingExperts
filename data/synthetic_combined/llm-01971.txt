@@ -1,0 +1,16 @@
+[english] How can I create an API endpoint that dumps complex nested structures like site trees using Django?
+[english] We are leveraging `django-smuggler` here to handle the serialization and response generation. By pointing it toward specific model types, this view will automatically structure your data.
+<switch:python>
+[python] def dump_view(cls, request):
+        """Dumps sitetrees with items using django-smuggler.
+
+        :param request:
+        :return:
+        """
+        from smuggler.views import dump_to_response
+        return dump_to_response(request, [MODEL_TREE, MODEL_TREE_ITEM], filename_prefix='sitetrees')
+<switch:english>
+[english] This function relies heavily on the imported `smuggler` utility and assumes that `MODEL_TREE` is correctly configured to represent your hierarchical data.
+[english] Does this view allow me to customize which fields appear in the final dump, or does it use a default?
+[english] By default, `dump_to_response` uses model defaults. To specify fields, you would typically need to pass configuration parameters to your calling logic that eventually influences the serializer used by Smuggler.
+[english] Got it, thanks for the clarification!

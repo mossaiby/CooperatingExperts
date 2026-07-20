@@ -1,0 +1,12 @@
+[english] How can I ensure that a specific class node is correctly processed and added to an architectural diagram?
+[english] This method facilitates the inclusion of a single class into your visualization system by executing two main steps. First, it uses an internal linker component to process any relationships associated with the current node, and then it adds the visualized object to the overall diagram.
+<switch:python>
+[python] def add_class(self, node):
+        """visit one class and add it to diagram"""
+        self.linker.visit(node)
+        self.classdiagram.add_object(self.get_title(node), node)
+<switch:english>
+[english] The function calls `get_title(node)` to dynamically generate a label for the class representation before passing both the generated title and the original node instance into the diagram's addition method.
+[english] If the same class node is encountered multiple times during traversal, how does the current implementation handle adding duplicate objects?
+[english] The function itself adds the object every time it is called. You would need to ensure that `self.classdiagram.add_object` checks for unique identifiers to prevent redundancy.
+[english] That helps clarify the flow; thanks!

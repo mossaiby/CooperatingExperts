@@ -1,0 +1,42 @@
+[english] How can I use observed merger events in my phylogenetic tree data to estimate the empirical inverse rate of coalescence (the skyline)?
+[english] The function calculates the empirical inverse rate by first identifying and sorting all observed mergers from your tree events. It then uses density estimates combined with a sliding window average for smoothing before applying interpolation.
+<switch:python>
+[python] def skyline_empirical(self, gen=1.0, n_points = 20):
+        '''
+        returns the skyline, i.e., an estimate of the inverse rate of coalesence.
+        Here, the skyline is estimated from a sliding window average of the observed
+        mergers, i.e., without reference to the coalescence likelihood.
+        parameters:
+            gen -- number of generations per year.
+        '''
+
+        mergers = self.tree_events[:,1]>0
+        merger_tvals = self.tree_events[mergers,0]
+        nlineages = self.nbranches(merger_tvals-ttconf.TINY_NUMBER)
+        expected_merger_density = nlineages*(nlineages-1)*0.5
+
+        nmergers = len(mergers)
+        et = merger_tvals
+        ev = 1.0/expected_merger_density
+        # reduce the window size if there are few events in the tree
+        if 2*n_points>len(expected_merger_density):
+            n_points = len(ev)//4
+
+        # smoothes with a sliding window over data points
+        avg = np.sum(ev)/np.abs(et[0]-et[-1])
+        dt = et[0]-et[-1]
+        mid_points = np.concatenate(([et[0]-0.5*(et[1]-et[0])],
+                                      0.5*(et[1:] + et[:-1]),
+                                     [et[-1]+0.5*(et[-1]-et[-2])]))
+
+        # this smoothes the ratio of expected and observed merger rate
+        self.Tc_inv = interp1d(mid_points[n_points:-n_points],
+                        [np.sum(ev[(et>=l)&(et<u)])/(u-l+dt/nmergers)
+                        for u,l in zip(mid_points[:-2*n_points],mid_points[2*n_points:])])
+
+        return interp1d(self.date2dist.to_numdate(self.Tc_inv.x), gen/self.date2dist.clock_rate/self.Tc_inv.y)
+<switch:english>
+[english] This gives you an estimate of coalescence likelihood integrated over time, but remember that the resulting skyline is highly sensitive to the temporal distribution of merger events in `self.tree_events`.
+[english] Since the estimation uses a sliding window and density smoothing, how would changing the number of points (`n_points`) affect the smoothness versus the accuracy of the final rate estimate?
+[english] Increasing `n_points` provides finer detail but risks overfitting to noise in sparse regions. Decreasing it adds aggressive smoothing, which helps generalization at the cost of losing sharp changes in merger rates.
+[english] This gives me a much clearer picture of how these variables interact.

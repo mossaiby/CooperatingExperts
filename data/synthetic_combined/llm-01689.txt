@@ -1,0 +1,27 @@
+[english] How do I transform a language-specific 'HostCall' structure into a standardized Python AST representation while correctly tracking data dependencies?
+[english] The approach here translates the abstract host call into native Python syntax by first generating the target expression and then wrapping it inside an `ast.Attribute` for method calls.
+<switch:python>
+[python] def _interop_call_to_py_ast(ctx: GeneratorContext, node: HostCall) -> GeneratedPyAST:
+    """Generate a Python AST node for Python interop method calls."""
+    assert node.op == NodeOp.HOST_CALL
+
+    target_ast = gen_py_ast(ctx, node.target)
+    args_deps, args_nodes = _collection_ast(ctx, node.args)
+
+    return GeneratedPyAST(
+        node=ast.Call(
+            func=ast.Attribute(
+                value=target_ast.node,
+                attr=munge(node.method, allow_builtins=True),
+                ctx=ast.Load(),
+            ),
+            args=list(args_nodes),
+            keywords=[],
+        ),
+        dependencies=list(chain(target_ast.dependencies, args_deps)),
+    )
+<switch:english>
+[english] This function meticulously builds the final AST node structure while ensuring that all transitive dependencies, from the object itself to its arguments, are correctly bundled in the metadata.
+[english] What happens if a call needs to access internal/private methods starting with an underscore, and how does `munge` handle that?
+[english] The `munge` function handles name formatting. By passing `allow_builtins=True`, it ensures standard Python rules are followed for identifiers in the AST.
+[english] That makes sense, thanks for clarifying.

@@ -1,0 +1,25 @@
+[english] How can I automatically save the currently displayed graphical output as a PNG file into a designated 'Artists_saved' folder?
+[english] This function first uses `print_figure` to render and save the figure temporarily, then it moves that generated file using system commands.
+<switch:python>
+[python] def save_figure(self):
+        """
+        This function programs the button to save the figure displayed
+        and save it in a png file in the current repository.
+        """
+
+        """
+        Increment the name of the figure in order to not erase the previous figure if the user use always this method.
+        The png file is put in the "Artists_saved" file localized in the "planarradpy" folder.
+        """
+
+        default_name = 'Default_figure.png'
+        self.ui.graphic_widget.canvas.print_figure(default_name)
+
+        src = './' + default_name
+        dst = './Artists_saved'
+        os.system("mv" + " " + src + " " + dst)
+<switch:english>
+[english] The approach is efficient for quick saving but relies on an external operating system command (`os.system`) rather than native Python file operations.
+[english] What happens if the 'Artists_saved' folder does not exist when this function attempts to run?
+[english] If the directory doesn't exist, the `mv` command will likely fail. It is safer to ensure the path exists first using standard library functions like `os.makedirs('./Artists_saved', exist_ok=True)` before attempting the move.
+[english] Thanks for pointing that out; I need to make sure the script handles missing directories.

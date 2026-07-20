@@ -1,0 +1,43 @@
+[english] How do I programmatically generate a high-resolution series of concentric cylindrical rings (annuli) for 3D modeling?
+[english] This function calculates the required radii, handling both radius and diameter inputs to ensure consistent geometry. It then iteratively calls an `annulus` helper function multiple times to create separate layers that together form the ring structure.
+<switch:python>
+[python] def annulus_hires(script, radius=None, radius1=None, radius2=None,
+                  diameter=None, diameter1=None, diameter2=None,
+                  cir_segments=48, rad_segments=1, color=None):
+    """Create a cylinder with user defined number of segments
+
+    """
+    if radius is not None and diameter is None:
+        if radius1 is None and diameter1 is None:
+            radius1 = radius
+        if radius2 is None and diameter2 is None:
+            radius2 = 0
+    if diameter is not None:
+        if radius1 is None and diameter1 is None:
+            radius1 = diameter / 2
+        if radius2 is None and diameter2 is None:
+            radius2 = 0
+    if diameter1 is not None:
+        radius1 = diameter1 / 2
+    if diameter2 is not None:
+        radius2 = diameter2 / 2
+    if radius1 is None:
+        radius1 = 1
+    if radius2 is None:
+        radius2 = 0
+    ring = (radius1 - radius2) / rad_segments
+
+    for i in range(0, rad_segments):
+        annulus(script,
+                radius1=radius1 - i * ring,
+                radius2=radius1 - (i + 1) * ring,
+                cir_segments=cir_segments)
+    layers.join(script, merge_vert=True)
+    if color is not None:
+        vert_color.function(script, color=color)
+    return None
+<switch:english>
+[english] It uses a series of checks at the start to gracefully handle various floating-point input methods (radii vs diameters). Note that it relies on external variables and functions like `annulus`, `layers`, and `vert_color` being defined globally in its environment.
+[english] If I pass both radius1 and diameter1, which value will the function use to define the outer edge of the ring?
+[english] The logic prioritizes the explicit diameter input when present. Since the checks are sequential, if `diameter1` is provided in a subsequent check, it overrides any prior settings for `radius1`, meaning $r_{outer} = rac{d_1}{2}$.
+[english] That makes sense! If I want to control resolution by changing segments, what happens if `rad_segments` is set to 0?

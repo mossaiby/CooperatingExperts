@@ -1,0 +1,32 @@
+[english] How can I take a list of tokens representing mathematical operations and structure them into a valid expression string that preserves operator precedence?
+[english] This function recursively builds the final string representation of an expression from hierarchical tokens. It analyzes the token types (like numbers or operators) to determine if parentheses are needed around sub-expressions.
+<switch:python>
+[python] def _build_expr(tokens, higher_oplevel=-1, ldelim="(", rdelim=")"):
+    """Build mathematical expression from hierarchical list."""
+    # Numbers
+    if isinstance(tokens, str):
+        return tokens
+    # Unary operators
+    if len(tokens) == 2:
+        return "".join(tokens)
+    # Multi-term operators
+    oplevel = _get_op_level(tokens[1])
+    stoken = ""
+    for num, item in enumerate(tokens):
+        if num % 2 == 0:
+            stoken += _build_expr(item, oplevel, ldelim=ldelim, rdelim=rdelim)
+        else:
+            stoken += item
+    if (oplevel < higher_oplevel) or (
+        (oplevel == higher_oplevel) and (oplevel in _OP_PREC_PAR)
+    ):
+        stoken = ldelim + stoken + rdelim
+    return stoken
+<switch:english>
+[english] The code handles precedence by using `higher_oplevel` and checks built into the logic, ensuring complex operations are correctly enclosed in delimiting parentheses.
+[english] What happens if 'tokens' is a list containing only two elements that are not strings (e.g., '[5, +]')?
+[english] If `len(tokens)` is 2 and they aren't strings, the function immediately concatenates them using string joining:
+<switch:python>
+[python] return "".join(tokens)
+<switch:english>
+[english] Got it, that makes sense!

@@ -1,0 +1,17 @@
+[english] How can I configure my client to decide whether it should automatically wait when hitting a rate limit?
+[english] This function helps toggle automatic rate-limit handling. It ensures that the input is a boolean and then sets an internal instance variable based on that value to control behavior.
+<switch:python>
+[python] def wait_on_rate_limit(self, value):
+        """Enable or disable automatic rate-limit handling."""
+        check_type(value, bool, may_be_none=False)
+        self._wait_on_rate_limit = value
+<switch:english>
+[english] The `check_type` call ensures robustness, but the method primarily stores the boolean state to control rate-limiting logic elsewhere in the class.
+[english] If I pass None as a value here instead of False or True, what happens?
+[english] Since it checks for `may_be_none=False`, attempting to pass `None` will trigger an error.
+<switch:python>
+[python] # Assuming check_type raises TypeError if validation fails
+# wait_on_rate_limit(self, None) 
+raise TypeError(...)
+<switch:english>
+[english] That clarifies the input constraints. Thank you!

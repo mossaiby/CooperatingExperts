@@ -1,0 +1,36 @@
+[english] How can I efficiently precalculate all possible continuation symbols for every prefix in a trie up to maximum length $n$?
+[english] This function iteratively computes and stores sets of valid next symbols for each node, essentially performing a constrained breadth-first search on the structure.
+<switch:python>
+[python] def precompute_future_symbols(trie, n, allow_spaces=False):
+    """
+    Collecting possible continuations of length <= n for every node
+    """
+    if n == 0:
+        return
+    if trie.is_terminated and trie.precompute_symbols:
+        # символы уже предпосчитаны
+        return
+    for index, final in enumerate(trie.final):
+        trie.data[index] = [set() for i in range(n)]
+    for index, (node_data, final) in enumerate(zip(trie.data, trie.final)):
+        node_data[0] = set(trie._get_letters(index))
+        if allow_spaces and final:
+            node_data[0].add(" ")
+    for d in range(1, n):
+        for index, (node_data, final) in enumerate(zip(trie.data, trie.final)):
+            children = set(trie._get_children(index))
+            for child in children:
+                node_data[d] |= trie.data[child][d - 1]
+            # в случае, если разрешён возврат по пробелу в стартовое состояние
+            if allow_spaces and final:
+                node_data[d] |= trie.data[trie.root][d - 1]
+    trie.terminated = True
+<switch:english>
+[english] It modifies the `trie.data` by filling nested sets representing continuations at varying lengths, relying heavily on helper methods like `_get_letters`. Note that it assumes `n > 0` and updates the trie in place.
+[english] What happens if a node has no children but is marked as final (allowing spaces)? Does this code handle generating subsequent paths through the root?
+[english] The logic handles spaces at level 1 for final nodes. For subsequent levels, it forces a union with the root's previous state to allow transitions back from a completed word:
+<switch:python>
+[python] # If allow_spaces is true and current node 'final' is True,
+node_data[d] |= trie.data[trie.root][d - 1]
+<switch:english>
+[english] That makes sense, thanks for clarifying the logic!

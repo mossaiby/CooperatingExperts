@@ -1,0 +1,25 @@
+[english] How can I efficiently manage and cache resource objects like RepoFile based on a path?
+[english] This function implements lazy loading by checking if an object associated with `repo_path` already exists in the internal dictionary. If it doesn't, it instantiates the required class.
+<switch:python>
+[python] def _get_repo_file(self, repo_path):
+        """
+        Lazy load RepoFile objects on demand.
+        :param repo_path:
+        :return:
+        """
+        if repo_path not in self._repo_files:
+            self._repo_files[repo_path] = RepoFile(repo_path)
+        return self._repo_files[repo_path]
+<switch:english>
+[english] By using this memoization pattern, you avoid redundant memory allocations and overhead until the resource is actually needed.
+[english] Does this implementation handle concurrent calls safely if multiple threads request different files simultaneously?
+[english] Currently, this function is not thread-safe. To make it safe, use a lock:
+```python
+import threading
+
+def _get_repo_file(self, repo_path):
+    with self._lock:
+        if repo_path not in self._repo_files:
+            self._repo_files[repo_path] = RepoFile(repo_path)
+        return self._repo_files[repo_path]
+[english] Got it, I will add locking to ensure proper thread safety.

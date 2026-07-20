@@ -1,0 +1,21 @@
+[english] I need a function that reliably determines if an input array is mathematically symmetric, even when dealing with floating-point numbers.
+[english] To check for symmetry, I first ensure the input is converted to a NumPy array. The core logic then verifies the dimensions and uses `np.allclose` combined with tolerances to compare the original matrix against its transpose.
+<switch:python>
+[python] def is_symmetric_matrix(op, rtol=RTOL_DEFAULT, atol=ATOL_DEFAULT):
+    """Test if an array is a symmetrix matrix"""
+    if atol is None:
+        atol = ATOL_DEFAULT
+    if rtol is None:
+        rtol = RTOL_DEFAULT
+    mat = np.array(op)
+    if mat.ndim != 2:
+        return False
+    return np.allclose(mat, mat.T, rtol=rtol, atol=atol)
+<switch:english>
+[english] The use of `np.allclose(mat, mat.T, ...)` ensures that the comparison works correctly for matrices containing floating-point numbers by allowing small acceptable deviations defined by `rtol` and `atol`.
+[english] If I pass a non-square matrix, like 3 rows by 2 columns, how does this function determine if it is symmetric?
+[english] A symmetric matrix must be square. If you provide a non-square matrix, the comparison with its transpose will always fail, and the function will correctly return False.
+<switch:python>
+[python] is_symmetric_matrix(np.array([[1, 2], [3, 4]])) # Returns False because it's not square in a way that allows equivalence to T
+<switch:english>
+[english] That easy explanation helps me understand the constraints much better!

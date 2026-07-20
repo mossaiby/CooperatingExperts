@@ -1,0 +1,45 @@
+[english] How can I reliably load a native shared library (`dlopen`) in Python while handling different module paths or running in an interactive shell?
+[english] This function handles the lazy loading of external C libraries. It attempts to locate and load the required dynamic library by checking several predefined search strategies.
+<switch:python>
+[python] def __openlib(self):
+        '''
+        Actual (lazy) dlopen() only when an attribute is accessed
+        '''
+        if self.__getattribute__('_libloaded'):
+            return
+        libpath_list = self.__get_libres()
+        for p in libpath_list:
+            try:
+                libres = resource_filename(self._module_name, p)
+                self.lib = self.ffi.dlopen(libres)
+                return
+            except:
+                continue
+        # Try self._libpath if nothing in libpath_list worked - will work
+        # only if self._module_name is set
+        try:
+            libres = resource_filename(self._module_name, self._libpath)
+            self.lib = self.ffi.dlopen(libres)
+        except:
+            # If self._module_name is in sys.modules, try self._libpath
+            # in the same dir as sys.modules[self._module_name].__file__
+            # This is allows get_lib_ffi_shared to work in REPL
+            try:
+                # We set _libloaded to indicate all options have been tried
+                self._libloaded = True
+
+                libdir = ''
+                if self._module_name is not None:
+                    mod = sys.modules.get(self._module_name, None)
+                    if mod is not None:
+                        libdir = os.path.dirname(mod.__file__) or os.getcwd()
+
+                libres = os.path.join(libdir, self._libpath)
+                self.lib = self.ffi.dlopen(libres)
+            except:
+                return None
+<switch:english>
+[english] The implementation is designed for maximum compatibility, ensuring that even if standard module paths fail, it tries locations appropriate for specific Python execution environments (like REPL).
+[english] If all attempts to locate and load the library fail, what does this function ultimately return?
+[english] After exhausting all defined search strategies (including checking `sys.modules` or using current directory heuristics), the function returns None.
+[english] Got it, I appreciate the detailed breakdown.

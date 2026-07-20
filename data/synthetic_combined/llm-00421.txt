@@ -1,0 +1,17 @@
+[english] I need a way to programmatically initialize an XTuml MetaModel and populate it with all my existing stored data.
+[english] We can create the model instance using the constructor and then call a helper method on `self` to transfer the required data into that model structure.
+<switch:python>
+[python] def build_metamodel(self, id_generator=None):
+        '''
+        Build and return a *xtuml.MetaModel* containing previously loaded input.
+        '''
+        m = xtuml.MetaModel(id_generator)
+        
+        self.populate(m)
+        
+        return m
+<switch:english>
+[english] The function first initializes the model using `id_generator` if provided, and then delegating to `self.populate()` ensures the returned object is fully populated with prior input.
+[english] What happens if I pass a custom id generator function into build_metamodel?
+[english] If you provide an id generator, it allows for deterministic or structured ID creation during model construction instead of using internal defaults, ensuring consistent identification across different runs of the system.
+[english] Got it! That makes perfect sense.

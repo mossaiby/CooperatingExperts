@@ -1,0 +1,18 @@
+[english] I need a robust way to handle custom configuration for error propagation while maintaining sensible defaults.
+[english] This function determines if exceptions should be propagated by consulting a configuration key. It checks if your configuration defines this behavior, and returns that specific value if it exists.
+<switch:python>
+[python] def propagate_exceptions(self):
+        """Returns the value of the `PROPAGATE_EXCEPTIONS` configuration
+        value in case it's set, otherwise a sensible default is returned.
+
+        .. versionadded:: 0.7
+        """
+        rv = self.config['PROPAGATE_EXCEPTIONS']
+        if rv is not None:
+            return rv
+        return self.testing or self.debug
+<switch:english>
+[english] By falling back to `self.testing` or `self.debug`, the code provides a default setting based on whether testing is running or the environment is in debug mode.
+[english] If both self.testing and self.debug are unset (or falsy), what value will be returned?
+[english] If neither attribute evaluates to True, it will return False since `False or False` results in False. However, relying on falsy defaults might not always achieve the desired effect.
+[english] Is there a way to explicitly set a default value here instead of depending on environment variables?

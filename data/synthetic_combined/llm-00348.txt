@@ -1,0 +1,94 @@
+[english] How can I ensure my character storage adheres to strict Unicode Weak Type Resolution rules (W1-W7)?
+[english] This function resolves ambiguous bidirectional properties by iterating through runs of characters and applying a series of specific Unicode standards. It ensures that weak types are correctly classified based on the strong types found in their immediate context.
+<switch:python>
+[python] def resolve_weak_types(storage, debug=False):
+    """Reslove weak type rules W1 - W3.
+
+    See: http://unicode.org/reports/tr9/#Resolving_Weak_Types
+
+    """
+
+    for run in storage['runs']:
+        prev_strong = prev_type = run['sor']
+        start, length = run['start'], run['length']
+        chars = storage['chars'][start:start+length]
+        for _ch in chars:
+            # W1. Examine each nonspacing mark (NSM) in the level run, and
+            # change the type of the NSM to the type of the previous character.
+            # If the NSM is at the start of the level run, it will get the type
+            # of sor.
+            bidi_type = _ch['type']
+
+            if bidi_type == 'NSM':
+                _ch['type'] = bidi_type = prev_type
+
+            # W2. Search backward from each instance of a European number until
+            # the first strong type (R, L, AL, or sor) is found. If an AL is
+            # found, change the type of the European number to Arabic number.
+            if bidi_type == 'EN' and prev_strong == 'AL':
+                _ch['type'] = 'AN'
+
+            # update prev_strong if needed
+            if bidi_type in ('R', 'L', 'AL'):
+                prev_strong = bidi_type
+
+            prev_type = _ch['type']
+
+        # W3. Change all ALs to R
+        for _ch in chars:
+            if _ch['type'] == 'AL':
+                _ch['type'] = 'R'
+
+        # W4. A single European separator between two European numbers changes
+        # to a European number. A single common separator between two numbers of
+        # the same type changes to that type.
+        for idx in range(1, len(chars) - 1):
+            bidi_type = chars[idx]['type']
+            prev_type = chars[idx-1]['type']
+            next_type = chars[idx+1]['type']
+
+            if bidi_type == 'ES' and (prev_type == next_type == 'EN'):
+                chars[idx]['type'] = 'EN'
+
+            if bidi_type == 'CS' and prev_type == next_type and \
+                    prev_type in ('AN', 'EN'):
+                chars[idx]['type'] = prev_type
+
+        # W5. A sequence of European terminators adjacent to European numbers
+        # changes to all European numbers.
+        for idx in range(len(chars)):
+            if chars[idx]['type'] == 'EN':
+                for et_idx in range(idx-1, -1, -1):
+                    if chars[et_idx]['type'] == 'ET':
+                        chars[et_idx]['type'] = 'EN'
+                    else:
+                        break
+                for et_idx in range(idx+1, len(chars)):
+                    if chars[et_idx]['type'] == 'ET':
+                        chars[et_idx]['type'] = 'EN'
+                    else:
+                        break
+
+        # W6. Otherwise, separators and terminators change to Other Neutral.
+        for _ch in chars:
+            if _ch['type'] in ('ET', 'ES', 'CS'):
+                _ch['type'] = 'ON'
+
+        # W7. Search backward from each instance of a European number until the
+        # first strong type (R, L, or sor) is found. If an L is found, then
+        # change the type of the European number to L.
+        prev_strong = run['sor']
+        for _ch in chars:
+            if _ch['type'] == 'EN' and prev_strong == 'L':
+                _ch['type'] = 'L'
+
+            if _ch['type'] in ('L', 'R'):
+                prev_strong = _ch['type']
+
+    if debug:
+        debug_storage(storage, runs=True)
+<switch:english>
+[english] The function modifies the provided storage object directly (in-place), so ensure you have a copy if you need to preserve the original state.
+[english] What happens if an 'EN' type resolves to another type during the process, and that new type interacts with surrounding characters in a subsequent rule application?
+[english] The rules are applied sequentially and locally within each run iteration. For instance, W2 changes 'EN' based on `prev_strong` being 'AL', but later stages (like W7) can change a resulting 'EN' to 'L' if the strong type found is 'L'. The final state of the character reflects all applicable rules in order.
+[english] I appreciate the detailed walkthrough!

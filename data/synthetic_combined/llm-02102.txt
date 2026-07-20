@@ -1,0 +1,14 @@
+[english] How do I efficiently check if a given name needs placeholder substitution and retrieve the correct value?
+[english] This helper method decides whether an input string represents a wildcard that needs resolving, relying on internal checks within `self._root_instance`.
+<switch:python>
+[python] def _replace_wildcards(self, name, run_idx=None):
+        """Replaces the $ wildcards and returns True/False in case it was replaced"""
+        if self._root_instance.f_is_wildcard(name):
+            return True, self._root_instance.f_wildcard(name, run_idx)
+        else:
+            return False, name
+<switch:english>
+[english] The function returns a boolean indicating if replacement occurred, alongside either the resolved value or the original name.
+[english] What happens internally when run_idx is passed as None to this method?
+[english] If `run_idx` is None and it's a wildcard, `self._root_instance.f_wildcard(name, run_idx)` likely uses default or static values.
+[english] That clarifies how the wildcards are handled!

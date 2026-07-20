@@ -1,0 +1,44 @@
+[english] How can I create a compressed archive of a specified directory, ensuring the resulting zip file is saved one level above the source folder?
+[english] The function first validates that the input path is a valid directory. It determines the output filename and then iterates through all files in the source directory using os.walk to add them into a new zip archive.
+<switch:python>
+[python] def zipdir(directory, name=None, delete=False):
+    """
+    Compresses the target directory, and saves it to ../name.zip
+
+    Parameters
+    ----------
+    directory : str
+        Path to the directory you want to compress.
+        Compressed file will be saved at directory/../name.zip
+    name : str (default=None)
+        The name of the resulting zip file. If not specified, the
+        name of the directory to be compressed is used.
+    delete : bool
+        If True, the uncompressed directory is deleted after the zip file
+        has been created. Defaults to False.
+
+    Returns
+    -------
+    None
+    """
+    if not os.path.isdir(directory) or not os.path.exists(directory):
+        raise ValueError('Please provide a valid directory.')
+    if name is None:
+        name = directory.split('/')[-1]
+    
+    savepath = os.path.join(directory, os.path.pardir)
+    
+    # create zipfile
+    with zipfile.ZipFile(os.path.join(savepath, name + '.zip'), 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(directory):
+            for f in files:
+                zipf.write(os.path.join(root, f), os.path.join(root.replace(directory, ''), f))
+    if delete:
+        shutil.rmtree(directory)
+
+    return None
+<switch:english>
+[english] This utility handles recursive compression and offers an optional `delete` flag to clean up the original folder after successful zipping, relying on standard library modules like shutil and zipfile.
+[english] What happens if I pass a directory that is symbolic link instead of a physical directory?
+[english] The function relies on os.path.isdir(), which only checks for existing directories, not necessarily handling symlinks specifically; to handle links differently you might need to inspect the file types before iterating.
+[english] That's very helpful, thank you!

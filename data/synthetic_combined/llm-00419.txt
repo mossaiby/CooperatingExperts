@@ -1,0 +1,35 @@
+[english] How can we build a helper function to fetch data from an external REST API and automatically raise specific Python exceptions when the response indicates missing data?
+[english] We can implement this by wrapping the HTTP request in a try-except block for connection errors, and then using regular expressions to inspect the response body for custom error strings.
+<switch:python>
+[python] def _get_request(self, endpoint):
+        """Do actual GET request to GC REST API
+        Also validates responses.
+
+        Keyword arguments:
+        endpoint -- full endpoint for GET request
+        """
+        try:
+            response = requests.get(endpoint)
+        except requests.exceptions.RequestException:
+            raise GoldenCheetahNotAvailable(endpoint)
+        
+        if response.text.startswith('unknown athlete'):
+            match = re.match(
+                pattern='unknown athlete (?P<athlete>.+)',
+                string=response.text)
+            raise AthleteDoesNotExist(
+                athlete=match.groupdict()['athlete'])
+
+        elif response.text == 'file not found':
+            match = re.match(
+                pattern='.+/activity/(?P<filename>.+)',
+                string=endpoint)
+            raise ActivityDoesNotExist(
+                filename=match.groupdict()['filename'])
+
+        return response
+<switch:english>
+[english] This method translates API-specific text into structured Python exceptions like AthleteDoesNotExist. Just be aware that checking `response.text` is fragile compared to relying solely on HTTP status codes.
+[english] What happens if the request gets a generic 500 Internal Server Error, since the validation logic only checks for specific error strings?
+[english] Currently, if the server returns an unexpected non-matching response, the function will simply return the raw `response` object. To handle standard HTTP errors, you might add `response.raise_for_status()` immediately after the GET request.
+[english] That clarifies how potential unhandled states are mitigated. Thank you!

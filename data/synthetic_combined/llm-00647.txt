@@ -1,0 +1,12 @@
+[english] How can I read the contents of a file, possibly constructed from several path segments?
+[english] This function is designed to accept multiple path elements using *paths. It first uses os.path.join to correctly assemble these segments into a valid file path regardless of the operating system.
+<switch:python>
+[python] def read(*paths):
+    """Build a file path from *paths* and return the contents."""
+    with open(os.path.join(*paths), 'r') as filename:
+        return filename.read()
+<switch:english>
+[english] Since it relies on open(), passing an incorrect or non-existent path will raise a FileNotFoundError, so careful input validation is recommended if this function is used in production code.
+[english] What happens if one of the path segments provided in *paths does not exist?
+[english] If the assembled path doesn't point to a real file, Python will raise a FileNotFoundError. You could add os.path.exists() checks before executing this function.
+[english] That makes perfect sense, thank you for clarifying!

@@ -1,0 +1,18 @@
+[english] I need to save all values from a complex NumPy array into a plain text file so I can read them back later.
+[english] This function iterates through every element in your input NumPy array (iop) and writes each one as a separate line into the specified file.
+<switch:python>
+[python] def _write_iop_to_file(self, iop, file_name):
+        """Generic iop file writer
+
+        :param iop numpy array to write to file
+        :param file_name the file and path to write the IOP to
+        """
+        lg.info('Writing :: ' + file_name)
+        f = open(file_name, 'w')
+        for i in scipy.nditer(iop):
+            f.write(str(i) + '\n')
+<switch:english>
+[english] It uses `scipy.nditer` to handle iterable data structures effectively, but remember that all elements are converted to strings before writing.
+[english] If my IOP array contained very large floating-point numbers (like 1.2345e+10), would printing them automatically preserve high precision?
+[english] By default, the `str(i)` conversion might round or truncate floating point values for readability; to maintain maximum precision, you should explicitly format the number before writing it.
+[english] That makes sense. Thanks for the clarification!

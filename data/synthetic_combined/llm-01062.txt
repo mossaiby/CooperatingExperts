@@ -1,0 +1,32 @@
+[english] How can I write a method to clean up test environments by deleting known files and optionally associated databases?
+[english] This function is designed to systematically gather resources intended for deletion, starting with a default list of files it identifies. It conditionally extends this list with database targets if the `clean_all` parameter is enabled.
+<switch:python>
+[python] def almost_everything(self, clean_all=False):
+        """
+        Delete almost all discovered files.
+
+        :param clean_all:
+            Tell the subsystem if we have to clean everything instesd
+            of almost everything.
+        :type clean_all: bool
+        """
+
+        # We get the list of file to delete.
+        to_delete = self.file_to_delete()
+
+        if clean_all:  # pragma: no cover
+            to_delete.extend(self.databases_to_delete())
+
+        for file in to_delete:
+            # We loop through the list of file to delete.
+
+            # And we delete the currently read file.
+            File(file).delete()
+
+        if clean_all:  # pragma: no cover
+            Load(PyFunceble.CURRENT_DIRECTORY)
+<switch:english>
+[english] The function handles resource cleanup by iterating through combined lists of files and databases, ensuring proper removal based on the `clean_all` flag.
+[english] If `self.file_to_delete()` returns an empty list, will any deletion actually occur?
+[english] No deletions will occur if no resources are discovered during the initial file scan, unless `clean_all=True` triggers additional actions like deleting databases.
+[english] Perfect, this provides a robust cleanup strategy.

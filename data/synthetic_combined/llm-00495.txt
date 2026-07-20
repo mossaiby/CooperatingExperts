@@ -1,0 +1,14 @@
+[english] How can I ensure that my application window takes exclusive control of the mouse input whenever it enters a menu state?
+[english] To enforce strict input handling, we override the base event method and explicitly call `toggle_exclusivity(True)` immediately after inheriting the parent's behavior.
+<switch:python>
+[python] def on_menu_enter(self,old):
+        """
+        Fake event handler, same as :py:meth:`WorldView.on_menu_enter()` but forces mouse exclusivity.
+        """
+        super(WorldViewMouseRotatable,self).on_menu_enter(old)
+        self.world.peng.window.toggle_exclusivity(True)
+<switch:english>
+[english] This implementation guarantees that once the menu is active, the system grants this window exclusive access to mouse events for better control.
+[english] What must I add if I don't implement a corresponding exit event?
+[english] You should implement `on_menu_exit` and call `toggle_exclusivity(False)` there. If you forget this, your window will fail to release the mouse lock when returning to normal gameplay.
+[english] That makes sense; handling both entry and exit states is crucial.

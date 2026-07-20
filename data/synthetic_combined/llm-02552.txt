@@ -1,0 +1,75 @@
+[english] How do I generate the specific list of coordinates that define the vertices for this layered shape within its bounding box?
+[english] This function first determines the top and bottom boundaries using self.getPos() and calculates 16 distinct corner points (v1 through v16) based on those positions and border offsets in b.
+It then groups these corners into nine specific quadrilaterals (q1-q9).
+<switch:python>
+[python] def genVertices(self):
+        """
+        Called to generate the vertices used by this layer.
+        
+        The length of the output of this method should be three times the :py:attr:`n_vertices` attribute.
+        
+        See the source code of this method for more information about the order of the vertices.
+        """
+        sx,sy,ex,ey = self.getPos()
+        b = self.bborder
+        
+        # Vertex Naming
+        # Y
+        # |1  2  3  4
+        # |5  6  7  8
+        # |9  10 11 12
+        # |13 14 15 16
+        # +------> X
+        # Border order
+        # 4 2-tuples
+        # Each marks x,y offset from the respective corner
+        # tuples are in order topleft,topright,bottomleft,bottomright
+        # indices:
+        # 0,1:topleft; 2,3:topright; 4,5:bottomleft; 6,7:bottomright
+        # For a simple border that is even, just repeat the first tuple three more times
+        
+        v1 = sx,            ey
+        v2 = sx+b[0],       ey
+        v3 = ex-b[2],       ey
+        v4 = ex,            ey
+        
+        v5 = sx,            ey-b[1]
+        v6 = sx+b[0],       ey-b[1]
+        v7 = ex-b[2],       ey-b[3]
+        v8 = ex,            ey-b[3]
+        
+        v9 = sx,            sy+b[5]
+        v10= sx+b[4],       sy+b[5]
+        v11= ex-b[6],       sy+b[7]
+        v12= ex,            sy+b[7]
+        
+        v13= sx,            sy
+        v14= sx+b[4],       sy
+        v15= ex-b[6],       sy
+        v16= ex,            sy
+        
+        # Layer is separated into 9 sections, naming:
+        # 1 2 3
+        # 4 5 6
+        # 7 8 9
+        # Within each section, vertices are given counter-clockwise, starting with the bottom-left
+        # 4 3
+        # 1 2
+        # This is important when assigning colors
+        
+        q1 = v5 +v6 +v2 +v1
+        q2 = v6 +v7 +v3 +v2
+        q3 = v7 +v8 +v4 +v3
+        q4 = v9 +v10+v6 +v5
+        q5 = v10+v11+v7 +v6
+        q6 = v11+v12+v8 +v7
+        q7 = v13+v14+v10+v9
+        q8 = v14+v15+v11+v10
+        q9 = v15+v16+v12+v11
+        
+        return q1+q2+q3+q4+q5+q6+q7+q8+q9
+<switch:english>
+[english] The method returns the concatenated list of all coordinates from q1 through q9, defining the full complex shape structure.
+[english] What does the combination 'v5 + v6 + v2 + v1' actually represent geometrically?
+[english] This sequence defines a specific quadrilateral section. For example, for q1, it uses vertices located near the top-left and bottom-right of that section to form a counter-clockwise shape.
+[english] Thanks for clarifying how those vertex groups are formed!

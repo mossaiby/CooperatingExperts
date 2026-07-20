@@ -1,0 +1,35 @@
+[english] I need a way to fetch all of a user's public organizations from an API, ensuring I don't make redundant network requests.
+[english] This function prioritizes performance by checking a cached dictionary before making any network calls. If the data isn't available locally, it constructs the necessary URL and fetches the raw response text.
+<switch:python>
+[python] def user_orgs(self, login):
+        """Get the user public organizations"""
+        if login in self._users_orgs:
+            return self._users_orgs[login]
+
+        url = urijoin(self.base_url, 'users', login, 'orgs')
+        try:
+            r = self.fetch(url)
+            orgs = r.text
+        except requests.exceptions.HTTPError as error:
+            # 404 not found is wrongly received sometimes
+            if error.response.status_code == 404:
+                logger.error("Can't get github login orgs: %s", error)
+                orgs = '[]'
+            else:
+                raise error
+
+        self._users_orgs[login] = orgs
+
+        return orgs
+<switch:english>
+[english] The function uses memoization to store results in `self._users_orgs`, but it handles 404 errors by defaulting to an empty list response, which might mask issues.
+[english] If the API sometimes returns non-200 status codes for valid users (e.g., rate limiting), how can we adjust this logic?
+[english] We should expand the error handling to catch common transient errors and perhaps implement a retry mechanism:
+<switch:python>
+[python] except requests.exceptions.HTTPError as error:
+            if 400 <= error.response.status_code < 600 and 
+               error.response.status_code not in [404]
+                # Implement retry logic here or raise a specific API failure
+                raise Exception(f"API Error: Status {error.response.status_code}") from error
+<switch:english>
+[english] That makes sense; adding generalized status checks would definitely make the retrieval more robust.

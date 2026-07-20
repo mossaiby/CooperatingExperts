@@ -1,0 +1,18 @@
+[english] How do I easily convert an existing Python dictionary into a structured Map object while optionally attaching custom metadata?
+[english] This function acts as a convenience wrapper. It takes your existing key-value pairs and initializes the required structure by passing them to the internal `pmap` helper, then wraps that result in the final `Map` class.
+<switch:python>
+[python] def map(kvs: Mapping[K, V], meta=None) -> Map[K, V]:  # pylint:disable=redefined-builtin
+    """Creates a new map."""
+    return Map(pmap(initial=kvs), meta=meta)
+<switch:english>
+[english] The reliance on `pmap` means this approach ensures data initialization is standardized, assuming that both `Map` and the helper function are correctly defined.
+[english] If I pass a mapping object with empty values for some keys—like `{ 'a': None, 'b': '' }` — does it affect how the Map behaves?
+[english] Since the structure uses `pmap(initial=kvs)`, it should successfully store any standard data type (including `None` or empty strings) without error.
+<switch:python>
+[python] try:
+    m = map({'a': None, 'b': ''})
+except Exception as e:
+    print(e)
+# If successful, f['a'] would be None and f['b'] would be ''
+<switch:english>
+[english] Got it; standard types are fully supported.

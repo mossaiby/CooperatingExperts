@@ -1,0 +1,18 @@
+[english] How can I retrieve a list of all valid category keys defined within an object while programmatically excluding internal or special identifiers?
+[english] To achieve this, the function accesses the instance's dictionary (`self.__dict__`) and uses list comprehension to efficiently filter out any attributes that match predefined exceptional constants.
+<switch:python>
+[python] def categories(self):
+        """
+        Lists the categories in the lexicon, except the
+        optional categories.
+
+        Returns:
+            list: A list of strings of category names.
+        """
+        keys = [k for k in self.__dict__.keys() if k not in SPECIAL]
+        return keys
+<switch:english>
+[english] The resulting list contains only standard categories. The functionality is entirely dependent on what keys are defined within the external `SPECIAL` constant for accurate filtering.
+[english] If a category is dynamically assigned to an instance during runtime, will this function still pick it up?
+[english] Yes, since it checks all keys in `self.__dict__`, any attribute added to the instance via `setattr()` will be included unless its name matches one of the entries in `SPECIAL`.
+[english] This makes sense; I appreciate the clear explanation!

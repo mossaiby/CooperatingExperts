@@ -1,0 +1,28 @@
+[english] I need a reliable way to download content from a URL and save it as a file without creating incomplete or corrupted downloads.
+[english] This function implements a safe download method by streaming the data into a unique temporary file first. It only renames this temp file to the final requested name upon successful completion of the stream.
+<switch:python>
+[python] def download(url, file_name, headers=None, show_progress=True):
+    '''stream to a temporary file, rename on successful completion
+
+        Parameters
+        ==========
+        file_name: the file name to stream to
+        url: the url to stream from
+        headers: additional headers to add
+    '''
+
+    fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
+    os.close(fd)
+
+    if DISABLE_SSL_CHECK is True:
+        bot.warning('Verify of certificates disabled! ::TESTING USE ONLY::')
+
+    verify = not DISABLE_SSL_CHECK
+    response = stream(url, headers=headers, stream_to=tmp_file)
+    shutil.move(tmp_file, file_name)
+    return file_name
+<switch:english>
+[english] Using the `shutil.move` command ensures that if an error occurs during the connection or writing, the user's target filename remains untouched and pointing to potential pre-existing content rather than a half-downloaded file.
+[english] If the downloading process fails midway due to network issues, does this function automatically clean up the temporary file?
+[english] No, as currently written, failed downloads leave behind orphaned temporary files. You would need to wrap the core logic in a try...finally block to ensure `os.remove(tmp_file)` executes upon any exception.
+[english] I appreciate the detailed walkthrough and suggestions on error handling.

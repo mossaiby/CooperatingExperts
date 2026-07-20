@@ -1,0 +1,13 @@
+[english] I need a function to let users interact with a search dialog and retrieve their selected text, word boundary settings, and case sensitivity preferences.
+[english] This helper function serves as a wrapper for the underlying system dialog. It initiates the find dialog using provided arguments and then organizes the resulting object into a clean dictionary format that is easy to use elsewhere in the code.
+<switch:python>
+[python] def find(default='', whole_words=0, case_sensitive=0, parent=None):
+    "Shows a find text dialog"
+    result = dialogs.findDialog(parent, default, whole_words, case_sensitive)
+    return {'text': result.searchText, 'whole_words': result.wholeWordsOnly,
+            'case_sensitive': result.caseSensitive}
+<switch:english>
+[english] This design ensures that even when dealing with complex system objects, you receive simple keyword pairs like 'text' or 'case_sensitive'. Note that it relies on `dialog_findingDialog` being successfully imported and initialized in your environment.
+[english] What happens if the user cancels the dialog? Does this function handle an empty or cancelled result gracefully?
+[english] Currently, this implementation assumes the dialog call returns a valid object (`result`). If cancellation needs to be handled, you should wrap the `dialog_findingDialog` call in a try/except block to check for specific error codes indicating user dismissal.
+[english] Got it, thanks for clarifying how those dependencies work.

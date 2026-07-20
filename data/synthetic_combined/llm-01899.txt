@@ -1,0 +1,23 @@
+[english] How do I set specific HTTP headers that need to be matched against an incoming request?
+[english] This method helps define matching criteria by explicitly setting expected request headers. It creates a dictionary of header names and values, then links this definition to the internal mock instance.
+<switch:python>
+[python] def header(self, name, value):
+        """
+        Defines a URL path to match.
+
+        Only call this method if the URL has no path already defined.
+
+        Arguments:
+            path (str): URL path value to match. E.g: ``/api/users``.
+
+        Returns:
+            self: current Mock instance.
+        """
+        headers = {name: value}
+        self._request.headers = headers
+        self.add_matcher(matcher('HeadersMatcher', headers))
+<switch:english>
+[english] The function ensures that any call to `self.add_matcher` includes a specific 'HeadersMatcher' based on the provided name-value pair.
+[english] What happens if I try to set headers using this method when other header matchers are already configured?
+[english] This implementation overwrites or modifies the existing request headers; however, you should consult the surrounding class logic to see how `self._request.headers` interacts with previously defined matchers.
+[english] Got it, thanks for clarifying how these matches work.

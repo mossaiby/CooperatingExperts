@@ -1,0 +1,31 @@
+[english] How can I ensure custom modules stored in specific project directories, like a configuration or plugins folder, are accessible via Python imports?
+[english] This function modifies the system path (`sys.path`) to explicitly tell Python where to look for imported modules. It checks if critical Airflow folders and DAG locations are already registered before appending them.
+<switch:python>
+[python] def prepare_classpath():
+    """
+    Ensures that certain subfolders of AIRFLOW_HOME are on the classpath
+    """
+
+    if DAGS_FOLDER not in sys.path:
+        sys.path.append(DAGS_FOLDER)
+
+    # Add ./config/ for loading custom log parsers etc, or
+    # airflow_local_settings etc.
+    config_path = os.path.join(AIRFLOW_HOME, 'config')
+    if config_path not in sys.path:
+        sys.path.append(config_path)
+
+    if PLUGINS_FOLDER not in sys.path:
+        sys.path.append(PLUGINS_FOLDER)
+<switch:english>
+[english] By adding these directories, you ensure that files within `DAGS_FOLDER`, `config/`, and `PLUGINS_FOLDER` can be treated as standard Python packages without needing complex absolute import routes.
+[english] Does this function inherently handle cases where the necessary environment variables (like AIRFLOW_HOME) might not be defined?
+[english] The current function assumes that globals like DAGS_FOLDER, AIRFLOW_HOME, and PLUGINS_FOLDER are already set in the execution context. If a variable is undefined, it will raise a NameError:
+<switch:python>
+[python] def prepare_classpath():
+    global AIRFLOW_HOME # Add explicit declaration if needed for IDE/Linting
+    if DAGS_FOLDER not in sys.path:
+        sys.path.append(DAGS_FOLDER)
+    # ... rest of the code
+<switch:english>
+[english] That clarifies how dependency management works within this setup.

@@ -1,0 +1,43 @@
+[english] I need a function that extracts exactly four corner crops and one central crop from an input image.
+[english] This function first normalizes the requested `size` into an (h, w) tuple if a single integer is provided. It then uses standard coordinate math to define the bounding boxes for each of the five specific regions on the image.
+<switch:python>
+[python] def five_crop(img, size):
+    """Crop the given PIL Image into four corners and the central crop.
+
+    .. Note::
+        This transform returns a tuple of images and there may be a
+        mismatch in the number of inputs and targets your ``Dataset`` returns.
+
+    Args:
+       size (sequence or int): Desired output size of the crop. If size is an
+           int instead of sequence like (h, w), a square crop (size, size) is
+           made.
+
+    Returns:
+       tuple: tuple (tl, tr, bl, br, center)
+                Corresponding top left, top right, bottom left, bottom right and center crop.
+    """
+    if isinstance(size, numbers.Number):
+        size = (int(size), int(size))
+    else:
+        assert len(size) == 2, "Please provide only two dimensions (h, w) for size."
+
+    w, h = img.size
+    crop_h, crop_w = size
+    if crop_w > w or crop_h > h:
+        raise ValueError("Requested crop size {} is bigger than input size {}".format(size,
+                                                                                      (h, w)))
+    tl = img.crop((0, 0, crop_w, crop_h))
+    tr = img.crop((w - crop_w, 0, w, crop_h))
+    bl = img.crop((0, h - crop_h, crop_w, h))
+    br = img.crop((w - crop_w, h - crop_h, w, h))
+    center = center_crop(img, (crop_h, crop_w))
+    return (tl, tr, bl, br, center)
+<switch:english>
+[english] The core logic correctly handles PIL cropping method arguments across all four corners and calls an external helper for the central crop.
+[english] What constraint is put in place if I ask for a crop size that is larger than the original image?
+[english] The function raises a `ValueError` to prevent runtime errors and explicitly checks this condition using the comparison:
+<switch:python>
+[python] if crop_w > w or crop_h > h:
+<switch:english>
+[english] That handles potential bugs nicely.

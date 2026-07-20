@@ -1,0 +1,36 @@
+[english] How do I register an existing operating system image from an Azure blob storage location with our image repository?
+[english] This method is designed to integrate an external OS disk into the registry. It first ensures all necessary parameters are provided and then constructs the required XML payload.
+<switch:python>
+[python] def add_os_image(self, label, media_link, name, os):
+        '''
+        Adds an OS image that is currently stored in a storage account in your
+        subscription to the image repository.
+
+        label:
+            Specifies the friendly name of the image.
+        media_link:
+            Specifies the location of the blob in Windows Azure blob store
+            where the media for the image is located. The blob location must
+            belong to a storage account in the subscription specified by the
+            <subscription-id> value in the operation call. Example:
+            http://example.blob.core.windows.net/disks/mydisk.vhd
+        name:
+            Specifies a name for the OS image that Windows Azure uses to
+            identify the image when creating one or more virtual machines.
+        os:
+            The operating system type of the OS image. Possible values are:
+            Linux, Windows
+        '''
+        _validate_not_none('label', label)
+        _validate_not_none('media_link', media_link)
+        _validate_not_none('name', name)
+        _validate_not_none('os', os)
+        return self._perform_post(self._get_image_path(),
+                                  _XmlSerializer.os_image_to_xml(
+                                      label, media_link, name, os),
+                                  as_async=True)
+<switch:english>
+[english] The function validates inputs and then uses an internal serializer to format the data for a POST request, executing the operation asynchronously.
+[english] Does this method handle rate limiting or retry logic if the API call fails?
+[english] Since it relies on `self._perform_post`, any specific handling for retries must be implemented within that underlying helper function.
+[english] Got it. Thanks for clarifying how those asynchronous calls work.

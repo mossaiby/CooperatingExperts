@@ -1,0 +1,41 @@
+[english] How can I resolve type definitions for complex signatures by looking them up in a parent context?
+[english] This function systematically gathers various types from different internal fields of the current object. It then iterates through all components of these collected types to ensure each symbol is correctly mapped.
+<switch:python>
+[python] def resolve(self):
+        """
+        Process the signature and find definition for type.
+        """
+        # collect types for resolution
+        t2resolv = []
+        if hasattr(self._sig, 'tret'):
+            t2resolv.append(self._sig.tret)
+        if hasattr(self._sig, 'tparams') and self._sig.tparams is not None:
+            for p in self._sig.tparams:
+                t2resolv.append(p)
+        if self._translate_to is not None:
+            t2resolv.append(self._translate_to.target)
+        if self._variadic_types is not None:
+            for t in self._variadic_types:
+                t2resolv.append(t)
+        for t in t2resolv:
+            for c in t.components:
+                if c not in self.resolution or self.resolution[c] is None:
+                    # try to find what is c
+                    parent = self.get_parent()
+                    if parent is not None:
+                        sc = parent.get_by_symbol_name(c)
+                        if len(sc) == 1:
+                            sc = list(sc.values())[0]
+                            # unwrap EvalCtx around Type
+                            if isinstance(sc, EvalCtx):
+                                sc = sc._sig
+                            rtyp = weakref.ref(sc)
+                            self.resolution[c] = rtyp
+                            continue
+                    # unresolved
+                    self.resolution[c] = None
+<switch:english>
+[english] The process relies heavily on finding exactly one match via `get_by_symbol_name`. If a type cannot be found in the parent, it is marked as unresolved.
+[english] What happens if the lookup finds multiple matches for a component symbol?
+[english] If more than one match is found by `parent.get_by_symbol_name(c)`, that specific component remains unresolved because the logic only proceeds when exactly one match exists to ensure deterministic resolution.
+[english] I see, so ambiguity prevents automatic resolution.

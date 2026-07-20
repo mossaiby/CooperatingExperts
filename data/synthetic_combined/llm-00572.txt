@@ -1,0 +1,36 @@
+[english] How can I implement a robust mechanism to add a data distribution (`dist`) to my working set while managing associated project entries?
+[english] This function handles adding distributions by first linking them to the appropriate entry and checking existing constraints. It uses internal dictionaries to track which keys belong to which entries, ensuring that related metadata is updated upon insertion.
+<switch:python>
+[python] def add(self, dist, entry=None, insert=True, replace=False):
+        """Add `dist` to working set, associated with `entry`
+
+        If `entry` is unspecified, it defaults to the ``.location`` of `dist`.
+        On exit from this routine, `entry` is added to the end of the working
+        set's ``.entries`` (if it wasn't already present).
+
+        `dist` is only added to the working set if it's for a project that
+        doesn't already have a distribution in the set, unless `replace=True`.
+        If it's added, any callbacks registered with the ``subscribe()`` method
+        will be called.
+        """
+        if insert:
+            dist.insert_on(self.entries, entry)
+
+        if entry is None:
+            entry = dist.location
+        keys = self.entry_keys.setdefault(entry,[])
+        keys2 = self.entry_keys.setdefault(dist.location,[])
+        if not replace and dist.key in self.by_key:
+            return      # ignore hidden distros
+
+        self.by_key[dist.key] = dist
+        if dist.key not in keys:
+            keys.append(dist.key)
+        if dist.key not in keys2:
+            keys2.append(dist.key)
+        self._added_new(dist)
+<switch:english>
+[english] The primary logic prevents redundant additions unless explicitly told otherwise via `replace=True`, maintaining data integrity within the working set structure.
+[english] If I call this function multiple times with the same distribution object but different entry names, how does it ensure those keys are correctly mapped to both entries?
+[english] The code uses `self.entry_keys` to append the distribution's key to lists associated with each specified entry. This links the distribution's unique identifier to every relevant project entry.
+[english] That makes sense, thanks for clarifying how the indexing works!

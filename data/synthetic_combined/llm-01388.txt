@@ -1,0 +1,17 @@
+[english] I need a way to automatically generate and register multiple Prometheus metrics based on a list of configuration objects.
+[english] This function uses a dictionary comprehension to efficiently iterate over the provided configurations and registers each metric via an internal helper method. The resulting map is then updated into a persistent state for future access.
+<switch:python>
+[python] def create_metrics(self,
+                       configs: Iterable[MetricConfig]) -> Dict[str, Metric]:
+        """Create Prometheus metrics from a list of MetricConfigs."""
+        metrics: Dict[str, Metric] = {
+            config.name: self._register_metric(config)
+            for config in configs
+        }
+        self._metrics.update(metrics)
+        return metrics
+<switch:english>
+[english] The operation returns the newly created metrics, but it also updates the instance's `self._metrics` attribute internally. If multiple configs share a name, the last one processed will overwrite previous entries in the dictionary.
+[english] What happens if two different MetricConfig objects happen to have the exact same value for their 'name'?
+[english] If names are duplicated during iteration, Python's dictionary comprehension structure means the second occurrence of that key would silently overwrite the first metric registered under the same name.
+[english] Got it. Knowing how overwriting works helps me organize my configuration better.

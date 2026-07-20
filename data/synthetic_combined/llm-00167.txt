@@ -1,0 +1,20 @@
+[english] I need a function that takes an AST node and returns the nearest enclosing `try...except` block it belongs to.
+[english] This function works by iteratively moving up through the parent chain of the provided node. It continuously checks if the immediate ancestor is either a TryExcept or an ExceptHandler structure until one of those containers is found.
+<switch:python>
+[python] def find_try_except_wrapper_node(
+    node: astroid.node_classes.NodeNG
+) -> Union[astroid.ExceptHandler, astroid.TryExcept]:
+    """Return the ExceptHandler or the TryExcept node in which the node is."""
+    current = node
+    ignores = (astroid.ExceptHandler, astroid.TryExcept)
+    while current and not isinstance(current.parent, ignores):
+        current = current.parent
+
+    if current and isinstance(current.parent, ignores):
+        return current.parent
+    return None
+<switch:english>
+[english] This logic assumes that the astroid library has correctly linked all parent pointers for the AST nodes during parsing.
+[english] If a node is nested deep within multiple try-except structures (e.g., inside an except block which itself is in a try block), which one will this function return?
+[english] Since it traverses upwards from the initial node, the function returns the most immediate ancestor that matches either type first.
+[english] Does that cover all cases for finding these wrappers?

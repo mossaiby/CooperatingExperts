@@ -1,0 +1,57 @@
+[english] How can I take a raw string or list of strings to create compiled regular expressions and special matching tokens like EOF?
+[english] This function is designed to standardize pattern input by first handling `None` values and ensuring that single string inputs are converted into lists before proceeding. It then iterates through the patterns, compiling strings into regex objects while respecting global flags.
+<switch:python>
+[python] def compile_pattern_list(self, patterns):
+
+        """This compiles a pattern-string or a list of pattern-strings.
+        Patterns must be a StringType, EOF, TIMEOUT, SRE_Pattern, or a list of
+        those. Patterns may also be None which results in an empty list (you
+        might do this if waiting for an EOF or TIMEOUT condition without
+        expecting any pattern).
+
+        This is used by expect() when calling expect_list(). Thus expect() is
+        nothing more than::
+
+             cpl = self.compile_pattern_list(pl)
+             return self.expect_list(cpl, timeout)
+
+        If you are using expect() within a loop it may be more
+        efficient to compile the patterns first and then call expect_list().
+        This avoid calls in a loop to compile_pattern_list()::
+
+             cpl = self.compile_pattern_list(my_pattern)
+             while some_condition:
+                ...
+                i = self.expect_list(clp, timeout)
+                ...
+        """
+
+        if patterns is None:
+            return []
+        if not isinstance(patterns, list):
+            patterns = [patterns]
+
+        compile_flags = re.DOTALL # Allow dot to match \n
+        if self.ignorecase:
+            compile_flags = compile_flags | re.IGNORECASE
+        compiled_pattern_list = []
+        for p in patterns:
+            if isinstance(p, (bytes, unicode)):
+                p = self._cast_buffer_type(p)
+                compiled_pattern_list.append(re.compile(p, compile_flags))
+            elif p is EOF:
+                compiled_pattern_list.append(EOF)
+            elif p is TIMEOUT:
+                compiled_pattern_list.append(TIMEOUT)
+            elif type(p) is re_type:
+                p = self._prepare_regex_pattern(p)
+                compiled_pattern_list.append(p)
+            else:
+                raise TypeError ('Argument must be one of StringTypes, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p)))
+
+        return compiled_pattern_list
+<switch:english>
+[english] The helper method ensures proper type safety throughout the compilation process, raising a precise TypeError if any unexpected data types are encountered in the input list.
+[english] What specific action is taken if one of the items passed into this function is already a compiled regular expression object?
+[english] If an item is recognized as an existing regex pattern (type `re_type`), the function skips re-compilation and calls `self._prepare_regex_pattern(p)` to normalize it for expected use within the system.
+[english] That makes sense, thank you!

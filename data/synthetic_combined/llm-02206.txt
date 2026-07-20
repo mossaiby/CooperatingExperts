@@ -1,0 +1,12 @@
+[english] How do I update a specific parameter value across all instructions that use that named parameter?
+[english] This function modifies instruction objects in place by looking up which instructions are associated with the provided parameter name.
+<switch:python>
+[python] def _bind_parameter(self, parameter, value):
+        """Assigns a parameter value to matching instructions in-place."""
+        for (instr, param_index) in self._parameter_table[parameter]:
+            instr.params[param_index] = value
+<switch:english>
+[english] The method assumes that `instr.params` is properly indexed for every instruction found in the lookup table.
+[english] What happens if an instruction listed in the parameter table has already been modified and doesn't have a slot at `param_index`?
+[english] If the index does not exist, this function will raise an IndexError. You would need additional checks before assignment or use a default value mechanism.
+[english] This clarification is helpful for ensuring data integrity.

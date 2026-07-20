@@ -1,0 +1,26 @@
+[english] How can I use a Python method to upload a specific string inside an Azure File Share?
+[english] This function handles uploading text by leveraging a connection object, which delegates the creation of the file using parameters for sharing, directory location, and the filename.
+<switch:python>
+[python] def load_string(self, string_data, share_name, directory_name, file_name, **kwargs):
+        """
+        Upload a string to Azure File Share.
+
+        :param string_data: String to load.
+        :type string_data: str
+        :param share_name: Name of the share.
+        :type share_name: str
+        :param directory_name: Name of the directory.
+        :type directory_name: str
+        :param file_name: Name of the file.
+        :type file_name: str
+        :param kwargs: Optional keyword arguments that
+            `FileService.create_file_from_text()` takes.
+        :type kwargs: object
+        """
+        self.connection.create_file_from_text(share_name, directory_name,
+                                              file_name, string_data, **kwargs)
+<switch:english>
+[english] The function relies entirely on the internal `create_file_from_text` method to perform the actual data handling and connection logic.
+[english] If I wanted to modify an existing file instead of overwriting it completely, is there a way?
+[english] This specific wrapper only calls a function that appears designed for creation. To modify content on Azure File Share, you would typically need `open` or related methods provided by the underlying connection service rather than this upload utility.
+[english] Thanks for clarifying how to manage file updates!

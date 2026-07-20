@@ -1,0 +1,21 @@
+[english] I need a way to link an object back to its parent Expression while making sure the type is correct.
+[english] To ensure data integrity when setting the parent relationship, this method first validates that the provided `parent` argument is indeed of type `Expression`. If validation passes, it assigns the reference to the instance attribute.
+<switch:python>
+[python] def set_parent(self, parent):
+        """Set parent ``Expression`` for this object.
+
+        Args:
+            parent (Expression): The ``Expression`` which contains this object.
+
+        Raises:
+            FiqlObjectException: Parent must be of type ``Expression``.
+        """
+        if not isinstance(parent, Expression):
+            raise FiqlObjectException("Parent must be of %s not %s" % (
+                Expression, type(parent)))
+        self.parent = parent
+<switch:english>
+[english] This strict check using isinstance and FiqlObjectException ensures that only valid objects can establish a hierarchical link, preventing runtime errors in subsequent logic.
+[english] If I call this function twice with different Expression objects, will the old parent remain accessible?
+[english] The current implementation overwrites `self.parent` each time it is called. If you needed to retain history, you would need an additional list structure here.
+[english] That makes more sense now.

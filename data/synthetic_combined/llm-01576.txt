@@ -1,0 +1,40 @@
+[english] I need a way to find the correct, currently available backend name even if I only know its deprecated version or an alias.
+[english] This function resolves configuration names by first checking deprecation maps and then consulting any defined aliases for the given input. If those checks fail, it defaults back to using the provided name directly.
+<switch:python>
+[python] def resolve_backend_name(name, backends, deprecated, aliased):
+    """Resolve backend name from a deprecated name or an alias.
+
+    A group will be resolved in order of member priorities, depending on
+    availability.
+
+    Args:
+        name (str): name of backend to resolve
+        backends (list[BaseBackend]): list of available backends.
+        deprecated (dict[str: str]): dict of deprecated names.
+        aliased (dict[str: list[str]]): dict of aliased names.
+
+    Returns:
+        str: resolved name (name of an available backend)
+
+    Raises:
+        LookupError: if name cannot be resolved through regular available
+            names, nor deprecated, nor alias names.
+    """
+    available = [backend.name() for backend in backends]
+
+    resolved_name = deprecated.get(name, aliased.get(name, name))
+    if isinstance(resolved_name, list):
+        resolved_name = next((b for b in resolved_name if b in available), "")
+
+    if resolved_name not in available:
+        raise LookupError("backend '{}' not found.".format(name))
+
+    if name in deprecated:
+        logger.warning("WARNING: '%s' is deprecated. Use '%s'.", name, resolved_name)
+
+    return resolved_name
+<switch:english>
+[english] After determining a potential resolved name, the code validates that it is present in the list of available backends before returning it or raising an error.
+[english] If an alias maps 'foo' to a list of multiple choices, which one does this function select?
+[english] The code uses `next()` to pick the first backend name found in the available list that matches any entry in the provided list of options. This is implemented via: `resolved_name = next((b for b in resolved_name if b in available), "")`.
+[english] That makes sense, thanks for explaining it.

@@ -1,0 +1,28 @@
+[english] I need to extract all configuration options from sections prefixed with 'multiproc_' in my existing config file and put them into a fresh parser without the prefix.
+[english] This function first checks if any section starts with our target prefix. If it does, it initializes a new parser and then iterates through all relevant sections, stripping that 'multiproc_' string from both the section title and every option key before copying the data over.
+<switch:python>
+[python] def _find_multiproc_options(parser):
+        """ Searches for multiprocessing options within a ConfigParser.
+
+        If such options are found, they are copied (without the `'multiproc_'` prefix)
+        into a new parser.
+
+        """
+        sections = parser.sections()
+        if not any(section.startswith('multiproc_') for section in sections):
+            return None
+        mp_parser = NoInterpolationParser()
+        for section in sections:
+            if section.startswith('multiproc_'):
+                new_section = section.replace('multiproc_', '')
+                mp_parser.add_section(new_section)
+                options = parser.options(section)
+                for option in options:
+                    val = parser.get(section, option, raw=True)
+                    mp_parser.set(new_section, option, val)
+        return mp_parser
+<switch:english>
+[english] The function is designed specifically to avoid interpolation by using NoInterpolationParser(), ensuring the values are treated as literal strings.
+[english] What happens if there are non-prefixed sections that coincidentally use names like 'mp_worker' or '_processor_pool'?
+[english] Since it uses a strict `section.startswith('multiproc_')` check, other similarly named sections will be preserved in the original parser and ignored by this function.
+[english] That makes perfect sense for clear code!

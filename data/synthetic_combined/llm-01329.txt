@@ -1,0 +1,29 @@
+[english] How do I ensure that gene entries in a set of updated panels have the correct database version assigned?
+[english] This function iterates over all genes in the panel to assign versions. It checks if the gene symbol belongs to a provided set of new genes, allowing it to apply different logic for existing versus newly introduced data.
+<switch:python>
+[python] def update_mim_version(self, new_genes, new_panel, old_version):
+        """Set the correct version for each gene
+        Loop over the genes in the new panel
+
+        Args:
+            new_genes(set(str)): Set with the new gene symbols
+            new_panel(dict)
+
+        """
+        LOG.info('Updating versions for new genes')
+        version = new_panel['version']
+        for gene in new_panel['genes']:
+            gene_symbol = gene['hgnc_id']
+            # If the gene is new we add the version
+            if gene_symbol in new_genes:
+                gene['database_entry_version'] = version
+                continue
+            # If the gene is old it will have the previous version
+            gene['database_entry_version'] = old_version
+
+        return
+<switch:english>
+[english] The logic relies on comparing `hgnc_id` against `new_genes`. Genes found in the set receive a fresh panel version, while others default to an older provided version.
+[english] What happens if a gene is not found in either 'new_genes' or implicitly treated as 'old'? Does it handle missing entries?
+[english] The current logic assumes every gene must be handled by one of the two branches. If `gene_symbol` is present but fails both checks, its version will remain untouched from before this function was called.
+[english] This makes sense. Thanks for explaining!

@@ -1,0 +1,60 @@
+[english] How can I write a function to dynamically fetch and yield usable streaming URLs for video content served via a specific webpage configuration?
+[english] This function begins by ensuring authentication is active. It scrapes the initial page source using regular expressions and validates extracted configuration data before determining whether it needs a video hash or a live stream URL.
+<switch:python>
+[python] def _get_streams(self):
+        """
+        Get the config object from the page source and call the
+        API to get the list of streams
+        :return:
+        """
+        # attempt a login
+        self.login()
+
+        res = self.session.http.get(self.url)
+        # decode the config for the page
+        matches = self.config_re.finditer(res.text)
+        try:
+            config = self.config_schema.validate(dict(
+                [m.group("key", "value") for m in matches]
+            ))
+        except PluginError:
+            return
+
+        if config["selectedVideoHID"]:
+            self.logger.debug("Found video hash ID: {0}", config["selectedVideoHID"])
+            api_url = urljoin(self.url, urljoin(config["videosURL"], config["selectedVideoHID"]))
+        elif config["livestreamURL"]:
+            self.logger.debug("Found live stream URL: {0}", config["livestreamURL"])
+            api_url = urljoin(self.url, config["livestreamURL"])
+        else:
+            return
+
+        ares = self.session.http.get(api_url)
+        data = self.session.http.json(ares, schema=self.api_schema)
+        viewing_urls = data["viewing_urls"]
+
+        if "error" in viewing_urls:
+            self.logger.error("Failed to load streams: {0}", viewing_urls["error"])
+        else:
+            for url in viewing_urls["urls"]:
+                try:
+                    label = "{0}p".format(url.get("res", url["label"]))
+                except KeyError:
+                    label = "live"
+
+                if url["type"] == "rtmp/mp4" and RTMPStream.is_usable(self.session):
+                    params = {
+                        "rtmp": url["src"],
+                        "pageUrl": self.url,
+                        "live": True,
+                    }
+                    yield label, RTMPStream(self.session, params)
+
+                elif url["type"] == "application/x-mpegURL":
+                    for s in HLSStream.parse_variant_playlist(self.session, url["src"]).items():
+                        yield s
+<switch:english>
+[english] After fetching the raw stream list from the API, the code checks for errors and then iterates through viewing URLs, yielding specialized streaming objects (RTMPStream or HLSStream) when compatible types are found.
+[english] If the API returns a URL type that is neither 'rtmp/mp4' nor 'application/x-mpegURL', what happens in this function?
+[english] The current logic implicitly skips any stream type that does not match either of those specific MIME types, meaning it will not yield anything for unsupported formats.
+[english] That makes perfect sense!

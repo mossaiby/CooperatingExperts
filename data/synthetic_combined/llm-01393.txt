@@ -1,0 +1,37 @@
+[english] How can I modify an existing function that expects a single list argument so that it accepts multiple positional arguments instead?
+[english] To achieve this, we wrap the original function using a nested function (a closure). This inner function uses `*args` to capture any number of incoming arguments and then passes them as a single tuple into your provided callable.
+<switch:python>
+[python] def unsplat(f: Callable[[Iterable], A]) -> Callable[..., A]:
+    """Convert a function taking a single iterable argument into a function taking multiple arguments.
+
+    Args:
+        f: Any function taking a single iterable argument
+
+    Returns:
+        A function that accepts multiple arguments. Each argument of this function is passed as an element of an
+        iterable to ``f``.
+
+    Example:
+        $ def f(a):
+        $     return a[0] + a[1] + a[2]
+        $
+        $ f([1, 2, 3])  # 6
+        $ g = unsplat(f)
+        $ g(1, 2, 3)  # 6
+    """
+
+    def unsplatted(*args):
+        return f(args)
+
+    return unsplatted
+<switch:english>
+[english] The returned wrapper allows you to call functions designed for iterables by simply passing standard positional arguments instead. Note that the input is converted into a tuple before being passed to the original function `f`.
+[english] If I tried to use this with keyword arguments (kwargs) in my outer call, would they still work?
+[english] No, because the inner function signature only captures positional arguments using `*args`. To support both positions and keywords, you would need to change it to accept `**kwargs` as well:
+<switch:python>
+[python] def unsplat(f):
+    def unsplatted(*args, **kwargs):
+        return f((*args, **kwargs))
+    return unsplatted
+<switch:english>
+[english] Got it! This simplifies how I have to structure my test data.

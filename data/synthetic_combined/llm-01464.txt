@@ -1,0 +1,21 @@
+[english] How can I retrieve the raw binary contents of an intermediate dataset located in a specific experiment?
+[english] To read the data, we access the underlying platform's API via the workspace object. This ensures all necessary IDs are correctly passed to fetch the required resource.
+<switch:python>
+[python] def read_as_binary(self):
+        '''Read and return the dataset contents as binary.'''
+        return self.workspace._rest.read_intermediate_dataset_contents_binary(
+            self.workspace.workspace_id,
+            self.experiment.experiment_id,
+            self.node_id,
+            self.port_name
+        )
+<switch:english>
+[english] The function delivers raw binary data, meaning any subsequent logic must handle parsing this byte stream.
+[english] If the dataset is not found under these parameters, how will this method signal an error?
+[english] Since it relies on a remote service call, invalid inputs typically cause a specific exception to be raised. For instance:
+<switch:python>
+[python] eexcept RemoteServiceError as e:
+    # Handle missing or incorrect IDs here
+    raise RuntimeError(f"Data retrieval failed: {e}")
+<switch:english>
+[english] I should wrap the call in a try-except block then; thanks for the tip!

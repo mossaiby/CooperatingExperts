@@ -1,0 +1,44 @@
+[english] How do I retrieve all open and closed ClinVar submissions made by a specific user for a particular institute?
+[english] This function first executes a database query using `user_id` and `institute_id` to find initial submission records. It then iterates through these results, mapping essential fields into a new dictionary structure.
+<switch:python>
+[python] def clinvar_submissions(self, user_id, institute_id):
+        """Collect all open and closed clinvar submission created by a user for an institute
+
+            Args:
+                user_id(str): a user ID
+                institute_id(str): an institute ID
+
+            Returns:
+                submissions(list): a list of clinvar submission objects
+        """
+        LOG.info("Retrieving all clinvar submissions for user '%s', institute '%s'", user_id, institute_id)
+        # get first all submission objects
+        query = dict(user_id=user_id, institute_id=institute_id)
+        results = list(self.clinvar_submission_collection.find(query))
+
+        submissions = []
+        for result in results:
+            submission = {}
+            submission['_id'] =  result.get('_id')
+            submission['status'] = result.get('status')
+            submission['user_id'] = result.get('user_id')
+            submission['institute_id'] = result.get('institute_id')
+            submission['created_at'] = result.get('created_at')
+            submission['updated_at'] = result.get('updated_at')
+
+            if 'clinvar_subm_id' in result:
+                submission['clinvar_subm_id'] = result['clinvar_subm_id']
+
+            if result.get('variant_data'):
+                submission['variant_data'] = self.clinvar_collection.find({'_id': { "$in": result['variant_data'] } })
+            if result.get('case_data'):
+                submission['case_data'] = self.clinvar_collection.find({'_id' : { "$in": result['case_data'] } })
+
+            submissions.append(submission)
+
+        return submissions
+<switch:english>
+[english] The implementation performs recursive queries to fetch related data (`variant_data` and `case_data`) from the ClinVar collection for each submission found.
+[english] What happens if the variant_data or case_data lists contain multiple IDs?
+[english] If those keys exist, the function triggers a secondary database search using `$in` to fetch matching documents from `self.clinvar_collection`, populating the required data fields for your submission objects.
+[english] Does this handle submissions that are not yet fully populated?

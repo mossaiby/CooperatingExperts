@@ -1,0 +1,13 @@
+[english] How do I write a function that retrieves user data using an email and converts it into a usable login object?
+[english] The approach here is to first attempt fetching raw user information from storage via the email. If successful, the code wraps this raw data in a `LoginUser` instance; otherwise, it safely returns null.
+<switch:python>
+[python] def load_user(user_email):
+    """Returns the currently active user as an object."""
+    user_obj = store.user(user_email)
+    user_inst = LoginUser(user_obj) if user_obj else None
+    return user_inst
+<switch:english>
+[english] This function relies on a global `store` object for data retrieval and assumes the input is always valid.
+[english] What happens if store.user() fails because of a database connection error instead of returning null?
+[english] Currently, it lacks explicit error handling; an exception would propagate up. To handle errors gracefully, you could wrap the call in a try/except block:
+[english] That makes sense, I need to consider those potential failures.

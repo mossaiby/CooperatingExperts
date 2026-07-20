@@ -1,0 +1,18 @@
+[english] How do I reliably get a mapping of entry point names to their corresponding objects from all members of a specific group?
+[english] This function first fetches every available entry point using an assumed helper, `get_group_all`. It then systematically builds a dictionary, checking for existing keys before adding any new ones.
+<switch:python>
+[python] def get_group_named(group, path=None):
+    """Find a group of entry points with unique names.
+
+    Returns a dictionary of names to :class:`EntryPoint` objects.
+    """
+    result = {}
+    for ep in get_group_all(group, path=path):
+        if ep.name not in result:
+            result[ep.name] = ep
+    return result
+<switch:english>
+[english] The explicit check 'if ep.name not in result:' ensures that if the source list contains duplicate names, only the first instance encountered is stored.
+[english] If there are multiple entry points with the exact same name within a group, which one does this function guarantee being kept?
+[english] This function guarantees that the very first entry point encountered during iteration whose name matches will be the one saved in the dictionary.
+[english] Great explanation, I'll use this approach.

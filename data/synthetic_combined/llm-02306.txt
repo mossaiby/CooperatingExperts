@@ -1,0 +1,21 @@
+[english] How can I create an instance of a chess piece class using only its symbol like 'N' or 'n'?
+[english] This function converts a piece symbol into a usable object by checking its case. If the input is uppercase, it assigns the WHITE color; if lowercase, it assigns BLACK.
+<switch:python>
+[python] def from_symbol(cls, symbol):
+        '''
+        Creates a piece instance from a piece symbol.
+        Raises `ValueError` if the symbol is invalid.
+        '''
+        if symbol.lower() == symbol:
+            return cls(PIECE_SYMBOLS.index(symbol), WHITE)
+        else:
+            return cls(PIECE_SYMBOLS.index(symbol.lower()), BLACK)
+<switch:english>
+[english] The code successfully differentiates piece colors based on casing before calculating the correct index from PIECE_SYMBOLS. Be aware that invalid symbols will cause Python to raise an IndexError via .index().
+[english] What error occurs if a symbol is passed that isn't in PIECE_SYMBOLS?
+[english] If an unrecognized symbol is provided, `PIECE_SYMBOLS.index()` will raise a ValueError: 'symbol not in list'. To prevent this, you could add a check:
+<switch:python>
+[python] if symbol not in PIECE_SYMBOLS:
+    raise ValueError(f"Invalid piece symbol: {symbol}")
+<switch:english>
+[english] Perfect, I understand how to validate inputs now.

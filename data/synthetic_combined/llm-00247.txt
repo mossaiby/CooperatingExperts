@@ -1,0 +1,19 @@
+[english] How do I initialize an Elasticsearch client based on configuration and start a necessary recurring timer?
+[english] This function first pulls the server details from the instance configuration, providing safe defaults if those keys are missing. It then uses these settings to instantiate the ElasticSearch connector.
+<switch:python>
+[python] def createClient(self):
+        """Sets up HTTP connector and starts queue timer
+        """
+
+        server = self.config.get('server', 'localhost')
+        port = int(self.config.get('port', 9200))
+
+        self.client = elasticsearch.ElasticSearch(self.url, self.user,
+            self.password, self.index)
+
+        self.t.start(self.inter)
+<switch:english>
+[english] The setup concludes by initiating a scheduled task using `self.t.start(self.inter)`, which suggests there are background operations or polling intervals running.
+[english] If the 'server' key is completely missing from self.config, what value will be used?
+[english] It uses 'localhost' by default because of the second argument in `self.config.get('server', 'localhost')`. If a different variable required for client setup were missing without a default, the initialization would fail.
+[english] That makes sense; thank you for the clarification.

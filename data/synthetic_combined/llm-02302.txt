@@ -1,0 +1,43 @@
+[english] How can I retrieve metadata about a specific container without downloading its content?
+[english] This function executes an HTTP HEAD request against the defined cluster path. It is specialized to fetch important operational headers like object counts and usage statistics instead of any body.
+<switch:python>
+[python] def head_container(self, container, headers=None, query=None, cdn=False):
+        """
+        HEADs the container and returns the results. Useful headers
+        returned are:
+
+        =========================== =================================
+        x-container-bytes-used      Object storage used for the
+                                    container, in bytes.
+        x-container-object-count    The number of objects in the
+                                    container.
+        =========================== =================================
+
+        Also, any user headers beginning with x-container-meta- are
+        returned.
+
+        These values can be delayed depending the Swift cluster.
+
+        :param container: The name of the container.
+        :param headers: Additional headers to send with the request.
+        :param query: Set to a dict of query values to send on the
+            query string of the request.
+        :param cdn: If set True, the CDN management interface will be
+            used.
+        :returns: A tuple of (status, reason, headers, contents).
+
+            :status: is an int for the HTTP status code.
+            :reason: is the str for the HTTP status (ex: "Ok").
+            :headers: is a dict with all lowercase keys of the HTTP
+                headers; if a header has multiple values, it will be a
+                list.
+            :contents: is the str for the HTTP body.
+        """
+        path = self._container_path(container)
+        return self.request(
+            'HEAD', path, '', headers, query=query, cdn=cdn)
+<switch:english>
+[english] The function uses an internal request method to handle the actual communication, returning metadata and HTTP status information as a tuple.
+[english] How do I specifically access the total object count from the returned dictionary?
+[english] You would access it by key: `response[headers].get('x-container-object-count')`, provided this header is present in the response headers dictionary.
+[english] This makes monitoring my storage very easy.

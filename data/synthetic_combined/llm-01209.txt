@@ -1,0 +1,25 @@
+[english] I need a function to safely parse an input string containing both an identifier and a path that are separated by a colon.
+[english] The approach involves splitting the entire input string using the colon character. After filtering out potential empty parts, the first element is designated as the endpoint, while all subsequent elements are concatenated into the path, joined by slashes.
+<switch:python>
+[python] def parse_endpoint_name(self, endpoint):
+    '''split an endpoint name by colon, as the user can provide an
+       endpoint name separated from a path:
+
+       Parameters
+       ==========
+       endpoint 12345:/path/on/remote
+    
+    '''
+    parts = [x for x in endpoint.split(':') if x]
+    endpoint = parts[0]
+    if len(parts) == 1:
+        path = ''
+    else:
+        path = '/'.join(parts[1:])
+
+    return endpoint, path
+<switch:english>
+[english] This implementation correctly handles strings with no colons or multiple colons by preserving those extra components within the path structure. However, be aware that if the input starts with a colon (e.g., ':path'), the resulting endpoint will be an empty string.
+[english] What happens to the logic if I provide a string containing multiple colons like '12345:foo:bar'?
+[english] The code treats the first element as the endpoint and joins all remaining parts together using slashes. For that input, it would return ('12345', 'foo/bar').
+[english] That clarifies how the path construction works; thank you.

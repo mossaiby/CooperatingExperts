@@ -1,0 +1,50 @@
+[english] How can I stop all currently running BigQuery jobs associated with this service and wait for them to confirm cancellation?
+[english] This function handles the cancellation process by checking if a job is active and initiating a cancel request. It then follows up with a polling loop to monitor the job's status until it confirms completion or hits a predefined timeout.
+<switch:python>
+[python] def cancel_query(self):
+        """
+        Cancel all started queries that have not yet completed
+        """
+        jobs = self.service.jobs()
+        if (self.running_job_id and
+                not self.poll_job_complete(self.running_job_id)):
+            self.log.info('Attempting to cancel job : %s, %s', self.project_id,
+                          self.running_job_id)
+            if self.location:
+                jobs.cancel(
+                    projectId=self.project_id,
+                    jobId=self.running_job_id,
+                    location=self.location).execute(num_retries=self.num_retries)
+            else:
+                jobs.cancel(
+                    projectId=self.project_id,
+                    jobId=self.running_job_id).execute(num_retries=self.num_retries)
+        else:
+            self.log.info('No running BigQuery jobs to cancel.')
+            return
+
+        # Wait for all the calls to cancel to finish
+        max_polling_attempts = 12
+        polling_attempts = 0
+
+        job_complete = False
+        while polling_attempts < max_polling_attempts and not job_complete:
+            polling_attempts = polling_attempts + 1
+            job_complete = self.poll_job_complete(self.running_job_id)
+            if job_complete:
+                self.log.info('Job successfully canceled: %s, %s',
+                              self.project_id, self.running_job_id)
+            elif polling_attempts == max_polling_attempts:
+                self.log.info(
+                    "Stopping polling due to timeout. Job with id %s "
+                    "has not completed cancel and may or may not finish.",
+                    self.running_job_id)
+            else:
+                self.log.info('Waiting for canceled job with id %s to finish.',
+                              self.running_job_id)
+                time.sleep(5)
+<switch:english>
+[english] The logic successfully cancels the query, but be aware that the final loop relies on maximum attempts; if cancellation fails permanently, it may log a warning rather than raising an exception.
+[english] What happens if the job fails immediately after initiating the cancel request?
+[english] The current code assumes successful execution of the cancel API call. If `jobs.cancel()` raised an error, that failure would need to be caught and logged before starting the polling sequence.
+[english] That makes sense; I'll add more robust error handling around the API calls then.

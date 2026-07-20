@@ -1,0 +1,13 @@
+[english] How do I group and retrieve all data points from a feature matrix X that belong to a particular cluster index?
+[english] This function finds all row indices in the `labels` array where they match the target `label_index`. It then uses these resulting indices to extract only those corresponding rows from the dataset `X`.
+<switch:python>
+[python] def get_clustered_data(self, X, labels, label_index):
+        """Returns the data with a specific label_index, using the previously
+         learned labels."""
+        D = X[np.argwhere(labels == label_index)]
+        return D.reshape((D.shape[0], D.shape[-1]))
+<switch:english>
+[english] The code ensures that even if the resulting data points have complex internal shapes, they are flattened into a uniform 2D matrix for consistent downstream processing.
+[english] If I try to retrieve an index where no samples exist (e.g., label_index=9 when labels only go up to 5), what will be returned?
+[english] It will return an empty array, maintaining the structure of X but with zero rows.
+[english] This makes sense for filtering clusters.

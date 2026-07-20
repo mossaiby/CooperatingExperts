@@ -1,0 +1,20 @@
+[english] I need a way to register functions that are triggered by one or more specific wildcard patterns passed as keys.
+[english] This function iterates through the provided dictionary and maps each set of wildcards to its corresponding function. It ensures single wildcards are converted into tuples for consistent handling across the system.
+<switch:python>
+[python] def f_add_wildcard_functions(self, func_dict):
+        """#TODO"""
+        for wildcards, function in func_dict.items():
+            if not isinstance(wildcards, tuple):
+                wildcards = (wildcards,)
+            for wildcard in wildcards:
+                if wildcard in self._wildcard_keys:
+                    raise ValueError('Your wildcard `%s` is used twice1' % wildcard)
+                self._wildcard_keys[wildcard] = wildcards
+            self._wildcard_functions[wildcards] = function
+            self._logger.debug('Added wildcard function `%s`.' % str(wildcards))
+<switch:english>
+[english] Crucially, it validates every individual wildcard against `self._wildcard_keys` before registration to prevent conflicts within the broader system.
+[english] What mechanism prevents a single filename pattern from being used in two different function registrations?
+[english] The code explicitly checks for this using `if wildcard in self._wildcard_keys:` and raises a ValueError if it detects duplicate usage, ensuring uniqueness across all registered patterns.
+# The check happens during iteration over func_dict.items()
+[english] That clarifies the constraint implementation! Thank you.

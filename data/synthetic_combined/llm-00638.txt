@@ -1,0 +1,13 @@
+[english] I need a function that fetches both the total count and a list of all currently featured communities from the database.
+[english] To accomplish this, we query the FeaturedCommunity model directly. The code executes two operations: counting all matching records, and fetching every single record found by the query.
+<switch:python>
+[python] def get(*args, **kwargs):
+    """Get communities."""
+    from invenio.modules.communities.models import FeaturedCommunity
+    q = FeaturedCommunity.query
+    return q.count(), q.all()
+<switch:english>
+[english] This function efficiently retrieves both metrics in one go; however, using `q.all()` means large datasets may put heavy strain on server memory.
+[english] If I only want a small subset of these communities (like the top 10) instead of all of them, how should I modify this code?
+[english] You can use the `.limit(N)` method to restrict the database results before calling `all()`. For example, to get 10 records: `q.limit(10).all()`.
+[english] That makes sense! Thanks for clarifying how limits work.

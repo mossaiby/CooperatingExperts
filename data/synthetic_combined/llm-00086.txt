@@ -1,0 +1,30 @@
+[english] Create a mechanism to process incoming edge updates, ensuring that all nodes participating in new edges are properly registered within a complex graph system.
+[english] This method acts as a hook to handle list changes related to an object's edges. It first identifies whether the operation is updating specific items or the entire edge set based on the provided 'name'.
+<switch:python>
+[python] def _on_edges(self, object, name, old, new):
+        """ Handles the list of edges for any graph changing.
+        """
+        if name == "edges_items":
+            edges = new.added
+        elif name == "edges":
+            edges = new
+        else:
+            edges = []
+
+        all_nodes = [n for g in self.all_graphs for n in g.nodes]
+
+        for each_edge in edges:
+            # Ensure the edge's nodes exist in the graph.
+            if each_edge.tail_node not in all_nodes:
+                object.nodes.append( each_edge.tail_node )
+
+            if each_edge.head_node not in all_nodes:
+                object.nodes.append( each_edge.head_node )
+
+            # Initialise the edge's list of available nodes.
+            each_edge._nodes = all_nodes
+<switch:english>
+[english] If nodes associated with an edge don't exist across all current graphs, this function automatically adds them to the global node collection and then caches the full list of available nodes per edge.
+[english] What happens if self.all_graphs is extremely large? Is checking `each_edge.tail_node in all_nodes` efficient for performance?
+[english] Currently, since `all_nodes` is a list, membership checks are O(n). To optimize this for very large graphs, you should convert `all_nodes` into a set before entering the edge loop.
+[english] This clarifies how to improve scalability and efficiency. Thank you.

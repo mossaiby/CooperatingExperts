@@ -1,0 +1,30 @@
+[english] How can I modify all path entries in a potentially deeply nested directory structure by prepending a common prefix?
+[english] This function recursively traverses a dictionary-based `model` structure to update its internal paths. It calculates the new full path using string joining and then applies recursion if it encounters a 'directory' type.
+<switch:python>
+[python] def _apply_prefix(prefix, model):
+    """
+    Prefix all path entries in model with the given prefix.
+    """
+    if not isinstance(model, dict):
+        raise TypeError("Expected dict for model, got %s" % type(model))
+
+    # We get unwanted leading/trailing slashes if prefix or model['path'] are
+    # '', both of which are legal values.
+    model['path'] = '/'.join((prefix, model['path'])).strip('/')
+    if model['type'] in ('notebook', 'file'):
+        return model
+
+    if model['type'] != 'directory':
+        raise ValueError("Unknown model type %s." % type(model))
+
+    content = model.get('content', None)
+    if content is not None:
+        for sub_model in content:
+            _apply_prefix(prefix, sub_model)
+
+    return model
+<switch:english>
+[english] The logic uses recursive calls on sub-models within directories, while also validating that the input is a dict or has an expected 'type'.
+[english] What happens if one of the listed `sub_model` entries in content isn't actually a dictionary?
+[english] The function relies on external logic ensuring all contents are dictionaries; if not, the recursive call to `_apply_prefix` will immediately raise the TypeError defined at the start of the function.
+[english] That makes it clear how the type checking prevents unexpected data errors.

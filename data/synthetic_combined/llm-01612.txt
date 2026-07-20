@@ -1,0 +1,25 @@
+[english] How can I generate a discrete triangle wave pulse with defined parameters like duration and amplitude?
+[english] This function serves as a convenient wrapper to create sampled pulses of a triangular waveform. It allows you to specify essential signal characteristics, such as time length, peak magnitude, and cyclical frequency.
+<switch:python>
+[python] def triangle(duration: int, amp: complex, period: float = None,
+             phase: float = 0, name: str = None) -> SamplePulse:
+    """Generates triangle wave `SamplePulse`.
+
+    Applies `left` sampling strategy to generate discrete pulse from continuous function.
+
+    Args:
+        duration: Duration of pulse. Must be greater than zero.
+        amp: Pulse amplitude. Wave range is [-amp, amp].
+        period: Pulse period, units of dt. If `None` defaults to single cycle.
+        phase: Pulse phase.
+        name: Name of pulse.
+    """
+    if period is None:
+        period = duration
+
+    return _sampled_triangle_pulse(duration, amp, period, phase=phase, name=name)
+<switch:english>
+[english] It defaults to generating only one cycle if the period is not provided, simplifying usage for basic pulse generation.
+[english] What happens functionally if I pass an amplitude of zero?
+[english] If `amp` is set to 0, every sample in the resulting pulse will be zero. This results in a technically correct but silent output signal.
+[english] Perfect, that makes sense.

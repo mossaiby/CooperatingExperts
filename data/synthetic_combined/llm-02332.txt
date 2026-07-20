@@ -1,0 +1,25 @@
+[english] How can I reliably execute an HTTP method on the Dominos UK API endpoint while ensuring proper error handling?
+[english] This function standardizes how requests are sent to the API within the class session. It first creates the necessary full URL and then executes the provided verb (like GET or POST) with any extra parameters you pass.
+<switch:python>
+[python] def __call_api(self, verb, path, **kargs):
+        '''
+        Make a HTTP request to the Dominos UK API with the given parameters for
+        the current session.
+
+        :param verb func: HTTP method on the session.
+        :param string path: The API endpoint path.
+        :params list kargs: A list of arguments.
+        :return: A response from the Dominos UK API.
+        :rtype: response.Response
+        '''
+        response = verb(self.__url(path), **kargs)
+
+        if response.status_code != 200:
+            raise ApiError('{}: {}'.format(response.status_code, response))
+
+        return response
+<switch:english>
+[english] The method checks that the request was successful by verifying a status code of 200; otherwise, it raises an ApiError which helps catch unexpected API failures early.
+[english] If I don't provide arguments to `**kargs`, is there any specific validation for the structure of the `path`?
+[english] The function does not explicitly validate the path string itself. It relies on your methods, such as `self.__url(path)`, to handle formatting and ensure the resulting URL is valid before the request is made.
+[english] Thanks, that makes much more sense.

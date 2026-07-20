@@ -1,0 +1,20 @@
+[english] I have a static analysis tool and need help figuring out how to track variable usage specifically when processing metaclasses defined within different scopes.
+[english] This method processes class definitions nested under a given node, recursively checking their metaclass requirements. It collects dependency information (scope and consumed keys) before cleaning up the scope's local references.
+<switch:python>
+[python] def _check_metaclasses(self, node):
+        """ Update consumption analysis for metaclasses. """
+        consumed = []  # [(scope_locals, consumed_key)]
+
+        for child_node in node.get_children():
+            if isinstance(child_node, astroid.ClassDef):
+                consumed.extend(self._check_classdef_metaclasses(child_node, node))
+
+        # Pop the consumed items, in order to avoid having
+        # unused-import and unused-variable false positives
+        for scope_locals, name in consumed:
+            scope_locals.pop(name, None)
+<switch:english>
+[english] The function cleans up tracking markers by removing consumed items from `scope_locals`. This is crucial to ensure that subsequent analysis passes don't flag these dependencies as unused variables or imports.
+[english] What happens if a class definition uses the same key that was already marked as consumed by an outer scope?
+[english] The implementation handles this safely. Since it iterates through `consumed` and calls `scope_locals.pop(name, None)`, it won't raise a KeyError even if the name has been removed or never existed in that specific local namespace.
+[english] That clears up my confusion about dependency cleanup.

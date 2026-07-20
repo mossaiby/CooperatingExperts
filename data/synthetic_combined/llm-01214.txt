@@ -1,0 +1,28 @@
+[english] How can I write a function that processes new user account creation, authenticates the resulting user, and generates an immediate login token?
+[english] This function begins by checking if a specific handler for `create_user` has been registered in your system; it then extracts the initial user object from that response.
+<switch:python>
+[python] def create_user(self, params):
+        """Register a new user account."""
+        receivers = create_user.send(
+            sender=__name__,
+            request=this.request,
+            params=params,
+        )
+        if len(receivers) == 0:
+            raise NotImplementedError(
+                'Handler for `create_user` not registered.'
+            )
+        user = receivers[0][1]
+        user = auth.authenticate(
+            username=user.get_username(), password=params['password'],
+        )
+        self.do_login(user)
+        return get_user_token(
+            user=user, purpose=HashPurpose.RESUME_LOGIN,
+            minutes_valid=HASH_MINUTES_VALID[HashPurpose.RESUME_LOGIN],
+        )
+<switch:english>
+[english] After obtaining the user object, the code authenticates them using provided credentials and generates a session token suitable for immediate login.
+[english] How does this function handle cases where the authentication step might fail due to invalid credentials?
+[english] The current implementation assumes `auth.authenticate` succeeds; if it fails, it would likely raise an exception that needs to be caught upstream or within this method by checking the return value of the auth call.
+[english] That makes sense.

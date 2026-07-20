@@ -1,0 +1,25 @@
+[english] I need a utility function to check if text matches an exclusion rule, and if it doesn't match, run a main extractor.
+[english] We can implement this filtering logic using a try-except block. It attempts to execute the exclusion criteria; if the specialized `DeadEnd` exception is caught, we know the item does not match our filter.
+<switch:python>
+[python] def _get_exclusion(extractor, exclusion, text):
+  """Returns extractor's result if exclusion does not match.
+
+  If exclusion raises DeadEnd (meaning it did not match) then the result of extractor(text) is
+  returned. Otherwise, if exclusion does not raise DeadEnd it means it did match, and we then
+  raise DeadEnd.
+  """
+  try:
+    _call_extractor(exclusion, text)
+    exclusion_matches = True
+  except DeadEnd:
+    exclusion_matches = False
+
+  if exclusion_matches:
+    raise DeadEnd()
+  else:
+    return _call_extractor(extractor, text)
+<switch:english>
+[english] This structure effectively gates the main extractor call. If the exclusion matches (no DeadEnd raised), the function cancels processing by raising DeadEnd itself.
+[english] If an unexpected runtime error occurs inside `_call_extractor(exclusion, text)` that isn't a `DeadEnd`, what happens to the overall function?
+[english] The exception will propagate immediately up the call stack. This is intended behavior for catching unforeseen bugs during exclusion validation.
+[english] Perfect, thanks for clarifying how error handling works here.

@@ -1,0 +1,21 @@
+[english] How can I programmatically export an entire Subversion repository from a URL to a local directory?
+[english] This function manages the retrieval process by first gathering all necessary subversion revision options. It then handles the prerequisite steps, ensuring the destination directory is properly prepared before initiating the final transfer.
+<switch:python>
+[python] def export(self, location):
+        """Export the svn repository at the url to the destination location"""
+        url, rev = self.get_url_rev()
+        rev_options = get_rev_options(url, rev)
+        logger.info('Exporting svn repository %s to %s', url, location)
+        with indent_log():
+            if os.path.exists(location):
+                # Subversion doesn't like to check out over an existing
+                # directory --force fixes this, but was only added in svn 1.5
+                rmtree(location)
+            self.run_command(
+                ['export'] + rev_options + [url, location],
+                show_stdout=False)
+<switch:english>
+[english] Note that this method explicitly deletes existing content at the destination path to preempt Subversion version errors when exporting using `rmtree`.
+[english] If the location exists but contains unrelated files, does the function delete everything inside it?
+[english] Yes, because of the check 'if os.path.exists(location):', it calls shutil.rmtree() which recursively removes all contents within that target path before the command runs.
+[english] Perfect, thanks for clarifying the cleanup behavior!

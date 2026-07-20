@@ -1,0 +1,12 @@
+[english] I need a way to list all available labels from my ontology and save them sequentially into a specified file.
+[english] This function retrieves the necessary identifiers using `get_labels` based on your provided arguments. It then iterates through every resulting label and writes it directly to the designated output stream or file.
+<switch:python>
+[python] def labels(ontology, output, ols_base):
+    """Output the names to the given file"""
+    for label in get_labels(ontology=ontology, ols_base=ols_base):
+        click.echo(label, file=output)
+<switch:english>
+[english] Since this uses `click.echo` with the file parameter, it cleanly handles writing each retrieved name as a separate line in the output.
+[english] What will happen if the function get_labels currently returns an empty list?
+[english] If there are no labels returned by the helper function, the for loop won't execute, and nothing will be written to the provided output file.
+[english] Perfect, thank you for clarifying that.

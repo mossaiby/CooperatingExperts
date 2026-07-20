@@ -1,0 +1,18 @@
+[english] How can I implement a function to save my current application state into an inactive JSON file if a configuration flag is set?
+[english] To handle database backups conditionally, we first check if the backup feature is enabled in PyFunceble.CONFIGURATION. If it's active, we proceed with exporting the current data.
+<switch:python>
+[python] def _backup(self):
+        """
+        Save the current database into the inactive-db.json file.
+        """
+
+        if PyFunceble.CONFIGURATION["inactive_database"]:
+            # The database subsystem is activated.
+
+            # We save the current database state into the database file.
+            Dict(PyFunceble.INTERN["inactive_db"]).to_json(self.inactive_db_path)
+<switch:english>
+[english] This method ensures that even when the application is running, a snapshot of the internal state can be reliably saved to disk via `self.inactive_db_path` if configured correctly.
+[english] If `PyFunceble.INTERN["inactive_db"]` contains objects that aren't serializable by default JSON rules, what errors might occur?
+[english] JSON serialization will fail if the internal dictionary contains non-serializable types, like sets or custom class instances. In such cases, you would need to preprocess those objects into basic Python types before calling `.to_json()`.
+[english] This makes sense; I'll ensure all data is JSON-friendly before backing up.

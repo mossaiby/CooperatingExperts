@@ -1,0 +1,18 @@
+[english] I have a list of variant IDs and need to compute their final phenotype status after sequentially applying all suggested changes.
+[english] This function processes a list of variants by iterating through the existing data. For every item, it derives the 'final' phenotype by starting with the current status and then incrementally applying all listed suggestions.
+<switch:python>
+[python] def get_variant_phenotypes_with_suggested_changes_merged(variant_id_list):
+    '''for each variant, yields evidence and merged phenotype from applying suggested changes to current'''
+    for evidence, phenotype_status in get_variant_phenotypes_with_suggested_changes(variant_id_list):
+        final = phenotype_status['current']
+        for rid in sorted(phenotype_status['suggested_changes']):
+            changes = phenotype_status['suggested_changes'][rid]
+            final = final - changes['deleted']
+            final = final | changes['added']
+        if final:
+            yield evidence, final
+<switch:english>
+[english] The code ensures that changes are applied deterministically using set-like subtraction (`-`) for deletions and union (`|`) for additions across all suggested changes.
+[english] If a variant has multiple suggested changes, does the order in which they appear matter?
+[english] No, because you iterate over `sorted(phenotype_status['suggested_changes'])`. Sorting ensures that the delta logic is applied consistently regardless of the original input sequence.
+[english] That clarifies how the merging works!

@@ -1,0 +1,23 @@
+[english] I need a function that returns a new envelope object, proportionally scaled up or down from its current center.
+[english] This approach calculates the required shift based on the centroid and then uses the provided scaling factors to determine the new boundaries. If yfactor is not supplied, it defaults to match xfactor for uniform scaling.
+<switch:python>
+[python] def scale(self, xfactor, yfactor=None):
+        """Returns a new envelope rescaled from center by the given factor(s).
+
+        Arguments:
+        xfactor -- int or float X scaling factor
+        yfactor -- int or float Y scaling factor
+        """
+        yfactor = xfactor if yfactor is None else yfactor
+        x, y = self.centroid
+        xshift = self.width * xfactor * 0.5
+        yshift = self.height * yfactor * 0.5
+        return Envelope(x - xshift, y - yshift, x + xshift, y + yshift)
+<switch:english>
+[english] The use of `* 0.5` ensures that the envelope is always scaled relative to its geometric center (the centroid) rather than one of its corners.
+[english] What happens if I pass a scaling factor of zero for xfactor or yfactor?
+[english] If either factor is zero, the resulting envelope will have zero width and height at its original centroid. For example, scaling by 0 would yield:
+<switch:python>
+[python] Envelope(x, y, x, y)
+<switch:english>
+[english] That makes perfect sense; thanks for clarifying how that works!

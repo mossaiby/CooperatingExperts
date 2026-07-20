@@ -1,0 +1,58 @@
+[english] How can I create a metadata tarball containing environment variables, labels, and runscripts needed for an image?
+[english] This function collects various configuration components from its instance. It systematically checks for environment settings, container labels, and runscripts, formatting them into templates if they are present.
+<switch:python>
+[python] def create_metadata_tar(self, destination=None, metadata_folder=".singularity.d"):
+    '''create a metadata tar (runscript and environment) to add to the
+       downloaded image. This function uses all functions in this section
+       to obtain key--> values from the manifest config, and write
+       to a .tar.gz
+
+       Parameters
+       ==========
+       metadata_folder: the metadata folder in the singularity image.
+                        default is .singularity.d
+    '''  
+    tar_file = None
+   
+    # We will add these files to it
+    files = []
+
+    # Extract and add environment
+    environ = self._extract_env()
+    if environ not in [None, ""]:
+        bot.verbose3('Adding Docker environment to metadata tar')
+        template = get_template('tarinfo')
+        template['name'] = './%s/env/10-docker.sh' % (metadata_folder)
+        template['content'] = environ
+        files.append(template)
+
+    # Extract and add labels
+    labels = self._extract_labels()
+    if labels is not None:
+        labels = print_json(labels)
+        bot.verbose3('Adding Docker labels to metadata tar')
+        template = get_template('tarinfo')
+        template['name'] = "./%s/labels.json" % metadata_folder
+        template['content'] = labels
+        files.append(template)
+
+    # Runscript
+    runscript = self._extract_runscript()
+    if runscript is not None:
+        bot.verbose3('Adding Docker runscript to metadata tar')
+        template = get_template('tarinfo')
+        template['name'] = "./%s/runscript" % metadata_folder
+        template['content'] = runscript
+        files.append(template)
+
+    if len(files) > 0:
+        dest = self._get_download_cache(destination, subfolder='metadata')
+        tar_file = create_tar(files, dest)
+    else:
+        bot.warning("No metadata will be included.")
+    return tar_file
+<switch:english>
+[english] The function relies heavily on helper methods like `self._extract_env()` to gather data and only proceeds with the tar creation if at least one piece of metadata has been successfully collected.
+[english] What happens if none of the environment information, labels, or runscripts are found during execution?
+[english] If no metadata is extracted, the function issues a warning and gracefully handles the situation by not generating any tar file. The final check `if len(files) > 0:` controls this behavior.
+[english] Thanks for clarifying that logic.

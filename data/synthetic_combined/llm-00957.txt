@@ -1,0 +1,14 @@
+[english] I need a way to validate that a command line argument provided as a string is valid JSON before converting it into a Python dictionary.
+[english] This method attempts to parse the input `value` as JSON using `json.loads`. If parsing succeeds, it returns the resulting dictionary; otherwise, it raises a specific error tailored for argument validation failure.
+<switch:python>
+[python] def check_dict(self, opt, value):
+    '''Take json as dictionary parameter'''
+    try:
+      return json.loads(value)
+    except:
+      raise optparse.OptionValueError("Option %s: invalid dict value: %r" % (opt, value))
+<switch:english>
+[english] Note that using a bare `except` block is generally discouraged, as it catches all possible exceptions instead of specifically handling decoding errors like `json.JSONDecodeError`.
+[english] What happens if the input value is an empty string (`""`)—should it trigger the validation error?
+[english] Yes, `json.loads("")` raises a JSON decode error, which your code catches and converts into the desired `OptionValueError`.
+[english] That makes sense for robust input handling.

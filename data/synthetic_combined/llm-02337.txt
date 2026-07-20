@@ -1,0 +1,16 @@
+[english] I have a large stream of tokens and need to organize them into nested lists, first by 'blocks' using a hard delimiter, and then splitting those blocks further into sentences using a soft delimiter.
+[english] This function processes the token stream in two hierarchical steps. It first splits the entire input stream into major segments (blocks) based on the `hard_delimiter`. Then, for each block created, it iterates through its sub-segments (sentences) defined by the `soft_delimiter` to generate length summaries.
+<switch:python>
+[python] def parse_token_stream(stream, soft_delimiter, hard_delimiter):
+    """Parses a stream of tokens and splits it into sentences (using C{soft_delimiter} tokens) 
+    and blocks (using C{hard_delimiter} tokens) for use with the L{align_texts} function.
+    """
+    return [
+        [sum(len(token) for token in sentence_it) 
+         for sentence_it in split_at(block_it, soft_delimiter)]
+        for block_it in split_at(stream, hard_delimiter)]
+<switch:english>
+[english] This approach efficiently summarizes segment lengths without needing to store all tokens, assuming `split_at` handles the iteration lazily. Be aware that the nested list structure means the outer list corresponds to blocks and the inner sums correspond to sentence lengths within those blocks.
+[english] What happens if the input stream is empty or contains consecutive hard delimiters?
+[english] If the stream is empty, it returns an empty generator/list. Consecutive hard delimiters will likely result in empty lists or segments between them depending on how `split_at` handles boundary conditions.
+[english] That makes sense. Thanks for clarifying.

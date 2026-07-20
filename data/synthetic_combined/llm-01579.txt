@@ -1,0 +1,28 @@
+[english] How can I authenticate with the Ecobee API by requesting access and refresh tokens using an authorization code?
+[english] This function implements the token request using a standard OAuth flow against the Ecobee token endpoint. It bundles credentials like the grant type and client ID into parameters for a POST request.
+<switch:python>
+[python] def request_tokens(self):
+        ''' Method to request API tokens from ecobee '''
+        url = 'https://api.ecobee.com/token'
+        params = {'grant_type': 'ecobeePin', 'code': self.authorization_code,
+                  'client_id': self.api_key}
+        try:
+            request = requests.post(url, params=params)
+        except RequestException:
+            logger.warn("Error connecting to Ecobee.  Possible connectivity outage."
+                        "Could not request token.")
+            return
+        if request.status_code == requests.codes.ok:
+            self.access_token = request.json()['access_token']
+            self.refresh_token = request.json()['refresh_token']
+            self.write_tokens_to_file()
+            self.pin = None
+        else:
+            logger.warn('Error while requesting tokens from ecobee.com.'
+                  ' Status code: ' + str(request.status_code))
+            return
+<switch:english>
+[english] If the API call is successful, it extracts and saves the necessary access and refresh tokens to maintain session persistence. Otherwise, it logs a warning and terminates the process gracefully to avoid unauthorized operations.
+[english] Does this function include logic for handling rate limits or other common HTTP error codes besides just checking for 'ok'?
+[english] The current implementation only checks for `requests.codes.ok`. If any other status code is returned, it will simply log a warning with the specific status code and then return without updating tokens.
+[english] That makes sense for managing API failures gracefully.

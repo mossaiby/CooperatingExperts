@@ -1,0 +1,35 @@
+[english] How can I extract pairs of MIM numbers and their preferred titles from an unstructured text file containing description data?
+[english] This function iterates through the input lines, skipping any comment lines starting with '#'. For each valid line, it calls a helper to parse the columns.
+<switch:python>
+[python] def parse_mim_titles(lines):
+    """Parse the mimTitles.txt file
+    
+    This file hold information about the description for each entry in omim.
+    There is not information about entry type.
+    parse_mim_titles collects the preferred title and maps it to the mim number.
+    
+    Args:
+        lines(iterable): lines from mimTitles file
+    
+    Yields:
+        parsed_entry(dict)
+    
+        {
+        'mim_number': int, # The mim number for entry
+        'preferred_title': str, # the preferred title for a entry
+        }
+
+    """
+    header = ['prefix', 'mim_number', 'preferred_title', 'alternative_title', 'included_title']
+    for i,line in enumerate(lines):
+        line = line.rstrip()
+        if not line.startswith('#'):
+            parsed_entry = parse_omim_line(line, header)
+            parsed_entry['mim_number'] = int(parsed_entry['mim_number'])
+            parsed_entry['preferred_title'] = parsed_entry['preferred_title'].split(';')[0]
+            yield parsed_entry
+<switch:english>
+[english] Note that this generator relies on `parse_omim_line` to handle column mapping and performs cleanup by isolating only the first part of titles separated by semicolons.
+[english] What safety checks are in place if one of those entries has a title that contains multiple semicolon-separated fragments?
+[english] The line `parsed_entry['preferred_title'] = parsed_entry['preferred_title'].split(';')[0]` ensures only the first fragment is kept, effectively truncating any further metadata.
+[english] I understand now, that helps a lot!

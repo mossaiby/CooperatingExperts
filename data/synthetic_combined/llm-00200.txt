@@ -1,0 +1,32 @@
+[english] How can I automate the process of converting provided database table metadata into SQL Data Definition Language (DDL) statements for PostgreSQL?
+[english] This function delegates the core logic to its base class by calling `super().write_table()`, which fetches both standard table DDL and any specific required serial key statements. It then writes these generated components sequentially using Python's file stream writing capabilities.
+<switch:python>
+[python] def write_table(self, table):
+        """Write DDL to create the specified `table`.
+
+        :Parameters:
+          - `table`: an instance of a :py:class:`mysql2pgsql.lib.mysql_reader.MysqlReader.Table` object that represents the table to read/write.
+
+        Returns None
+        """
+        table_sql, serial_key_sql = super(PostgresFileWriter, self).write_table(table)
+        if serial_key_sql:
+            self.f.write("""
+%(serial_key_sql)s
+""" % {
+    'serial_key_sql': '\n'.join(serial_key_sql)
+    })
+
+        self.f.write("""
+-- Table: %(table_name)s
+%(table_sql)s
+""" % {
+    'table_name': table.name,
+    'table_sql': '\n'.join(table_sql),
+    })
+<switch:english>
+[english] The code handles output carefully, first checking for special serial keys before appending the main table definition block to the file (`self.f`) with appropriate comments.
+[english] If `table` somehow had no columns defined and thus `table_sql` was an empty list, what would be written to the file?
+[english] The code executes `self.f.write()` using `
+'.join(table_sql)`, which results in writing only a single newline character (an empty string) after the table name comment.
+[english] That helps understand how it handles edge cases.

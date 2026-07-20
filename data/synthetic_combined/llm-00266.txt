@@ -1,0 +1,20 @@
+[english] How can I retrieve the values of specific variables defined in the function that called `extract_vars_above()`?
+[english] This utility uses frame introspection to bypass standard scope rules. It captures the local variables (`f_locals`) from a specified level above the current execution point, specifically targeting the caller's environment.
+<switch:python>
+[python] def extract_vars_above(*names):
+    """Extract a set of variables by name from another frame.
+
+    Similar to extractVars(), but with a specified depth of 1, so that names
+    are exctracted exactly from above the caller.
+
+    This is simply a convenience function so that the very common case (for us)
+    of skipping exactly 1 frame doesn't have to construct a special dict for
+    keyword passing."""
+
+    callerNS = sys._getframe(2).f_locals
+    return dict((k,callerNS[k]) for k in names)
+<switch:english>
+[english] Note that because this relies on `sys._getframe`, it is dependent on CPython internals and may not work in other Python implementations.
+[english] What happens if one of the requested variable names doesn't exist in the calling frame?
+[english] The dictionary comprehension will raise a KeyError because it attempts to access non-existent keys in `callerNS`. To prevent this, you must check key existence before retrieval.
+[english] That makes sense.

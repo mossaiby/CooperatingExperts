@@ -1,0 +1,43 @@
+[english] I need a way to automatically download all files with a specific name from my INBOX and handle cases where the file isn't found.
+[english] This method, `retrieve_mail_attachments`, acts as a wrapper to simplify attachment retrieval. It uses an internal helper to fetch attachments based on your criteria before managing any necessary error handling defined by `not_found_mode`.
+<switch:python>
+[python] def retrieve_mail_attachments(self,
+                                  name,
+                                  mail_folder='INBOX',
+                                  check_regex=False,
+                                  latest_only=False,
+                                  not_found_mode='raise'):
+        """
+        Retrieves mail's attachments in the mail folder by its name.
+
+        :param name: The name of the attachment that will be downloaded.
+        :type name: str
+        :param mail_folder: The mail folder where to look at.
+        :type mail_folder: str
+        :param check_regex: Checks the name for a regular expression.
+        :type check_regex: bool
+        :param latest_only: If set to True it will only retrieve
+                            the first matched attachment.
+        :type latest_only: bool
+        :param not_found_mode: Specify what should happen if no attachment has been found.
+                               Supported values are 'raise', 'warn' and 'ignore'.
+                               If it is set to 'raise' it will raise an exception,
+                               if set to 'warn' it will only print a warning and
+                               if set to 'ignore' it won't notify you at all.
+        :type not_found_mode: str
+        :returns: a list of tuple each containing the attachment filename and its payload.
+        :rtype: a list of tuple
+        """
+        mail_attachments = self._retrieve_mails_attachments_by_name(name,
+                                                                    mail_folder,
+                                                                    check_regex,
+                                                                    latest_only)
+        if not mail_attachments:
+            self._handle_not_found_mode(not_found_mode)
+
+        return mail_attachments
+<switch:english>
+[english] The function returns the list of found attachments or triggers one of three behaviors (`raise`, `warn`, or `ignore`) if no matches are discovered through its search process.
+[english] How does the priority logic for retrieving just the 'latest' attachment work within this code?
+[english] By setting `latest_only` to True, you instruct the internal retrieval method (`self._retrieve_mails_attachments_by_name`) to stop after fetching only the first matching item.
+[english] That makes sense; can I use that same function with a regular expression later this week?

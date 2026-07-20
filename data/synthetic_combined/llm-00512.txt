@@ -1,0 +1,19 @@
+[english] I need a way to upload a file from my local machine to a specific remote location, but I must wait until the file is completely available before starting the transfer.
+[english] This function ensures the source file exists by polling its presence. It waits up to ten seconds while periodically checking if the file is ready, then executes the SCP command for the actual upload.
+<switch:python>
+[python] def _send_file(self, local, remote):
+        """send a single file"""
+        remote = "%s:%s" % (self.location, remote)
+        for i in range(10):
+            if not os.path.exists(local):
+                self.log.debug("waiting for %s" % local)
+                time.sleep(1)
+            else:
+                break
+        self.log.info("sending %s to %s", local, remote)
+        check_output(self.scp_cmd + [local, remote])
+<switch:english>
+[english] The code successfully handles waiting for a local resource, but it lacks explicit error handling if the transfer itself fails or if the waiting timeout was hit.
+[english] What happens if the file never appears after those ten attempts? Does the function fail gracefully?
+[english] If the loop finishes without finding the file (i.e., all 10 checks pass while not found), it will proceed with `check_output`, likely causing a transfer failure.
+[english] That makes sense, I need to add proper error checking.

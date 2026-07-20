@@ -1,0 +1,24 @@
+[english] How can I configure my class method to write its output to either a specific file path or standard output?
+[english] This method handles setting where data should be written by first checking if the input `output` is already a file object. If it's just a string representing a name, the code uses Python's built-in functions to open that file for writing.
+<switch:python>
+[python] def open(self, output, opts=None):
+        """Use this to set where to write to. output can be a
+        file object or a string. This code raises IOError on error."""
+        if isinstance(output, io.TextIOWrapper) or \
+           isinstance(output, io.StringIO) or \
+           output == sys.stdout:
+            pass
+        elif isinstance(output, 'string'.__class__):  # FIXME
+            output = open(output, 'w')
+        else:
+            raise IOError("Invalid output type (%s) for %s" %
+                          (output.__class__.__name__, output))
+            # raise IOError("Invalid output type (%s) for %s" % (type(output),
+            #                                                     output))
+        self.output = output
+        return
+<switch:english>
+[english] The function ensures consistency by assigning the resulting stream (file or stdout) to self.output. Note that this method assumes `io` and `sys` are imported globally or in scope for it to work correctly.
+[english] What happens if I pass a filename but no directory exists?
+[english] If the directory does not exist, Python's built-in `open()` function will raise a FileNotFoundError. To handle this manually, you would need code like this:
+[english] That makes sense! Thanks for the clear breakdown.

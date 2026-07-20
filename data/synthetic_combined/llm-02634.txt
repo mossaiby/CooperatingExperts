@@ -1,0 +1,50 @@
+[english] How do I programmatically initialize or update the weight and bias tensors for a specific layer in a BigDL-integrated neural network?
+[english] This function is responsible for taking a standard Python list of weight arrays and pushing them into the underlying Java backend, ensuring they are synchronized with the model's parameters. It performs necessary type conversions before executing the setting operation via system calls.
+<switch:python>
+[python] def set_weights(self, weights):
+        """
+        Set weights for this layer
+
+        :param weights: a list of numpy arrays which represent weight and bias
+        :return:
+
+        >>> linear = Linear(3,2)
+        creating: createLinear
+        >>> linear.set_weights([np.array([[1,2,3],[4,5,6]]), np.array([7,8])])
+        >>> weights = linear.get_weights()
+        >>> weights[0].shape == (2,3)
+        True
+        >>> np.testing.assert_allclose(weights[0][0], np.array([1., 2., 3.]))
+        >>> np.testing.assert_allclose(weights[1], np.array([7., 8.]))
+        >>> relu = ReLU()
+        creating: createReLU
+        >>> from py4j.protocol import Py4JJavaError
+        >>> try:
+        ...     relu.set_weights([np.array([[1,2,3],[4,5,6]]), np.array([7,8])])
+        ... except Py4JJavaError as err:
+        ...     print(err.java_exception)
+        ...
+        java.lang.IllegalArgumentException: requirement failed: this layer does not have weight/bias
+        >>> relu.get_weights()
+        The layer does not have weight/bias
+        >>> add = Add(2)
+        creating: createAdd
+        >>> try:
+        ...     add.set_weights([np.array([7,8]), np.array([1,2])])
+        ... except Py4JJavaError as err:
+        ...     print(err.java_exception)
+        ...
+        java.lang.IllegalArgumentException: requirement failed: the number of input weight/bias is not consistant with number of weight/bias of this layer, number of input 1, number of output 2
+        >>> cAdd = CAdd([4, 1])
+        creating: createCAdd
+        >>> cAdd.set_weights(np.ones([4, 1]))
+        >>> (cAdd.get_weights()[0] == np.ones([4, 1])).all()
+        True
+        """
+        tensors = [JTensor.from_ndarray(param, self.bigdl_type) for param in to_list(weights)]
+        callBigDlFunc(self.bigdl_type, "setWeights", self.value, tensors)
+<switch:english>
+[english] The function relies on `to_list` and `JTensor` conversions to bridge the gap between NumPy arrays and BigDL structures. It will only execute successfully if the layer is structurally capable of accepting weights.
+[english] What happens if I try to call set_weights on an Add layer when it isn't expecting any incoming parameters?
+[english] As demonstrated in the docstring, trying to set weights on a layer that hasn't been initialized with input/output dimensions results in a `Py4JJavaError`, indicating a mismatch between supplied and expected tensor counts.
+[english] This helps clarify how parameter initialization failure is handled.

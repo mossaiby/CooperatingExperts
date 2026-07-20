@@ -1,0 +1,31 @@
+[english] I need a way to determine if a specified test element is currently registered within our internal inactive database structures.
+[english] This function determines presence by first checking configuration flags; it only proceeds with complex nested lookups if the inactive database subsystem is activated in PyFunceble. It then checks multiple paths for the target item within various internal dictionaries.
+<switch:python>
+[python] def is_present(cls):
+        """
+        Check if the currently tested element is into the database.
+        """
+
+        if PyFunceble.CONFIGURATION["inactive_database"]:
+            # The database subsystem is activated.
+
+            if PyFunceble.INTERN["to_test"] in PyFunceble.INTERN[
+                "flatten_inactive_db"
+            ] or (
+                PyFunceble.INTERN["file_to_test"] in PyFunceble.INTERN["inactive_db"]
+                and PyFunceble.INTERN["inactive_db"][PyFunceble.INTERN["file_to_test"]]
+                and "to_test"
+                in PyFunceble.INTERN["inactive_db"][PyFunceble.INTERN["file_to_test"]]
+                and PyFunceble.INTERN["to_test"]
+                in PyFunceble.INTERN["inactive_db"][PyFunceble.INTERN["file_to_test"]][
+                    "to_test"
+                ]
+            ):
+                return True
+
+        return False
+<switch:english>
+[english] The logic depends entirely on successful execution of deep index checks across internal state structures. Be aware that this function assumes all intermediate keys exist to avoid runtime errors.
+[english] If one of the required dictionary keys deep inside PyFunceble.INTERN is missing, does the function raise an error or gracefully fail?
+[english] The current structure will likely raise a KeyError if any expected key (e.g., in inactive_db) is absent. To handle this safely without crashing, you could use .get(key, {}) for all dictionary accesses.
+[english] Thanks! That context helps me understand the dependencies better.

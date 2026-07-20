@@ -1,0 +1,38 @@
+[english] I need a function that can execute and collect statistical results from multiple performance profilers configured via a string.
+[english] This utility method first validates the input configuration against known available profiler types. If valid, it iteratively executes each selected profiler on your object and gathers the resulting statistics.
+<switch:python>
+[python] def run_profilers(run_object, prof_config, verbose=False):
+    """Runs profilers on run_object.
+
+    Args:
+        run_object: An object (string or tuple) for profiling.
+        prof_config: A string with profilers configuration.
+        verbose: True if info about running profilers should be shown.
+    Returns:
+        An ordered dictionary with collected stats.
+    Raises:
+        AmbiguousConfigurationError: when prof_config is ambiguous.
+        BadOptionError: when unknown options are present in configuration.
+    """
+    if len(prof_config) > len(set(prof_config)):
+        raise AmbiguousConfigurationError(
+            'Profiler configuration %s is ambiguous' % prof_config)
+
+    available_profilers = {opt for opt, _ in _PROFILERS}
+    for option in prof_config:
+        if option not in available_profilers:
+            raise BadOptionError('Unknown option: %s' % option)
+
+    run_stats = OrderedDict()
+    present_profilers = ((o, p) for o, p in _PROFILERS if o in prof_config)
+    for option, prof in present_profilers:
+        curr_profiler = prof(run_object)
+        if verbose:
+            print('Running %s...' % curr_profiler.__class__.__name__)
+        run_stats[option] = curr_profiler.run()
+    return run_stats
+<switch:english>
+[english] The function uses an `OrderedDict` to store results while iterating through the active profilers derived from the configuration string. It raises specific errors if the input is malformed or options are unknown.
+[english] What happens inside the loop in case one of the selected profilers does not have a `.run()` method?
+[english] If any callable fails to provide a run method, Python will raise an `AttributeError` during execution. To prevent this, ensure all objects retrieved from _PROFILERS adhere to that expected interface.
+[english] That makes sense, thanks for the thorough explanation.

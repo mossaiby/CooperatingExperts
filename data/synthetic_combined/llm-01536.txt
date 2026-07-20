@@ -1,0 +1,20 @@
+[english] How can I ensure Altair-generated JSON conforms correctly to the latest Vega Lite schema before rendering?
+[english] This function processes an incoming JSON string to transform it into a valid and updated Vega Lite specification.
+<switch:python>
+[python] def _patch_json(self, json_data):
+        """
+        Patch the Altair generated json to the newest Vega Lite spec
+        """
+        json_data = json.loads(json_data)
+        # add schema
+        json_data["$schema"] = "https://vega.github.io/schema/vega-lite/2.0.0-beta.15.json"
+        # add top level width and height
+        json_data["width"] = json_data["config"]["cell"]["width"]
+        json_data["height"] = json_data["config"]["cell"]["height"]
+        del(json_data["config"]["cell"])
+        return json.dumps(json_data)
+<switch:english>
+[english] It ensures compliance by adding the `$schema` version, while extracting global dimensions (width/height) from configuration settings for direct use in the top level of the data structure.
+[english] If the input JSON already lacks a `config` block or if `cell` is missing, will this function still execute?
+[english] No, it won't. The code assumes these keys exist and using `json_data['config']['cell']` would raise a KeyError if that data structure isn't present in the input.
+[english] That makes sense; I’ll add robust error handling to this utility.

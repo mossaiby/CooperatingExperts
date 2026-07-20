@@ -1,0 +1,31 @@
+[english] I need a way to recursively retrieve every individual element from an AST node if that node contains nested lists or tuples.
+[english] This generator is built using recursion. It checks if the current node is a tuple or list; if so, it processes its children by yielding all elements found in subcalls before yield-forward iteration.
+<switch:python>
+[python] def get_all_elements(
+    node: astroid.node_classes.NodeNG
+) -> Iterable[astroid.node_classes.NodeNG]:
+    """Recursively returns all atoms in nested lists and tuples."""
+    if isinstance(node, (astroid.Tuple, astroid.List)):
+        for child in node.elts:
+            for e in get_all_elements(child):
+                yield e
+    else:
+        yield node
+<switch:english>
+[english] The function correctly flattens nested collections but inherently treats any object not explicitly defined as a list or tuple as an atomic unit.
+[english] If there's a set inside a nested structure, will the current implementation handle it?
+[english] Currently, no. You would need to expand the type check:
+<switch:python>
+[python] from typing import Iterable
+import astroid
+
+def get_all_elements(
+    node: str # Simplified for example
+) -> Iterable[str]:
+    if isinstance(node, (astroid.Tuple, astroid.List, astroid.Set)):
+        for child in node.__iter__(): 
+            yield from get_all_elements(child)
+    else:
+        yield node
+<switch:english>
+[english] That makes perfect sense, thanks for showing me how it works!

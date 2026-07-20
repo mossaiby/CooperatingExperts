@@ -1,0 +1,37 @@
+[english] How can I safely delete thousands of matching database records without exhausting my server's memory?
+[english] This function efficiently handles large deletions by processing results in manageable chunks rather than loading all entities into memory at once.
+<switch:python>
+[python] def delete(self, blocksize=100):
+        '''
+        Will delete the entities that match at the time the query is executed.
+
+        Used like::
+
+            MyModel.query.filter(email=...).delete()
+            MyModel.query.endswith(email='@host.com').delete()
+
+        .. warning:: can't be used on models on either side of a ``OneToMany``,
+            ``ManyToOne``, or ``OneToOne`` relationship.
+        '''
+
+        from .columns import MODELS_REFERENCED
+        if not self._model._no_fk or self._model._namespace in MODELS_REFERENCED:
+            raise QueryError("Can't delete entities of models with foreign key relationships")
+
+        de = []
+        i = 0
+        for result in self.iter_result(pagesize=blocksize):
+            de.append(result)
+            i += 1
+            if i >= blocksize:
+                session.delete(de) # one round-trip to delete "chunk" items
+                del de[:]
+                i = 0
+
+        if de:
+            session.delete(de)
+<switch:english>
+[english] The implementation maintains data integrity by raising an error if the model has defined foreign key relationships, preventing accidental data loss during deletion.
+[english] If I have a massive number of records, should I worry about setting the `blocksize` parameter?
+[english] Yes, setting `blocksize` too high could cause excessive memory usage. A moderate size like 100 or more is usually ideal to balance speed and resource consumption.
+[english] That makes sense; I'll adjust my batch size accordingly.

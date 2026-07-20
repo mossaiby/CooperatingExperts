@@ -1,0 +1,40 @@
+[english] How do I register a new device ('thing') on an IoT platform using its API?
+[english] This function handles the registration process by constructing a payload and sending it as a POST request to the designated API endpoint.
+<switch:python>
+[python] def registerThing(self, thingTypeId, thingId, name = None, description = None, aggregatedObjects = None, metadata=None):
+        """
+        Registers a new thing.
+        It accepts thingTypeId (string), thingId (string), name (string), description (string), aggregatedObjects (JSON) and metadata (JSON) as parameters
+        In case of failure it throws APIException
+        """
+        thingsUrl = ApiClient.thingsUrl % (self.host, thingTypeId)
+        payload = {'thingId' : thingId, 'name' : name, 'description' : description, 'aggregatedObjects' : aggregatedObjects, 'metadata': metadata}
+
+        r = requests.post(thingsUrl, auth=self.credentials, data=json.dumps(payload), headers = {'content-type': 'application/json'}, verify=self.verify)
+        status = r.status_code
+        if status == 201:
+            self.logger.debug("Thing Instance Created")
+            return r.json()
+        elif status == 400:
+            raise ibmiotf.APIException(400, "Invalid request (No body, invalid JSON, unexpected key, bad value)", r.json())
+        elif status == 401:
+            raise ibmiotf.APIException(401, "The authentication token is empty or invalid", None)
+        elif status == 403:
+            raise ibmiotf.APIException(403, "The authentication method is invalid or the API key used does not exist", None)
+        elif status == 404:
+            raise ibmiotf.APIException(404, "The thing type with specified id does not exist", None)
+        elif status == 409:
+            raise ibmiotf.APIException(409, "A thing instance with the specified id already exists", r.json())
+        elif status == 500:
+            raise ibmiotf.APIException(500, "Unexpected error", None)
+        else:
+            raise ibmiotf.APIException(None, "Unexpected error", None)
+<switch:english>
+[english] The code effectively manages various HTTP responses, mapping client errors (4xx) and server failures (5xx) to specific, descriptive exceptions while allowing successful registrations to return the created resource data.
+[english] If the API returns an unexpected status code—like a 503 Service Unavailable—will it be caught by this function?
+[english] The current logic falls into the final `else` block for unlisted codes. It raises a generic exception:
+<switch:python>
+[python] an imbed_response = ibmiotf.APIException(None, "Unexpected error", None)
+raise imbed_response
+<switch:english>
+[english] That makes sense, thank you!

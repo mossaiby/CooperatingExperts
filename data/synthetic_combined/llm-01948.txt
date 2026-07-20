@@ -1,0 +1,26 @@
+[english] I have a list of tasks that rely on others, how can I get them in the correct execution order?
+[english] This function determines a valid sequence for executing specified tasks by analyzing their dependencies. It isolates the dependency chain for each requested task and then applies topological sorting to establish the required execution order.
+<switch:python>
+[python] def get_tasks(do_tasks, dep_graph):
+    """Given a list of tasks to perform and a dependency graph, return the tasks
+    that must be performed, in the correct order"""
+
+    #XXX: Is it important that if a task has "foo" before "bar" as a dep,
+    #     that foo executes before bar? Why? ATM this may not happen.
+
+    #Each task that the user has specified gets its own execution graph
+    task_graphs = []
+
+    for task in do_tasks:
+        exgraph = DiGraph()
+        exgraph.add_node(task)
+        _get_deps(task, exgraph, dep_graph)
+
+        task_graphs.append(exgraph)
+
+    return flatten(reversed(topological_sort(g)) for g in task_graphs)
+<switch:english>
+[english] Each task is processed independently, generating an ordered list based on its specific prerequisites found in the provided graph structure.
+[english] If two tasks don't depend on each other at all, does this function guarantee one specific order?
+[english] No. If there is no dependency between tasks, their relative ordering isn't enforced by the topological sort algorithm within this context as they appear in the input list.
+[english] That makes sense; I should consider how to handle concurrent or unordered dependencies.

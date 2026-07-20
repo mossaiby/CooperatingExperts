@@ -1,0 +1,25 @@
+[english] How can I check if a given node's styles satisfy multiple required criteria based on regular expressions?
+[english] This function checks if a provided node meets all the style requirements stored internally by first retrieving the actual styles from the input node.
+<switch:python>
+[python] def resolves_for(self, node):
+        """
+        Resolves this query relative to the given node.
+
+        Args:
+            node (node.Base): The node to be evaluated.
+
+        Returns:
+            int: The number of matches found.
+        """
+
+        self.node = node
+        self.actual_styles = node.style(*self.expected_styles.keys())
+
+        return all(
+            toregex(value).search(self.actual_styles[style])
+            for style, value in iter(self.expected_styles.items()))
+<switch:english>
+[english] The helper converts each expected value into a regex and uses `all()` to ensure every single requirement is met. Note that while the docstring suggests an integer count, this implementation currently returns a boolean True/False.
+[english] If one of the style requirements doesn't match, what does the function ultimately return?
+[english] If any required style pattern fails to match in the node's actual styles, the `all()` generator evaluates to False, causing the entire function to return a boolean false.
+[english] Perfect, that clarifies how the logic flows.

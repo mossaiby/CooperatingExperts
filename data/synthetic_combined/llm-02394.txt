@@ -1,0 +1,30 @@
+[english] How can I reliably parse complex HTTP content type headers, including parameters and suffixes?
+[english] This function systematically breaks down a content type string into its core components and associated metadata. It first removes comments and splits the primary type from secondary parameters before isolating the main subtype and any special suffixes.
+<switch:python>
+[python] def parse_content_type(content_type, normalize_parameter_values=True):
+    """Parse a content type like header.
+
+    :param str content_type: the string to parse as a content type
+    :param bool normalize_parameter_values:
+        setting this to ``False`` will enable strict RFC2045 compliance
+        in which content parameter values are case preserving.
+    :return: a :class:`~ietfparse.datastructures.ContentType` instance
+
+    """
+    parts = _remove_comments(content_type).split(';')
+    content_type, content_subtype = parts.pop(0).split('/')
+    if '+' in content_subtype:
+        content_subtype, content_suffix = content_subtype.split('+')
+    else:
+        content_suffix = None
+    parameters = _parse_parameter_list(
+        parts, normalize_parameter_values=normalize_parameter_values)
+
+    return datastructures.ContentType(content_type, content_subtype,
+                                      dict(parameters),
+                                      content_suffix)
+<switch:english>
+[english] The function returns an `ietfparse.datastructures.ContentType` instance, making it easy to access normalized properties like the type, subtype, and a dictionary of parameters.
+[english] What happens if the input string has multiple semicolons but no standard MIME format structure?
+[english] If the structure is severely malformed, the line `content_type, content_subtype = parts.pop(0).split('/')` will raise a ValueError because it expects exactly one '/' separator.
+[english] Thanks for the detailed breakdown!

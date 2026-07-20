@@ -1,0 +1,14 @@
+[english] How can I implement a method to send an update request (PUT) to a specific resource path on my CRUD API while providing new data?
+[english] This function handles sending an HTTP PUT request, which is standard for updating resources. It first constructs the full URL by joining necessary paths and then sends the provided `data` dictionary serialized into JSON.
+<switch:python>
+[python] def update(self, path, data=None):
+        """Send an update request to the given path of the CRUD API, with the given data dict, which will be converted
+        into json"""
+        return self.handleresult(self.r.put(urljoin(self.url + CRUD_PATH,
+                                                    path),
+                                            data=json.dumps(data)))
+<switch:english>
+[english] The method completes the API operation using `self.handleresult`. Note that if the data structure passed to this function is invalid, a serialization error might occur before the request is even sent.
+[english] If the server returns an error (like 404 Not Found) because the resource doesn't exist at that path, how does this function handle it?
+[english] The function relies on `self.handleresult` to manage the response; typically, you would need custom logic within or around this call to explicitly catch HTTP status code exceptions thrown by the underlying request handler.
+[english] Does this approach work well for handling large payloads?

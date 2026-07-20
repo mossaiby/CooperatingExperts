@@ -1,0 +1,21 @@
+[english] I need a utility to process complex inputs, specifically taking a state object and ensuring it is wrapped into a standardized list of TensorFlow tensors.
+[english] This approach standardizes inputs by first checking if the 'state' argument is iterable. If not, it wraps it in a single-item list before converting all elements into specific TensorFlow tensor formats.
+<switch:python>
+[python] def _prepare_args(log_likelihood_fn, state,
+                  log_likelihood=None, description='log_likelihood'):
+  """Processes input args to meet list-like assumptions."""
+  state_parts = list(state) if mcmc_util.is_list_like(state) else [state]
+  state_parts = [tf.convert_to_tensor(s, name='current_state')
+                 for s in state_parts]
+
+  log_likelihood = _maybe_call_fn(
+      log_likelihood_fn,
+      state_parts,
+      log_likelihood,
+      description)
+  return [state_parts, log_likelihood]
+<switch:english>
+[english] After preparing the state parts, the function uses _maybe_call_fn to handle any optional log likelihood calculations. It returns both the prepared tensors and the processed likelihood value as a tuple.
+[english] If an item inside the input 'state' already exists as a TensorFlow tensor, will it change when running tf.convert_to_tensor?
+[english] tf.convert_to_tensor generally handles existing tensors gracefully by reusing them if their structure matches expectations. This avoids redundant copies but relies on compatible data types.
+[english] When should I be worried about the potential side effects of _maybe_call_fn?

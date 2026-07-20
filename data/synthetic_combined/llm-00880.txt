@@ -1,0 +1,29 @@
+[english] How can I programmatically verify if a specific user identity (`netid`) is currently considered an effective member of a given group?
+[english] This function uses an external API to check group membership by sending a request to the appropriate resource endpoint. It relies heavily on catching and interpreting exceptions from that call.
+<switch:python>
+[python] def is_effective_member(self, group_id, netid):
+        """
+        Returns True if the netid is in the group, False otherwise.
+        """
+        self._valid_group_id(group_id)
+
+        # GWS doesn't accept EPPNs on effective member checks, for UW users
+        netid = re.sub('@washington.edu', '', netid)
+
+        url = "{}/group/{}/effective_member/{}".format(self.API,
+                                                       group_id,
+                                                       netid)
+
+        try:
+            data = self._get_resource(url)
+            return True  # 200
+        except DataFailureException as ex:
+            if ex.status == 404:
+                return False
+            else:
+                raise
+<switch:english>
+[english] Note that for Washington University users, the domain suffix is explicitly removed from their network ID before it is used in the API query.
+[english] If `self._valid_group_id(group_id)` raises an error because the group doesn't exist, how does this function handle that failure?
+[english] The function relies on calling `self._valid_group_id` at the beginning. If that check fails (e.g., invalid ID), it will raise a validation exception immediately rather than proceeding to the API call.
+[english] Thanks, that clarifies how input validation is handled.

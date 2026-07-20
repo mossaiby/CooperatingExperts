@@ -1,0 +1,71 @@
+[english] I need a way to rename specific keys or apply pattern-based changes across all indices within my main dictionary.
+[english] This function allows you to update `self.main_dictionnary` by iterating through your required changes. It first checks if both the source and target dictionaries are valid, then applies renaming either strictly or via pattern matching.
+<switch:python>
+[python] def rename_key(self, key_to_rename, strict=True):
+        """
+        Rename the given keys from the given dictionary.
+
+        :param key_to_rename:
+            The key(s) to rename.
+            Expected format: :code:`{old:new}`
+        :type key_to_rename: dict
+
+        :param strict:
+            Tell us if we have to rename the exact index or
+            the index which looks like the given key(s)
+
+        :return: The well formatted dict.
+        :rtype: dict|None
+        """
+
+        if isinstance(self.main_dictionnary, dict) and isinstance(key_to_rename, dict):
+            # * The given main directory is a dictionnary.
+            # and
+            # * The given key to rename is a dictionnary.
+
+            for old, new in key_to_rename.items():
+                # We loop through the key to raname.
+
+                if strict:
+                    # The strict method is activated.
+                    if old in self.main_dictionnary:
+                        # The old key is in the main dictionnary.
+
+                        # We initiate the new with the old and remove the old content.
+                        self.main_dictionnary[new] = self.main_dictionnary.pop(old)
+                else:
+                    # The strict method is not activated.
+
+                    # We initiate the elements to rename.
+                    to_rename = {}
+
+                    for index in self.main_dictionnary:
+                        # We loop throught the indexes of the main dictionnary.
+
+                        if old in index:
+                            # The old key is into the index name.
+
+                            # We append the index name and the new index to our
+                            # local list to rename.
+                            to_rename.update({index: new[:-1] + index.split(old)[-1]})
+
+                    # We run this method against the local list to rename in order
+                    # to rename the element.
+                    self.main_dictionnary = Dict(self.main_dictionnary).rename_key(
+                        to_rename, True
+                    )
+
+            # We return the final list.
+            return self.main_dictionnary
+
+        # * The given main directory is not a dictionnary.
+        # or
+        # * The given key to rename is not a dictionnary.
+
+        # We return None.
+        return None
+<switch:english>
+[english] Be aware that in non-strict mode, key replacement relies on string manipulation of indices, which could lead to unexpected results if partial keys overlap.
+[english] If I use the non-strict mode where `old` is a substring of an existing index, how does it handle cases where one old key appears multiple times within a single dictionary value's index?
+[english] In non-strict mode, the code uses string replacement logic (`new[:-1] + index.split(old)[-1]`) to rename based on substring matches found in the indices. Since it iterates over all indices, any occurrence of `old` within an index will trigger a change.
+[english] Thank you for clarifying how the pattern matching behaves.

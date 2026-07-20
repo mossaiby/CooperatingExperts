@@ -1,0 +1,13 @@
+[english] How can I save multiple data references to a persistent storage service?
+[english] This approach iterates through the provided dictionary of references and uses an internal storage service to save each reference under its specified trajectory name.
+<switch:python>
+[python] def store_references(self, references):
+        """Stores references to disk and may collect garbage."""
+        for trajectory_name in references:
+            self._storage_service.store(pypetconstants.LIST, references[trajectory_name], trajectory_name=trajectory_name)
+        self._check_and_collect_garbage()
+<switch:english>
+[english] The function ensures consistency by storing everything individually and then calls a garbage collection method to clean up memory after storage.
+[english] What happens if one of the values accessed via references[trajectory_name] is None?
+[english] If a value is None, it will be stored as null/None in the disk service for that trajectory. The code directly uses the retrieved object without type checking, so storage proceeds normally.
+[english] Got it, I appreciate the clarity on how Null values are handled.

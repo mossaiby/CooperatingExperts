@@ -1,0 +1,27 @@
+[english] I need a way to fetch a specific document by its unique ID and display all its associated information while ensuring that any fields containing house numbers are sorted numerically.
+[english] This function first retrieves the requested document using an internal lookup method. It checks for existence before proceeding, then iterates through key-value pairs in the document to print attributes. Finally, it executes a custom sort logic specifically on house number entries.
+<switch:python>
+[python] def do_GET(self, _id):
+        """Get document from index with its id.
+        GET 772210180J"""
+        doc = doc_by_id(_id)
+        if not doc:
+            return self.error('id "{}" not found'.format(_id))
+        for key, value in doc.items():
+            if key == config.HOUSENUMBERS_FIELD:
+                continue
+            print('{} {}'.format(white(key), magenta(value)))
+        if doc.get('housenumbers'):
+            def sorter(v):
+                try:
+                    return int(re.match(r'^\d+', v['raw']).group())
+                except AttributeError:
+                    return -1
+            housenumbers = sorted(doc['housenumbers'].values(), key=sorter)
+            print(white('housenumbers'),
+                  magenta(', '.join(v['raw'] for v in housenumbers)))
+<switch:english>
+[english] The sorting mechanism uses a lambda-style sorter that safely attempts to extract leading digits from raw values and converts them to integers for accurate comparison. Note that any entry which lacks starting digits will be treated as a specific edge case during the sort.
+[english] What specifically happens if one of the entries in 'housenumbers' does not begin with a digit, such as a string like 'B-42'?
+[english] The `sorter` returns `-1` when it fails to find leading digits using regex. This ensures that non-numeric entries appear at the beginning of the sorted list.
+[english] That clarifies how the custom sorting handles mixed data types, thank you!

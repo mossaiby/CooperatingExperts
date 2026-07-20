@@ -1,0 +1,18 @@
+[english] I need a generic method that automatically explores and processes all child nodes within a hierarchical structure.
+[english] This function implements default recursive traversal. It first checks if a node possesses children before attempting to loop through them, which prevents runtime errors on leaf nodes.
+<switch:python>
+[python] def default_accept(self, node, **kwargs):
+        '''
+        The default accept behaviour is to decend into the iterable member
+        *node.children* (if available).
+        '''
+        if not hasattr(node, 'children'):
+            return
+        
+        for child in node.children:
+            self.accept(child, **kwargs)
+<switch:english>
+[english] The core logic iterates over `node.children`, ensuring that every descendant is visited by calling the instance's `self.accept` method recursively.
+[english] What happens if a child node itself doesn't have children?
+[english] The function naturally handles this using the initial check; if a child lacks 'children', it simply skips the internal loop and returns without calling self.accept on that specific leaf node.
+[english] That makes sense, thanks for explaining!

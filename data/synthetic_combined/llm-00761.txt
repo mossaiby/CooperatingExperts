@@ -1,0 +1,78 @@
+[english] How can I safely deep-merge two dictionaries in Python, ensuring nested dict structures are also merged and handling lists based on element content?
+[english] This function merges a dictionary (`to_merge`) into an internal state (`self.main_dictionnary`), recursively merging matching keys that point to dictionaries or lists.
+<switch:python>
+[python] def merge(self, to_merge, strict=True):
+        """
+        Merge the content of to_merge into the given main dictionnary.
+
+        :param to_merge: The dictionnary to merge.
+        :type to_merge: dict
+
+        :param strict:
+            Tell us if we have to strictly merge lists.
+
+            :code:`True`: We follow index
+            :code`False`: We follow element (content)
+        :type strict: bool
+
+        :return: The merged dict.
+        :rtype: dict
+        """
+
+        # We initiate a variable which will save our result.
+        result = {}
+
+        for element in to_merge:
+            # We loop throught the given dict to merge.
+
+            if element in self.main_dictionnary:
+                # The currently read element is in the main dict.
+
+                if isinstance(to_merge[element], dict) and isinstance(
+                    self.main_dictionnary[element], dict
+                ):
+                    # They are in both side dict.
+
+                    # We merge the dict tree and save into result.
+                    result[element] = Dict(self.main_dictionnary[element]).merge(
+                        to_merge[element]
+                    )
+
+                elif isinstance(to_merge[element], list) and isinstance(
+                    self.main_dictionnary[element], list
+                ):
+                    # They are in both side list.
+
+                    # We merge the lists and save into result.
+                    result[element] = List(self.main_dictionnary[element]).merge(
+                        to_merge[element], strict
+                    )
+                else:
+                    # They are not list, not dict.
+
+                    # We append the currently read element to the result.
+                    result.update({element: to_merge[element]})
+            else:
+                # The currently read element is not into the main
+                # dict.
+
+                # We append the currently read element to the result.
+                result.update({element: to_merge[element]})
+
+        for element in self.main_dictionnary:
+            # We loop through each element of the main dict.
+
+            if element not in result:
+                # The currently read element is not into
+                # the result.
+
+                # We append it to the result.
+                result[element] = self.main_dictionnary[element]
+
+        # We return the result.
+        return result
+<switch:english>
+[english] The logic meticulously iterates over both input dictionaries to ensure all unique keys from the original state are retained in the final output. Note that list merging relies on a custom `List` class implementation.
+[english] If an element contains different types at the same key—for instance, one dict and one list—what is the defined behavior of this merge?
+[english] When encountered during the loop (the final 'else' condition), the current element from `to_merge` overwrites any existing entry in the result. This occurs because specific recursive handling only applies if both values are lists or both are dict objects.
+[english] That clarifies how conflicts are resolved!

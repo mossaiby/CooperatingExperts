@@ -1,0 +1,27 @@
+[english] How do I calculate the result of a convolution integral between two time-dependent functions, $f$ and $g$, at a given value $t$?
+[english] This function computes the convolution by first deriving the integrand using `_convolution_integrand`. It then checks if the distributions overlap to handle edge cases before performing numerical integration.
+<switch:python>
+[python] def _evaluate_convolution(t_val, f, g,  n_integral = 100, inverse_time=None, return_log=False):
+    """
+    Calculate convolution F(t) = int { f(tau)g(t-tau) } dtau
+    """
+
+    FG = _convolution_integrand(t_val, f, g, inverse_time, return_log)
+
+    #integrate the interpolation object, return log, make neg_log
+        #print('FG:',FG.xmin, FG.xmax, FG(FG.xmin), FG(FG.xmax))
+    if (return_log and FG == ttconf.BIG_NUMBER) or \
+        (not return_log and FG == 0.0): # distributions do not overlap
+        res = ttconf.BIG_NUMBER # we integrate log funcitons
+    else:
+        res = -FG.integrate(a=FG.xmin, b=FG.xmax, n=n_integral, return_log=True)
+
+    if return_log:
+        return res, -1
+    else:
+        return np.exp(-res), -1
+<switch:english>
+[english] The final return value `np.exp(-res)` suggests the function is calculating an exponential form related to the integral of a negative log-density (which can often represent probability or reliability).
+[english] If I don't provide an `n_integral` argument, what fixed number of rectangles will be used for the numerical integration?
+[english] By default, if no value is passed for `n_integral`, it uses a hardcoded resolution of 100.
+[english] Thanks for clarifying the behavior!

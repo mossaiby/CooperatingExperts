@@ -1,0 +1,15 @@
+[english] I need a way to approve an external address to spend or move a specific amount of tokens on my behalf.
+[english] To allow another address access to your funds, we update the allowance mapping within the context (`ctx`) and emit an event for logging. This function securely grants permission by tracking pending withdrawals against the sender's balance.
+<switch:python>
+[python] def approve(ctx, _spender='address', _value='uint256', returns=STATUS):
+        """ Standardized Contract API:
+        function approve(address _spender, uint256 _value) returns (bool success)
+        """
+        ctx.allowances[ctx.msg_sender][_spender] += _value
+        ctx.Approval(ctx.msg_sender, _spender, _value)
+        return OK
+<switch:english>
+[english] This pattern implements 'ERC-like' functions essential for decentralized finance operations that rely on third-party spending permissions.
+[english] When I call this, does it always increase the existing allowance, or can I set a specific hard limit from zero?
+[english] The code uses addition (`+=`) to increment the current value in `ctx.allowances`, meaning it builds upon any previously set allowances rather than resetting them.
+[english] That makes sense; thanks for clarifying how the state is updated!

@@ -1,0 +1,19 @@
+[english] How can I generate a detailed, structured string representation of an index value that includes extra bit information?
+[english] This method formats a complex output string by first determining the number of required bits (`extraBits`) to encode auxiliary data. It then constructs the necessary extra segment and substitutes it into a base mnemonic structure derived from the index.
+<switch:python>
+[python] def explanation(self, index, extra):
+        """
+        >>> d = DistanceAlphabet('D', NPOSTFIX=2, NDIRECT=10)
+        >>> d[55].explanation(13)
+        '11[1101]01-5: [0]+240'
+        """
+        extraBits = self.extraBits(index)
+        extraString = '[{:0{}b}]'.format(extra, extraBits)
+        return '{0}: [{1[0]}]{1[1]:+d}'.format(
+            self.mnemonic(index, True).replace('x'*(extraBits or 1), extraString),
+            self.value(index, extra))
+<switch:english>
+[english] The function relies heavily on internal helper methods like `self.mnemonic` and `self.value`. Note that if `extraBits` is zero, it defaults to a bit count of one for formatting purposes.
+[english] If an item has no extra bits (i.e., the 'extra' argument is 0), will the resultant string always show exactly two sets of brackets?
+[english] Yes, because even if `extraBits` is falsy or zero, the `.format()` call in the return statement accesses indices [0] and [1], ensuring both parts are attempted. If `self.value(index, extra)` handles a null case gracefully, the string structure remains consistent.
+[english] Thanks for clarifying how that formatting works!

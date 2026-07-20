@@ -1,0 +1,23 @@
+[english] Select an appropriate edge from a list based on whether its endpoints have been mapped in a program.
+[english] This function iterates through available program edges to find one where at least one endpoint has been successfully mapped. If such a partially known edge is found, it is prioritized and returned immediately.
+<switch:python>
+[python] def _select_next_edge(self):
+        """
+        If there is an edge with one endpoint mapped, return it.
+        Else return in the first edge
+        """
+        for edge in self.pending_program_edges:
+            q1_mapped = edge[0] in self.prog2hw
+            q2_mapped = edge[1] in self.prog2hw
+            assert not (q1_mapped and q2_mapped)
+            if q1_mapped or q2_mapped:
+                return edge
+        return self.pending_program_edges[0]
+<switch:english>
+[english] The logic ensures that as long as there's any progress (a partial mapping), the loop avoids defaulting to just the first item in the list. It relies on external assertions to prevent edges from being fully mapped.
+[english] What happens if none of the pending program edges have any endpoints currently mapped or available?
+[english] If no edge has a partially mapped endpoint, the function will return the very first edge found in `self.pending_program_edges`, regardless of its mapping status.
+<switch:python>
+[python] return self.pending_program_edges[0]
+<switch:english>
+[english] That makes sense now how the fallback works!

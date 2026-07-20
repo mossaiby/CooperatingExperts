@@ -1,0 +1,22 @@
+[english] How can I programmatically configure the logging verbosity for a library to ensure it meets specific operational requirements?
+[english] This function provides a flexible way to set the desired log level by checking arguments first, and then falling back to the environment variable if configuration is not explicitly provided.
+<switch:python>
+[python] def set_logging_level(level=None):
+    """Set neurosynth's logging level
+
+    Args
+      level : str
+        Name of the logging level (warning, error, info, etc) known
+        to logging module.  If no level provided, it would get that one
+        from environment variable NEUROSYNTH_LOGLEVEL
+    """
+    if level is None:
+        level = os.environ.get('NEUROSYNTH_LOGLEVEL', 'warn')
+    if level is not None:
+        logger.setLevel(getattr(logging, level.upper()))
+    return logger.getEffectiveLevel()
+<switch:english>
+[english] The function uses `getattr` to safely map string names like 'INFO' or 'DEBUG' to actual logging constant objects.
+[english] What happens if the user passes a logging level name that isn't valid, like 'critical_error'?
+[english] If an invalid level is provided via the argument, `getattr(logging, level.upper())` will raise an AttributeError because it won't find a matching constant in the `logging` module.
+[english] That makes sense; I need to handle validation on the input side.

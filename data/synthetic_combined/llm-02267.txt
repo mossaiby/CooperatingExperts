@@ -1,0 +1,88 @@
+[english] I need a way to search backward from a known terminal node, finding candidates that match a given name pattern while respecting depth limits.
+[english] This function initiates a backwards search starting from a specified `start_node` using the components in `split_name`. It fetches potential candidates and checks if they match the required segment structure or if 'shortcuts' can bypass intermediate path segments.
+<switch:python>
+[python] def _backwards_search(self, start_node, split_name, max_depth=float('inf'), shortcuts=True):
+        """ Performs a backwards search from the terminal node back to the start node
+
+        :param start_node:
+
+            The node from where search starts, or here better way where backwards search should
+            end.
+
+        :param split_name:
+
+            List of names
+
+        :param max_depth:
+
+            Maximum search depth where to look for
+
+        :param shortcuts:
+
+            If shortcuts are allowed
+
+        """
+
+        result_list = [] # Result list of all found items
+        full_name_set = set() # Set containing full names of all found items to avoid finding items
+        # twice due to links
+
+        colon_name = '.'.join(split_name)
+        key = split_name[-1]
+        candidate_dict = self._get_candidate_dict(key, None, use_upper_bound=False)
+        parent_full_name = start_node.v_full_name
+
+        split_length = len(split_name)
+
+        for candidate_name in candidate_dict:
+            # Check if candidate startswith the parent's name
+            candidate = candidate_dict[candidate_name]
+            if key != candidate.v_name or candidate.v_full_name in full_name_set:
+                # If this is not the case we do have link, that we need to skip
+                continue
+
+            if candidate_name.startswith(parent_full_name):
+                if parent_full_name != '':
+                    reduced_candidate_name = candidate_name[len(parent_full_name) + 1:]
+                else:
+                    reduced_candidate_name = candidate_name
+
+                candidate_split_name = reduced_candidate_name.split('.')
+
+                if len(candidate_split_name) > max_depth:
+                    break
+
+                if len(split_name) == 1 or reduced_candidate_name.endswith(colon_name):
+                    result_list.append(candidate)
+                    full_name_set.add(candidate.v_full_name)
+
+                elif shortcuts:
+
+                    candidate_set = set(candidate_split_name)
+                    climbing = True
+                    for name in split_name:
+                        if name not in candidate_set:
+                            climbing = False
+                            break
+
+                    if climbing:
+                        count = 0
+                        candidate_length = len(candidate_split_name)
+                        for idx in range(candidate_length):
+
+                            if idx + split_length - count > candidate_length:
+                                break
+
+                            if split_name[count] == candidate_split_name[idx]:
+                                count += 1
+                                if count == len(split_name):
+                                    result_list.append(candidate)
+                                    full_name_set.add(candidate.v_full_name)
+                                    break
+
+        return result_list
+<switch:english>
+[english] The code handles path matching rigorously while preventing duplicates by tracking full names already included via links. Be mindful that the shortcut logic significantly alters how deep-level matches are identified.
+[english] What is the effect of setting `max_depth` to 0 on the search results?
+[english] If `max_depth` is set to 0, the function ensures that any candidate found would represent a path segment of length zero or one. Since it iterates over candidates based on depth checks, typically no complex matches will be returned in this restrictive scenario.
+[english] This makes sense; I appreciate the detailed explanation!

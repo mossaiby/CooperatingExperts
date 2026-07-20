@@ -1,0 +1,16 @@
+[english] I need to generate an evenly spaced sequence of parameters for a multi-dimensional sampling routine, specifically related to Dirichlet or Gamma distributions.
+[english] This function constructs a structured sequence by first creating a linear space from 0 up to a specific limit determined by the parameter `p`. It handles tensor compatibility using TensorFlow operations and then adjusts the sequence value based on input vector `a`.
+<switch:python>
+[python] def _multi_gamma_sequence(self, a, p, name="multi_gamma_sequence"):
+    """Creates sequence used in multivariate (di)gamma; shape = shape(a)+[p]."""
+    with self._name_scope(name):
+      # Linspace only takes scalars, so we'll add in the offset afterwards.
+      seq = tf.linspace(
+          tf.constant(0., dtype=self.dtype), 0.5 - 0.5 * p, tf.cast(
+              p, tf.int32))
+      return seq + tf.expand_dims(a, [-1])
+<switch:english>
+[english] The final returned sequence adds the offset calculated from `a` to every element in the linear space, effectively broadcasting it across the desired shape defined by `p`.
+[english] What happens if 'a' is a tensor with more than one dimension?
+[english] If 'a' has multiple dimensions, TensorFlow will broadcast it to match an additional dimension from the sequence created by tf.linspace rather than simply adding it as a scalar offset across all axes.
+[english] That makes sense! Thanks for clarifying how broadcasting works here.

@@ -1,0 +1,17 @@
+[english] I need to generate a formatted Markdown report detailing various metrics.
+[english] This function prepares standard output by ensuring all underscores are properly escaped, then calculates necessary column widths before calling functions to print the header and data rows.
+<switch:python>
+[python] def outputMetricMarkdown(self):
+        """
+        Sends the markdown of the metric definitions to standard out
+        """
+        self.escapeUnderscores()
+        m, d = self.getMetricsColumnLengths()
+
+        self.printMetricsHeader(m, d)
+        self.printMetrics(m, d)
+<switch:english>
+[english] The method relies heavily on instance-specific helper methods (`self.printMetricsHeader`, etc.) for formatting, making it a clean orchestrator of presentation logic.
+[english] What happens if the `getMetricsColumnLengths` method returns zero values?
+[english] If lengths are zero, functions like `printMetricsHeader` might fail or produce empty output. You should add an assertion to ensure both length values (`m`, `d`) are positive.
+[english] That clarifies how the function handles sizing and rendering.

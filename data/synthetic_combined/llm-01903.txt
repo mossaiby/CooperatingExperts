@@ -1,0 +1,25 @@
+[english] I need a way to convert an alias into its corresponding canonical HGNC symbol while handling cases where no match is found.
+[english] This function attempts to resolve an alias into a valid HGNC gene symbol by calling the internal `self.hgnc_genes` method with the provided alias and build version.
+<switch:python>
+[python] def to_hgnc(self, hgnc_alias, build='37'):
+        """Check if a hgnc symbol is an alias
+
+            Return the correct hgnc symbol, if not existing return None
+
+            Args:
+                hgnc_alias(str)
+
+            Returns:
+                hgnc_symbol(str)
+        """
+        result = self.hgnc_genes(hgnc_symbol=hgnc_alias, build=build)
+        if result:
+            for gene in result:
+                return gene['hgnc_symbol']
+        else:
+            return None
+<switch:english>
+[english] The function successfully returns the symbol if a match is found; otherwise, it safely returns None to prevent errors.
+[english] What happens if self.hgnc_genes returns multiple genetic results that all use different canonical symbols?
+[english] Currently, the loop will only return the hgnc_symbol of the very first gene object yielded by `self.hgnc_genes`. If you wish to see all matches, you would need to store them in a list instead of exiting immediately.
+[english] Got it, that makes sense for handling potential multiple returns.

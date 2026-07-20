@@ -1,0 +1,33 @@
+[english] I need a helper function that can reliably add or subtract a number of months from any given date object.
+[english] This approach calculates the target year and month by handling division first, then identifies the last day of that resulting month. It uses the `dateobj.replace()` method to construct the new date while adjusting for short months.
+<switch:python>
+[python] def add_months(dateobj, nb_months: int):
+    """return `dateobj` + `nb_months`
+
+    If landing date doesn't exist (e.g. february, 30th), return the last
+    day of the landing month.
+
+    >>> add_months(date(2018, 1, 1), 1)
+    datetime.date(2018, 1, 1)
+    >>> add_months(date(2018, 1, 1), -1)
+    datetime.date(2017, 12, 1)
+    >>> add_months(date(2018, 1, 1), 25)
+    datetime.date(2020, 2, 1)
+    >>> add_months(date(2018, 1, 1), -25)
+    datetime.date(2015, 12, 1)
+    >>> add_months(date(2018, 1, 31), 1)
+    datetime.date(2018, 2, 28)
+    """
+    nb_years, nb_months = divmod(nb_months, 12)
+    month = dateobj.month + nb_months
+    if month > 12:
+        nb_years += 1
+        month -= 12
+    year = dateobj.year + nb_years
+    lastday = monthrange(year, month)[1]
+    return dateobj.replace(year=year, month=month, day=min(lastday, dateobj.day))
+<switch:english>
+[english] The logic ensures accurate results even if the original day (like 31) does not exist in the target month.
+[english] What happens if I try to add negative months, such as -25? Does it handle large backward jumps correctly?
+[english] Yes, the initial calculation handles this. When you pass -25, the function adjusts both years and months relative to the starting date.
+[english] That makes sense.

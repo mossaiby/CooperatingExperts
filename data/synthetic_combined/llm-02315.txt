@@ -1,0 +1,15 @@
+[english] How can I write a Python script to reboot multiple EC2 instances within a specific AWS region?
+[english] This function automates resource maintenance by targeting a list of instance IDs in a specified AWS location. It uses helper functions to establish an connection and then executes a bulk reboot command on the provided instance list while tracking progress via logging.
+<switch:python>
+[python] def reboot_instances(instances, region):
+    '''Reboot all the instances given by its ids'''
+    if not instances: return
+    conn = ec2_connect(region)
+    log("Rebooting instances {0}.".format(instances))
+    conn.reboot_instances(instances)
+    log("Done")
+<switch:english>
+[english] Remember that this function relies on external helpers like `ec2_connect` and assumes proper authentication is configured for the environment. It logs success but does not explicitly handle errors if the API call fails mid-execution.
+[english] What should happen if one of the provided instance IDs does not exist in that region or an AWS connection error occurs?
+[english] To prevent the script from crashing, you can wrap the core logic in a try/except block to catch potential exceptions thrown by the EC2 API call. This allows you to log failures gracefully instead of stopping execution.
+[english] Thanks for explaining how to make this more resilient!

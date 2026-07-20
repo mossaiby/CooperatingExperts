@@ -1,0 +1,16 @@
+[english] I need a helper function to reliably check if a given data type is a boolean, especially when dealing with both TensorFlow and NumPy object types.
+[english] This approach attempts to normalize the input using `tf.as_dtype` before checking properties. It first looks for a specific `is_bool` attribute on the dtype object to handle TensorFlow conventions.
+<switch:python>
+[python] def is_bool(dtype):
+  """Returns whether this is a boolean data type."""
+  dtype = tf.as_dtype(dtype)
+  if hasattr(dtype, 'is_bool'):
+    return dtype.is_bool
+  # We use `kind` because:
+  # np.issubdtype(np.uint8, np.bool) == True.
+  return np.dtype(dtype).kind == 'b'
+<switch:english>
+[english] The function falls back to checking if the underlying NumPy data type 'kind' is 'b' ('boolean'). This fallback ensures compatibility even when standard library functions treat types like uint8 as compatible with booleans.
+[english] What happens if I pass a fully instantiated tensor instead of just a dtype object?
+[english] Since this function expects a data type, passing an actual tensor will usually trigger errors. However, you could extract the dtype first using `tensor.dtype` before calling the function.
+[english] That makes sense; thanks for clarifying how it handles input types!

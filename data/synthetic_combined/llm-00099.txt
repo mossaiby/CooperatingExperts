@@ -1,0 +1,29 @@
+[english] I need a reliable way to process an incoming binary frame, ensuring it has the correct header and footer before I use or validate the data payload.
+[english] This function first validates that the received packet contains the expected magic bytes for both the start (header) and end (footer). Once validated, it extracts the main body, performs necessary internal byte replacements, and then verifies a custom checksum using the final two bytes of the payload.
+<switch:python>
+[python] def verify_and_strip(resp):
+    """Verify checksum and strip header and footer of received frame."""
+    if resp[0:2] != b'\xFE\xFE':
+        _LOGGER.error("Houston, we got problem:")
+        print_hex(resp)
+        raise Exception("Wrong header - got %X%X" % (resp[0], resp[1]))
+    if resp[-2:] != b'\xFE\x0D':
+        raise Exception("Wrong footer - got %X%X" % (resp[-2], resp[-1]))
+    output = resp[2:-2].replace(b'\xFE\xF0', b'\xFE')
+
+    c = checksum(bytearray(output[0:-2]))
+
+    if (256 * output[-2:-1][0] + output[-1:][0]) != c:
+        raise Exception("Wrong checksum - got %d expected %d" % (
+            (256 * output[-2:-1][0] + output[-1:][0]), c))
+
+    return output[0:-2]
+<switch:english>
+[english] The function correctly calculates the sum based on all but the last two bytes before comparing it to those integrity bytes. It is important to note that the returned data excludes both the original trailing integrity field and any internal replacement sequences.
+[english] If an input frame passes the header/footer checks but fails the checksum, what information does the function provide in its error message?
+[english] The function calculates and displays a comparison between the actual value derived from the last two bytes and the expected calculated checksum (c), as seen here:
+<switch:python>
+[python] raise Exception("Wrong checksum - got %d expected %d" % (
+    (256 * output[-2:-1][0] + output[-1:][0]), c))
+<switch:english>
+[english] Thank you, that makes the validation logic much clearer!

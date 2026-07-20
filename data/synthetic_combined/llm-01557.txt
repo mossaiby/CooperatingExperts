@@ -1,0 +1,20 @@
+[english] I need a method to output all component categories and their related information in a readable format.
+[english] This function gathers structured data from two internal attributes, ensuring they are processed alphabetically for consistency before assembling the output string.
+<switch:python>
+[python] def get_info(self):
+        """
+        Get info for all filters.
+        """
+        out = ''
+        for k in sorted(self.components.keys()):
+            out += '{:s}: {:s}'.format(k, self.info[k]) + '\n'
+        return(out)
+<switch:english>
+[english] The loop constructs each line by combining the sorted keys with corresponding values. Note that this method repeatedly concatenates strings using `+=`, which can be inefficient in large-scale applications.
+[english] Would it be better practice to use a list comprehension and join instead of manual concatenation?
+[english] Yes, for improved performance on many entries, you should collect the lines into a list first:
+<switch:python>
+[python] lines = [f'{k}: {self.info[k]}' for k in sorted(self.components)]
+return '\n'.join(lines) + ('' if not lines else '\n')
+<switch:english>
+[english] That makes sense, thank you!

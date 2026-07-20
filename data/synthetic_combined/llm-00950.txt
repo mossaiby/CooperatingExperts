@@ -1,0 +1,37 @@
+[english] How can I connect to the Luminoso API using my username and password if they aren't already defined?
+[english] This function manages authentication by first prompting the user for credentials if none are supplied. It then uses these details to initialize a client session configured specifically for your needs.
+<switch:python>
+[python] def connect_with_username_and_password(cls, url=None, username=None,
+                                           password=None):
+        """
+        Returns an object that makes requests to the API, authenticated with
+        a short-lived token retrieved from username and password.  If username
+        or password is not supplied, the method will prompt for a username
+        and/or password to be entered interactively.
+
+        See the connect method for more details about the `url` argument.
+
+        PLEASE NOTE: This method is being provided as a temporary measure.  We
+        strongly encourage users of the Luminoso API to use a long-lived token
+        instead, as explained in the V5_README file.
+        """
+        from .v4_client import LuminosoClient as v4LC
+        if username is None:
+            username = input('Username: ')
+        v4client = v4LC.connect(url=url, username=username, password=password)
+
+        if url is None:
+            url = '/'
+
+        if url.startswith('http'):
+            root_url = get_root_url(url)
+        else:
+            url = URL_BASE + '/' + url.lstrip('/')
+            root_url = URL_BASE
+
+        return cls(v4client.session, root_url)
+<switch:english>
+[english] The code ensures proper URL handling before returning an instance, though remember it advises against using this in production due to its temporary nature.
+[english] If I provide a base path that is not relative (e.g., starting with http), how does the function determine the correct root URL?
+[english] If the `url` starts with 'http', the code calls get_root_url(url) to derive the API's actual base endpoint from that absolute address.
+[english] That helps me understand the setup much better!

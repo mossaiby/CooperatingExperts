@@ -1,0 +1,23 @@
+[english] How can I check if a given object within an internal PE_PE library structure has been defined at the global level instead of inside a local scope?
+[english] This function recursively traverses the PE_PE hierarchy to determine if the entity is globally accessible. It checks for the existence of a specific nested context (C_C) and continues descending down the package structure until it reaches a leaf node or finds a local definition.
+<switch:python>
+[python] def is_global(pe_pe):
+    '''
+    Check if a PE_PE is globally defined, i.e. not inside a C_C
+    '''
+    if type(pe_pe).__name__ != 'PE_PE':
+        pe_pe = one(pe_pe).PE_PE[8001]()
+    
+    if one(pe_pe).C_C[8003]():
+        return False
+    
+    pe_pe = one(pe_pe).EP_PKG[8000].PE_PE[8001]()
+    if not pe_pe:
+        return True
+    
+    return is_global(pe_pe)
+<switch:english>
+[english] The function relies heavily on specific indexing (like [8003]) and external helper functions (`one()`). Because it uses recursion, be mindful of extremely deep hierarchies that could cause a stack overflow.
+[english] If the PE_PE structure contained circular references, would this `is_global` function run infinitely?
+[english] Since there is no explicit mechanism to track visited nodes, yes; circular references in the hierarchy would cause infinite recursion and potentially crash the program or lead to a stack overflow.
+[english] Thanks for clarifying how the traversal works!

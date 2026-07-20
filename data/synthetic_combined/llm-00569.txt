@@ -1,0 +1,25 @@
+[english] How can I extract rate limits and their reset times from an HTTP response object?
+[english] This function reads specific headers like 'Rate Limit' and 'Rate Limit Reset' from a response object to update internal state variables for the client.
+<switch:python>
+[python] def update_rate_limit(self, response):
+        """Update the rate limit and the time to reset
+        from the response headers.
+
+        :param: response: the response object
+        """
+        if self.rate_limit_header in response.headers:
+            self.rate_limit = int(response.headers[self.rate_limit_header])
+            logger.debug("Rate limit: %s", self.rate_limit)
+        else:
+            self.rate_limit = None
+
+        if self.rate_limit_reset_header in response.headers:
+            self.rate_limit_reset_ts = int(response.headers[self.rate_limit_reset_header])
+            logger.debug("Rate limit reset: %s", self.calculate_time_to_reset())
+        else:
+            self.rate_limit_reset_ts = None
+<switch:english>
+[english] It checks for the existence of required headers, converts them to integers if present, and logs the values.
+[english] What happens if the `response.headers` object is missing or malformed?
+[english] The function safely handles missing keys using `if self.rate_limit_header in response.headers:`, setting the value to `None` instead of crashing.
+[english] That's very helpful, thank you!

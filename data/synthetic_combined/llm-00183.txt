@@ -1,0 +1,37 @@
+[english] I want to create a generic decorator that takes a domain name and allows me to process specific dataframes within a dictionary without manually indexing them every time.
+[english] This function implements a factory pattern for decorators, `domain`, which returns an actual decorator (`decorator`). This mechanism allows you to target a specific key in the input dictionary while processing it using subsequent wrapper functions. The wrapper handles extracting and then correctly reinserting the processed DataFrame back into the original collection.
+<switch:python>
+[python] def domain(domain_name):
+    """
+    Allow to apply a function f(df: DataFrame) -> DataFrame) on dfs by specifying the key
+    E.g instead of writing:
+        def process_domain1(dfs):
+            df = dfs['domain1']
+            # actual process
+            dfs['domain1'] = df
+            return dfs
+
+    You can write:
+        @domain('domain1')
+        def process_domain1(df):
+            #actual process
+            return df
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            dfs, *args = args
+            if not isinstance(dfs, dict):
+                raise TypeError(f'{dfs} is not a dict')
+            df = dfs.pop(domain_name)
+            df = func(df, *args, **kwargs)
+            return {domain_name: df, **dfs}
+
+        return wrapper
+
+    return decorator
+<switch:english>
+[english] The implementation relies on `.pop(domain_name)` to safely remove and retrieve the specified data before processing, ensuring the modified DataFrame is returned as part of the new dictionary structure.
+[english] If the input `args` in my decorated function contains multiple arguments besides the DataFrame itself, how are they passed through?
+[english] The wrapper uses `wrapper(*args, **kwargs)` to capture all positional and keyword arguments. These are then correctly unpacked when calling your function: `df = func(df, *args, **kwargs)`. This allows non-DataFrame side effects or additional inputs to pass through unmodified.
+[english] Thanks! That makes handling complex workflows much cleaner.

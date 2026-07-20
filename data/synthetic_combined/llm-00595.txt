@@ -1,0 +1,26 @@
+[english] I need a function that validates Django database settings and ensures related APIs are properly initialized upon application start.
+[english] This method handles critical initialization tasks by first validating required configuration, specifically checking for existing database definitions before proceeding with setup. It also performs compatibility checks on the configured database engines.
+<switch:python>
+[python] def ready(self):
+        """Initialisation for django-ddp (setup lookups and signal handlers)."""
+        if not settings.DATABASES:
+            raise ImproperlyConfigured('No databases configured.')
+        for (alias, conf) in settings.DATABASES.items():
+            engine = conf['ENGINE']
+            if engine not in [
+                'django.db.backends.postgresql',
+                'django.db.backends.postgresql_psycopg2',
+            ]:
+                warnings.warn(
+                    'Database %r uses unsupported %r engine.' % (
+                        alias, engine,
+                    ),
+                    UserWarning,
+                )
+        self.api = autodiscover()
+        self.api.ready()
+<switch:english>
+[english] After verifying the database environment and issuing warnings for unsupported engine types, this function proceeds to discover and initialize all application APIs.
+[english] If a user configures a MySQL database instead of one of the specified PostgreSQL backends, does the setup fail or just issue a warning?
+[english] It issues a `UserWarning` if an unsupported engine is detected but continues execution. The function logs the incompatibility and then proceeds to run API discovery regardless.
+[english] That makes sense for robust initialization.

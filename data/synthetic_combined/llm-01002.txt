@@ -1,0 +1,15 @@
+[english] How do I efficiently retrieve all parsed directives from comments associated with an object?
+[english] I see this function is designed to extract directives from comment data while ensuring that if it has already been calculated, it skips the heavy parsing work.
+<switch:python>
+[python] def directives(self):
+    """The diretives parsed from the comments."""
+    if self._directives is None:
+      self._directives = []
+      for comment in self.comments:
+        self._directives.extend(self.directives_from_comment(comment))
+    return self._directives
+<switch:english>
+[english] The function returns a list of all extracted commands or parameters found within your comment sections.
+[english] What happens if `self.comments` contains comments that don't actually parse into any directives?
+[english] If no lines in `self.comments` yield results, the function will still return an empty list ([]), as specified by the `extend` method when it receives an empty iterable.
+[english] That makes perfect sense, thanks for clarifying!

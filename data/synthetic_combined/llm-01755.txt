@@ -1,0 +1,18 @@
+[english] I need a method that compares home and away scores after a game to determine which team wins.
+[english] We can implement this logic by first fetching the score for both teams and then using conditional statements to compare those values.
+<switch:python>
+[python] def winner(self):
+        """Returns the team ID of the winning team. Returns NaN if a tie."""
+        hmScore = self.home_score()
+        awScore = self.away_score()
+        if hmScore > awScore:
+            return self.home()
+        elif hmScore < awScore:
+            return self.away()
+        else:
+            return None
+<switch:english>
+[english] The function returns None when the scores are equal, effectively handling ties gracefully instead of returning a numerical NaN.
+[english] How does this handle the scenario where both teams score zero points and the game is tied?
+[english] If both scores are zero, `hmScore` equals `awScore`, so `None` will be correctly returned as the team ID.
+[english] Perfect, that helps clarify the logic!

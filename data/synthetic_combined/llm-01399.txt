@@ -1,0 +1,81 @@
+[english] How can I write a custom utility to parse arbitrary command line arguments, converting flags and positional inputs into structured keyword and positional data?
+[english] This function processes a list of raw command-line strings by iteratively categorizing them. It distinguishes between positional arguments that fill required slots and keyword arguments specified using flags, handling complex formats like `--flag=value` or simple booleans.
+<switch:python>
+[python] def process_arguments(self, func, args):
+        """Process arguments from the command line into positional and kw args.
+
+        Arguments are consumed until the argument spec for the function is filled
+        or a -- is found or there are no more arguments.  Keyword arguments can be
+        specified using --field=value, -f value or --field value.  Positional
+        arguments are specified just on the command line itself.
+
+        If a keyword argument (`field`) is a boolean, it can be set to True by just passing
+        --field or -f without needing to explicitly pass True unless this would cause
+        ambiguity in parsing since the next expected positional argument is also a boolean
+        or a string.
+
+        Args:
+            func (callable): A function previously annotated with type information
+            args (list): A list of all of the potential arguments to this function.
+
+        Returns:
+            (args, kw_args, unused args): A tuple with a list of args, a dict of
+                keyword args and a list of any unused args that were not processed.
+        """
+
+        pos_args = []
+        kw_args = {}
+
+        while len(args) > 0:
+            if func.metadata.spec_filled(pos_args, kw_args) and not self._is_flag(args[0]):
+                break
+
+            arg = args.pop(0)
+
+            if arg == '--':
+                break
+            elif self._is_flag(arg):
+                arg_value = None
+                arg_name = None
+
+                if len(arg) == 2:
+                    arg_name = func.metadata.match_shortname(arg[1:], filled_args=pos_args)
+                else:
+                    if not arg.startswith('--'):
+                        raise ArgumentError("Invalid method of specifying keyword argument that did not start with --", argument=arg)
+
+                    # Skip the --
+                    arg = arg[2:]
+
+                    # Check if the value is embedded in the parameter
+                    # Make sure we allow the value after the equals sign to also
+                    # contain an equals sign.
+                    if '=' in arg:
+                        arg, arg_value = arg.split('=', 1)
+
+                    arg_name = func.metadata.match_shortname(arg, filled_args=pos_args)
+
+                arg_type = func.metadata.param_type(arg_name)
+                if arg_type is None:
+                    raise ArgumentError("Attempting to set a parameter from command line that does not have type information", argument=arg_name)
+
+                # If we don't have a value yet, attempt to get one from the next parameter on the command line
+                if arg_value is None:
+                    arg_value = self._extract_arg_value(arg_name, arg_type, args)
+
+                kw_args[arg_name] = arg_value
+            else:
+                pos_args.append(arg)
+
+        # Always check if there is a trailing '--' and chomp so that we always
+        # start on a function name.  This can happen if there is a gratuitous
+        # -- for a 0 arg function or after an implicit boolean flag like -f --
+        if len(args) > 0 and args[0] == '--':
+            args.pop(0)
+
+        return pos_args, kw_args, args
+<switch:english>
+[english] The core strength lies in its recursive consumption of arguments; it attempts to pull a value from the subsequent input list if the current flag doesn't contain one, ensuring proper parameter mapping.
+[english] If an argument uses a short name like `-f`, how does the function determine what positional parameter that short flag maps to?
+[english] The `func.metadata.match_shortname` method is used within the logic when the input string length is 2 (e.g., `arg[1:]`), allowing it to look up which positional field a specific single-letter flag corresponds to.
+[english] That makes sense! Thanks for the clarification.

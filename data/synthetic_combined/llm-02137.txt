@@ -1,0 +1,24 @@
+[english] I need to train an internal machine learning model using input features and target labels in my estimator.
+[english] This method focuses on fitting the underlying classifier (`self.clf`) using the provided data. It first stores the inputs for later use and then applies any specified class weights before executing the main training step.
+<switch:python>
+[python] def fit(self, X, y, cv=None, class_weight='auto'):
+        """ Fits X to outcomes y, using clf """
+
+        # Incorporate error checking such as :
+        # if isinstance(self.classifier, ScikitClassifier):
+        #     do one thingNone
+        # otherwiseNone.
+
+        self.X = X
+        self.y = y
+
+        self.set_class_weight(class_weight=class_weight, y=y)
+
+        self.clf = self.clf.fit(X, y)
+
+        return self.clf
+<switch:english>
+[english] The function successfully trains and returns the estimator's internal model, which is now ready to make predictions or calculate scores on new data.
+[english] I noticed 'cv' is passed in as an argument but isn't used during `self.clf.fit(X, y)`—is it ignored?
+[english] In this specific version, the cross-validation parameter (`cv`) is not utilized by the core fitting logic and will be ignored.
+[english] Thanks for clarifying that.

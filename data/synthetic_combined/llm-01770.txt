@@ -1,0 +1,72 @@
+[english] How can I automatically extract the name of a variable used in an assertion, even if that variable is just passed into another function?
+[english] This utility uses stack introspection by raising and catching exceptions. It then walks up the call stack until it finds where assert_is_type was originally called, allowing it to analyze the source line for variable names.
+<switch:python>
+[python] def _retrieve_assert_arguments():
+    """
+    Magic variable name retrieval.
+
+    This function is designed as a helper for assert_is_type() function. Typically such assertion is used like this::
+
+        assert_is_type(num_threads, int)
+
+    If the variable `num_threads` turns out to be non-integer, we would like to raise an exception such as
+
+        H2OTypeError("`num_threads` is expected to be integer, but got <str>")
+
+    and in order to compose an error message like that, we need to know that the variables that was passed to
+    assert_is_type() carries a name "num_threads". Naturally, the variable itself knows nothing about that.
+
+    This is where this function comes in: we walk up the stack trace until the first frame outside of this
+    file, find the original line that called the assert_is_type() function, and extract the variable name from
+    that line. This is slightly fragile, in particular we assume that only one assert_is_type statement can be per line,
+    or that this statement does not spill over multiple lines, etc.
+    """
+    try:
+        raise RuntimeError("Catch me!")
+    except RuntimeError:
+        # Walk up the stacktrace until we are outside of this file
+        tb = sys.exc_info()[2]
+        assert tb.tb_frame.f_code.co_name == "_retrieve_assert_arguments"
+        this_filename = tb.tb_frame.f_code.co_filename
+        fr = tb.tb_frame
+        while fr is not None and fr.f_code.co_filename == this_filename:
+            fr = fr.f_back
+
+        # Read the source file and tokenize it, extracting the expressions.
+        try:
+            with io.open(fr.f_code.co_filename, "r", encoding="utf-8") as f:
+                # Skip initial lines that are irrelevant
+                for i in range(fr.f_lineno - 1): next(f)
+                # Create tokenizer
+                g = tokenize.generate_tokens(f.readline)
+                step = 0
+                args_tokens = []
+                level = 0
+                for ttt in g:
+                    if step == 0:
+                        if ttt[0] != tokenize.NAME: continue
+                        if not ttt[1].startswith("assert_"): continue
+                        step = 1
+                    elif step == 1:
+                        assert ttt[0] == tokenize.OP and ttt[1] == "("
+                        args_tokens.append([])
+                        step = 2
+                    elif step == 2:
+                        if level == 0 and ttt[0] == tokenize.OP and ttt[1] == ",":
+                            args_tokens.append([])
+                        elif level == 0 and ttt[0] == tokenize.OP and ttt[1] == ")":
+                            break
+                        else:
+                            if ttt[0] == tokenize.OP and ttt[1] in "([{": level += 1
+                            if ttt[0] == tokenize.OP and ttt[1] in ")]}": level -= 1
+                            assert level >= 0, "Parse error: parentheses level became negative"
+                            args_tokens[-1].append(ttt)
+                args = [tokenize.untokenize(at).strip().replace("\n", " ") for at in args_tokens]
+                return args
+        except IOError:
+            return "arg",
+<switch:english>
+[english] The function successfully extracts arguments by parsing the original source code of the calling statement using Python's tokenizer. However, this approach is inherently fragile and relies heavily on strict formatting in the calling code.
+[english] What if the variable name being asserted isn't a simple argument, but rather part of a larger expression?
+[english] The current parsing logic specifically targets tokens immediately following assert_, (, and ,. If the variable is used within complex arithmetic or nested functions not captured by these rules, the tokenizer will likely fail to extract the intended name.
+[english] This mechanism for deep introspection is surprisingly difficult to engineer.

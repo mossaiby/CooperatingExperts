@@ -1,0 +1,28 @@
+[english] How can I program my application to retrieve all configuration data entered by a user across several different input fields in the UI?
+[english] This method is designed to collect every input value from the associated UI layer and store it within the instance attributes for later processing.
+<switch:python>
+[python] def data(self):
+        """
+        This function gets back data that the user typed.
+        """
+        self.batch_name_value = self.ui.batch_name_value.text()
+        self.saa_values = self.ui.saa_values.text()
+        self.sza_values = self.ui.sza_values.text()
+        self.p_values = self.ui.p_values.text()
+        self.x_value = self.ui.x_value.text()
+        self.y_value = self.ui.y_value.text()
+        self.g_value = self.ui.g_value.text()
+        self.s_value = self.ui.s_value.text()
+        self.z_value = self.ui.z_value.text()
+        self.wavelength_values = self.ui.wavelength_values.text()
+        self.verbose_value = self.ui.verbose_value.text()
+        self.phytoplankton_path = self.ui.phyto_path.text()
+        self.bottom_path = self.ui.bottom_path.text()
+        self.executive_path = self.ui.exec_path.text()
+        self.nb_cpu = self.ui.nb_cpu.currentText()
+        self.report_parameter_value = str(self.ui.report_parameter_value.text())
+<switch:english>
+[english] The function relies heavily on accessing string values directly from widgets; developers should ensure these retrieved strings are properly validated or type-cast before use.
+[english] What if a user leaves one of those input fields blank? Will the code handle that gracefully?
+[english] If no text is entered, methods like `.text()` or `.currentText()` will typically return an empty string (`''`). You may want to add checks for `if value:` before processing.
+[english] That makes sense, thanks for clarifying how input data is collected.

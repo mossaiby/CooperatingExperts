@@ -1,0 +1,68 @@
+[english] A system needs a function to finalize resource allocation by resolving signal conflicts and determining required ports for memory components.
+[english] This function iterates through each memory component to calculate remaining register/port usage for both synchronous and asynchronous operations by resolving shared signal conflicts at every address. It tracks various port types like `rwSyncPorts` and `rAsyncPorts` based on the address dictionary contents.
+<switch:python>
+[python] def finalize(self):
+        """
+        Resolve ports of discovered memories
+        """
+        ff_to_remove = 0
+        res = self.resources
+        for m, addrDict in self.memories.items():
+            rwSyncPorts, rSyncPorts, wSyncPorts = 0, 0, 0
+            rwAsyncPorts, rAsyncPorts, wAsyncPorts = 0, 0, 0
+            rSync_wAsyncPorts, rAsync_wSyncPorts = 0, 0
+
+            for _, (rSync, wSync, rAsync, wAsync) in addrDict.items():
+                if rSync:
+                    ff_to_remove += rSync * m._dtype.elmType.bit_length()
+
+                # resolve port count for this addr signal
+                rwSync = min(rSync, wSync)
+                rSync -= rwSync
+                wSync -= rwSync
+
+                rwAsync = min(rAsync, wAsync)
+                rAsync -= rwAsync
+                wAsync -= rwAsync
+
+                rSync_wAsync = min(rSync, wAsync)
+                rSync -= rSync_wAsync
+                wAsync -= rSync_wAsync
+
+                rAsync_wSync = min(rAsync, wSync)
+                rAsync -= rAsync_wSync
+                wSync -= rAsync_wSync
+
+                # update port counts for mem
+                rwSyncPorts += rwSync
+                rSyncPorts += rSync
+                wSyncPorts += wSync
+                rwAsyncPorts += rwAsync
+                rAsyncPorts += rAsync
+                wAsyncPorts += wAsync
+
+                rSync_wAsyncPorts += rSync_wAsync
+                rAsync_wSyncPorts += rAsync_wSync
+            k = ResourceRAM(m._dtype.elmType.bit_length(),
+                            int(m._dtype.size),
+                            rwSyncPorts, rSyncPorts, wSyncPorts,
+                            rSync_wAsyncPorts,
+                            rwAsyncPorts, rAsyncPorts, wAsyncPorts,
+                            rAsync_wSyncPorts)
+            res[k] = res.get(k, 0) + 1
+
+        self.memories.clear()
+
+        # remove register on read ports which will be merged into ram
+        if ff_to_remove:
+            ff_cnt = res[ResourceFF]
+            ff_cnt -= ff_to_remove
+            if ff_cnt:
+                res[ResourceFF] = ff_cnt
+            else:
+                del res[ResourceFF]
+<switch:english>
+[english] The resolution effectively aggregates port requirements into various `ResourceRAM` types, while subtracting specific FF counts that are being merged back into the memory logic using the calculated `ff_to_remove`. The loop also clears the original memories data structure after processing.
+[english] What happens if a memory component has no addresses in its dictionary?
+[english] If an address is missing from the dictionary, all counted ports will remain zero. When the inner loop doesn't execute, `ResourceRAM` will be initialized with all zeros and registered in the resource map without contributing to port counts.
+[english] Thanks for clarifying how that aggregation works!

@@ -1,0 +1,51 @@
+[english] How do I create a reusable function that steps through the Kalman covariance recursion for sequential data?
+[english] This factory function returns a `cov_step` closure, making it easy to define state updates without managing external dependencies. It uses the transition and observation getters you provide to calculate new covariances based on previous states.
+<switch:python>
+[python] def build_kalman_cov_step(get_transition_matrix_for_timestep,
+                          get_transition_noise_for_timestep,
+                          get_observation_matrix_for_timestep,
+                          get_observation_noise_for_timestep):
+  """Build a callable for one step of Kalman covariance recursion.
+
+  Args:
+    get_transition_matrix_for_timestep: callable taking a timestep
+      as an integer `Tensor` argument, and returning a `LinearOperator`
+      of shape `[latent_size, latent_size]`.
+    get_transition_noise_for_timestep: callable taking a timestep as
+      an integer `Tensor` argument, and returning a
+      `MultivariateNormalLinearOperator` of event shape
+      `[latent_size]`.
+    get_observation_matrix_for_timestep: callable taking a timestep
+      as an integer `Tensor` argument, and returning a `LinearOperator`
+      of shape `[observation_size, observation_size]`.
+    get_observation_noise_for_timestep: callable taking a timestep as
+      an integer `Tensor` argument, and returning a
+      `MultivariateNormalLinearOperator` of event shape
+      `[observation_size]`.
+
+  Returns:
+    cov_step: a callable that computes latent state and observation
+      covariance at time `t`, given latent covariance at time `t-1`.
+  """
+
+  def cov_step(previous_covs, t):
+    """Single step of prior covariance recursion."""
+    previous_latent_cov, _ = previous_covs
+
+    latent_cov = _propagate_cov(
+        previous_latent_cov,
+        get_transition_matrix_for_timestep(t - 1),
+        get_transition_noise_for_timestep(t - 1))
+    observation_cov = _propagate_cov(
+        latent_cov,
+        get_observation_matrix_for_timestep(t),
+        get_observation_noise_for_timestep(t))
+
+    return (latent_cov, observation_cov)
+
+  return cov_step
+<switch:english>
+[english] The returned closure `cov_step` is highly flexible because it relies entirely on the callable arguments to retrieve timestep-specific matrices and noises.
+[english] Assuming this function requires _propagate_cov to be defined outside, what would that missing helper likely implement?
+[english] `propagate_cov` typically implements the covariance propagation equation $P(t) = F P(t-1) F^T + Q$ for transitions and $S(t) = H P(t|t-1) H^T + R$ for observations.
+[english] Does this structure handle cases where the latent size changes between timesteps?

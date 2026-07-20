@@ -1,0 +1,20 @@
+[english] How can I determine if this specific widget should be clickable or interactable by the user?
+[english] This function determines navigability by verifying how a widget interacts with its submenus and current state. It checks for specific internal conditions to decide if clicking is permitted.
+<switch:python>
+[python] def clickable(self):
+        """
+        Property used for determining if the widget should be clickable by the user.
+        
+        This is only true if the submenu of this widget is active and this widget is enabled.
+        
+        The widget may be either disabled by setting this property or the :py:attr:`enabled` attribute.
+        """
+        if not isinstance(self.submenu,Container):
+            return self.submenu.name == self.submenu.menu.activeSubMenu and self.submenu.menu.name == self.window.activeMenu and self.enabled
+        else:
+            return self.submenu.clickable and self.enabled
+<switch:english>
+[english] It's important to note that disabling this property works both by setting the custom property itself or through general widget enabling mechanisms provided by `self.enabled`.
+[english] If a Container exists, what happens if its ‘clickable’ attribute is true, but it's nested inside an inactive menu?
+[english] If the submenu is a container type, this property ignores active menus and relies solely on whether `self.submenu.clickable` is set to true along with the widget being enabled.
+[english] Thanks for the breakdown!

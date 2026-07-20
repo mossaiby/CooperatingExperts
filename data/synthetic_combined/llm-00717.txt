@@ -1,0 +1,15 @@
+[english] I need a reliable way to fetch the list of any supplementary files attached to this notebook, potentially using caching.
+[english] This method implements memoization to optimize performance; it first checks if the information is already stored in the internal instance variable before making an external call.
+<switch:python>
+[python] def other_supplementary_files(self):
+        """The supplementary files of this notebook"""
+        if self._other_supplementary_files is not None:
+            return self._other_supplementary_files
+        return getattr(self.nb.metadata, 'other_supplementary_files', None)
+<switch:english>
+[english] If the data isn't in the cache, it retrieves the files from the notebook metadata and returns them.
+[english] What happens if the `other_supplementary_files` key does not exist within the notebook's metadata?
+[english] The function gracefully handles missing keys by using a default value of `None`, ensuring no attribute error is thrown.
+
+g
+[english] That makes perfect sense, thanks for clearing that up!

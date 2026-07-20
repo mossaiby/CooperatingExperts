@@ -1,0 +1,81 @@
+[english] Write a method to programmatically create a new data channel on a remote server with specific metadata and permissions.
+[english] This function first validates the required arguments, including checking if the `channel_type` is supported by the system. It then constructs a complete API endpoint URL and prepares a comprehensive JSON payload for configuration.
+<switch:python>
+[python] def create_channel(self,
+                       channel_name,
+                       project_name,
+                       dataset_name,
+                       channel_type,
+                       dtype,
+                       startwindow,
+                       endwindow,
+                       readonly=0,
+                       start_time=0,
+                       end_time=0,
+                       propagate=0,
+                       resolution=0,
+                       channel_description=''):
+        """
+        Create a new channel on the Remote, using channel_data.
+
+        Arguments:
+            channel_name (str): Channel name
+            project_name (str): Project name
+            dataset_name (str): Dataset name
+            channel_type (str): Type of the channel (e.g. `neurodata.IMAGE`)
+            dtype (str): The datatype of the channel's data (e.g. `uint8`)
+            startwindow (int): Window to start in
+            endwindow (int): Window to end in
+            readonly (int): Can others write to this channel?
+            propagate (int): Allow propogation? 1 is True, 0 is False
+            resolution (int): Resolution scaling
+            channel_description (str): Your description of the channel
+
+        Returns:
+            bool: `True` if successful, `False` otherwise.
+
+        Raises:
+            ValueError: If your args were bad :(
+            RemoteDataUploadError: If the channel data is valid but upload
+                fails for some other reason.
+        """
+        self._check_channel(channel_name)
+
+        if channel_type not in ['image', 'annotation', 'timeseries']:
+            raise ValueError('Channel type must be ' +
+                             'neurodata.IMAGE or neurodata.ANNOTATION.')
+
+        if readonly * 1 not in [0, 1]:
+            raise ValueError("readonly must be 0 (False) or 1 (True).")
+
+        # Good job! You supplied very nice arguments.
+
+        url = self.url() + "/nd/resource/dataset/{}".format(dataset_name)\
+            + "/project/{}".format(project_name) + \
+            "/channel/{}/".format(channel_name)
+        json = {
+            "channel_name": channel_name,
+            "channel_type": channel_type,
+            "channel_datatype": dtype,
+            "startwindow": startwindow,
+            "endwindow": endwindow,
+            'starttime': start_time,
+            'endtime': end_time,
+            'readonly': readonly,
+            'propagate': propagate,
+            'resolution': resolution,
+            'channel_description': channel_description
+        }
+        req = self.remote_utils.post_url(url, json=json)
+
+        if req.status_code is not 201:
+            raise RemoteDataUploadError('Could not upload {}'.format(req.text))
+        if req.content == "" or req.content == b'':
+            return True
+        else:
+            return False
+<switch:english>
+[english] The operation uses HTTP POST to register the channel resource remotely; it specifically checks for status code 201 to confirm successful registration before returning success or failure.
+[english] What happens if I provide an invalid `channel_type` string, like 'video'?
+[english] If you provide a type that is not explicitly listed in your validation check (e.g., 'image', 'annotation'), the function will raise a ValueError immediately, preventing the API call.
+[english] Okay, I appreciate the clear explanation!

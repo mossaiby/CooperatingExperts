@@ -1,0 +1,16 @@
+[english] How can I implement a cleanup function to completely reset all internal state variables of my command processor?
+[english] This method performs a thorough reset by explicitly assigning default or empty values to key instance attributes that track execution context.
+<switch:python>
+[python] def forget(self):
+        """ Remove memory of state variables set in the command processor """
+        self.stack       = []
+        self.curindex    = 0
+        self.curframe    = None
+        self.thread_name = None
+        self.frame_thread_name = None
+        return
+<switch:english>
+[english] It effectively clears memory related to the current operational session, ensuring no residual data affects future commands. If any external components hold references to these variables, they might still be retained in memory, though.
+[english] If 'self' was an object created within a loop, does this function guarantee that all associated resources are actually freed from garbage collection?
+[english] This method only resets the *references* stored on the instance. For complex resource freeing (like file handles or network connections), you would need to add explicit cleanup logic before running `forget()`, as simply setting attributes to `None` does not automatically trigger deletion.
+[english] That makes perfect sense, I appreciate the detailed breakdown!

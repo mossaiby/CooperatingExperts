@@ -1,0 +1,53 @@
+[english] I need a way to programmatically retrieve a specific XCom data value, ensuring it matches criteria like task ID or execution date.
+[english] This function retrieves an XCom value by dynamically constructing SQLAlchemy filters based on provided metadata (like `key`, `task_id`, and `dag_id`). It then queries the database for the relevant record and handles deserialization using a preference for JSON over legacy pickling.
+<switch:python>
+[python] def get_one(cls,
+                execution_date,
+                key=None,
+                task_id=None,
+                dag_id=None,
+                include_prior_dates=False,
+                session=None):
+        """
+        Retrieve an XCom value, optionally meeting certain criteria.
+        TODO: "pickling" has been deprecated and JSON is preferred.
+        "pickling" will be removed in Airflow 2.0.
+
+        :return: XCom value
+        """
+        filters = []
+        if key:
+            filters.append(cls.key == key)
+        if task_id:
+            filters.append(cls.task_id == task_id)
+        if dag_id:
+            filters.append(cls.dag_id == dag_id)
+        if include_prior_dates:
+            filters.append(cls.execution_date <= execution_date)
+        else:
+            filters.append(cls.execution_date == execution_date)
+
+        query = (
+            session.query(cls.value).filter(and_(*filters))
+                   .order_by(cls.execution_date.desc(), cls.timestamp.desc()))
+
+        result = query.first()
+        if result:
+            enable_pickling = configuration.getboolean('core', 'enable_xcom_pickling')
+            if enable_pickling:
+                return pickle.loads(result.value)
+            else:
+                try:
+                    return json.loads(result.value.decode('UTF-8'))
+                except ValueError:
+                    log = LoggingMixin().log
+                    log.error("Could not deserialize the XCOM value from JSON. "
+                              "If you are using pickles instead of JSON "
+                              "for XCOM, then you need to enable pickle "
+                              "support for XCOM in your airflow config.")
+                    raise
+<switch:english>
+[english] The code prioritizes data integrity by attempting to deserialize the returned value either via JSON or Pickle based on your Airflow configuration. Note that relying on `pickle` is discouraged due to security risks.
+[english] If multiple records match all my filters, which one will this function return?
+[english] It returns only one record using `.first()`, prioritizing results by descending execution date and timestamp, ensuring the most recent data point is captured.
+[english] That makes sense.

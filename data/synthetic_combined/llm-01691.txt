@@ -1,0 +1,13 @@
+[english] How can I convert my notebook data into a Base64 encoded string for transport via API?
+[english] To prepare your notebook content `nb` as Base64, we first need to serialize it using the required versioning logic, then encode the resulting string into bytes before applying Base64 encoding.
+<switch:python>
+[python] def writes_base64(nb, version=NBFORMAT_VERSION):
+    """
+    Write a notebook as base64.
+    """
+    return b64encode(writes(nb, version=version).encode('utf-8'))
+<switch:english>
+[english] This approach ensures a consistent byte representation regardless of local character encoding issues when handling text data.
+[english] What happens if `nb` is not provided or if the version number is missing?
+[english] If `nb` is absent, an error will occur during the `writes()` serialization step. The default parameter `NBFORMAT_VERSION` prevents issues with missing versions by providing a fallback.
+[english] That makes sense; I appreciate the clarity on handling dependencies.

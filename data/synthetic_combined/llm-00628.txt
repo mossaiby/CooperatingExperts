@@ -1,0 +1,18 @@
+[english] How do I get a secure API endpoint for sending messages using Dingding?
+[english] This function is designed to handle credential retrieval before constructing the necessary message delivery URL. It first attempts to fetch configuration details from an internal connection manager.
+<switch:python>
+[python] def _get_endpoint(self):
+        """
+        Get Dingding endpoint for sending message.
+        """
+        conn = self.get_connection(self.http_conn_id)
+        token = conn.password
+        if not token:
+            raise AirflowException('Dingding token is requests but get nothing, '
+                                   'check you conn_id configuration.')
+        return 'robot/send?access_token={}'.format(token)
+<switch:english>
+[english] It safely extracts the required access token and formats it into a full API endpoint. Note that if the connection ID is misconfigured, this function raises an exception.
+[english] What happens if I try to use this function without configuring `self.http_conn_id`?
+[english] If you don't configure `self.http_conn_id`, the call to `self.get_connection()` will likely fail unless a default is set in your class initialization.
+[english] That makes sense, thanks for explaining how that token retrieval works.

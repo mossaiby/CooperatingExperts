@@ -1,0 +1,12 @@
+[english] I need a set of evenly spaced time points (frames) over a given duration for an analysis.
+[english] This function calculates how many frames are needed using `get_num_frames` and then uses NumPy's `linspace` to generate those specific timestamps starting from zero up to the total duration. Since `np.linspace(0, dur, num=n_frames)` is used, the final time point will exactly equal the input duration.
+<switch:python>
+[python] def get_time_frames(dur, anal):
+    """Gets the time frames and puts them in a numpy array."""
+    n_frames = get_num_frames(dur, anal)
+    return np.linspace(0, dur, num=n_frames)
+<switch:english>
+[english] The function relies on an external helper (`get_num_frames`) for frame counting, ensuring that all returned values are evenly distributed across the entire specified duration.
+[english] What happens if `dur` or `n_frames` is zero?
+[english] If `n_frames` is zero or negative, `np.linspace` will typically raise a ValueError because it requires at least one number to generate frames between 0 and dur. If you pass `num=1`, the result would be an array containing only `[0.]`.
+[english] Got it, that makes sense.

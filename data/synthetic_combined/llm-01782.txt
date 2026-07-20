@@ -1,0 +1,14 @@
+[english] How can I multiply every element of a vector by a single scalar value using Python?
+[english] To achieve this, we iterate through the input vector `v1` while keeping track of indices and construct a list containing formatted strings for each multiplication operation. This approach builds the result as a series of symbolic mathematical expressions rather than calculating numerical values directly.
+<switch:python>
+[python] def v_multiply(scalar, v1):
+    """ Multiply vector by scalar"""
+    vector = []
+    for i, x in enumerate(v1):
+        vector.append('(({})*({}))'.format(scalar, v1[i]))
+    return vector
+<switch:english>
+[english] The function currently returns a list of strings representing the math operations, which acts more like a symbolic representation or code generation task.
+[english] If I pass in string elements instead of numbers into `v1` (e.g., ['a', 'b']), will it still work as intended?
+[english] Yes, because the function uses `.format()` on strings to generate new strings. For a vector v1=['a', 'b'] and scalar 2, the result would be ['((2)*(a))', '((2)*(b))'].
+[english] That makes sense; I can use this for generating symbolic code instead of numerical results.

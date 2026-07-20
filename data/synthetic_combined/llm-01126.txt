@@ -1,0 +1,70 @@
+[english] How can I systematically compare geochemical measurement datasets—like test user results versus LAtools data—against reference values?
+[english] This function automates the comparison process by first identifying relevant analyte and ratio columns based on the provided elements. It then loops through each element, computing specific statistical summaries for both Test User and LAtools relative to a baseline.
+<switch:python>
+[python] def comparison_stats(df, els=['Mg', 'Sr', 'Ba', 'Al', 'Mn']):
+    """
+    Compute comparison stats for test and LAtools data.
+    
+    Population-level similarity assessed by a Kolmogorov-Smirnov test.
+    
+    Individual similarity assessed by a pairwise Wilcoxon signed rank test.
+    
+    Trends in residuals assessed by regression analysis, where significance of
+    the slope and intercept is determined by t-tests (both relative to zero).
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A dataframe containing reference ('X/Ca_r'), test user 
+        ('X/Ca_t') and LAtools ('X123') data.
+    els : list
+        list of elements (names only) to plot.
+    
+    Returns
+    -------
+    pandas.DataFrame
+    
+    """
+    
+    # get corresponding analyte and ratio names
+    As = []
+    Rs = []
+    analytes = [c for c in df.columns if ('_r' not in c) and ('_t' not in c)]
+    ratios = [c for c in df.columns if ('_r' in c)]
+
+    for e in els:
+        if e == 'Sr':
+            As.append('Sr88')
+        elif e == 'Mg':
+            As.append('Mg24')
+        else:
+            As.append([a for a in analytes if e in a][0])
+        Rs.append([r for r in ratios if e in r][0][:-2])
+        
+    yt_stats = []
+    yl_stats = []
+    
+    for i, (e, a) in enumerate(zip(Rs, As)):
+        if a == 'Ba138':
+            m = 1e3
+            u = '$\mu$mol/mol'
+        else:
+            m = 1
+            u = 'mmol/mol'
+        
+        x = df.loc[:, e + '_r'].values * m
+        yt = df.loc[:, e + '_t'].values * m
+        yl = df.loc[:, a].values * m
+        
+        yt_stats.append(summary_stats(x, yt, e))
+        yl_stats.append(summary_stats(x, yl, e))
+    
+    yt_stats = pd.concat(yt_stats).T
+    yl_stats = pd.concat(yl_stats).T
+    
+    return pd.concat([yt_stats, yl_stats], keys=['Test User', 'LAtools']).T
+<switch:english>
+[english] The function returns two combined DataFrames, one for each method (Test User/LAtools), making direct comparison against the reference data straightforward. Note that successful execution requires an external 'summary_stats' helper function.
+[english] What happens if one of the specified elements or ratios is missing from the input DataFrame column structure?
+[english] The current logic relies on list comprehensions and explicit indexing, so it would likely raise a KeyError during column variable assignment. To handle this robustly, you could wrap your loops in try/except blocks to check for column existence.
+[english] Thanks for the detailed explanation!

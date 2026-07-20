@@ -1,0 +1,36 @@
+[english] How do I automatically parse complex SnpEff ANN INFO fields that contain pipe-delimited genomic annotations into a structured list of dictionaries?
+[english] This function specializes in parsing the 'ANN' field from SnpEff data. It iterates through the input string, splitting each record by '|', and converts it into a dictionary using pre-defined keys.
+<switch:python>
+[python] def _parse_info_snpeff(self, info):
+        """
+        Specialized INFO field parser for SnpEff ANN fields.
+        Requires self._snpeff_ann_fields to be set.
+        """
+        ann = info.pop('ANN', []) or []
+        # Overwrite the existing ANN with something parsed
+        # Split on '|', merge with the ANN keys parsed above.
+        # Ensure empty values are None rather than empty string.
+        items = []
+        for a in ann:
+            # For multi-allelic records, we may have already
+            # processed ANN. If so, quit now.
+            if isinstance(a, dict):
+                info['ANN'] = ann
+                return info
+
+            values = [i or None for i in a.split('|')]
+            item = dict(zip(self._snpeff_ann_fields, values))
+
+            # Further split the Annotation field by '&'
+            if item.get('Annotation'):
+                item['Annotation'] = item['Annotation'].split('&')
+
+            items.append(item)
+
+        info['ANN'] = items
+        return info
+<switch:english>
+[english] The parser ensures that empty fields are represented as `None` and further splits the 'Annotation' field if multiple pieces of info are combined with '&'.
+[english] If an individual annotation contains extra fields separated by '|', does this function handle them correctly?
+[english] Yes, it handles any number of pipe-delimited values. It uses `zip(self._snpeff_ann_fields, values)` to ensure all parsed values are mapped accurately against the defined keys.
+[english] Got it, that makes perfect sense thanks!

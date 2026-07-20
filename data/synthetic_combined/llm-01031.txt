@@ -1,0 +1,36 @@
+[english] How do I create a combined boolean mask by taking the logical conjunction of several specified layers?
+[english] This function calculates a comprehensive mask by iteratively combining different layer results. It ensures that all selected layers and the overall volume state must be true for a given spatial coordinate to remain 'on' in the final output.
+<switch:python>
+[python] def get_mask(self, layers=None, output='vector', in_global_mask=True):
+        """ Set the current mask by taking the conjunction of all specified
+        layers.
+
+        Args:
+            layers: Which layers to include. See documentation for add() for
+                format.
+            include_global_mask: Whether or not to automatically include the
+                global mask (i.e., self.volume) in the conjunction.
+        """
+        if in_global_mask:
+            output = 'vector'
+
+        if layers is None:
+            layers = self.layers.keys()
+        elif not isinstance(layers, list):
+            layers = [layers]
+
+        layers = map(lambda x: x if isinstance(x, string_types)
+                     else self.stack[x], layers)
+        layers = [self.layers[l] for l in layers if l in self.layers]
+
+        # Always include the original volume
+        layers.append(self.full)
+        layers = np.vstack(layers).T.astype(bool)
+        mask = layers.all(axis=1)
+        mask = self.get_image(mask, output)
+        return mask[self.global_mask] if in_global_mask else mask
+<switch:english>
+[english] The core logic relies on `np.vstack`.T.astype(bool)` to stack all layer masks and convert them into a boolean array where only rows True across all columns signal the final mask.
+[english] Does this function handle cases where one of the requested layers is missing from self.layers?
+[english] Yes, it handles missing keys gracefully by filtering the input list before stacking. The line `layers = [self.layers[l] for l in layers if l in self.layers]` ensures only valid layer references are included.
+[english] Thanks! This makes the masking process very robust.

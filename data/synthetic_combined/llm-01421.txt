@@ -1,0 +1,26 @@
+[english] How do I register a result signal and handle static evaluation for an operator definition?
+[english] This function wraps an existing operation by creating an associated 'result signal' (`RtlSignal`) which then links the output back to the original operator object. It ensures that data dependencies are handled correctly within the system architecture, especially by checking if inputs are constants.
+<switch:python>
+[python] def withRes(opDef, operands, resT, outputs=[]):
+        """
+        Create operator with result signal
+
+        :ivar resT: data type of result signal
+        :ivar outputs: iterable of singnals which are outputs
+            from this operator
+        """
+        op = Operator(opDef, operands)
+        out = RtlSignal(getCtxFromOps(operands), None, resT)
+        out._const = arr_all(op.operands, isConst)
+        out.drivers.append(op)
+        out.origin = op
+        op.result = out
+        op.registerSignals(outputs)
+        if out._const:
+            out.staticEval()
+        return out
+<switch:english>
+[english] The main purpose is linking a result signal to its generating operator and triggering static evaluation only when all necessary input signals have constant values for performance optimization.
+[english] If `operands` contains non-constant signals, how does the function guarantee proper dynamic value propagation?
+[english] By setting out.drivers with 'op' in line with the initialization of the result signal `out`, it ensures that any changes to the operator's inputs will correctly update the output result signal dynamically when static evaluation is bypassed.
+[english] That makes sense; thanks for clarifying how dependencies are managed here.

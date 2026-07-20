@@ -1,0 +1,51 @@
+[english] I need a way to safely remove and destroy a specific widget that I've previously registered with the system.
+[english] This function is designed to handle widget deletion by first extracting the unique name if necessary, then verifying the widget exists in internal storage before initiating the cleanup process.
+<switch:python>
+[python] def delWidget(self,widget):
+        """
+        Deletes the widget by the given name.
+        
+        Note that this feature is currently experimental as there seems to be a memory leak with this method.
+        """
+        # TODO: fix memory leak upon widget deletion
+        #print("*"*50)
+        #print("Start delWidget")
+        if isinstance(widget,BasicWidget):
+            widget = widget.name
+        
+        if widget not in self.widgets:
+            return
+        
+        w = self.widgets[widget]
+        
+        #print("refs: %s"%sys.getrefcount(w))
+        
+        w.delete()
+        del self.widgets[widget]
+        del widget
+        
+        #w_wref = weakref.ref(w)
+        
+        #print("GC: GARBAGE")
+        #print(gc.garbage)
+        #print("Widget Info")
+        #print(w_wref())
+        #import objgraph
+        #print("Objgraph")
+        #objgraph.show_refs([w], filename='./mem_widget.png')
+        #print("refs: %s"%sys.getrefcount(w))
+        #w_r = gc.get_referrers(w)
+        #print("GC: REFS")
+        #for w_ref in w_r:
+        #    print(repr(w_ref)[:512])
+        #print("GC: END")
+        #print("len: %s"%len(w_r))
+        #del w_ref,w_r
+        #print("after del %s"%w_wref())
+        #print("refs: %s"%sys.getrefcount(w))
+        del w
+<switch:english>
+[english] The code performs comprehensive local reference removal, though it notes an existing issue regarding potential memory leaks that require further investigation.
+[english] If I try to delete a widget using its name string instead of the actual object instance, will the function handle that successfully?
+[english] Yes, the logic checks if the input is a `BasicWidget` instance; if it is, it explicitly extracts and uses the `.name` attribute for lookup.
+[english] That makes sense, thanks for clarifying.

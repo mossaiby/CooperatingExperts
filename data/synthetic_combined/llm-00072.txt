@@ -1,0 +1,26 @@
+[english] How can I generate dependency graphs (DOT files) for internal, external, or general imports from a system analysis tool?
+[english] This helper function manages the creation of three types of dot-formatted graph files based on your configuration settings. It first validates whether any dependency data is available before proceeding to check specific file paths.
+<switch:python>
+[python] def _report_dependencies_graph(self, sect, _, _dummy):
+        """write dependencies as a dot (graphviz) file"""
+        dep_info = self.stats["dependencies"]
+        if not dep_info or not (
+            self.config.import_graph
+            or self.config.ext_import_graph
+            or self.config.int_import_graph
+        ):
+            raise EmptyReportError()
+        filename = self.config.import_graph
+        if filename:
+            _make_graph(filename, dep_info, sect, "")
+        filename = self.config.ext_import_graph
+        if filename:
+            _make_graph(filename, self._external_dependencies_info(), sect, "external ")
+        filename = self.config.int_import_graph
+        if filename:
+            _make_graph(filename, self._internal_dependencies_info(), sect, "internal ")
+<switch:english>
+[english] The function uses conditional logic to delegate the actual graph generation to `_make_graph` only if the relevant configuration flag is set. It calls specialized methods like `self._external_dependencies_info()` when generating external graphs.
+[english] If multiple dependency types (e.g., internal and external) are configured simultaneously, how does this function handle calling _make_graph for both?
+[english] It handles them sequentially by checking each configuration flag independently. If `int_import_graph` is set, the function calls `_make_graph` using `self._internal_dependencies_info()` regardless of whether external graphs were also generated.
+[english] That clarifies how it processes mixed configurations.

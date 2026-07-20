@@ -1,0 +1,14 @@
+[english] I need a function that allows me to toggle the sound on or off based on whether I want it muted.
+[english] This approach uses an if/else block tied to the boolean input `mute`. If the flag is true, we call the mute-on method; otherwise, we execute the unmute logic.
+<switch:python>
+[python] def mute_volume(self, mute):
+        """Mute the volume."""
+        if mute:
+            self._device.mute_on()
+        else:
+            self._device.mute_off()
+<switch:english>
+[english] The behavior of this function depends entirely on the external class object that manages the hardware state via `self._device` methods. Always verify those dependencies are correctly initialized.
+[english] What should I do if the input isn't a proper boolean, like passing zero or None?
+[english] If a non-boolean value is passed for `mute`, Python treats it based on its truthiness (e.g., `0` is False). For predictable behavior, you should always explicitly pass True or False.
+[english] Got it; this is much clearer than I expected.

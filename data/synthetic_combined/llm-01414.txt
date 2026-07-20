@@ -1,0 +1,24 @@
+[english] How can I write a method to load file information, tags, and metadata from a binary file while ensuring the resource is always safely closed?
+[english] This function manages complex file processing by opening the specified file in binary mode. It uses nested error handling to manage data extraction attempts robustly.
+<switch:python>
+[python] def load(self, filename):
+        """Load file information from a filename."""
+
+        self.filename = filename
+        fileobj = open(filename, "rb")
+        try:
+            try:
+                self.info = self._Info(fileobj)
+                self.tags = self._Tags(fileobj, self.info)
+                self.info._post_tags(fileobj)
+            except error as e:
+                reraise(self._Error, e, sys.exc_info()[2])
+            except EOFError:
+                raise self._Error("no appropriate stream found")
+        finally:
+            fileobj.close()
+<switch:english>
+[english] The use of a `try...finally` block guarantees that the file object (`fileobj`) is closed, preventing resource leaks even if data processing fails.
+[english] If the provided filename does not exist on disk, what specific error will be raised by this implementation and how would I handle it?
+[english] An `FileNotFoundError` (or similar OS-level IOError) would occur when `open(filename, "rb")` is called. To catch this specifically before data processing begins, you could wrap the file opening line in an initial try-except block.
+[english] That makes much more sense for robust resource management.

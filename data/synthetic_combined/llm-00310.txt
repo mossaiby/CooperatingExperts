@@ -1,0 +1,21 @@
+[english] I need a clean way to implement an iterative or cyclical operation within my deep learning graph.
+[english] This function serves as a factory for defining complex loops in your computational graph. It abstracts away the low-level mechanics by taking input sequences and defining output variables.
+<switch:python>
+[python] def loop(self, sequences=None, outputs=None, non_sequences=None, block=None, **kwargs):
+        """
+        Start a loop.
+        Usage:
+<switch:english>
+[english] with deepy.graph.loop(sequences={"x": x}, outputs={"o": None}) as vars:
+            vars.o = vars.x + 1
+        loop_outputs = deepy.graph.loop_outputs()
+        result = loop_outputs.o
+<switch:python>
+[python] """
+        from loop import Loop
+        return Loop(sequences, outputs, non_sequences, block, **kwargs)
+<switch:english>
+[english] The returned `Loop` object maintains state about sequence dependency and manages variable scope during the execution of the block provided.
+[english] What happens if I forget to specify either the initial 'sequences' or the desired 'outputs'?
+[english] If either argument is omitted, it defaults to None. You must ensure all required inputs are defined within the loop body, and any resulting variables will not be captured by the overall system unless explicitly handled.
+[english] I see; so I define the scope first before running the actual iterative logic.

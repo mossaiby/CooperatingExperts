@@ -1,0 +1,27 @@
+[english] How can I create a utility that prints both the value and detailed type information for various objects?
+[english] To handle object printing with custom formatting, this function iterates through variables. It conditionally formats output using external utilities or provides structured details about types and attributes.
+<switch:python>
+[python] def print_obj(arg, val, format=None, short=False):
+    """Return a string representation of an object """
+    what = arg
+    if format:
+        what = format + ' ' + arg
+        val = Mprint.printf(val, format)
+        pass
+    s = '%s = %s' % (what, val)
+    if not short:
+        s += '\n  type = %s' % type(val)
+        # Try to list the members of a class.
+        # Not sure if this is correct or the
+        # best way to do.
+        s = print_dict(s, val, "object variables")
+        if hasattr(val, "__class__"):
+            s = print_dict(s, val.__class__, "class variables")
+            pass
+        pass
+    return s
+<switch:english>
+[english] The code uses helper functions like `print_dict` to recursively display internal class members. Note that the formatting relies on an assumed global module named `Mprint`. Currently, it may not handle complex data structures perfectly.
+[english] What happens if I call this function when `val` is a primitive type like an integer?
+[english] If `val` is an integer, the initial assignment `s = '%s = %s' % (what, val)` will execute successfully. It then adds 'type = <class 'int'>', but the subsequent calls to `print_dict` for variables and classes will likely fail or return nothing.
+[english] Great, this helps structure my debugging output!

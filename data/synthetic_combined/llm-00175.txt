@@ -1,0 +1,14 @@
+[english] I need a way to extract all defined filters from `self` that specifically conform to the NodeFilter class.
+[english] To isolate the necessary filters, we iterate over the key-value pairs in `self.filters`. We then use Python's type checking to ensure each filter value matches the required `NodeFilter` class.
+<switch:python>
+[python] def node_filters(self):
+        """ Dict[str, NodeFilter]: Returns the node filters for this selector. """
+
+        return {
+            name: filter for name, filter in iter(self.filters.items())
+            if isinstance(filter, NodeFilter)}
+<switch:english>
+[english] This operation effectively prunes any non-conforming types while preserving the original keys, returning a clean dictionary of matching filters.
+[english] If I have a complex object in self.filters that is not a NodeFilter, will it simply be ignored?
+[english] Yes, the `if isinstance(filter, NodeFilter)` check explicitly skips any entry whose value does not inherit from NodeFilter and excludes them from the result.
+[english] Thanks for the quick explanation!

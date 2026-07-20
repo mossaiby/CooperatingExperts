@@ -1,0 +1,22 @@
+[english] How can I retrieve historical data for a list of specific bug identifiers?
+[english] This function starts by constructing a detailed URI using `urijoin`, then creates a parameter dictionary containing all provided bug IDs before executing the API request.
+<switch:python>
+[python] def history(self, *bug_ids):
+        """Get the history of the given bugs.
+
+        :param bug_ids: list of bug identifiers
+        """
+        resource = urijoin(self.RBUG, bug_ids[0], self.RHISTORY)
+
+        params = {
+            self.PIDS: bug_ids
+        }
+
+        response = self.call(resource, params)
+
+        return response
+<switch:english>
+[english] It relies on internal helper methods like `urijoin` and assumes that `self.call` handles the actual network communication based on the defined parameters.
+[english] What behavior should I expect if I call this function without passing any arguments?
+[english] If no arguments are passed, attempting to access `bug_ids[0]` will result in an IndexError due to trying to retrieve a non-existent element from the empty tuple.
+[english] That definitely helps clarify how input validation needs to be handled.

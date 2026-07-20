@@ -1,0 +1,41 @@
+[english] How can I write a function to validate if a specified package version is compatible with my current installation constraints?
+[english] This function validates the provided software `version` against internal compatibility thresholds, ensuring major version leaps don't break dependency rules.
+<switch:python>
+[python] def check_compatibility(version, name):
+    """
+    Raises errors or warns if called with an incompatible Wheel-Version.
+
+    Pip should refuse to install a Wheel-Version that's a major series
+    ahead of what it's compatible with (e.g 2.0 > 1.1); and warn when
+    installing a version only minor version ahead (e.g 1.2 > 1.1).
+
+    version: a 2-tuple representing a Wheel-Version (Major, Minor)
+    name: name of wheel or package to raise exception about
+
+    :raises UnsupportedWheel: when an incompatible Wheel-Version is given
+    """
+    if not version:
+        raise UnsupportedWheel(
+            "%s is in an unsupported or invalid wheel" % name
+        )
+    if version[0] > VERSION_COMPATIBLE[0]:
+        raise UnsupportedWheel(
+            "%s's Wheel-Version (%s) is not compatible with this version "
+            "of pip" % (name, '.'.join(map(str, version)))
+        )
+    elif version > VERSION_COMPATIBLE:
+        logger.warning(
+            'Installing from a newer Wheel-Version (%s)',
+            '.'.join(map(str, version)),
+        )
+<switch:english>
+[english] The code uses comparison operators on tuples to differentiate between fatal incompatibility (major series mismatch) and merely advising caution (minor version upgrade).
+[english] What happens if the `VERSION_COMPATIBLE` constant or logger is not defined? Does this function require specific imports?
+[english] The functions relies on external definitions for error handling (`UnsupportedWheel`) and logging (`logger`). To make it runnable, you would need to define these components, like so:
+<switch:python>
+[python] custom_error = Exception('Error')
+class UnsupportedWheel(Exception): pass
+logger = print
+VERSION_COMPATIBLE = (1, 2)
+<switch:english>
+[english] This implementation seems comprehensive for dependency checking!

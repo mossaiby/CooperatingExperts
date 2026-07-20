@@ -1,0 +1,42 @@
+[english] I need a function that converts boolean arrays representing signals, background, and traces into time range limits, while also counting the total number of signal traces.
+[english] This method first calculates time ranges for triggers and events by converting boolean flags (like `self.sig`) to indices using auxiliary functions. It then determines if a trace starts or ends to count contiguous segments in the signal array.
+<switch:python>
+[python] def mkrngs(self):
+        """
+        Transform boolean arrays into list of limit pairs.
+
+        Gets Time limits of signal/background boolean arrays and stores them as
+        sigrng and bkgrng arrays. These arrays can be saved by 'save_ranges' in
+        the analyse object.
+        """
+        bbool = bool_2_indices(self.bkg)
+        if bbool is not None:
+            self.bkgrng = self.Time[bbool]
+        else:
+            self.bkgrng = [[np.nan, np.nan]]
+        sbool = bool_2_indices(self.sig)
+        if sbool is not None:
+            self.sigrng = self.Time[sbool]
+        else:
+            self.sigrng = [[np.nan, np.nan]]
+        tbool = bool_2_indices(self.trn)
+        if tbool is not None:
+            self.trnrng = self.Time[tbool]
+        else:
+            self.trnrng = [[np.nan, np.nan]]
+
+        self.ns = np.zeros(self.Time.size)
+        n = 1
+        for i in range(len(self.sig) - 1):
+            if self.sig[i]:
+                self.ns[i] = n
+            if self.sig[i] and ~self.sig[i + 1]:
+                n += 1
+        self.n = int(max(self.ns))  # record number of traces
+
+        return
+<switch:english>
+[english] The method successfully maps boolean states to numerical limits, treating missing data gracefully with NaN values and ensuring the total number of traces is correctly recorded.
+[english] If `self.sig` is empty or all False, how does the function handle setting `self.n`?
+[english] If there are no signal points (`bool_2_indices(self.sig)` returns None), the trace counter will naturally remain 0 because the loop condition requires at least one True value to increment n.
+[english] That makes sense, thanks for clarifying.

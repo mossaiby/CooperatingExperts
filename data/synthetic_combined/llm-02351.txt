@@ -1,0 +1,18 @@
+[english] How can I write a routine that retrieves event details using a unique ID from potentially two different tables?
+[english] This function handles retrieving events by checking both recorded and upcoming event categories. It uses a single expression to query the database, consolidating results from two models before deciding how to respond.
+<switch:python>
+[python] def event(uid):
+    '''Return a specific events JSON
+    '''
+    db = get_session()
+    event = db.query(RecordedEvent).filter(RecordedEvent.uid == uid).first() \
+        or db.query(UpcomingEvent).filter(UpcomingEvent.uid == uid).first()
+
+    if event:
+        return make_data_response(event.serialize())
+    return make_error_response('No event with specified uid', 404)
+<switch:english>
+[english] The logic relies on the Python chained `or` operator, which efficiently attempts each database query sequentially until an object is found.
+[english] What happens inside `event(uid)` if multiple events somehow share the same UID?
+[english] If both tables contained items with the identical UID, the first one returned by `.first()` from the `RecordedEvent` query would be used, ignoring any potential matches in the `UpcomingEvent` table.
+[english] I understand now; so it prioritizes recorded events if there's a conflict.

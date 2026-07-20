@@ -1,0 +1,21 @@
+[english] Write a helper method that automatically adjusts the number of FFT bins to meet specific computational constraints, like being even or a power of two.
+[english] This method checks boolean flags (`even` or `pow2`) and modifies the input `bins` value if it doesn't satisfy the specified condition. By using math functions for logarithms and ceiling, it ensures the number is adjusted correctly before returning the modified bins value.
+<switch:python>
+[python] def nearest_bins(self, bins, even=False, pow2=False):
+        """Return nearest number of FFT bins (even or power of two)"""
+        if pow2:
+            bins_log2 = math.log(bins, 2)
+            if bins_log2 % 1 != 0:
+                bins = 2**math.ceil(bins_log2)
+                logger.warning('number of FFT bins should be power of two, changing to {}'.format(bins))
+        elif even:
+            if bins % 2 != 0:
+                bins = math.ceil(bins / 2) * 2
+                logger.warning('number of FFT bins should be even, changing to {}'.format(bins))
+
+        return bins
+<switch:english>
+[english] The function includes warning logs when it changes the bin count, which is useful for debugging but relies on an external logger setup not shown here.
+[english] What happens if neither 'even' nor 'pow2' flags are passed to the method?
+[english] If neither flag is set, the function performs no adjustments and returns the original `bins` value unchanged as intended by the initial logic of the conditional structure.
+[english] That makes sense for default use cases.

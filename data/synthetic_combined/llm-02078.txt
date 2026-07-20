@@ -1,0 +1,16 @@
+[english] How can I create a reusable GraphQL argument for sorting fields that accepts a list of valid sort directions?
+[english] This function generates a specific Graphene Argument type designed to handle complex model sorting inputs. It dynamically retrieves the necessary Enums and default values tailored to your specified class.
+<switch:python>
+[python] def sort_argument_for_model(cls, has_default=True):
+    """Returns a Graphene argument for the sort field that accepts a list of sorting directions for a model.
+    If `has_default` is True (the default) it will sort the result by the primary key(s)
+    """
+    enum, default = _sort_enum_for_model(cls)
+    if not has_default:
+        default = None
+    return Argument(List(enum), default_value=default)
+<switch:english>
+[english] By returning an argument with a List wrapping a defined Enum, it ensures client requests are strongly typed while managing default behavior for queries.
+[english] Should _sort_enum_for_model ever return conflicting data or multiple types, how does this function handle choosing the correct sorting logic?
+[english] The responsibility lies within the helper function `_sort_enum_for_model`. For this specific function to work correctly, it relies on a single Enum and default being returned for the given class model.
+[english] That clarifies how the dependency is managed!

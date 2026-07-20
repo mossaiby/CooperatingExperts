@@ -1,0 +1,18 @@
+[english] How can I convert different representations of quantum channels into a uniform Operator format?
+[english] This helper function standardizes various inputs representing a quantum channel—such as Stinespring or Kraus forms—into a coherent Operator representation.
+<switch:python>
+[python] def _to_operator(rep, data, input_dim, output_dim):
+    """Transform a QuantumChannel to the Operator representation."""
+    if rep == 'Operator':
+        return data
+    if rep == 'Stinespring':
+        return _stinespring_to_operator(data, input_dim, output_dim)
+    # Convert via Kraus representation
+    if rep != 'Kraus':
+        data = _to_kraus(rep, data, input_dim, output_dim)
+    return _kraus_to_operator(data, input_dim, output_dim)
+<switch:english>
+[english] This function ensures consistency by first checking explicit types like Operator or Stinespring before defaulting to a conversion through the Kraus representation.
+[english] What happens if I pass an unsupported string for the 'rep' argument?
+[english] If an unsupported type is provided and it isn't 'Operator' or 'Stinespring', the function will attempt to call `_to_kraus` on that unknown representation, which may lead to a runtime error.
+[english] That makes sense; I will ensure my input representations stay consistent.

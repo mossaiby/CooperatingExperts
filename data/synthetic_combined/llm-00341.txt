@@ -1,0 +1,29 @@
+[english] How can I ensure my database is correctly configured with essential extensions like 'hstore' before running migrations?
+[english] This method prepares the database environment by attempting to enable specific PostgreSQL extensions using a dedicated cursor. It uses error handling to manage situations where automatic creation might fail due to permissions.
+<switch:python>
+[python] def prepare_database(self):
+        """Ran to prepare the configured database.
+
+        This is where we enable the `hstore` extension
+        if it wasn't enabled yet."""
+
+        super().prepare_database()
+        with self.cursor() as cursor:
+            try:
+                cursor.execute('CREATE EXTENSION IF NOT EXISTS hstore')
+            except ProgrammingError:  # permission denied
+                logger.warning(
+                    'Failed to create "hstore" extension. '
+                    'Tables with hstore columns may fail to migrate. '
+                    'If hstore is needed, make sure you are connected '
+                    'to the database as a superuser '
+                    'or add the extension manually.',
+                    exc_info=True)
+<switch:english>
+[english] The function logs a detailed warning if the `hstore` extension cannot be created, which is typically an indicator that the user lacks superuser privileges.
+[english] If my application connects with user credentials that aren't powerful enough to create this extension automatically, what manual steps should I take?
+[english] The database must be accessed via a superuser account (e.g., using `psql -U postgres`) and the command executed directly:
+<switch:python>
+[python] CREATE EXTENSION IF NOT EXISTS hstore;
+<switch:english>
+[english] Perfect, so I need to handle this manually if my migration user doesn't have administrative rights.

@@ -1,0 +1,19 @@
+[english] I need an easier way to create an ellipse object for drawing using specific coordinates and dimensions.
+[english] To generate a standard Ellipse, this method takes token data such as origin points and width/height parameters. It then instantiates the core `Ellipse` class with all necessary configuration details like pen style and filling options.
+<switch:python>
+[python] def _proc_ellipse(self, tokens, filled):
+        """ Returns the components of an ellipse. """
+
+        component = Ellipse(pen=self.pen,
+                            x_origin=tokens["x0"],
+                            y_origin=tokens["y0"],
+                            e_width=tokens["w"],
+                            e_height=tokens["h"],
+                            filled=filled)
+
+        return component
+<switch:english>
+[english] The function centrally handles the construction of an object that holds all properties typical for drawing an ellipse.
+[english] What happens if the tokens do not contain 'w' or 'h', which are used for the width and height?
+[english] If your input dictionary `tokens` is missing those keys, the code will raise a KeyError when trying to access them. You might want to add error checking or default values before calling this function.
+[english] Is there an alternative way to pass custom colors instead of using self.pen?

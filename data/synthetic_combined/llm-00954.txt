@@ -1,0 +1,42 @@
+[english] How should I connect layers in my neural network setup while applying various regularizations?
+[english] This function, build_graph, handles the complex task of transforming individual network layers into a cohesive computation graph. It ensures that each layer connects correctly to its previous outputs and applies necessary regularization.
+<switch:python>
+[python] def build_graph(self, regularizers=()):
+        '''Connect the layers in this network to form a computation graph.
+
+        Parameters
+        ----------
+        regularizers : list of :class:`theanets.regularizers.Regularizer`
+            A list of the regularizers to apply while building the computation
+            graph.
+
+        Returns
+        -------
+        outputs : list of Theano variables
+            A list of expressions giving the output of each layer in the graph.
+        updates : list of update tuples
+            A list of updates that should be performed by a Theano function that
+            computes something using this graph.
+        '''
+        key = self._hash(regularizers)
+        if key not in self._graphs:
+            util.log('building computation graph')
+            for loss in self.losses:
+                loss.log()
+            for reg in regularizers:
+                reg.log()
+            outputs = {}
+            updates = []
+            for layer in self.layers:
+                out, upd = layer.connect(outputs)
+                for reg in regularizers:
+                    reg.modify_graph(out)
+                outputs.update(out)
+                updates.extend(upd)
+            self._graphs[key] = outputs, updates
+        return self._graphs[key]
+<switch:english>
+[english] The use of `self._hash(regularizers)` serves as a memoization technique; if the exact set of regularizers hasn't changed, it avoids rebuilding the entire graph.
+[english] What happens if there are multiple losses defined in self.losses?
+[english] Each loss is logged and used during the graph building process, likely contributing to the overall objective function that the updates will minimize. The `loss.log()` call starts tracking these objectives.
+[english] Can you also explain what 'upd' usually represents inside this loop?

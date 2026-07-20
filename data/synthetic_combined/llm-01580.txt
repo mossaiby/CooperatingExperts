@@ -1,0 +1,34 @@
+[english] I need a way to reliably fetch an article given its ID, while simultaneously extracting specific details like the message ID and number into a clean dictionary.
+[english] This function first retrieves the raw article data using the provided `article_id` through the internal handler. It then specifically extracts the required fields—number, message id, and lines—from the response structure.
+<switch:python>
+[python] def _fetch_article(self, article_id):
+        """Fetch article data
+
+        :param article_id: id of the article to fetch
+        """
+        fetched_data = self.handler.article(article_id)
+        data = {
+            'number': fetched_data[1].number,
+            'message_id': fetched_data[1].message_id,
+            'lines': fetched_data[1].lines
+        }
+
+        return data
+<switch:english>
+[english] Remember that this implementation assumes the underlying `self.handler` consistently returns a valid tuple where the desired data resides at index 1.
+[english] What error handling should I add if fetching an article for a non-existent ID causes the handler to return a structure without any valid content?
+[english] You can wrap the extraction logic in a try...except block or explicitly check the length and type of `fetched_data` before accessing index 1. 
+```python
+def _fetch_article(self, article_id):
+        try:
+            fetched_data = self.handler.article(article_id)
+            if fetched_data and isinstance(fetched_data[1], object):
+                return {
+                    'number': fetched_data[1].number,
+                    'message_id': fetched_data[1].message_id,
+                    'lines': fetched_data[1].lines
+                }
+        except Exception:
+            return None # Or raise a specific custom error
+        return None
+[english] Got it, adding robust checks like that sounds much safer.

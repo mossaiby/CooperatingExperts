@@ -1,0 +1,20 @@
+[english] How can I programmatically force a known failed member of a cluster to be marked as having left?
+[english] This method interacts with the underlying Nomad API to trigger a forced departure for a specified `node`. It sets up the necessary parameters before executing the POST request.
+<switch:python>
+[python] def force_leave(self, node):
+        """Force a failed gossip member into the left state.
+
+            https://www.nomadproject.io/docs/http/agent-force-leave.html
+
+            returns: 200 status code
+            raises:
+              - nomad.api.exceptions.BaseNomadException
+              - nomad.api.exceptions.URLNotFoundNomadException
+        """
+        params = {"node": node}
+        return self.request("force-leave", params=params, method="post").status_code
+<switch:english>
+[english] The function returns the HTTP status code from the API response, which serves as the indicator of whether the force-leave operation was successful or if an error occurred.
+[english] If the provided node doesn't exist within the cluster configuration, what specific exception will this method likely raise?
+[english] Based on the docstring, attempting to target a non-existent ID would probably trigger `nomad.api.exceptions.URLNotFoundNomadException` from the API call.
+[english] That makes sense; knowing when and how exceptions are raised is very helpful.

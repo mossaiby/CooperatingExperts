@@ -1,0 +1,44 @@
+[english] How can I calculate the sum of rows or columns in my data frame while controlling whether missing values are ignored?
+[english] This function computes sums based on your choice of direction (`axis`) and whether to include null entries. You specify data handling using `skipna` or rely on configuration settings.
+<switch:python>
+[python] def sum(self, skipna=True, axis=0, **kwargs):
+        """
+        Compute the frame's sum by-column (or by-row).
+
+        :param bool skipna: If True (default), then NAs are ignored during the computation. Otherwise presence
+            of NAs renders the entire result NA.
+        :param int axis: Direction of sum computation. If 0 (default), then sum is computed columnwise, and the result
+            is a frame with 1 row and number of columns as in the original frame. If 1, then sum is computed rowwise
+            and the result is a frame with 1 column (called "sum"), and number of rows equal to the number of rows
+            in the original frame.  For row or column sums, the ``return_frame`` parameter must be True.
+        :param bool return_frame: A boolean parameter that indicates whether to return an H2O frame or one single aggregated value. Default is False.
+        :returns: either an aggregated value with sum of values per-column (old semantic); or an H2OFrame containing sum of values
+            per-column/per-row in the original frame (new semantic). The new semantic is triggered by either
+            providing the ``return_frame=True`` parameter, or having the ``general.allow_breaking_changed`` config
+            option turned on.
+        """
+        assert_is_type(skipna, bool)
+        assert_is_type(axis, 0, 1)
+        # Deprecated since 2016-10-14,
+        if "na_rm" in kwargs:
+            warnings.warn("Parameter na_rm is deprecated; use skipna instead", category=DeprecationWarning)
+            na_rm = kwargs.pop("na_rm")
+            assert_is_type(na_rm, bool)
+            skipna = na_rm  # don't assign to skipna directly, to help with error reporting
+        # Determine whether to return a frame or a list
+        return_frame = get_config_value("general.allow_breaking_changes", False)
+        if "return_frame" in kwargs:
+            return_frame = kwargs.pop("return_frame")
+            assert_is_type(return_frame, bool)
+        if kwargs:
+            raise H2OValueError("Unknown parameters %r" % list(kwargs))
+
+        if return_frame:
+            return H2OFrame._expr(ExprNode("sumaxis", self, skipna, axis))
+        else:
+            return ExprNode("sumNA" if skipna else "sum", self)._eager_scalar()
+<switch:english>
+[english] The method manages the output format, choosing between a single aggregated value or an H2OFrame object based on parameters like `return_frame`. Note that older parameter names have been moved entirely under `skipna` to prevent confusion.
+[english] If I set 'axis' to 1, what specific structural change should I expect in the returned data compared to using axis=0?
+[english] When setting `axis=0`, you get a single sum per column. When `axis=1`, the calculation proceeds row-wise; it reduces each row to its summed total, resulting in an H2OFrame with rows corresponding to your original data.
+[english] That makes sense—I appreciate the detailed breakdown!

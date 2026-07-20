@@ -1,0 +1,20 @@
+[english] How do I programmatically create a new tab that shares the kernel and frontend implementation of the currently active view?
+[english] The function begins by gathering essential information about the current widget, such as its index and name. It then utilizes a factory method to construct a suitable frontend object tied to this existing kernel.
+<switch:python>
+[python] def create_tab_with_current_kernel(self):
+        """create a new frontend attached to the same kernel as the current tab"""
+        current_widget = self.tab_widget.currentWidget()
+        current_widget_index = self.tab_widget.indexOf(current_widget)
+        current_widget_name = self.tab_widget.tabText(current_widget_index)
+        widget = self.slave_frontend_factory(current_widget)
+        if 'slave' in current_widget_name:
+            # don't keep stacking slaves
+            name = current_widget_name
+        else:
+            name = '(%s) slave' % current_widget_name
+        self.add_tab_with_frontend(widget,name=name)
+<switch:english>
+[english] Finally, it adds the newly created widget as a tab, prioritizing unique naming conventions even if the original view was already labeled as a 'slave.'
+[english] What specific logic determines whether the new tab gets the label '(Name) slave' or retains its current name?
+[english] If the existing `current_widget_name` already contains the string 'slave', the function assumes it is an internal duplicate and keeps the original name to prevent redundant labels. Otherwise, it appends '(...) slave'.
+[english] That clarifies how the naming conflict is handled; thanks for explaining!

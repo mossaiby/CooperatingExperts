@@ -1,0 +1,28 @@
+[english] How do I programmatically execute a specific query against my Google Cloud Datastore?
+[english] To run the query, first we establish a connection via `get_conn()`, then use the client's dedicated `runQuery` method, passing both the project ID and the request body.
+<switch:python>
+[python] def run_query(self, body):
+        """
+        Run a query for entities.
+
+        .. seealso::
+            https://cloud.google.com/datastore/docs/reference/rest/v1/projects/runQuery
+
+        :param body: the body of the query request.
+        :type body: dict
+        :return: the batch of query results.
+        :rtype: dict
+        """
+        conn = self.get_conn()
+
+        resp = (conn
+                .projects()
+                .runQuery(projectId=self.project_id, body=body)
+                .execute(num_retries=self.num_retries))
+
+        return resp['batch']
+<switch:english>
+[english] This function successfully executes the call and returns only the raw query results contained within the `'batch'` key of the API response.
+[english] What happens if runQuery fails after all configured number of retries have been exhausted?
+[english] If the request repeatedly fails, the Google API client will typically raise a specific exception (like an RPC error) indicating that the operation could not be completed.
+[english] That makes perfect sense, thanks for clarifying!

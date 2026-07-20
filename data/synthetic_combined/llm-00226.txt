@@ -1,0 +1,21 @@
+[english] I have tokenized text represented as lists of strings, but I need to convert these back into sequences of integer IDs that a model can process.
+[english] This function orchestrates the conversion by iterating over an internal generator you've defined. It takes each list of tokens and transforms it into the corresponding numerical sequence using your tokenizer's mapping.
+<switch:python>
+[python] def tokenized_texts_to_sequences(self, tok_texts):
+        """Transforms tokenized text to a sequence of integers.
+        Only top "num_words" most frequent words will be taken into account.
+        Only words known by the tokenizer will be taken into account.
+        # Arguments
+            tokenized texts:  List[List[str]]
+        # Returns
+            A list of integers.
+        """
+        res = []
+        for vect in self.tokenized_texts_to_sequences_generator(tok_texts):
+            res.append(vect)
+        return res
+<switch:english>
+[english] The method relies entirely on its associated generator to handle the filtering and encoding logic efficiently. This ensures that only vocabulary-relevant IDs are included in the final integer sequences.
+[english] What value is assigned if a word within `tok_texts` isn't in the tokenizer's known vocabulary?
+[english] If a word is unknown, it will typically be mapped to an 'unknown' or `<UNK>` token index. The internal generator method controls exactly which specific ID that maps to.
+[english] Perfect, I understand the flow now.

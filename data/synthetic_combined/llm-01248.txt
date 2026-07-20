@@ -1,0 +1,15 @@
+[english] How should I implement parsing for a universal unitary operation defined by specific exponents and target qubits within my quantum program?
+[english] This function processes a structured 'program' list to handle the unitary operation. It replaces the initial instruction with a high-level `UniversalUnitary` node, capturing the required parameters.
+<switch:python>
+[python] def p_unitary_op_0(self, program):
+        """
+          unitary_op : U '(' exp_list ')' primary
+        """
+        program[0] = node.UniversalUnitary([program[3], program[5]])
+        self.verify_reg(program[5], 'qreg')
+        self.verify_exp_list(program[3])
+<switch:english>
+[english] The subsequent calls ensure that the target register (`qreg`) and the supplied exponent lists are valid before proceeding with execution or compilation.
+[english] What happens if `program[3]` (the first exponent list) is empty or malformed, as suggested by the call to `self.verify_exp_list`?
+[english] If the structure passed for `program[3]` doesn't meet validation criteria defined in `self.verify_exp_list`, an error will likely be raised during execution, preventing improper state updates.
+[english] That makes sense; relying on helper methods for input sanity is good practice.

@@ -1,0 +1,20 @@
+[english] I need a helper function that takes a specific VideoCard object and converts it into a standardized Attachment structure for processing.
+[english] This approach first verifies that the input `card` is an instance of `VideoCard`. If the type check passes, it constructs and returns the final `Attachment` object using required factory constants.
+<switch:python>
+[python] def video_card(card: VideoCard) -> Attachment:
+        """
+        Returns an attachment for a video card. Will raise a TypeError if 'card' argument is not a VideoCard.
+        :param card:
+        :return:
+        """
+        if not isinstance(card, VideoCard):
+            raise TypeError('CardFactory.video_card(): `card` argument is not an instance of an VideoCard, '
+                            'unable to prepare attachment.')
+
+        return Attachment(content_type=CardFactory.content_types.video_card,
+                          content=card)
+<switch:english>
+[english] The function strictly enforces types by raising a TypeError if the input doesn't match `VideoCard`, ensuring data integrity before attachment creation.
+[english] If the card is successfully validated but its internal content attributes are missing, will this still generate a valid Attachment?
+[english] Validation only checks the object type, not its contents. To ensure all necessary fields exist, you would need to add attribute checks inside the function before returning:
+[english] Thanks, that makes sense.

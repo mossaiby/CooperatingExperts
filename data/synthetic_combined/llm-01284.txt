@@ -1,0 +1,47 @@
+[english] How can I robustly parse an NNTP ARTICLE command message to extract its article number, headers, and potentially decode the body content?
+[english] This function processes the response from an ARTICLE command. It first handles command arguments, validates the server's status code (220), and then iterates through the raw message lines while decoding non-ASCII parts.
+<switch:python>
+[python] def article(self, msgid_article=None, decode=None):
+        """ARTICLE command.
+        """
+        args = None
+        if msgid_article is not None:
+            args = utils.unparse_msgid_article(msgid_article)
+
+        code, message = self.command("ARTICLE", args)
+        if code != 220:
+            raise NNTPReplyError(code, message)
+
+        parts = message.split(None, 1)
+
+        try:
+            articleno = int(parts[0])
+        except ValueError:
+            raise NNTPProtocolError(message)
+
+        # headers
+        headers = utils.parse_headers(self.info_gen(code, message))
+
+        # decoding setup
+        decode = "yEnc" in headers.get("subject", "")
+        escape = 0
+        crc32 = 0
+
+        # body
+        body = []
+        for line in self.info_gen(code, message):
+
+            # decode body if required
+            if decode:
+                if line.startswith("=y"):
+                    continue
+                line, escape, crc32 = yenc.decode(line, escape, crc32)
+
+            body.append(line)
+
+        return articleno, headers, "".join(body)
+<switch:english>
+[english] The function manages complex decoding by checking the subject header for 'yEnc' and iteratively applying yEnc decoding to ensure the full body is correctly reconstructed.
+[english] If `msgid_article` is provided, how exactly does it affect what gets parsed inside this method?
+[english] Providing a value to `msgid_article` allows the function to call `utils.unparse_msgid_article(msgid_article)` before issuing the command. This translates the input into arguments appropriate for the underlying `self.command()` call.
+[english] This detailed breakdown of the NNTP parsing logic is very helpful.

@@ -1,0 +1,18 @@
+[english] How can I programmatically determine the indentation level of an LI tag within a given list element?
+[english] To find the level, we use XPath to locate the ilvl attribute associated with the specific namespace and then extract its integer value.
+<switch:python>
+[python] def get_ilvl(li, w_namespace):
+    """
+    The ilvl on an li tag tells the li tag at what level of indentation this
+    tag is at. This is used to determine if the li tag needs to be nested or
+    not.
+    """
+    ilvls = li.xpath('.//w:ilvl', namespaces=li.nsmap)
+    if len(ilvls) == 0:
+        return -1
+    return int(ilvls[0].get('%sval' % w_namespace))
+<switch:english>
+[english] The function successfully retrieves the required level but defaults to -1 if no 'ilvl' attribute is present on the tag.
+[english] What happens if there are multiple 'w:ilvl' elements within a single LI tag?
+[english] The current implementation only considers the first match found by the XPath query, using `ilvls[0]` to retrieve it.
+[english] Does this function handle namespaces correctly for external XML dependencies?

@@ -1,0 +1,36 @@
+[english] How do I automatically discover and load custom plugins from a directory structure?
+[english] This function recursively scans a specified directory to locate potential plugin modules. It iterates through all entries, handling subdirectories by calling itself until it finds individual Python files that need loading.
+<switch:python>
+[python] def load_plugins(self, directory):
+        """
+        Loads plugins from the specified directory.
+
+        `directory` is the full path to a directory containing python modules
+        which each contain a subclass of the Plugin class.
+
+        There is no criteria for a valid plugin at this level - any python
+        module found in the directory will be loaded. Only modules that
+        implement a subclass of the Plugin class above will be collected.
+
+        The directory will be traversed recursively.
+        """
+        # walk directory
+        for filename in os.listdir(directory):
+            # path to file
+            filepath = os.path.join(directory, filename)
+
+            # if it's a file, load it
+            modname, ext = os.path.splitext(filename)
+            if os.path.isfile(filepath) and ext == '.py':
+                file, path, descr = imp.find_module(modname, [directory])
+                if file:
+                    mod = imp.load_module(modname, file, path, descr)
+
+            # if it's a directory, recurse into it
+            if os.path.isdir(filepath):
+                self.load_plugins(filepath)
+<switch:english>
+[english] By using `imp`, the system can dynamically load code at runtime without requiring explicit imports in the main script, allowing for flexible plugin discovery. Note that the use of `imp` is generally considered legacy Python code.
+[english] If a directory contains two different `.py` files with the exact same module name (e.g., 'utils.py' twice), how does the function resolve this conflict?
+[english] The current implementation will likely result in one module overwriting the other during runtime imports, as it relies on standard Python import logic which does not inherently deduplicate identical filenames across different paths.
+[english] Thanks for clarifying how the recursion works!

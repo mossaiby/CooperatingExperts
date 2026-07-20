@@ -1,0 +1,24 @@
+[english] How can I retrieve a list of recent changes from several specific namespaces on a wiki?
+[english] This function prepares parameters for an API call to fetch recent changes across multiple specified namespaces by joining them with a pipe delimiter.
+<switch:python>
+[python] def get_recent_pages(self, namespaces, rccontinue=''):
+        """Retrieve recent pages from all namespaces starting from rccontinue."""
+
+        namespaces.sort()
+        params = {
+            "action": "query",
+            "list": "recentchanges",
+            "rclimit": self.limit,
+            "rcnamespace": "|".join(namespaces),
+            "rcprop": "title|timestamp|ids",
+            "format": "json"
+        }
+        if rccontinue:
+            params['rccontinue'] = rccontinue
+
+        return self.call(params)
+<switch:english>
+[english] It makes the request using `self.call` and returns the raw JSON response, allowing subsequent code to process the change data.
+[english] If I provide a valid rccontinue token, how does this function ensure it continues from the exact point where the previous call left off?
+[english] The provided `rccontinue` string is added to the `params` dictionary if present. This token tells the API server to resume retrieval exactly where the prior request terminated.
+[english] That makes perfect sense!

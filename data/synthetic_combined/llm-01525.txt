@@ -1,0 +1,61 @@
+[english] How can I configure my OAuth2 provider to use Redis or another custom cache instead of its default database for managing grant tokens?
+[english] This function simplifies caching for your OAuth2 setup by automatically binding logic to your data access points. It creates a getter and setter that handles interaction with the configured Cache system.
+<switch:python>
+[python] def bind_cache_grant(app, provider, current_user, config_prefix='OAUTH2'):
+    """Configures an :class:`OAuth2Provider` instance to use various caching
+    systems to get and set the grant token. This removes the need to
+    register :func:`grantgetter` and :func:`grantsetter` yourself.
+
+    :param app: Flask application instance
+    :param provider: :class:`OAuth2Provider` instance
+    :param current_user: function that returns an :class:`User` object
+    :param config_prefix: prefix for config
+
+    A usage example::
+
+        oauth = OAuth2Provider(app)
+        app.config.update({'OAUTH2_CACHE_TYPE': 'redis'})
+
+        bind_cache_grant(app, oauth, current_user)
+
+    You can define which cache system you would like to use by setting the
+    following configuration option::
+
+        OAUTH2_CACHE_TYPE = 'null' // memcache, simple, redis, filesystem
+
+    For more information on the supported cache systems please visit:
+    `Cache <http://werkzeug.pocoo.org/docs/contrib/cache/>`_
+    """
+    cache = Cache(app, config_prefix)
+
+    @provider.grantsetter
+    def create_grant(client_id, code, request, *args, **kwargs):
+        """Sets the grant token with the configured cache system"""
+        grant = Grant(
+            cache,
+            client_id=client_id,
+            code=code['code'],
+            redirect_uri=request.redirect_uri,
+            scopes=request.scopes,
+            user=current_user(),
+        )
+        log.debug("Set Grant Token with key %s" % grant.key)
+        cache.set(grant.key, dict(grant))
+
+    @provider.grantgetter
+    def get(client_id, code):
+        """Gets the grant token with the configured cache system"""
+        grant = Grant(cache, client_id=client_id, code=code)
+        ret = cache.get(grant.key)
+        if not ret:
+            log.debug("Grant Token not found with key %s" % grant.key)
+            return None
+        log.debug("Grant Token found with key %s" % grant.key)
+        for k, v in ret.items():
+            setattr(grant, k, v)
+        return grant
+<switch:english>
+[english] This approach successfully intercepts grant operations to utilize your caching layer. However, ensure your cache entries have appropriate TTL settings to prevent excessively long-lived tokens.
+[english] If a token key is retrieved from the cache but found to be expired, how should the `get` function handle that scenario?
+[english] Since the current logic only checks for existence, you would need to add validation within the `getter`. You could check for an expiration timestamp stored alongside the grant data and return None if it has passed.
+[english] This is much clearer than manually managing cache hooks.

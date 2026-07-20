@@ -1,0 +1,37 @@
+[english] I need a way for my scheduled tasks to retry automatically after increasingly longer delays whenever they fail.
+[english] This function implements exponential backoff with added jitter to determine when a task should be retried. It calculates an increasing delay based on the current try number and then introduces variation using a SHA1 hash of the task context.
+<switch:python>
+[python] def next_retry_datetime(self):
+        """
+        Get datetime of the next retry if the task instance fails. For exponential
+        backoff, retry_delay is used as base and will be converted to seconds.
+        """
+        delay = self.task.retry_delay
+        if self.task.retry_exponential_backoff:
+            min_backoff = int(delay.total_seconds() * (2 ** (self.try_number - 2)))
+            # deterministic per task instance
+            hash = int(hashlib.sha1("{}#{}#{}#{}".format(self.dag_id,
+                                                         self.task_id,
+                                                         self.execution_date,
+                                                         self.try_number)
+                                    .encode('utf-8')).hexdigest(), 16)
+            # between 0.5 * delay * (2^retry_number) and 1.0 * delay * (2^retry_number)
+            modded_hash = min_backoff + hash % min_backoff
+            # timedelta has a maximum representable value. The exponentiation
+            # here means this value can be exceeded after a certain number
+            # of tries (around 50 if the initial delay is 1s, even fewer if
+            # the delay is larger). Cap the value here before creating a
+            # timedelta object so the operation doesn't fail.
+            delay_backoff_in_seconds = min(
+                modded_hash,
+                timedelta.max.total_seconds() - 1
+            )
+            delay = timedelta(seconds=delay_backoff_in_seconds)
+            if self.task.max_retry_delay:
+                delay = min(self.task.max_retry_delay, delay)
+        return self.end_date + delay
+<switch:english>
+[english] The code ensures that the retry duration scales exponentially but remains bounded by `timedelta.max` and any defined maximum delay, preventing overflow errors across many retries.
+[english] If two different instances of this exact same task run on the same day, will they always calculate the same next retry time?
+[english] No, because the hash calculation includes `self.execution_date`, and if one instance runs slightly before or after another (even potentially in a different microsecond), their execution dates may differ enough to produce a unique delay.
+[english] Got it. This makes my service much more robust.

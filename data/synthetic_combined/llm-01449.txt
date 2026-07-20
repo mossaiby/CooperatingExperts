@@ -1,0 +1,22 @@
+[english] I see a method that pushes data from a gateway to devices; how would I use it?
+[english] This function processes incoming broadcasted data, first validating it and then interpreting the payload structure based on an internal protocol version. It uses callbacks to execute specific logic once the data is successfully parsed.
+<switch:python>
+[python] def push_data(self, data):
+        """Push data broadcasted from gateway to device"""
+        if not _validate_data(data):
+            return False
+        jdata = json.loads(data['data']) if int(self.proto[0:1]) == 1 else _list2map(data['params'])
+        if jdata is None:
+            return False
+        sid = data['sid']
+        for func in self.callbacks[sid]:
+            func(jdata, data)
+        return True
+<switch:english>
+[english] The method successfully determines how to parse the incoming payload and triggers relevant functions stored under the session's ID before returning a success or failure status.
+[english] Does this function handle multiple callback functions for the same sid, or does it only execute one?
+[english] It iterates over all functions in `self.callbacks[sid]`, executing every single one associated with that specific session ID.
+<switch:python>
+[python] for func in self.callbacks[sid]:    func(jdata, data)
+<switch:english>
+[english] Got it, thanks for the explanation!

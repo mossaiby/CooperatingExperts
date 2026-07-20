@@ -1,0 +1,35 @@
+[english] How does this function parse a shadowed template string to extract and catalog all defined arguments?
+[english] This method analyzes internal shadow content using a specific matcher to find argument spans. It then iterates through these detected spans, calculating absolute coordinates to construct detailed Argument objects stored in the instance.
+<switch:python>
+[python] def arguments(self) -> List[Argument]:
+        """Parse template content. Create self.name and self.arguments."""
+        shadow = self._shadow
+        split_spans = self._args_matcher(shadow).spans('arg')
+        if not split_spans:
+            return []
+        arguments = []
+        arguments_append = arguments.append
+        type_to_spans = self._type_to_spans
+        ss, se = span = self._span
+        type_ = id(span)
+        lststr = self._lststr
+        string = lststr[0]
+        arg_spans = type_to_spans.setdefault(type_, [])
+        span_tuple_to_span_get = {(s[0], s[1]): s for s in arg_spans}.get
+        for arg_self_start, arg_self_end in split_spans:
+            s, e = arg_span = [ss + arg_self_start, ss + arg_self_end]
+            old_span = span_tuple_to_span_get((s, e))
+            if old_span is None:
+                insort(arg_spans, arg_span)
+            else:
+                arg_span = old_span
+            arg = Argument(lststr, type_to_spans, arg_span, type_)
+            arg._shadow_cache = (
+                string[s:e], shadow[arg_self_start:arg_self_end])
+            arguments_append(arg)
+        return arguments
+<switch:english>
+[english] The function relies heavily on pre-established mappings (`self._type_to_spans`) and complex coordinate transformations to ensure arguments are correctly indexed regardless of their position within the template string.
+[english] What happens if `split_spans` is found to be empty during execution?
+[english] The function explicitly checks `if not split_spans:` at the beginning. If no argument spans are identified, it immediately returns an empty list: `return []`.
+[english] Thanks for clarifying that logic!

@@ -1,0 +1,27 @@
+[english] How can I programmatically fetch all configuration mappings for a given logical interface that belongs to a specific thing type?
+[english] This function is designed to locate and retrieve the mapping details using an API call. It first determines if it should query the draft endpoint or the production endpoint based on the `draft` parameter.
+<switch:python>
+[python] def getMappingsOnThingTypeForLogicalInterface(self, thingTypeId, logicalInterfaceId, draft=False):
+        """
+        Gets the mappings for a logical interface from a thing type.
+        Parameters:
+            - thingTypeId (string) - the thing type
+            - logicalInterfaceId (string) - the platform returned id of the logical interface
+        Throws APIException on failure.
+        """
+        if draft:
+            req = ApiClient.oneThingTypeMappingUrl % (self.host, "/draft", thingTypeId, logicalInterfaceId)
+        else:
+            req = ApiClient.oneThingTypeMappingUrl % (self.host, "", thingTypeId, logicalInterfaceId)
+
+        resp = requests.get(req, auth=self.credentials, verify=self.verify)
+        if resp.status_code == 200:
+            self.logger.debug("Mappings retrieved from the thing type")
+        else:
+            raise ibmiotf.APIException(resp.status_code, "HTTP error getting mappings for a logical interface from a thing type", resp)
+        return resp.json()
+<switch:english>
+[english] The method relies heavily on checking `resp.status_code == 200`. If the request fails for any reason, it raises a specific APIException detailing the HTTP error and response object rather than returning null data.
+[english] What happens if the thing type ID provided does not exist in the system?
+[english] If the thing type does not exist, the server will return an error status code (like 404 or 500). Since the function only proceeds on success, it will raise an ibmiotf.APIException.
+[english] That makes sense regarding how API errors are handled.

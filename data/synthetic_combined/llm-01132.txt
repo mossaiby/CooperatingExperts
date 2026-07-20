@@ -1,0 +1,36 @@
+[english] How do I change the sample rate or number of channels of an existing audio segment?
+[english] This function modifies an existing audio segment's characteristics by calling an external tool. It first checks if parameters are provided, falling back to internal values like `self.frame_rate` if they are set to None.
+<switch:python>
+[python] def resample(self, sample_rate_Hz=None, sample_width=None, channels=None, console_output=False):
+        """
+        Returns a new AudioSegment whose data is the same as this one, but which has been resampled to the
+        specified characteristics. Any parameter left None will be unchanged.
+
+        .. note:: This method requires that you have the program 'sox' installed.
+
+        .. warning:: This method uses the program 'sox' to perform the task. While this is very fast for a single
+                     function call, the IO may add up for large numbers of AudioSegment objects.
+
+        :param sample_rate_Hz: The new sample rate in Hz.
+        :param sample_width: The new sample width in bytes, so sample_width=2 would correspond to 16 bit (2 byte) width.
+        :param channels: The new number of channels.
+        :param console_output: Will print the output of sox to the console if True.
+        :returns: The newly sampled AudioSegment.
+        """
+        if sample_rate_Hz is None:
+            sample_rate_Hz = self.frame_rate
+        if sample_width is None:
+            sample_width = self.sample_width
+        if channels is None:
+            channels = self.channels
+
+        # TODO: Replace this with librosa's implementation to remove SOX dependency here
+        command = "sox {inputfile} -b " + str(sample_width * 8) + " -r " + str(sample_rate_Hz) \
+            + " -t wav {outputfile} channels " + str(channels)
+
+        return self._execute_sox_cmd(command, console_output=console_output)
+<switch:english>
+[english] The method constructs a command using SOX that handles the heavy lifting of resampling, before executing it via `self._execute_sox_cmd`.
+[english] What happens if I don't specify any parameters like rate or channels to resample?
+[english] If no parameters are provided, the function defaults to using the current segment attributes (like `self.frame_rate`) for all settings as defined in the initial checks.
+[english] Great, so it maintains consistency with my original file settings by default.

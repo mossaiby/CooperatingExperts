@@ -1,0 +1,28 @@
+[english] I need a function that can retrieve the first element in an object using its ID and optionally provide a default value if no match exists.
+[english] This method attempts to find the first matching element by its ID, utilizing XPath extraction. It is built with error handling to return a specified fallback instead of crashing when an item isn't found.
+<switch:python>
+[python] def get_element_by_id(self, id, *default):
+        """
+        Get the first element in a document with the given id.  If none is
+        found, return the default argument if provided or raise KeyError
+        otherwise.
+
+        Note that there can be more than one element with the same id,
+        and this isn't uncommon in HTML documents found in the wild.
+        Browsers return only the first match, and this function does
+        the same.
+        """
+        try:
+            # FIXME: should this check for multiple matches?
+            # browsers just return the first one
+            return _id_xpath(self, id=id)[0]
+        except IndexError:
+            if default:
+                return default[0]
+            else:
+                raise KeyError(id)
+<switch:english>
+[english] Note that because it relies on indexing (`[0]`), this function will only ever return the first element found, even if multiple elements share the same ID.
+[english] If I pass an empty tuple for the default argument `()` or None, which one is prioritized by the logic?
+[english] Both an empty tuple and `None` would cause the function to raise a KeyError because the check `if default:` evaluates to false in both scenarios. The current structure prioritizes failing fast if no explicit non-empty default is provided.
+[english] Got it, I understand how that error handling works now.

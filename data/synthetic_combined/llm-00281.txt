@@ -1,0 +1,18 @@
+[english] How can I modify this function to serve dynamic content over HTTP using gzip compression?
+[english] This method handles the GET request by first looking up a specific handler for the requested path. It then retrieves and compresses the resulting content before setting appropriate headers and sending the data.
+<switch:python>
+[python] def do_GET(self):
+        """Handles HTTP GET requests."""
+        handler = self.uri_map.get(self.path) or self._handle_other
+        content, content_type = handler()
+        compressed_content = gzip.compress(content)
+        self._send_response(
+            200, headers=(('Content-type', '%s; charset=utf-8' % content_type),
+                          ('Content-Encoding', 'gzip'),
+                          ('Content-Length', len(compressed_content))))
+        self.wfile.write(compressed_content)
+<switch:english>
+[english] The function ensures that even if no specific handler is found, it attempts to serve content via a fallback mechanism.
+[english] What happens if the original content was binary data instead of text?
+[english] Gzip compression works on any byte stream. However, ensure you update 'content_type' in the headers to reflect binary MIME types (like application/octet-stream) for browsers to handle it correctly.
+[english] That makes sense; I appreciate the breakdown.

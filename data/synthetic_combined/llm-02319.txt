@@ -1,0 +1,29 @@
+[english] How should I implement rollback logic to safely remove all temporary nodes and links created during a system run?
+[english] This method is designed for post-run cleanup by systematically removing any elements added during the current execution phase. It uses internal tracking mechanisms, specifically `self._new_links` and `self._new_nodes`, to identify which objects need to be destroyed.
+<switch:python>
+[python] def _finalize_run(self):
+        """Called by the environment after storing to perform some rollback operations.
+
+        All results and derived parameters created in the current run are removed.
+
+        Important for single processing to not blow up the parent trajectory with the results
+        of all runs.
+
+        """
+        self._run_information[self.v_crun]['completed'] = 1
+        while len(self._new_links):
+            name_pair, child_parent_pair = self._new_links.popitem(last=False)
+            parent_node, _ = child_parent_pair
+            _, link = name_pair
+            parent_node.f_remove_child(link)
+
+        while len(self._new_nodes):
+            _, child_parent_pair = self._new_nodes.popitem(last=False)
+            parent, child = child_parent_pair
+            child_name = child.v_name
+            parent.f_remove_child(child_name, recursive=True)
+<switch:english>
+[english] The function ensures clean state management by iterating through temporary structures and explicitly calling removal methods on parent nodes. Note that using `recursive=True` during node deletion is necessary for complete rollback but requires caution in simulations.
+[english] If a run completes without creating any new links or nodes, does the function still perform unnecessary operations?
+[english] No. Both cleanup loops are guarded by 'while len(...)', so if there are no items in `self._new_links` or `self._new_nodes`, those sections of the code simply won't run.
+[english] That clarification is helpful; I appreciate you breaking down that logic!

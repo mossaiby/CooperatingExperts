@@ -1,0 +1,28 @@
+[english] How can I ensure an HTTP request is correctly formatted for Service Bus communication, including necessary length and type headers?
+[english] This function prepares a modified request object by automatically adding essential headers required by the Service Bus protocol and handling authentication.
+<switch:python>
+[python] def _update_service_bus_header(self, request):
+        ''' Add additional headers for Service Bus. '''
+
+        if request.method in ['PUT', 'POST', 'MERGE', 'DELETE']:
+            request.headers.append(('Content-Length', str(len(request.body))))
+
+        # if it is not GET or HEAD request, must set content-type.
+        if not request.method in ['GET', 'HEAD']:
+            for name, _ in request.headers:
+                if name.lower() == 'content-type':
+                    break
+            else:
+                request.headers.append(
+                    ('Content-Type',
+                     'application/atom+xml;type=entry;charset=utf-8'))
+
+        # Adds authorization header for authentication.
+        self.authentication.sign_request(request, self._httpclient)
+
+        return request.headers
+<switch:english>
+[english] The function ensures that content-length and default content types are present, while also triggering request signing for security.
+[english] What happens if the incoming request already contains a Content-Type header?
+[english] If a 'Content-Type' header is already present in the request headers, the function skips adding the Atom XML type to prevent conflict. This logic relies on Python's loop `else` block to determine absence.
+[english] That makes sense, thanks for clarifying!

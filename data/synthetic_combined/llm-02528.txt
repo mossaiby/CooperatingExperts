@@ -1,0 +1,34 @@
+[english] How can I implement the logic to place a specific game piece onto a given square on the current board?
+[english] This function manages placing a piece by first checking if it needs to be taken out of hand and then replacing any existing pieces at the destination. It updates various internal tracking dictionaries like self.pieces and self.king_squares.
+<switch:python>
+[python] def set_piece_at(self, square, piece, from_hand=False, into_hand=False):
+        '''Sets a piece at the given square. An existing piece is replaced.'''
+        if from_hand:
+            self.remove_piece_from_hand(piece.piece_type, self.turn)
+
+        self.remove_piece_at(square, into_hand)
+
+        self.pieces[square] = piece.piece_type
+
+        mask = BB_SQUARES[square]
+
+        piece_type = piece.piece_type
+
+        self.piece_bb[piece_type] |= mask
+
+        if piece_type == KING:
+            self.king_squares[piece.color] = square
+
+        self.occupied.ixor(mask, piece.color, square)
+
+        # Update incremental zorbist hash.
+        if piece.color == BLACK:
+            piece_index = (piece.piece_type - 1) * 2
+        else:
+            piece_index = (piece.piece_type - 1) * 2 + 1
+        self.incremental_zobrist_hash ^= DEFAULT_RANDOM_ARRAY[81 * piece_index + 9 * rank_index(square) + file_index(square)]
+<switch:english>
+[english] Crucially, once the piece is set, the function calculates and modifies the Zobrist hash. This ensures that the game's move history can be efficiently tracked for move evaluation.
+[english] What happens specifically if I call this with a square that already has a piece, but I don't want to remove it first?
+[english] The existing piece will always be removed and replaced because the function explicitly calls self.remove_piece_at(square, into_hand) before setting the new piece at self.pieces[square].
+[english] Thanks for detailing how the placement works!

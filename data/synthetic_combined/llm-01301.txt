@@ -1,0 +1,24 @@
+[english] I need a quick way to generate the project's changelog automatically after determining its new version.
+[english] This function first identifies the project root by moving up two levels relative to its own location and then verifies that there is a valid version number available before proceeding with the generation process.
+<switch:python>
+[python] def generate():
+    """Generate changelog."""
+    old_dir = os.getcwd()
+    proj_dir = os.path.join(os.path.dirname(__file__), os.pardir)
+    os.chdir(proj_dir)
+    version = validate_version()
+    if not version:
+        os.chdir(old_dir)
+        return
+    print('Generating changelog for version {}'.format(version))
+    options = [
+        '--user', 'arve0', '--project', 'leicacam', '-v', '--with-unreleased',
+        '--future-release', version]
+    generator = ChangelogGenerator(options)
+    generator.run()
+    os.chdir(old_dir)
+<switch:english>
+[english] The crucial part here is managing directory state; it ensures the process runs in the required project root and safely reverts to where it started afterward, regardless of whether the generator succeeds or fails.
+[english] What happens if `validate_version()` returns false? Does that mean the function exits early?
+[english] If no version is found by `validate_version()`, the function immediately changes back to the original working directory and returns, skipping all generation steps entirely.
+[english] That makes sense; good to know it handles invalid versions gracefully.

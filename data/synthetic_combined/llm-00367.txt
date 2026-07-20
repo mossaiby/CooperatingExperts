@@ -1,0 +1,19 @@
+[english] How can I determine the earliest start time for an event given multiple channels where data is stored?
+[english] To find the overall earliest start time, we first gather all interval objects from the specified channels using `self._table`. We then flatten these results into a single list of intervals.
+<switch:python>
+[python] def ch_start_time(self, *channels: List[Channel]) -> int:
+        """Return earliest start time in this collection.
+
+        Args:
+            *channels: Channels over which to obtain start_time.
+        """
+        intervals = list(itertools.chain(*(self._table[chan] for chan in channels
+                                           if chan in self._table)))
+        if intervals:
+            return min((interval.begin for interval in intervals))
+        return 0
+<switch:english>
+[english] The use of `min((interval.begin for interval in intervals))` efficiently finds the minimum starting point across all collected data, defaulting to zero if no active intervals exist.
+[english] If any channel listed in `channels` is not present in `self._table`, what happens conceptually?
+[english] The logic handles this gracefully: channels missing from `self._table` are skipped entirely during the iteration, preventing errors and ensuring only valid data is processed.
+[english] Thanks for breaking down how that works!

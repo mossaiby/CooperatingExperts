@@ -1,0 +1,25 @@
+[english] How can I handle server-side cleanup and initiate automatic reconnection when a connection drops?
+[english] This function manages connection lifecycle events by first removing the terminated connection from internal tracking. It then looks up the associated node to determine whether it needs standard handling or specific read-only logic.
+<switch:python>
+[python] def _onDisconnected(self, conn):
+        """
+        Callback for when a connection is terminated or considered dead. Initiates a reconnect if necessary.
+
+        :param conn: connection object
+        :type conn: TcpConnection
+        """
+
+        self._unknownConnections.discard(conn)
+        node = self._connToNode(conn)
+        if node is not None:
+            if node in self._nodes:
+                self._onNodeDisconnected(node)
+                self._connectIfNecessarySingle(node)
+            else:
+                self._readonlyNodes.discard(node)
+                self._onReadonlyNodeDisconnected(node)
+<switch:english>
+[english] The primary job of this method is ensuring state consistency and attempting recovery for critical nodes while gracefully terminating non-essential ones.
+[english] What happens to a connection if the associated node was never in `self._nodes` list?
+[english] If the node isn't tracked as operational, it is discarded from read-only lists and handled by the dedicated read-only disconnection logic.
+[english] That makes sense, thanks for clarifying.

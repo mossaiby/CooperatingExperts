@@ -1,0 +1,49 @@
+[english] How do I calculate the combined operation of two quantum channels by taking their tensor product?
+[english] To find the resultant channel, we use Kronecker products (tensor products) on the Kraus operators of both input channels. The function supports standard and reversed application orders.
+<switch:python>
+[python] def _tensor_product(self, other, reverse=False):
+        """Return the tensor product channel.
+
+        Args:
+            other (QuantumChannel): a quantum channel subclass.
+            reverse (bool): If False return self ⊗ other, if True return
+                            if True return (other ⊗ self) [Default: False
+        Returns:
+            Kraus: the tensor product channel as a Kraus object.
+
+        Raises:
+            QiskitError: if other cannot be converted to a channel.
+        """
+        # Convert other to Kraus
+        if not isinstance(other, Kraus):
+            other = Kraus(other)
+
+        # Get tensor matrix
+        ka_l, ka_r = self._data
+        kb_l, kb_r = other._data
+        if reverse:
+            input_dims = self.input_dims() + other.input_dims()
+            output_dims = self.output_dims() + other.output_dims()
+            kab_l = [np.kron(b, a) for a in ka_l for b in kb_l]
+        else:
+            input_dims = other.input_dims() + self.input_dims()
+            output_dims = other.output_dims() + self.output_dims()
+            kab_l = [np.kron(a, b) for a in ka_l for b in kb_l]
+        if ka_r is None and kb_r is None:
+            kab_r = None
+        else:
+            if ka_r is None:
+                ka_r = ka_l
+            if kb_r is None:
+                kb_r = kb_l
+            if reverse:
+                kab_r = [np.kron(b, a) for a in ka_r for b in kb_r]
+            else:
+                kab_r = [np.kron(a, b) for a in ka_r for b in kb_r]
+        data = (kab_l, kab_r)
+        return Kraus(data, input_dims, output_dims)
+<switch:english>
+[english] The logic handles dimension calculation carefully to ensure proper ordering for either self ⊗ other or other ⊗ self product.
+[english] What happens if one of the input quantum channels is an identity channel?
+[english] If a Kraus representation is not provided (e.g., missing operator list), this specific implementation seems designed to default from existing lists, but assuming proper input, standard identities would map correctly via Kronecker products over the appropriate basis.
+[english] That makes sense, thanks for clarifying!

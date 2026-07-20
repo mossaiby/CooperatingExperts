@@ -1,0 +1,36 @@
+[english] How can I format a list of records and associated headers into a neatly organized, vertically separated table?
+[english] This function constructs a vertical ASCII table by first determining the maximum width needed for all header entries. It then iterates through the input data rows, padding them to match these widths before joining them with custom separators.
+<switch:python>
+[python] def vertical_table(data, headers, sep_title='{n}. row', sep_character='*',
+                   sep_length=27):
+    """Format *data* and *headers* as an vertical table.
+
+    The values in *data* and *headers* must be strings.
+
+    :param iterable data: An :term:`iterable` (e.g. list) of rows.
+    :param iterable headers: The column headers.
+    :param str sep_title: The title given to each row separator. Defaults to
+                          ``'{n}. row'``. Any instance of ``'{n}'`` is
+                          replaced by the record number.
+    :param str sep_character: The character used to separate rows. Defaults to
+                              ``'*'``.
+    :param int/tuple sep_length: The number of separator characters that should
+                                 appear on each side of the *sep_title*. Use
+                                 a tuple to specify the left and right values
+                                 separately.
+    :return: The formatted data.
+    :rtype: str
+
+    """
+    header_len = max([len(x) for x in headers])
+    padded_headers = [x.ljust(header_len) for x in headers]
+    formatted_rows = [_format_row(padded_headers, row) for row in data]
+
+    output = []
+    for i, result in enumerate(formatted_rows):
+        yield _get_separator(i, sep_title, sep_character, sep_length) + result
+<switch:english>
+[english] The function uses generator syntax (`yield`), which is memory efficient when dealing with large datasets of formatted tables.
+[english] What happens if one of the headers or a row value is longer than the default `sep_length`?
+[english] The padding logic (e.g., in the line `header_len = max([len(x) for x in headers])`) adjusts column widths independently of separator length, meaning extremely long items will simply extend beyond the default star characters.
+[english] That makes sense; so even if I don't specify a new width, it doesn't break?

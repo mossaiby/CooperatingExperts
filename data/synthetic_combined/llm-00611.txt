@@ -1,0 +1,19 @@
+[english] How should I structure an authorization header signature to cryptographically prove a client's identity for API access?
+[english] This function generates a secure, standardized signature used for validating incoming requests. It first creates a unique credential pair by merging the request type and a current timestamp before generating the HMAC signature.
+<switch:python>
+[python] def generate_header_signature(secret, payload, request_type):
+    '''Authorize a client based on encrypting the payload with the client
+       secret, timestamp, and other metadata
+     '''
+
+    # Use the payload to generate a digest   push|collection|name|tag|user
+    timestamp = generate_timestamp()
+    credential = "%s/%s" %(request_type,timestamp)
+
+    signature = generate_signature(payload,secret)
+    return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential,signature)
+<switch:english>
+[english] The final output is formatted specifically to be placed in an HTTP header, utilizing assumed helper functions for timestamp generation and cryptographic signing.
+[english] What happens if the 'payload' data contains special characters that might affect the signature calculation?
+[english] Standard HMAC implementations treat inputs as bytes. If your payload uses custom formatting or encoding (like URL encoding), ensure those modifications are applied consistently before passing them to `generate_signature` to maintain a valid hash.
+[english] That makes sense; I appreciate the detail on input handling.

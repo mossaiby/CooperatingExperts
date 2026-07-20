@@ -1,0 +1,20 @@
+[english] I need a helper function to display built-in help documentation, either listing available commands or providing detailed info for a specific command.
+[english] This function acts as a dispatcher for help requests based on the number of arguments provided. It handles three specific cases: no arguments, one argument (likely the function name), and too many arguments.
+<switch:python>
+[python] def _builtin_help(self, args):
+        """Return help information for a context or function."""
+
+        if len(args) == 0:
+            return self.list_dir(self.contexts[-1])
+        if len(args) == 1:
+            func = self.find_function(self.contexts[-1], args[0])
+            return annotate.get_help(func)
+
+        help_text = "Too many arguments: " + str(args) + "\n"
+        help_text += "Usage: help [function]"
+        return help_text
+<switch:english>
+[english] It leverages `self` attributes like `contexts` and private methods to locate functions or list directory contents before returning the appropriate formatted documentation.
+[english] How does this handle a situation where a user asks for help on a function that doesn't exist?
+[english] If a function isn't found by `self.find_function`, the subsequent call to `annotate.get_help(func)` would likely raise an error depending on how `find_function` handles missing matches. A check should be added there.
+[english] Thanks for explaining this logic!

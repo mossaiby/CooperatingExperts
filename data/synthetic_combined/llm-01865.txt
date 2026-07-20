@@ -1,0 +1,58 @@
+[english] I need a script that can extract deep features from an input dataset or single audio file while allowing me to specify job counts, output filenames, and synchronization options via command-line arguments.
+[english] To manage complex command-line execution, this function uses the `argparse` module. It sets up various arguments like input path (`in_path`), process concurrency (`-j`), and feature handling settings before initiating the main processing logic and tracking performance.
+<switch:python>
+[python] def main():
+    """Main function to parse the arguments and call the main process."""
+    parser = argparse.ArgumentParser(
+        description="Extracts a set of features from a given dataset "
+        "or audio file and saves them into the 'features' folder of "
+        "the dataset or the specified single file.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("in_path",
+                        action="store",
+                        help="Input dataset dir or audio file")
+    parser.add_argument("-j",
+                        action="store",
+                        dest="n_jobs",
+                        type=int,
+                        help="Number of jobs (only for collection mode)",
+                        default=4)
+    parser.add_argument("-o",
+                        action="store",
+                        dest="out_file",
+                        type=str,
+                        help="Output file (only for single file mode)",
+                        default="out.json")
+    parser.add_argument("-d",
+                        action="store",
+                        dest="ds_name",
+                        default="*",
+                        help="The prefix of the dataset to use "
+                        "(e.g. Isophonics, SALAMI)")
+    parser.add_argument("-fs",
+                        action="store_true",
+                        dest="framesync",
+                        help="Use frame-synchronous features",
+                        default=False)
+    args = parser.parse_args()
+    start_time = time.time()
+
+    # Setup the logger
+    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s',
+        level=logging.INFO)
+
+    # Run the main process
+    process(args.in_path, out_file=args.out_file, n_jobs=args.n_jobs, framesync=args.framesync)
+
+    # Done!
+    logging.info("Done! Took %.2f seconds." % (time.time() - start_time))
+<switch:english>
+[english] This setup allows the core processing logic to run in high-performance modes or specialized single-file modes by dynamically passing a richly configured set of `args` objects. The tool also automatically logs execution time once finished.
+[english] In the current code, is there any validation performed on the 'in_path' argument before the process function is called?
+[english] The provided script relies on the downstream `process()` function to handle input errors, so no explicit file path existence check is implemented here. If you wanted to add a check using Python's standard library, it would look like this:
+<switch:python>
+[python] import os
+if not os.path.exists(args.in_path):
+    raise FileNotFoundError(f"Input path not found: {args.in_path}")
+<switch:english>
+[english] This makes perfect sense; I will add input validation to my next update.

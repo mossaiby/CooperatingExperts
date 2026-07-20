@@ -1,0 +1,17 @@
+[english] How can I programmatically retrieve all HTTP response headers from a WinHttpRequest object using Python?
+[english] This function directly interfaces with the Windows API to pull header data. It uses ctypes pointers and dedicated system functions to read the raw output into a usable string.
+<switch:python>
+[python] def get_all_response_headers(self):
+        ''' Gets back all response headers. '''
+
+        bstr_headers = c_void_p()
+        _WinHttpRequest._GetAllResponseHeaders(self, byref(bstr_headers))
+        bstr_headers = ctypes.cast(bstr_headers, c_wchar_p)
+        headers = bstr_headers.value
+        _SysFreeString(bstr_headers)
+        return headers
+<switch:english>
+[english] The critical part of this implementation is calling `_SysFreeString`, which properly cleans up the native memory allocated by the Windows request object after we have copied the content into Python.
+[english] What specific error codes should I check if the API call fails to retrieve headers?
+[english] To handle failures robustly, you would typically check the return value of `_WinHttpRequest._GetAllResponseHeaders`. If it doesn't return a successful status, the function might need to raise an exception instead of attempting to cast a failure pointer.
+[english] Thanks for clarifying how memory management works here.

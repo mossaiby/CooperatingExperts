@@ -1,0 +1,26 @@
+[english] I need a way to retrieve all available marketing images, such as movie posters and backdrops, associated with a specific movie ID.
+[english] This method fetches image data by first constructing a specific API path using the object's internal methods. It then makes a GET request to that path before normalizing and returning the results into a dictionary format.
+<switch:python>
+[python] def images(self, **kwargs):
+        """
+        Get the images (posters and backdrops) for a specific movie id.
+
+        Args:
+            language: (optional) ISO 639-1 code.
+            append_to_response: (optional) Comma separated, any movie method.
+            include_image_language: (optional) Comma separated, a valid
+                                    ISO 69-1.
+
+        Returns:
+            A dict representation of the JSON returned from the API.
+        """
+        path = self._get_id_path('images')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The function relies heavily on the internal helper methods like `_get_id_path` and `self._GET` to handle API communication. Once data is received, it uses `_set_attrs_to_values` for structured output.
+[english] If I want to limit my results to only images available in a specific language, should I pass 'language' via kwargs?
+[english] The function includes an optional `language` argument (ISO 639-1) which is passed directly into the underlying API request. You would call it like this: `images(language='en')`.
+[english] Got it, so I use language to filter and kwargs for other parameters.

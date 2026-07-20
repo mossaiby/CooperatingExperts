@@ -1,0 +1,28 @@
+[english] How can I format a list of data points into a single display row while ensuring it doesn't exceed a specific terminal width?
+[english] This function takes raw cell data and prepares it for visual output. It starts by applying uniform padding to every cell in the input list, then combines them using a specified separator.
+<switch:python>
+[python] def _build_row(cells, padding, begin, sep, end):
+    "Return a string which represents a row of data cells."
+
+    pad = " " * padding
+    padded_cells = [pad + cell + pad for cell in cells]
+
+    # SolveBio: we're only displaying Key-Value tuples (dimension of 2).
+    #  enforce that we don't wrap lines by setting a max
+    #  limit on row width which is equal to TTY_COLS (see printing)
+    rendered_cells = (begin + sep.join(padded_cells) + end).rstrip()
+    if len(rendered_cells) > TTY_COLS:
+        if not cells[-1].endswith(" ") and not cells[-1].endswith("-"):
+            terminating_str = " ... "
+        else:
+            terminating_str = ""
+        rendered_cells = "{0}{1}{2}".format(
+            rendered_cells[:TTY_COLS - len(terminating_str) - 1],
+            terminating_str, end)
+
+    return rendered_cells
+<switch:english>
+[english] The code rigorously checks if the resultant string exceeds `TTY_COLS`. If it does, it truncates the row while conditionally adding an ellipsis instead of standard truncation.
+[english] What is the specific logic related to how it decides whether or not to append '...' when a cell ends in a space or hyphen?
+[english] If `cells[-1]` already ends with a space or hyphen, the function sets `terminating_str` to an empty string. This prevents adding an ellipsis if the data suggests continuation without loss of meaning.
+[english] Thanks for clarifying how the truncation edge cases are managed.

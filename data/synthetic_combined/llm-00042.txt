@@ -1,0 +1,18 @@
+[english] How can I automatically generate the required Python import Abstract Syntax Tree (AST) nodes needed to set up module aliases?
+[english] This function is a generator that constructs `ast.Import` objects programmatically, allowing you to define how external modules should be imported and aliased in your code.
+<switch:python>
+[python] def _module_imports(ctx: GeneratorContext) -> Iterable[ast.Import]:
+    """Generate the Python Import AST node for importing all required
+    language support modules."""
+    # Yield `import basilisp` so code attempting to call fully qualified
+    # `basilisp.lang...` modules don't result in compiler errors
+    yield ast.Import(names=[ast.alias(name="basilisp", asname=None)])
+    for imp in ctx.imports:
+        name = imp.key.name
+        alias = _MODULE_ALIASES.get(name, None)
+        yield ast.Import(names=[ast.alias(name=name, asname=alias)])
+<switch:english>
+[english] The logic ensures that both a base 'basilisp' import and all other configured module aliases are correctly represented as AST nodes before the compilation phase begins.
+[english] What happens if one of the required modules is not found in the `ctx.imports` list or if its key is missing from `_MODULE_ALIASES`?
+[english] If a module import is requested but no alias exists, it defaults to yielding an empty list for that entry (returning nothing), preventing runtime errors on non-existent modules.
+[english] That makes sense; I'll keep the configuration clean then.

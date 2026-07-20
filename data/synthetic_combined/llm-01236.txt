@@ -1,0 +1,33 @@
+[english] How do I ensure a geometry is correctly projected into a specific spatial reference system without losing its data?
+[english] This function handles the necessary reprojection steps to transform a given geometry object (`geom`) into a target spatial reference system (`to_sref`). It first attempts to set or verify the current spatial reference before executing a transformation if required.
+<switch:python>
+[python] def transform(geom, to_sref):
+    """Returns a transformed Geometry.
+
+    Arguments:
+    geom -- any coercible Geometry value or Envelope
+    to_sref -- SpatialReference or EPSG ID as int
+    """
+    # If we have an envelope, assume it's in the target sref.
+    try:
+        geom = getattr(geom, 'polygon', Envelope(geom).polygon)
+    except (TypeError, ValueError):
+        pass
+    else:
+        geom.AssignSpatialReference(to_sref)
+    try:
+        geom_sref = geom.GetSpatialReference()
+    except AttributeError:
+        return transform(Geometry(geom), to_sref)
+    if geom_sref is None:
+        raise Exception('Cannot transform from unknown spatial reference')
+    # Reproject geom if necessary
+    if not geom_sref.IsSame(to_sref):
+        geom = geom.Clone()
+        geom.TransformTo(to_sref)
+    return geom
+<switch:english>
+[english] The function checks `geom_sref.IsSame(to_sref)` to avoid unnecessary cloning and transformation steps, which improves performance.
+[english] If the initial geometry object lacks a defined spatial reference (i.e., it has a missing sref), what specific error will this function raise?
+[english] It raises an Exception with the message 'Cannot transform from unknown spatial reference' if `geom_sref` is `None`, explicitly preventing transformation of unreferenced data.
+[english] This clarifies when and where I need to ensure my geometry has a proper starting point.

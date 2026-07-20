@@ -1,0 +1,23 @@
+[english] I need a function to verify that the voting locksets used at specific rounds match the defined set of active validators for those heights.
+[english] This method rigorously checks if the configured lockset meets structural integrity using an internal helper function. It verifies both vote count consistency and membership compliance against provided validator lists.
+<switch:python>
+[python] def validate_votes(self, validators_H, validators_prevH):
+        "set of validators may change between heights"
+        assert self.sender
+
+        def check(lockset, validators):
+            if not lockset.num_eligible_votes == len(validators):
+                raise InvalidProposalError('lockset num_eligible_votes mismatch')
+            for v in lockset:
+                if v.sender not in validators:
+                    raise InvalidProposalError('invalid signer')
+        if self.round_lockset:
+            check(self.round_lockset, validators_H)
+        check(self.signing_lockset, validators_prevH)
+
+        return True
+<switch:english>
+[english] The code ensures that every required signer is indeed present in the active validators, preventing invalid proposals from being processed at different stages of execution.
+[english] If `self.round_lockset` or `self.signing_lockset` were somehow None instead of iterable objects, how would this function behave?
+[english] The current implementation relies on these attributes being set; accessing them directly will raise an AttributeError if they are None. To make it safer, you could add explicit checks before calling the check helper:
+[english] That makes sense; I'll modify those initialization paths.

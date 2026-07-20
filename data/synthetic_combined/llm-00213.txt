@@ -1,0 +1,15 @@
+[english] I need a way to programmatically determine if a given input array represents a square matrix.
+[english] To identify if an array is a square matrix, we first convert the input to a NumPy structure. We then verify it has exactly two dimensions, finally checking if the number of rows matches the number of columns.
+<switch:python>
+[python] def is_square_matrix(mat):
+    """Test if an array is a square matrix."""
+    mat = np.array(mat)
+    if mat.ndim != 2:
+        return False
+    shape = mat.shape
+    return shape[0] == shape[1]
+<switch:english>
+[english] The code ensures robustness by immediately exiting if the input is not 2-dimensional, preventing dimension comparison errors on non-matrix data.
+[english] What happens if I pass an empty list as input to this checker?
+[english] If you pass an empty list, the function returns False. NumPy converts a simple empty list into a 1D array, which fails the `ndim != 2` check in the code.
+[english] That clarifies how boundary conditions are handled.

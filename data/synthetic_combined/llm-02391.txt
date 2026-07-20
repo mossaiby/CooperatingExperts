@@ -1,0 +1,15 @@
+[english] I need a dataframe containing metadata for various fields, indexed and sorted appropriately.
+[english] This function collects metadata from all defined fields by mapping over `self.fields`, concatenates them into a single DataFrame, and then transposes it to structure the data correctly.
+<switch:python>
+[python] def fields_metadata(self):
+    """
+    Returns fields metadata as a dataframe.
+    """  
+    return (pd.concat([f.metadata() for f in self.fields], axis = 1)
+            .transpose()
+            .sort_values(["step_num", "frame", "label", "position"]))
+<switch:english>
+[english] The final step sorts the resulting DataFrame based on multiple key indices to ensure reproducible and ordered results.
+[english] What happens if some of the metadata dictionaries returned by `f.metadata()` have different keys?
+[english] If there are differing keys, missing values (NaN) will be introduced in those columns for any row that lacks the specific key during concatenation:
+[english] That makes sense, thanks!

@@ -1,0 +1,34 @@
+[english] How can I retrieve a list of all albums for a given Spotify ID, allowing me to filter by market and paginate the results?
+[english] This function constructs an HTTP GET request against a predefined route specific to retrieving artist albums from Spotify. It dynamically populates the query string with pagination settings (limit/offset), grouping options, and market information.
+<switch:python>
+[python] def artist_albums(self, spotify_id, include_groups=None, limit=20, offset=0, market='US'):
+        """Get an artists tracks by their ID.
+
+        Parameters
+        ----------
+        spotify_id : str
+            The spotify_id to search by.
+        include_groups : INCLUDE_GROUPS_TP
+            INCLUDE_GROUPS
+        limit : Optional[int]
+            The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+        offset : Optiona[int]
+            The offset of which Spotify should start yielding from.
+        market : Optional[str]
+            An ISO 3166-1 alpha-2 country code.
+        """
+        route = Route('GET', '/artists/{spotify_id}/albums', spotify_id=spotify_id)
+        payload = {'limit': limit, 'offset': offset}
+
+        if include_groups:
+            payload['include_groups'] = include_groups
+
+        if market:
+            payload['market'] = market
+
+        return self.request(route, params=payload)
+<switch:english>
+[english] This method effectively controls the data retrieved using standard API query parameters. Note that any mandatory authentication headers must be handled outside of this function definition.
+[english] What happens if I pass a value to `market` that isn't recognized by the underlying Spotify service?
+[english] If an invalid market code is provided, the system will return an error response from the API when `self.request` attempts the call. You should handle potential exceptions at the calling level.
+[english] That makes sense, clarifying where input validation happens helps a lot.

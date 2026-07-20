@@ -1,0 +1,30 @@
+[english] Implement a method that finds and yields all complete words stored within a Trie data structure.
+[english] The function uses an iterative Depth-First Search approach, simulating recursion by maintaining explicit stacks for tracking the current path and managing which children still need to be explored.
+<switch:python>
+[python] def words(self):
+        """
+        Возвращает итератор по словам, содержащимся в боре
+        """
+        branch, word, indexes = [self.root], [], [0]
+        letters_with_children = [self._get_children_and_letters(self.root)]
+        while len(branch) > 0:
+            if self.is_final(branch[-1]):
+                yield "".join(word)
+            while indexes[-1] == len(letters_with_children[-1]):
+                indexes.pop()
+                letters_with_children.pop()
+                branch.pop()
+                if len(indexes) == 0:
+                    raise StopIteration()
+                word.pop()
+            next_letter, next_child = letters_with_children[-1][indexes[-1]]
+            indexes[-1] += 1
+            indexes.append(0)
+            word.append(next_letter)
+            branch.append(next_child)
+            letters_with_children.append(self._get_children_and_letters(branch[-1]))
+<switch:english>
+[english] This code leverages generator behavior (`yield`) to efficiently traverse the tree without needing to store all words in memory simultaneously. It relies heavily on stack manipulation to backtrack after exploring a branch.
+[english] If a node has no children, does this algorithm correctly decide when to stop pursuing that path and return up?
+[english] Yes. When `letters_with_children[-1]` reaches its full length (`len(letters_with_children[-1])`), the inner `while` loop triggers, effectively popping elements until a valid parent state is reached.
+[english] That clears it up! This implementation looks solid.

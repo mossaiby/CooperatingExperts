@@ -1,0 +1,71 @@
+[english] How can we navigate deep into a nested structure using a string like 'a.b.c.d', returning both the reference to the parent container and the last key?
+[english] We first parse the input path by splitting it on dots, then iterate over these keys while traversing the root data structure from beginning to end.
+<switch:python>
+[python] def _resolve_path(self, create=False):
+        """
+        Returns a tuple of a reference to the last container in the path, and
+        the last component in the key path.
+
+        For example, with a self._value like this:
+
+        {
+            'thing': {
+                'another': {
+                    'some_leaf': 5,
+                    'one_more': {
+                        'other_leaf': 'x'
+                    }
+                }
+            }
+        }
+
+        And a self._path of: 'thing.another.some_leaf'
+
+        This will return a tuple of a reference to the 'another' dict, and
+        'some_leaf', allowing the setter and casting methods to directly access
+        the item referred to by the key path.
+        """
+        # Split up the key path
+        if type(self._path) == str:
+            key_path = self._path.split('.')
+        else:
+            key_path = [self._path]
+
+        # Start at the root node
+        node = self._root._data
+        nodes = [self._root._data]
+
+        # Traverse along key path
+        while len(key_path):
+            # Get the next key in the key path
+            key = key_path.pop(0)
+
+            # See if the test could be an int for array access, if so assume it is
+            try:
+                key = int(key)
+            except:
+                pass
+
+            # If the next level doesn't exist, create it
+            if create:
+                if type(node) == dict and key not in node:
+                    node[key] = {}
+                elif type(node) == list and type(key) == int and len(node) < key:
+                    node.append([None for i in range(key-len(node))])
+
+            # Store the last node and traverse down the hierarchy
+            nodes.append(node)
+            try:
+                node = node[key]
+            except TypeError:
+                if type(key) == int:
+                    raise IndexError(key)
+                else:
+                    raise KeyError(key)
+
+        return (nodes[-1], key)
+<switch:english>
+[english] The function returns a tuple containing the final storage node (parent) and the terminal key so that subsequent methods can access or modify the leaf item directly.
+[english] Does this method handle lists efficiently, for example, should it be able to access an element in a list using its string index?
+[english] Yes. The code attempts to convert every path segment into an integer (`key = int(key)`) which allows the traversal logic to correctly handle list indexing instead of dictionary keys.
+[english] Perfect, that clarifies how array access is managed within the path resolution.

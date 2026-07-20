@@ -1,0 +1,23 @@
+[english] How do I retrieve information about a specific management certificate using its thumbprint in an Azure subscription?
+[english] This function first validates that the provided thumbprint is not None before using internal methods to perform a GET request against the Azure resource manager.
+<switch:python>
+[python] def get_management_certificate(self, thumbprint):
+        '''
+        The Get Management Certificate operation retrieves information about
+        the management certificate with the specified thumbprint. Management
+        certificates, which are also known as subscription certificates,
+        authenticate clients attempting to connect to resources associated
+        with your Windows Azure subscription.
+
+        thumbprint:
+            The thumbprint value of the certificate.
+        '''
+        _validate_not_none('thumbprint', thumbprint)
+        return self._perform_get(
+            '/' + self.subscription_id + '/certificates/' + _str(thumbprint),
+            SubscriptionCertificate)
+<switch:english>
+[english] The function constructs a specific API path using the subscription ID and certificate thumbprint to fetch the object.
+[english] What happens if this method is called with a thumbprint that does not correspond to any existing certificate?
+[english] If no matching certificate is found, the underlying _perform_get call will likely raise an exception (such as ResourceNotFound) as it attempts to query a non-existent resource path.
+[english] That makes sense; thanks for clarifying how error handling works here.

@@ -1,0 +1,25 @@
+[english] How can I quickly check if any blobs exist within a specific Azure container that start with a given prefix?
+[english] This function efficiently checks for matching blobs by using the underlying connection's ability to list objects. By setting num_results=1, it minimizes API overhead while still confirming existence.
+<switch:python>
+[python] def check_for_prefix(self, container_name, prefix, **kwargs):
+        """
+        Check if a prefix exists on Azure Blob storage.
+
+        :param container_name: Name of the container.
+        :type container_name: str
+        :param prefix: Prefix of the blob.
+        :type prefix: str
+        :param kwargs: Optional keyword arguments that
+            `BlockBlobService.list_blobs()` takes.
+        :type kwargs: object
+        :return: True if blobs matching the prefix exist, False otherwise.
+        :rtype: bool
+        """
+        matches = self.connection.list_blobs(container_name, prefix,
+                                             num_results=1, **kwargs)
+        return len(list(matches)) > 0
+<switch:english>
+[english] The function returns True if at least one blob matches the criteria; otherwise, it correctly identifies that no blobs exist with the specified prefix in the container.
+[english] Does this method handle cases where the `prefix` is an empty string?
+[english] Yes, if the prefix is empty, it will check for any blob existence in the entire container. Since list_blobs defaults to listing everything when the prefix is blank, you would see a result if anything exists.
+[english] Thanks! This makes sense.

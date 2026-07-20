@@ -1,0 +1,35 @@
+[english] How can I register different callback functions to handle specific Cinder notification events, including broad patterns?
+[english] This decorator factory is designed to register event handlers for Cinder notifications. It inspect the provide event type argument to determine whether to store the function in a specific dictionary or a wildcard process map.
+<switch:python>
+[python] def cinder(*arg):
+    """
+    Cinder annotation for adding function to process cinder notification.
+
+    if event_type include wildcard, will put {pattern: function} into process_wildcard dict
+    else will put {event_type: function} into process dict
+
+    :param arg: event_type of notification
+    """
+    check_event_type(Openstack.Cinder, *arg)
+    event_type = arg[0]
+
+    def decorator(func):
+        if event_type.find("*") != -1:
+            event_type_pattern = pre_compile(event_type)
+            cinder_customer_process_wildcard[event_type_pattern] = func
+        else:
+            cinder_customer_process[event_type] = func
+        log.info("add function {0} to process event_type:{1}".format(func.__name__, event_type))
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+<switch:english>
+[english] The `wrapper` and `@functools.wraps(func)` ensure that your decorated function preserves its metadata while allowing it to be called by the handler logic, maintaining the original signature.
+[english] What happens if I pass an event type that doesn't start with a valid Cinder pattern?
+[english] The `check_event_type` call at the beginning of the function would likely raise an error if the provided event type does not match expected Openstack formats.
+[english] Does this setup handle multiple wildcard registrations correctly?

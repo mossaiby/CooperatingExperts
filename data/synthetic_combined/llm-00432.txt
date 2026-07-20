@@ -1,0 +1,15 @@
+[english] How can I quickly scan devices on my network interface while excluding specific hardware?
+[english] This function initiates a device discovery process by first displaying help information. It then calls `scan_devices`, passing a lambda that filters out any discovered device whose source MAC ID is in the `mac_id_list` and uses the optional `interface` argument.
+<switch:python>
+[python] def discover(interface=None):
+    """Print help and scan devices on screen.
+
+    :return: None
+    """
+    click.secho(HELP, fg='yellow')
+    scan_devices(discovery_print, lfilter=lambda d: d.src not in mac_id_list, iface=interface)
+<switch:english>
+[english] The function relies heavily on external imports like `click` and `scan_devices`. Note how the call to `lfilter` ensures that devices matching the provided criteria are skipped.
+[english] What happens if I don't pass any specific interface?
+[english] If no `interface` is passed, the function defaults to scanning all available network interfaces on the system. The external library handles this default behavior automatically when checking for the parameter.
+[english] That makes sense; thanks for clarifying how it works.

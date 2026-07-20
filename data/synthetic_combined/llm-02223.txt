@@ -1,0 +1,50 @@
+[english] How can I enforce documentation standards and check for missing docstrings across various Python code structures?
+[english] This function systematically inspect a given node to verify if it contains a valid, non-empty docstring. It implements checks based on whether the docstring is completely absent or only whitespace.
+<switch:python>
+[python] def _check_docstring(
+        self, node_type, node, report_missing=True, confidence=interfaces.HIGH
+    ):
+        """check the node has a non empty docstring"""
+        docstring = node.doc
+        if docstring is None:
+            if not report_missing:
+                return
+            lines = utils.get_node_last_lineno(node) - node.lineno
+
+            if node_type == "module" and not lines:
+                # If the module has no body, there's no reason
+                # to require a docstring.
+                return
+            max_lines = self.config.docstring_min_length
+
+            if node_type != "module" and max_lines > -1 and lines < max_lines:
+                return
+            self.stats["undocumented_" + node_type] += 1
+            if (
+                node.body
+                and isinstance(node.body[0], astroid.Expr)
+                and isinstance(node.body[0].value, astroid.Call)
+            ):
+                # Most likely a string with a format call. Let's see.
+                func = utils.safe_infer(node.body[0].value.func)
+                if isinstance(func, astroid.BoundMethod) and isinstance(
+                    func.bound, astroid.Instance
+                ):
+                    # Strings in Python 3, others in Python 2.
+                    if PY3K and func.bound.name == "str":
+                        return
+                    if func.bound.name in ("str", "unicode", "bytes"):
+                        return
+            self.add_message(
+                "missing-docstring", node=node, args=(node_type,), confidence=confidence
+            )
+        elif not docstring.strip():
+            self.stats["undocumented_" + node_type] += 1
+            self.add_message(
+                "empty-docstring", node=node, args=(node_type,), confidence=confidence
+            )
+<switch:english>
+[english] The logic handles common exceptions where docstring requirements are waived, such as for modules with no body content or specific type hints that resemble strings but aren't true docstrings.
+[english] If a method has a very short docstring (one line), will this function correctly flag it if the configured minimum length is two lines?
+[english] The logic uses `max_lines` from the configuration. If the difference between the last and first line number (`lines`) is less than this maximum allowed length, the check returns, effectively skipping the report.
+[english] Thanks for clarifying how the docstring lengths are evaluated!

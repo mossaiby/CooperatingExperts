@@ -1,0 +1,26 @@
+[english] I need a reliable way to download and load the MNIST dataset for training and testing my neural networks.
+[english] This function streamlines fetching the MNIST images from a remote source, handling compression using `gzip` and deserialization with `pickle`. It includes conditional logic to ensure backward compatibility across different Python versions during the unpickling process.
+<switch:python>
+[python] def load_mnist(flatten=True, labels=False):
+    '''Load the MNIST digits dataset.'''
+    fn = find('mnist.pkl.gz', 'http://deeplearning.net/data/mnist/mnist.pkl.gz')
+    h = gzip.open(fn, 'rb')
+    if sys.version_info < (3, ):
+        (timg, tlab), (vimg, vlab), (simg, slab) = pickle.load(h)
+    else:
+        (timg, tlab), (vimg, vlab), (simg, slab) = pickle.load(h, encoding='bytes')
+    h.close()
+    if not flatten:
+        timg = timg.reshape((-1, 28, 28, 1))
+        vimg = vimg.reshape((-1, 28, 28, 1))
+        simg = simg.reshape((-1, 28, 28, 1))
+    if labels:
+        return ((timg, tlab.astype('i')),
+                (vimg, vlab.astype('i')),
+                (simg, slab.astype('i')))
+    return (timg, ), (vimg, ), (simg, )
+<switch:english>
+[english] The function gives you control over image dimensionality via the `flatten` argument. However, its reliance on external URL fetching means connectivity issues could interrupt data loading.
+[english] If I want only the training data and don't need validation or test sets at all, how would I modify the logic?
+[english] The current function loads all three splits (train, validation, test). To get just one split, you would need to alter the `pickle.load(h)` logic to selectively unpack only what is required.
+[english] That makes much more sense now.

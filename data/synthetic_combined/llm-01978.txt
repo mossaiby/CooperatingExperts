@@ -1,0 +1,23 @@
+[english] I need a function that can normalize user inputs into their standardized string names using existing ID and name mappings.
+[english] This utility handles normalization by checking if the input is an integer or a string. Depending on the type, it performs lookups in internal data structures to return the corresponding normalized value or confirm its validity.
+<switch:python>
+[python] def normalizeName(self,in_name):
+        """
+        Takes in an object and normalizes it to its name/string.
+        
+        Currently, only integers and strings may be passed in, else a :py:exc:`TypeError`
+        will be thrown.
+        """
+        if isinstance(in_name,str):
+            assert in_name in self._data["reg"].inv
+            return in_name
+        elif isinstance(in_name,int):
+            assert in_name in self._data["reg"]
+            return self._data["reg"][in_name]
+        else:
+            raise TypeError("Only int and str can be converted to names")
+<switch:english>
+[english] The logic strictly limits accepted inputs to integers and strings, raising a TypeError otherwise. It uses assertions to ensure mappings exist before returning results.
+[english] If an input string is provided but doesn't exist in the inverse mapping, what specific error will be triggered?
+[english] The code will raise an `AssertionError` because of the check `assert in_name in self._data["reg"].inv`. This assertion fails if the name is not present in the allowed strings.
+[english] I appreciate that detailed explanation.

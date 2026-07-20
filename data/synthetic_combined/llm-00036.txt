@@ -1,0 +1,62 @@
+[english] How do I apply a custom transformation and ensure the resulting structured dataset retains its correct shape information?
+[english] This function maps an array transformation over the RDD elements but first performs internal tests using sample data to infer how the output shapes will change.
+<switch:python>
+[python] def map(self, func):
+        """
+        Apply a function on each subarray.
+
+        Parameters
+        ----------
+        func : function 
+             This is applied to each value in the intermediate RDD.
+
+        Returns
+        -------
+        StackedArray
+        """
+        vshape = self.shape[self.split:]
+        x = self._rdd.values().first()
+        if x.shape == vshape:
+            a, b = asarray([x]), asarray([x, x])
+        else:
+            a, b = x, concatenate((x, x))
+
+        try:
+            atest = func(a)
+            btest = func(b)
+        except Exception as e:
+            raise RuntimeError("Error evaluating function on test array, got error:\n %s" % e)
+
+        if not (isinstance(atest, ndarray) and isinstance(btest, ndarray)):
+            raise ValueError("Function must return ndarray")
+
+        # different shapes map to the same new shape
+        elif atest.shape == btest.shape:
+            if self._rekeyed is True:
+                # we've already rekeyed
+                rdd = self._rdd.map(lambda kv: (kv[0], func(kv[1])))
+                shape = (self.shape[0],) + atest.shape
+            else:
+                # do the rekeying
+                count, rdd = zip_with_index(self._rdd.values())
+                rdd = rdd.map(lambda kv: ((kv[1],), func(kv[0])))
+                shape = (count,) + atest.shape
+            split = 1
+            rekeyed = True
+
+        # different shapes stay different (along the first dimension)
+        elif atest.shape[0] == a.shape[0] and btest.shape[0] == b.shape[0]:
+            shape = self.shape[0:self.split] + atest.shape[1:]
+            split = self.split
+            rdd = self._rdd.map(lambda kv: (kv[0], func(kv[1])))
+            rekeyed = self._rekeyed
+
+        else:
+            raise ValueError("Cannot infer effect of function on shape")
+
+        return self._constructor(rdd, rekeyed=rekeyed, shape=shape, split=split).__finalize__(self)
+<switch:english>
+[english] The method attempts to precisely calculate new dimensions based on samples, throwing errors if the effect of `func` cannot be reliably determined or tracked.
+[english] What happens if the function `func` returns a value that is not an ndarray?
+[english] If the test execution fails because the output isn't an ndarray, a `ValueError` is raised. The check iterates through types of both sample outputs (atest and btest) before progressing.
+[english] That clarifies how shape inference works!

@@ -1,0 +1,15 @@
+[english] How do I apply a rotation gate that acts on two specified qubits within a quantum circuit?
+[english] To integrate the RZZ gate into your circuit structure, we call an internal append method. This function uses this method to define the RZZGate object with the required theta and specify the target qubit1 and qubit2.
+<switch:python>
+[python] def rzz(self, theta, qubit1, qubit2):
+    """Apply RZZ to circuit."""
+    return self.append(RZZGate(theta), [qubit1, qubit2], [])
+<switch:english>
+[english] The current code relies on the `self.append` logic, so ensure that your class properly handles the application queue for sequential execution.
+[english] If I needed to modify the gate implementation slightly before appending it, would adding an intermediate step result in better circuit traceability?
+[english] Yes, you can perform any necessary manipulation between defining RZZGate(theta) and passing it into self.append(). For example:
+<switch:python>
+[python] RZZGate(theta).name = 'custom_rzz'
+return self.append(RZZGate(theta), [qubit1, qubit2], [])
+<switch:english>
+[english] I see the difference now; that clarifies things!

@@ -1,0 +1,45 @@
+[english] How can I automate the export of a vector graphic to a specific format and resolution using Python?
+[english] This function automates calling the external Inkscape program by constructing all necessary CLI arguments into a single structured list. It validates file existence before building the command array.
+<switch:python>
+[python] def inkscape_export(input_file, output_file, export_flag="-A", dpi=90, inkscape_binpath=None):
+    """ Call Inkscape to export the input_file to output_file using the
+    specific export argument flag for the output file type.
+
+    Parameters
+    ----------
+
+    input_file: str
+        Path to the input file
+
+    output_file: str
+        Path to the output file
+
+    export_flag: str
+        Inkscape CLI flag to indicate the type of the output file
+
+    Returns
+    -------
+    return_value
+        Command call return value
+
+    """
+    if not os.path.exists(input_file):
+        log.error('File {} not found.'.format(input_file))
+        raise IOError((0, 'File not found.', input_file))
+
+    if '=' not in export_flag:
+        export_flag += ' '
+
+    arg_strings = []
+    arg_strings += ['--without-gui']
+    arg_strings += ['--export-text-to-path']
+    arg_strings += ['{}"{}"'.format(export_flag, output_file)]
+    arg_strings += ['--export-dpi={}'.format(dpi)]
+    arg_strings += ['"{}"'.format(input_file)]
+
+    return call_inkscape(arg_strings, inkscape_binpath=inkscape_binpath)
+<switch:english>
+[english] It constructs the argument list for execution, but remember that successful functionality relies on the proper implementation of `call_inkscape` and its dependencies like `os`.
+[english] How does this function ensure that the output flag (e.g., '-A') is correctly incorporated into the command?
+[english] The code explicitly checks if an exported flag contains '=' characters; if not, it appends a space to ensure proper CLI formatting before building the argument array.
+[english] That makes sense!

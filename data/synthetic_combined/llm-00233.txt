@@ -1,0 +1,11 @@
+[english] How can I verify that an input variable is a tuple, and simultaneously ensure every element within that tuple adheres to a specific required type?
+[english] We first check if the incoming variable is indeed a tuple using `isinstance`. Then, we utilize the `all()` function along with a generator expression to validate each internal item.
+<switch:python>
+[python] def check(self, var):
+        """Return True if the variable matches this type, and False otherwise."""
+        return isinstance(var, tuple) and all(_check_type(t, self._element_type) for t in var)
+<switch:english>
+[english] This implementation uses short-circuit evaluation; if any element fails the validation provided by `_check_type`, the entire expression immediately evaluates to False.
+[english] What is the behavior of this function when it receives an empty tuple?
+[english] If you pass an empty tuple, the function will return True. This is because all() returns True for any iterable that has no elements (vacuously true).
+[english] Thanks, that clarifies how internal validation works.

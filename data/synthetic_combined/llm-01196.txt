@@ -1,0 +1,19 @@
+[english] How can I check if a given string record matches any of a list of potential prefixes or exact labels, even when the match occurs as part of a hierarchical path?
+[english] This function iterates through the provided `matchers` to determine if the `record` satisfies a matching condition. It uses a helper function to verify either an exact equality or a partial prefix match followed by a dot.
+<switch:python>
+[python] def _any_match(matchers, record):
+        """return the bool of whether `record` starts with
+        any item in `matchers`"""
+        def record_matches_key(key):
+            return record == key or record.startswith(key + '.')
+        return anyp(bool, map(record_matches_key, matchers))
+<switch:english>
+[english] The use of `anyp` from the `operator` module ensures short-circuiting behavior, making it efficient for large lists where a true match is found early.
+[english] Does this logic assume that the dot (`.`) acts as a necessary delimiter when matching nested structures?
+[english] Yes, by checking `key + '.'`, the function requires an explicit dot to consider one matcher a parent of another record.
+
+tExample:
+<pre>def _any_match(matchers, record):
+        ... # (full code)
+</pre>
+[english] That makes sense, thanks for explaining how it handles path matching!

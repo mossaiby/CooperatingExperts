@@ -1,0 +1,29 @@
+[english] How do I remove a specific management certificate from my Azure subscription using its unique thumbprint?
+[english] This method first validates that the required `thumbprint` argument is provided. It then constructs the necessary path and delegates the actual deletion to an internal helper.
+<switch:python>
+[python] def delete_management_certificate(self, thumbprint):
+        '''
+        The Delete Management Certificate operation deletes a certificate from
+        the list of management certificates. Management certificates, which
+        are also known as subscription certificates, authenticate clients
+        attempting to connect to resources associated with your Windows Azure
+        subscription.
+
+        thumbprint:
+            The thumb print that uniquely identifies the management
+            certificate.
+        '''
+        _validate_not_none('thumbprint', thumbprint)
+        return self._perform_delete(
+            '/' + self.subscription_id + '/certificates/' + _str(thumbprint))
+<switch:english>
+[english] The function assumes `self._validate_not_none` and `self._perform_delete` handle all potential API errors during the deletion process.
+[english] What happens if I try to delete a certificate that I don't actually have listed in my management certificates?
+[english] The current implementation relies on `self._validate_not_none`, which only checks for null input. A robust system would modify the internal deletion method, like this:
+
+def _perform_delete(self, path):
+    try:
+        return self._api_call('DELETE', path)
+    except CertificateNotFoundException:
+        return 'Certificate not found'
+[english] Got it, I appreciate the detailed breakdown!

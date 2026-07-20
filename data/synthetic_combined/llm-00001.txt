@@ -1,0 +1,44 @@
+[english] I want to visualize model posterior uncertainty and average predictions for a batch of heldout images.
+[english] This function creates a grid plot to compare the input image, individual Monte Carlo probability samples, and the final averaged predictive probabilities for each sample.
+It loops through the specified number of datapoints (`n`) to generate three subplots per image showing different aspects of uncertainty.
+<switch:python>
+[python] def plot_heldout_prediction(input_vals, probs,
+                            fname, n=10, title=""):
+  """Save a PNG plot visualizing posterior uncertainty on heldout data.
+
+  Args:
+    input_vals: A `float`-like Numpy `array` of shape
+      `[num_heldout] + IMAGE_SHAPE`, containing heldout input images.
+    probs: A `float`-like Numpy array of shape `[num_monte_carlo,
+      num_heldout, num_classes]` containing Monte Carlo samples of
+      class probabilities for each heldout sample.
+    fname: Python `str` filename to save the plot to.
+    n: Python `int` number of datapoints to vizualize.
+    title: Python `str` title for the plot.
+  """
+  fig = figure.Figure(figsize=(9, 3*n))
+  canvas = backend_agg.FigureCanvasAgg(fig)
+  for i in range(n):
+    ax = fig.add_subplot(n, 3, 3*i + 1)
+    ax.imshow(input_vals[i, :].reshape(IMAGE_SHAPE[:-1]), interpolation="None")
+
+    ax = fig.add_subplot(n, 3, 3*i + 2)
+    for prob_sample in probs:
+      sns.barplot(np.arange(10), prob_sample[i, :], alpha=0.1, ax=ax)
+      ax.set_ylim([0, 1])
+    ax.set_title("posterior samples")
+
+    ax = fig.add_subplot(n, 3, 3*i + 3)
+    sns.barplot(np.arange(10), np.mean(probs[:, i, :], axis=0), ax=ax)
+    ax.set_ylim([0, 1])
+    ax.set_title("predictive probs")
+  fig.suptitle(title)
+  fig.tight_layout()
+
+  canvas.print_figure(fname, format="png")
+  print("saved {}".format(fname))
+<switch:english>
+[english] The visualization is saved as a PNG file using Matplotlib's aggregation backend. Note that this function relies on pre-defined constants like `IMAGE_SHAPE` and imports from specific libraries (like `figure` and `backend_agg`).
+[english] What happens if the number of classes is greater than 10 when plotting predictions?
+[english] The code uses `np.arange(10)` as the class label index for the bar charts. If your model has more than 10 classes, you must update this constant to match your total class count in both the sample visualization and the predictive probability plot.
+[english] This is exactly what I needed! Thanks.

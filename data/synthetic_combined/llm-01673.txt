@@ -1,0 +1,24 @@
+[english] How can I ensure that a given data type or object implements necessary conversion and formatting methods before processing it?
+[english] This function acts as an interface validator, checking if the input type meets specific contract requirements. It verifies the presence of mandatory serialization functions like `convert` or `convert_binary`, along with the required `default_formatter` method.
+<switch:python>
+[python] def _validate_type(cls, typeobj):
+        """
+        Validate that all required type methods are implemented.
+
+        At minimum a type must have:
+        - a convert() or convert_binary() function
+        - a default_formatter() function
+
+        Raises an ArgumentError if the type is not valid
+        """
+
+        if not (hasattr(typeobj, "convert") or hasattr(typeobj, "convert_binary")):
+            raise ArgumentError("type is invalid, does not have convert or convert_binary function", type=typeobj, methods=dir(typeobj))
+
+        if not hasattr(typeobj, "default_formatter"):
+            raise ArgumentError("type is invalid, does not have default_formatter function", type=typeobj, methods=dir(typeobj))
+<switch:english>
+[english] The validation strictly enforces that types adhere to a minimum set of API methods for handling data conversion and presentation. The use of `dir(typeobj)` provides detailed debugging information if any validation fails.
+[english] What happens if the object passed is an instance of a class rather than the class definition itself?
+[english] The function works correctly on instances because it relies solely on Python's built-in `hasattr` check, which inspects both attributes and methods available to that specific object. If the instance lacks these methods, it raises an ArgumentError.
+[english] That makes much more sense now regarding runtime validation!

@@ -1,0 +1,38 @@
+[english] How can I ensure that a dynamic field's placeholder image is correctly saved to storage when it hasn't been named yet?
+[english] This method handles creating and naming placeholder images. First, it checks if `self.placeholder_image` exists; if so, it determines the file name based on whether the object is an `OnStoragePlaceholderImage` or has raw image data.
+<switch:python>
+[python] def process_placeholder_image(self):
+        """
+        Process the field's placeholder image.
+
+        Ensures the placeholder image has been saved to the same storage class
+        as the field in a top level folder with a name specified by
+        settings.VERSATILEIMAGEFIELD_SETTINGS['placeholder_directory_name']
+
+        This should be called by the VersatileImageFileDescriptor __get__.
+        If self.placeholder_image_name is already set it just returns right away.
+        """
+        if self.placeholder_image_name:
+            return
+
+        placeholder_image_name = None
+        placeholder_image = self.placeholder_image
+        if placeholder_image:
+            if isinstance(placeholder_image, OnStoragePlaceholderImage):
+                name = placeholder_image.path
+            else:
+                name = placeholder_image.image_data.name
+            placeholder_image_name = os.path.join(
+                VERSATILEIMAGEFIELD_PLACEHOLDER_DIRNAME, name
+            )
+            if not self.storage.exists(placeholder_image_name):
+                self.storage.save(
+                    placeholder_image_name,
+                    placeholder_image.image_data
+                )
+        self.placeholder_image_name = placeholder_image_name
+<switch:english>
+[english] If storage does not already have a file at the calculated path, `self.storage.save()` uploads the placeholder image there. Note that this relies heavily on the availability of configuration constants like `VERSATILEIMAGEFIELD_PLACEHOLDER_DIRNAME`.
+[english] What happens if `placeholder_image.image_data` is null or None inside this function?
+[english] If `placeholder_image.image_data` is null, the code will attempt to pass null data during storage. You may want to add a check for its truthiness before calling `self.storage.save()`.
+[english] Thanks! I think that clarifies how it handles missing image data.

@@ -1,0 +1,34 @@
+[english] How do I define a conical or flared geometric shape in a rendering pipeline using custom radius and height functions?
+[english] This function generates mathematical expressions to calculate the radial position (`r_func`) and height (`z_func`) of mesh points as they transition from a starting point into a flare. It constructs these complex formulas by substituting input parameters into placeholder strings.
+<switch:python>
+[python] def radial_flare(script, flare_radius=None, start_radius=None, end_radius=None,
+                 end_height=None):
+    """
+    flare_radius must be >= z2 (height)
+    r2 max = flare_radius + r
+    
+    r2 (num): radius of mesh at end of flare
+    
+    +15 r= 8.8205
+    -15 r= 1.1795
+    
+    z=10, 5 +/-15 - +/-15*0.74535599249992989880305788957709
+    """
+    # TODO: set radius limit, make it so flare continues to expand linearly after radius limit
+    # if(r<=radius_limit, flare, factor*z+constant
+    # TODO: add option to specify radius at height instead of radius
+    effective_radius = '(flare_radius) + (start_radius) - (r)'
+    
+    r_func = 'if(z>0, (flare_radius) + (start_radius) - (effective_radius)*cos(z/(flare_radius)), (r))'
+    z_func = 'if(z>0, (effective_radius)*sin(z/(flare_radius)), z)'
+    
+    r_func = r_func.replace('effective_radius', str(effective_radius)).replace('start_radius', str(start_radius)).replace('flare_radius', str(flare_radius))
+    z_func = z_func.replace('effective_radius', str(effective_radius)).replace('start_radius', str(start_radius)).replace('flare_radius', str(flare_radius))
+    
+    function_cyl_co(script=script, r_func=r_func, z_func=z_func)
+    return None
+<switch:english>
+[english] The current implementation relies heavily on string manipulation, meaning it is not dynamically calculating values but rather building the required functional definitions for an external geometry function (`function_cyl_co`).
+[english] What happens if `flare_radius` or `start_radius` are set to zero?
+[english] If either `flare_radius` or `start_radius` is zero, the formulas will simplify drastically but might lead to division by zero errors within the external geometry function (`function_cyl_co`) since those values act as divisors in the trigonometric functions.
+[english] Should I consider handling edge case parameter validation before building these strings?

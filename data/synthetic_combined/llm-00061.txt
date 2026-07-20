@@ -1,0 +1,49 @@
+[english] I have scattered simulation results, but I need a single structured table that indexes the firing rates by 'Input Current' and 'Reference Time Constant'.
+[english] This function organizes scattered simulation runs into a structured pandas DataFrame. It first defines the axes of the desired table using parameter ranges found within the trajectory object.
+<switch:python>
+[python] def neuron_postproc(traj, result_list):
+    """Postprocessing, sorts computed firing rates into a table
+
+    :param traj:
+
+        Container for results and parameters
+
+    :param result_list:
+
+        List of tuples, where first entry is the run index and second is the actual
+        result of the corresponding run.
+
+    :return:
+    """
+
+    # Let's create a pandas DataFrame to sort the computed firing rate according to the
+    # parameters. We could have also used a 2D numpy array.
+    # But a pandas DataFrame has the advantage that we can index into directly with
+    # the parameter values without translating these into integer indices.
+    I_range = traj.par.neuron.f_get('I').f_get_range()
+    ref_range = traj.par.neuron.f_get('tau_ref').f_get_range()
+
+    I_index = sorted(set(I_range))
+    ref_index = sorted(set(ref_range))
+    rates_frame = pd.DataFrame(columns=ref_index, index=I_index)
+    # This frame is basically a two dimensional table that we can index with our
+    # parameters
+
+    # Now iterate over the results. The result list is a list of tuples, with the
+    # run index at first position and our result at the second
+    for result_tuple in result_list:
+        run_idx = result_tuple[0]
+        firing_rates = result_tuple[1]
+        I_val = I_range[run_idx]
+        ref_val = ref_range[run_idx]
+        rates_frame.loc[I_val, ref_val] = firing_rates # Put the firing rate into the
+        # data frame
+
+    # Finally we going to store our new firing rate table into the trajectory
+    traj.f_add_result('summary.firing_rates', rates_frame=rates_frame,
+                      comment='Contains a pandas data frame with all firing rates.')
+<switch:english>
+[english] The code uses `rates_frame.loc` to efficiently map results, which is much cleaner than managing complex integer indices for parameters like current or time constants.
+[english] If a specific combination of input and reference values wasn't tested in the simulations, what value will appear in that cell?
+[english] Pandas handles missing data automatically; if no firing rate is assigned to an index pair, the resulting DataFrame will contain NaN (Not a Number).
+[english] That clarifies how pandas fills in gaps! Thanks for the explanation.

@@ -1,0 +1,21 @@
+[english] How do I execute a block of JavaScript in my browser driver while passing specific Python objects as arguments?
+[english] This approach modifies the provided arguments first, specifically transforming any object that inherits from `Base` into its underlying `.base` attribute before execution.
+<switch:python>
+[python] def execute_script(self, script, *args):
+        """
+        Execute the given script, not returning a result. This is useful for scripts that return
+        complex objects, such as jQuery statements. ``execute_script`` should be used over
+        :meth:`evaluate_script` whenever possible.
+
+        Args:
+            script (str): A string of JavaScript to execute.
+            *args: Variable length argument list to pass to the executed JavaScript string.
+        """
+
+        args = [arg.base if isinstance(arg, Base) else arg for arg in args]
+        self.driver.execute_script(script, *args)
+<switch:english>
+[english] The function ensures type safety by unwrapping custom objects before passing them to the browser's execution engine.
+[english] If I call this function with zero arguments, does it still work correctly?
+[english] Yes, if no variable is passed in `*args`, the list comprehension simply returns an empty list, and the script executes without parameters.
+[english] Got it, that makes sense for handling argument types.

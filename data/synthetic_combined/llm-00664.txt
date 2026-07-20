@@ -1,0 +1,20 @@
+[english] How do I create a new guest session through this service?
+[english] This method handles generating a new guest session ID by first determining the correct API path using an internal helper.
+<switch:python>
+[python] def guest_session_new(self, **kwargs):
+        """
+        Generate a guest session id.
+
+        Returns:
+            A dict respresentation of the JSON returned from the API.
+        """
+        path = self._get_path('guest_session_new')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] After fetching the response from the server, it uses `self._set_attrs_to_values` to populate attributes before returning the final data.
+[english] What happens if the request fails and returns a non-200 status code?
+[english] The method retrieves the raw API response. If an API call like this fails, you should check `response` for error keys or specifically handle HTTP exceptions that may be raised within `self._GET`.
+[english] That makes sense!

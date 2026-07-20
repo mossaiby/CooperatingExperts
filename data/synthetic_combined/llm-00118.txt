@@ -1,0 +1,38 @@
+[english] How does this function handle lines that signify the start of an IPython 'cell magic' command?
+[english] This approach identifies cell magic by checking lines starting with `%%` and proceeds to parse the name of the magic.
+<switch:python>
+[python] def _handle_cell_magic(self, lines):
+        """Process lines when they start with %%, which marks cell magics.
+        """
+        self.processing_cell_magic = True
+        first, _, body = lines.partition('\n')
+        magic_name, _, line = first.partition(' ')
+        magic_name = magic_name.lstrip(ESC_MAGIC)
+        # We store the body of the cell and create a call to a method that
+        # will use this stored value. This is ugly, but it's a first cut to
+        # get it all working, as right now changing the return API of our
+        # methods would require major refactoring.
+        self.cell_magic_parts = [body]
+        tpl = 'get_ipython()._run_cached_cell_magic(%r, %r)'
+        tlines = tpl % (magic_name, line)
+        self._store(tlines)
+        self._store(lines, self._buffer_raw, 'source_raw')
+        # We can actually choose whether to allow for single blank lines here
+        # during input for clients that use cell mode to decide when to stop
+        # pushing input (currently only the Qt console).
+        # My first implementation did that, and then I realized it wasn't
+        # consistent with the terminal behavior, so I've reverted it to one
+        # line.  But I'm leaving it here so we can easily test both behaviors,
+        # I kind of liked having full blank lines allowed in the cell magics...
+        #self._is_complete = last_two_blanks(lines)
+        self._is_complete = last_blank(lines)
+        return self._is_complete
+<switch:english>
+[english] The function uses string partitioning to extract both the magic name and its arguments, then stores raw source information.
+[english] If `ESC_MAGIC` is defined incorrectly or if multiple spaces exist between 'magic\' and the name, could the extraction fail?
+[english] There's a risk that extra whitespace might corrupt the magic_name. For instance, if `lines` starts with `%%  mycode`, stripping only `ESC_MAGIC` won't remove leading space.
+
+potentially,
+t
+magic_name = magic_name.lstrip(ESC_MAGIC).lstrip(' ')
+[english] That helps clarify how the cell magics are processed.

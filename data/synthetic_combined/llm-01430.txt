@@ -1,0 +1,55 @@
+[english] How can I reliably open a LAS file, whether it's provided as a filename or preloaded in memory?
+[english] This function acts as a robust factory for creating a LasReader object. It first checks if you provided a path or raw bytes, and handles the necessary stream setup before initializing the reader.
+<switch:python>
+[python] def open_las(source, closefd=True):
+    """ Opens and reads the header of the las content in the source
+
+        >>> with open_las('pylastests/simple.las') as f:
+        ...     print(f.header.point_format_id)
+        3
+
+
+        >>> f = open('pylastests/simple.las', mode='rb')
+        >>> with open_las(f, closefd=False) as flas:
+        ...     print(flas.header)
+        <LasHeader(1.2)>
+        >>> f.closed
+        False
+
+        >>> f = open('pylastests/simple.las', mode='rb')
+        >>> with open_las(f) as flas:
+        ...    las = flas.read()
+        >>> f.closed
+        True
+
+    Parameters
+    ----------
+    source : str or io.BytesIO
+        if source is a str it must be a filename
+        a stream if a file object with the methods read, seek, tell
+
+    closefd: bool
+        Whether the stream/file object shall be closed, this only work
+        when using open_las in a with statement. An exception is raised if
+        closefd is specified and the source is a filename
+
+
+    Returns
+    -------
+    pylas.lasreader.LasReader
+
+    """
+    if isinstance(source, str):
+        stream = open(source, mode="rb")
+        if not closefd:
+            raise ValueError("Cannot use closefd with filename")
+    elif isinstance(source, bytes):
+        stream = io.BytesIO(source)
+    else:
+        stream = source
+    return LasReader(stream, closefd=closefd)
+<switch:english>
+[english] The function intelligently manages the underlying stream input by determining if it needs to open a file or wrap existing data like bytes.
+[english] If I pass an already opened file object as 'source', does setting `closefd=True` attempt to close that original file?
+[english] No, if you pass a pre-opened file handle directly, the function assumes it won't manage closing it unless explicitly told otherwise by the LasReader wrapper.
+[english] That makes perfect sense.

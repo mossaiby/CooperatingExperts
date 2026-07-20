@@ -1,0 +1,38 @@
+[english] I need a Python implementation for a Variational Autoencoder that specifically defines the topic distribution posterior layer for an LDA model.
+[english] This function constructs and returns a custom wrapper based on TensorFlow. It builds an encoder network designed to map input features into a concentration parameter for Dirichlet distributions over topics.
+<switch:python>
+[python] def make_lda_variational(activation, num_topics, layer_sizes):
+  """Creates the variational distribution for LDA.
+
+  Args:
+    activation: Activation function to use.
+    num_topics: The number of topics.
+    layer_sizes: The number of hidden units per layer in the encoder.
+
+  Returns:
+    lda_variational: A function that takes a bag-of-words Tensor as
+      input and returns a distribution over topics.
+  """
+  encoder_net = tf.keras.Sequential()
+  for num_hidden_units in layer_sizes:
+    encoder_net.add(
+        tf.keras.layers.Dense(
+            num_hidden_units,
+            activation=activation,
+            kernel_initializer=tf.compat.v1.glorot_normal_initializer()))
+  encoder_net.add(
+      tf.keras.layers.Dense(
+          num_topics,
+          activation=tf.nn.softplus,
+          kernel_initializer=tf.compat.v1.glorot_normal_initializer()))
+
+  def lda_variational(bag_of_words):
+    concentration = _clip_dirichlet_parameters(encoder_net(bag_of_words))
+    return ed.Dirichlet(concentration=concentration, name="topics_posterior")
+
+  return lda_variational
+<switch:english>
+[english] The inner `lda_variational` closure leverages the trained weights to generate parameters that are then passed directly into a Dirichlet distribution object, typical for implementing variational inference.
+[english] If I change the activation function in the encoder, does it affect how the resulting topic distribution is interpreted?
+[english] The activation only changes the non-linearity of the feature extraction. If you use activations that can produce negative outputs, you must ensure `_clip_dirichlet_parameters` handles those invalid concentration values.
+[english] I will check my clipping logic to ensure compatibility.

@@ -1,0 +1,78 @@
+[english] How can I iterate over structured data parts while grouping them into words according to alignment rules and optionally including padding?
+[english] This method traverses sequential parts (`self.parts`) and groups them into 'words' of fixed width, managing boundary conditions by checking bit addresses against `wordWidth`.
+<switch:python>
+[python] def walkWords(self, showPadding: bool=False):
+        """
+        Walk enumerated words in this frame
+
+        :attention: not all indexes has to be present, only words
+            with items will be generated when not showPadding
+        :param showPadding: padding TransParts are also present
+        :return: generator of tuples (wordIndex, list of TransParts
+            in this word)
+        """
+        wIndex = 0
+        lastEnd = self.startBitAddr
+        parts = []
+        for p in self.parts:
+            end = p.startOfPart
+            if showPadding and end != lastEnd:
+                # insert padding
+                while end != lastEnd:
+                    assert end >= lastEnd, (end, lastEnd)
+                    endOfWord = ceil(
+                        (lastEnd + 1) / self.wordWidth) * self.wordWidth
+                    endOfPadding = min(endOfWord, end)
+                    _p = TransPart(self, None, lastEnd, endOfPadding, 0)
+                    parts.append(_p)
+
+                    if endOfPadding >= endOfWord:
+                        yield (wIndex, parts)
+                        wIndex += 1
+                        parts = []
+
+                    lastEnd = endOfPadding
+
+            if self._wordIndx(lastEnd) != self._wordIndx(p.startOfPart):
+                yield (wIndex, parts)
+
+                wIndex += 1
+                parts = []
+                lastEnd = p.endOfPart
+
+            parts.append(p)
+            lastEnd = p.endOfPart
+            if lastEnd % self.wordWidth == 0:
+                yield (wIndex, parts)
+
+                wIndex += 1
+                parts = []
+
+        if showPadding and (parts
+                            or lastEnd != self.endBitAddr
+                            or lastEnd % self.wordWidth != 0):
+            # align end to end of last word
+            end = ceil(self.endBitAddr / self.wordWidth) * self.wordWidth
+            while end != lastEnd:
+                assert end >= lastEnd, (end, lastEnd)
+                endOfWord = ((lastEnd // self.wordWidth) + 1) * self.wordWidth
+                endOfPadding = min(endOfWord, end)
+                _p = TransPart(self, None, lastEnd, endOfPadding, 0)
+                _p.parent = self
+                parts.append(_p)
+
+                if endOfPadding >= endOfWord:
+                    yield (wIndex, parts)
+                    wIndex += 1
+                    parts = []
+
+                lastEnd = endOfPadding
+
+            if parts:
+                # in the case end of frame is not aligned to end of word
+                yield (wIndex, parts)
+<switch:english>
+[english] It ensures that data either aligns perfectly to word boundaries or explicitly fills gaps using zero-value padding TransParts when `showPadding` is True.
+[english] If I set `showPadding=False`, how does the function handle parts that would normally be padded to meet a word alignment?
+[english] When `showPadding` is False, the logic relies on checking if the current part's starting address (`p.startOfPart`) falls within the required word boundary structure; otherwise, it yields the accumulated parts as the next full word.
+[english] This implementation seems robust for serialization.

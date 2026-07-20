@@ -1,0 +1,21 @@
+[english] I need a way to calculate the log loss between my true binary labels and the predicted probabilities.
+[english] This wrapper function simplifies the process of calculating log loss by simply calling the underlying implementation using the provided inputs. It handles various input formats like lists or NumPy arrays for robustness.
+<switch:python>
+[python] def sk_log_loss(y_true: Union[List[List[float]], List[List[int]], np.ndarray],
+                y_predicted: Union[List[List[float]], List[List[int]], np.ndarray]) -> float:
+    """
+    Calculates log loss.
+
+    Args:
+        y_true: list or array of true values
+        y_predicted: list or array of predicted values
+
+    Returns:
+        Log loss
+    """
+    return log_loss(y_true, y_predicted)
+<switch:english>
+[english] Since this function delegates the calculation to `log_loss`, ensure that the library it relies on is properly installed and accessible in your environment. The returned float represents the cross-entropy loss.
+[english] If I pass a non-binary prediction, will this still calculate log loss correctly?
+[english] Log loss traditionally requires predictions to be probabilities (between 0 and 1) for binary classification; passing raw scores might lead to mathematically incorrect results unless the underlying implementation handles sigmoid internally. Consider using `sk_learn.log_loss` directly if you are unsure of the wrapper's behavior.
+[english] Got it, thanks for clarifying how the input formats affect the calculation.

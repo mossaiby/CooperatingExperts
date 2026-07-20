@@ -1,0 +1,33 @@
+[english] How can I configure a database query object to handle both specific field insertions and conditional updates for a list of objects?
+[english] This method sets up the required fields for your query by separating data intended for an initial insert from fields that should only be used during an update.
+<switch:python>
+[python] def values(self, objs: List, insert_fields: List, update_fields: List=[]):
+        """Sets the values to be used in this query.
+
+        Insert fields are fields that are definitely
+        going to be inserted, and if an existing row
+        is found, are going to be overwritten with the
+        specified value.
+
+        Update fields are fields that should be overwritten
+        in case an update takes place rather than an insert.
+        If we're dealing with a INSERT, these will not be used.
+
+        Arguments:
+            objs:
+                The objects to apply this query to.
+
+            insert_fields:
+                The fields to use in the INSERT statement
+
+            update_fields:
+                The fields to only use in the UPDATE statement.
+        """
+
+        self.insert_values(insert_fields, objs, raw=False)
+        self.update_fields = update_fields
+<switch:english>
+[english] The method first populates insert values using `self.insert_values` and then explicitly assigns the update fields to an instance attribute for later use.
+[english] If this object is used for a pure INSERT operation, will those defined update fields ever be accessed?
+[english] No; according to the docstring, if the query is a pure insert, `update_fields` are specifically ignored by the underlying logic. They are only utilized when an update takes place.
+[english] This clarifies how the upsert logic handles different operation types.

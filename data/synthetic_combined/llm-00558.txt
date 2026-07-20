@@ -1,0 +1,22 @@
+[english] I need a way to efficiently insert multiple transcript records into our database in a single operation.
+[english] To save on database overhead and improve speed, we use `insert_many` instead of looping through the objects one by one. This method performs a bulk write operation on the collection.
+<switch:python>
+[python] def load_transcript_bulk(self, transcript_objs):
+        """Load a bulk of transcript objects to the database
+
+        Arguments:
+            transcript_objs(iterable(scout.models.hgnc_transcript))
+
+        """
+        LOG.info("Loading transcript bulk")
+        try:
+            result = self.transcript_collection.insert_many(transcript_objs)
+        except (DuplicateKeyError, BulkWriteError) as err:
+            raise IntegrityError(err)
+        
+        return result
+<switch:english>
+[english] The function wraps common MongoDB write errors like duplicate keys or bulk failures into a custom IntegrityError for consistent error handling throughout your application.
+[english] If some transcripts in the batch are duplicates and others are new, will this handle it gracefully?
+[english] By default, `insert_many` is ordered, meaning if a DuplicateKeyError occurs during one insertion, the entire bulk operation fails. To allow partial success, you would need to pass an 'ordered=False' option.
+[english] Thanks for clarifying that behavior.

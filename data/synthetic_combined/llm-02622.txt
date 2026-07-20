@@ -1,0 +1,26 @@
+[english] I need a way to fetch specific details about a particular media item given its unique identifier.
+[english] This function is built to retrieve data from an internal API using a media ID. It allows you to dynamically influence the response by specifying exactly which fields you want returned.
+<switch:python>
+[python] def get_info(self, media_id, fields=None, schema=None):
+        """
+            Returns the data for a certain media item.
+
+            :param media_id: id that identifies the media item to be accessed.
+            :param fields: list of the media"s field to be returned. By default the
+            API returns some fields, but others are not returned unless they are
+            explicity asked for. I have no real documentation on the fields, but
+            they all seem to start with the "media." prefix (e.g. media.name,
+            media.stream_data).
+            :param schema: validation schema to use
+        """
+        params = {"media_id": media_id}
+
+        if fields:
+            params["fields"] = ",".join(fields)
+
+        return self._api_call("info", params, schema=schema)
+<switch:english>
+[english] Be mindful that if you provide the 'fields' list, it must be formatted using specific prefixes like 'media.' for the API to recognize them correctly.
+[english] If I pass an empty list instead of None for the `fields` argument, will it behave differently than if I omit the parameter entirely?
+[english] Passing an empty list will result in the `params` dictionary not containing a 'fields' key, causing the function to rely solely on the API's default behavior.
+[english] Got it. Thanks for walking me through that.

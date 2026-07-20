@@ -1,0 +1,20 @@
+[english] How do I safely queue a segment fetch operation after ensuring the download pool is still open?
+[english] This method handles adding a new task to the processing pipeline while strictly checking if the system is shut down. It submits the actual fetching logic as an asynchronous task before queuing the result.
+<switch:python>
+[python] def put(self, segment):
+        """Adds a segment to the download pool and write queue."""
+        if self.closed:
+            return
+
+        if segment is not None:
+            future = self.executor.submit(self.fetch, segment,
+                                          retries=self.retries)
+        else:
+            future = None
+
+        self.queue(self.futures, (segment, future))
+<switch:english>
+[english] The function ensures that if a valid segment is provided, the work is offloaded to an executor thread while still registering it for later queue handling.
+[english] If `put` is called rapidly with many segments, how does this method prevent resource starvation?
+[english] The asynchronous nature of `self.executor.submit` handles rapid calls by submitting tasks quickly without blocking the main thread, though you should consider a rate limiter if the underlying executor capacity is an issue.
+[english] Thanks for clarifying that!

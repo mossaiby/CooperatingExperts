@@ -1,0 +1,46 @@
+[english] I need a tool to automatically detect outdated Python dependencies in my `requirements.txt` files, suggest upgrades from PyPI, and apply those changes.
+[english] This function acts as the CLI entry point for package management. It systematically finds requirements files, identifies packages needing updates against the current environment or index, and provides an interactive way to proceed before finally performing the upgrade and updating your dependency specifications.
+<switch:python>
+[python] def main():
+    """ Main CLI entrypoint. """
+    options = get_options()
+    Windows.enable(auto_colors=True, reset_atexit=True)
+
+    try:
+        # maybe check if virtualenv is not activated
+        check_for_virtualenv(options)
+
+        # 1. detect requirements files
+        filenames = RequirementsDetector(options.get('<requirements_file>')).get_filenames()
+        if filenames:
+            print(Color('{{autoyellow}}Found valid requirements file(s):{{/autoyellow}} '
+                        '{{autocyan}}\n{}{{/autocyan}}'.format('\n'.join(filenames))))
+        else:  # pragma: nocover
+            print(Color('{autoyellow}No requirements files found in current directory. CD into your project '
+                        'or manually specify requirements files as arguments.{/autoyellow}'))
+            return
+        # 2. detect all packages inside requirements
+        packages = PackagesDetector(filenames).get_packages()
+
+        # 3. query pypi API, see which package has a newer version vs the one in requirements (or current env)
+        packages_status_map = PackagesStatusDetector(
+            packages, options.get('--use-default-index')).detect_available_upgrades(options)
+
+        # 4. [optionally], show interactive screen when user can choose which packages to upgrade
+        selected_packages = PackageInteractiveSelector(packages_status_map, options).get_packages()
+
+        # 5. having the list of packages, do the actual upgrade and replace the version inside all filenames
+        upgraded_packages = PackagesUpgrader(selected_packages, filenames, options).do_upgrade()
+
+        print(Color('{{autogreen}}Successfully upgraded (and updated requirements) for the following packages: '
+                    '{}{{/autogreen}}'.format(','.join([package['name'] for package in upgraded_packages]))))
+        if options['--dry-run']:
+            print(Color('{automagenta}Actually, no, because this was a simulation using --dry-run{/automagenta}'))
+
+    except KeyboardInterrupt:  # pragma: nocover
+        print(Color('\n{autored}Upgrade interrupted.{/autored}'))
+<switch:english>
+[english] The logic handles version replacement within filenames directly after a successful upgrade, which ensures consistency between the installed package and the listed requirement. Remember that this process relies heavily on accurate API responses from PyPI for detecting new versions.
+[english] What happens if multiple requirements files depend on conflicting packages? Does the function handle resolution?
+[english] The current implementation lists all detected upgrade options before resolving them, but it doesn't explicitly perform conflict resolution during step 5. Conflicts would need to be handled by `PackagesUpgrader` implementing dependency constraint checks.
+[english] Got it! That makes sense for a robust tooling system.

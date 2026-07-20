@@ -1,0 +1,22 @@
+[english] How can I programmatically truncate overly long strings in data rows and headers so they fit standard screen widths?
+[english] This function addresses display issues by limiting overly long content for tabular views. It iterates over all provided data rows and column headers, using a utility to constrain their length based on a maximum width.
+<switch:python>
+[python] def truncate_string(data, headers, max_field_width=None, **_):
+    """Truncate very long strings. Only needed for tabular
+    representation, because trying to tabulate very long data
+    is problematic in terms of performance, and does not make any
+    sense visually.
+
+    :param iterable data: An :term:`iterable` (e.g. list) of rows.
+    :param iterable headers: The column headers.
+    :param int max_field_width: Width to truncate field for display
+    :return: The processed data and headers.
+    :rtype: tuple
+    """
+    return (([utils.truncate_string(v, max_field_width) for v in row] for row in data),
+            [utils.truncate_string(h, max_field_width) for h in headers])
+<switch:english>
+[english] The function uses generator expressions to process elements efficiently without creating full copies of the original data input. Note that the return value is an iterable tuple rather than materialized lists.
+[english] What happens internally if I call this function and don't specify a value for `max_field_width`?
+[english] If you omit the parameter, the underlying utility method (`utils.truncate_string`) will handle truncation based on its default settings or return the string unchanged if no limit is set.
+[english] This makes sense, thanks for breaking down how it handles parameters.

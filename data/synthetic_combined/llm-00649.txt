@@ -1,0 +1,15 @@
+[english] I need a way to safely remove an existing breakpoint from my script by referencing its unique number.
+[english] This function first attempts to locate and retrieve the specified breakpoint using `bpnum`. If the retrieval is successful, it then proceeds with calling the actual deletion method.
+<switch:python>
+[python] def delete_breakpoint_by_number(self, bpnum):
+        "Remove a breakpoint given its breakpoint number."
+        success, msg, bp = self.get_breakpoint(bpnum)
+        if not success:
+            return False, msg
+        self.delete_breakpoint(bp)
+        return (True, '')
+<switch:english>
+[english] The code clearly handles cases where a matching breakpoint cannot be found by immediately returning False if the initial lookup fails.
+[english] What information can I expect back if the input number `bpnum` refers to a breakpoint that doesn't exist?
+[english] If the breakpoint is not found, the function returns False and includes the error message provided by the internal search mechanism: (False, msg).
+[english] That makes sense; thanks for clarifying how it handles invalid inputs.

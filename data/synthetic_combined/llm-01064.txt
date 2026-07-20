@@ -1,0 +1,26 @@
+[english] I have prediction probability vectors and I need a function that converts them into one-hot encoded arrays based on a confidence threshold.
+[english] This function implements a two-step process. First, it uses `proba2labels` to map the raw probabilities in `proba` to actual class labels using your specified `confident_threshold`. Then, it takes these determined labels and converts them into one-hot vectors via `labels2onehot`, referencing the provided `classes` array.
+<switch:python>
+[python] def proba2onehot(proba: [list, np.ndarray], confident_threshold: float, classes:  [list, np.ndarray]) -> np.ndarray:
+    """
+    Convert vectors of probabilities to one-hot representations using confident threshold
+
+    Args:
+        proba: samples where each sample is a vector of probabilities to belong with given classes
+        confident_threshold: boundary of probability to belong with a class
+        classes: array of classes' names
+
+    Returns:
+        2d array with one-hot representation of given samples
+    """
+    return labels2onehot(proba2labels(proba, confident_threshold, classes), classes)
+<switch:english>
+[english] The function effectively pipelines two helper functions together to ensure that each probability vector is reliably converted into a consistent 2D one-hot representation using the defined classes. This approach simplifies the conversion into a clean final output.
+[english] What happens if multiple probabilities in a single sample are above the `confident_threshold` and are tied for the maximum?
+[english] The behavior depends on how the internal `proba2labels` helper function handles ties, but typically it uses an argmax approach to select a single index or class name.
+<switch:python>
+[python] # Example conceptual flow:
+# If two probabilities were 0.5 and 0.5, proba2labels would return one selected label.
+# The rest of the code then converts that label into a 1-hot vector.
+<switch:english>
+[english] That makes perfect sense, thanks for clarifying how it handles cases.

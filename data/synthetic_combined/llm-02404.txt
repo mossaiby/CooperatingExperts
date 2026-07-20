@@ -1,0 +1,81 @@
+[english] How does this function handle storing complex sparse matrix data for various parameter types?
+[english] This method determines if the stored data is a supported sparse matrix type by checking `self._is_supported_matrix`. If it's not, it uses standard parent storage; otherwise, it serializes the matrix into named parts.
+<switch:python>
+[python] def _store(self):
+        """Creates a storage dictionary for the storage service.
+
+        If the data is not a supported sparse matrix, the
+        :func:`~pypet.parameter.ArrayParmater._store` method of the parent class is called.
+
+        Otherwise the matrix is split into parts with
+        :func:`~pypet.parameter.SparseParameter._serialize_matrix` and these are named
+        'data__spsp__XXXX' where 'XXXX' is a particular property of the matrix.
+
+        The exploration range is handled similar as in the parent class. Yet, the matrices
+        are split into the relevant parts and each part is stored as
+        'xspm__spsp__XXXX__spsp__XXXXXXXX` where the first 'XXXX' refer to the property and
+        the latter 'XXXXXXX' to the sparse matrix index.
+
+        The :class:`~pypet.parameter.ObjectTable` `explored_data__spsp__` stores the order
+        of the matrices and whether the corresponding matrix is dia or not.
+
+        """
+        if not self._is_supported_matrix(self._data):
+            return super(SparseParameter, self)._store()
+        else:
+            store_dict = {}
+            data_list, name_list, hash_tuple = self._serialize_matrix(self._data)
+            rename_list = ['data%s%s' % (SparseParameter.IDENTIFIER, name)
+                           for name in name_list]
+
+            is_dia = int(len(rename_list) == 4)
+            store_dict['data%sis_dia' % SparseParameter.IDENTIFIER] = is_dia
+
+            for idx, name in enumerate(rename_list):
+                store_dict[name] = data_list[idx]
+
+            if self.f_has_range():
+                # # Supports smart storage by hashing
+                smart_dict = {}
+
+                store_dict['explored_data' + SparseParameter.IDENTIFIER] = \
+                    ObjectTable(columns=['idx', 'is_dia'],
+                                index=list(range(len(self))))
+
+                count = 0
+                for idx, elem in enumerate(self._explored_range):
+
+                    data_list, name_list, hash_tuple = self._serialize_matrix(elem)
+
+                    # Use the hash_tuple as a key for the smart_dict
+                    if hash_tuple in smart_dict:
+                        name_idx = smart_dict[hash_tuple]
+                        add = False
+                    else:
+                        name_idx = count
+                        add = True
+
+                    is_dia = int(len(name_list) == 4)
+                    rename_list = self._build_names(name_idx, is_dia)
+
+                    store_dict['explored_data' + SparseParameter.IDENTIFIER]['idx'][idx] = name_idx
+
+                    store_dict['explored_data' + SparseParameter.IDENTIFIER]['is_dia'][
+                        idx] = is_dia
+
+                    if add:
+
+                        for irun, name in enumerate(rename_list):
+                            store_dict[name] = data_list[irun]
+
+                        smart_dict[hash_tuple] = name_idx
+                        count += 1
+
+            self._locked = True
+
+            return store_dict
+<switch:english>
+[english] The function cleverly manages exploration ranges using hashes to ensure that duplicate matrices encountered during range checks are only stored once in the `smart_dict`.
+[english] If a sparse matrix has already been seen, how does the code efficiently retrieve and substitute its data during exploration?
+[english] When processing a new element from `self._explored_range`, it first calculates the `hash_tuple`. If this hash exists in `smart_dict`, it retrieves the existing `name_idx` to reuse the previously stored matrix instead of creating redundant entries.
+[english] ¿Are there any performance considerations when dealing with a very large number of unique matrix hashes?

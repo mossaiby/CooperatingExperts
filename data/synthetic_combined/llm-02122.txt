@@ -1,0 +1,33 @@
+[english] I need a way to safely insert a single row of data into my target database table, handling errors gracefully or immediately if required.
+[english] This method loads one row at a time after ensuring the connection is initialized. It uses a try-except block to catch potential database or encoding issues.
+<switch:python>
+[python] def put(self, items, panic=True):
+        """
+        Load a single row into the target table.
+
+        :param list items: A list of values in the row corresponding to the
+            fields specified by :code:`self.columns`
+        :param bool panic: If :code:`True`, when an error is encountered it will be
+            raised. Otherwise, the error will be logged and :code:`self.error_count`
+            is incremented.
+        :raises `giraffez.errors.GiraffeEncodeError`: if :code:`panic` is :code:`True` and there
+            are format errors in the row values.
+        :raises `giraffez.errors.GiraffeError`: if table name is not set.
+        :raises `giraffez.TeradataPTError`: if there is a problem
+            connecting to Teradata.
+        """
+        if not self.initiated:
+            self._initiate()
+        try:
+            row_status = self.mload.put_row(self.preprocessor(items))
+            self.applied_count += 1
+        except (TeradataPTError, EncoderError) as error:
+            self.error_count += 1
+            if panic:
+                raise error
+            log.info("BulkLoad", error)
+<switch:english>
+[english] If an error occurs, this function increments `self.error_count`. When panic mode is active, it immediately raises the caught error instead of logging it.
+[english] What happens if I call `put` multiple times successfully before setting up the connection?
+[english] The method first checks `if not self.initiated:` and calls `self._initiate()` automatically, so subsequent successful calls will simply proceed to load the row without re-initializing.
+[english] Got it, that makes sense for handling bulk operations.

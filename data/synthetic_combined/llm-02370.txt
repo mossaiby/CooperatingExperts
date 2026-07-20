@@ -1,0 +1,20 @@
+[english] How do I send an authorized disarm signal to a device using a specific code and partition list?
+[english] This function prepares and sends the disarm command asynchronously. It ensures that the provided hexadecimal code meets a minimum length requirement by padding it with 'F's before constructing the full data packet.
+<switch:python>
+[python] async def disarm(self, code, partition_list):
+        """Send command to disarm."""
+        _LOGGER.info("Sending disarm command.")
+        while len(code) < 16:
+            code += 'F'
+
+        code_bytes = bytearray.fromhex(code)
+
+        data = generate_query(b'\x84' + code_bytes
+                              + partition_bytes(partition_list))
+
+        await self._send_data(data)
+<switch:english>
+[english] The final payload is created by combining fixed headers, the padded code bytes, and partition information before being transmitted via an await call.
+[english] What happens if I pass a disarm code that is already longer than 16 characters?
+[english] If the input `code` is already over 16 characters, the padding loop will be skipped, and the entire string (including those excess characters) will be processed through `fromhex()`. Because this function only checks if the length is less than 16, extra characters are accepted.
+[english] Great, I understand how the validation step works now.

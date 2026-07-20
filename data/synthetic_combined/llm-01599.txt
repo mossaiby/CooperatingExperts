@@ -1,0 +1,28 @@
+[english] How do I retrieve the current conformance status data from the external API using this method?
+[english] This function retrieves information by first building the correct endpoint URL and then executing a GET request against that URL.
+<switch:python>
+[python] def conformance(self):
+        """
+        implements Requirement 5 (/req/core/conformance-op)
+
+        @returns: conformance object
+        """
+
+        url = self._build_url('conformance')
+        LOGGER.debug('Request: {}'.format(url))
+        response = requests.get(url, headers=REQUEST_HEADERS).json()
+        return response
+<switch:english>
+[english] The code uses `requests.get()` to fetch the data, but it relies on the assumption that the server successfully returns valid JSON in its response body.
+[english] If the API service is down or returns an error status (like 500), how does this specific implementation handle those failures?
+[english] The current code doesn't explicitly catch HTTP errors. It's best to wrap the request and check for bad status codes:
+<switch:python>
+[python] try:
+    response = requests.get(url, headers=REQUEST_HEADERS)
+    response.raise_for_status()
+    return response.json()
+xcept requests.exceptions.RequestException as e:
+    LOGGER.error(f"Failed to fetch conformance data: {e}")
+    return None
+<switch:english>
+[english] Perfect, I will add that error handling logic now.

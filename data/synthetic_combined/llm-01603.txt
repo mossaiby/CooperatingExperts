@@ -1,0 +1,21 @@
+[english] How can I reliably abort all currently active data transfers managed by my system?
+[english] To stop every operation, we iterate through the list of tracked transfer coordinators to ensure that each one receives a cancellation instruction.
+<switch:python>
+[python] def cancel(self, msg='', exc_type=CancelledError):
+        """Cancels all inprogress transfers
+
+        This cancels the inprogress transfers by calling cancel() on all
+        tracked transfer coordinators.
+
+        :param msg: The message to pass on to each transfer coordinator that
+            gets cancelled.
+
+        :param exc_type: The type of exception to set for the cancellation
+        """
+        for transfer_coordinator in self.tracked_transfer_coordinators:
+            transfer_coordinator.cancel(msg, exc_type)
+<switch:english>
+[english] The code loops through all `self.tracked_transfer_coordinators`, calling their respective `.cancel()` method with the provided message and exception type.
+[english] What happens if one of the transfer coordinators is unresponsive or crashes when the cancel message is sent?
+[english] Currently, a failure in one coordinator will stop the cancellation for all subsequent ones. To make this robust, you should wrap the call in a try/except block:
+[english] I understand; handling those exceptions is a critical detail for cleanup.

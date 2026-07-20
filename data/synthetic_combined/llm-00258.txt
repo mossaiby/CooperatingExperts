@@ -1,0 +1,15 @@
+[english] I need a function that creates a descriptive label for an instruction box, including both its capitalized name and any associated parameters.
+[english] This function begins by capitalizing the `instruction`'s name to form the base label. It then checks for specific drawing parameters using `TextDrawing` and conditionally appends them inside parentheses if they are found.
+<switch:python>
+[python] def label_for_box(instruction):
+        """ Creates the label for a box."""
+        label = instruction.name.capitalize()
+        params = TextDrawing.params_for_label(instruction)
+        if params:
+            label += "(%s)" % ','.join(params)
+        return label
+<switch:english>
+[english] The final string is constructed based on whether any dynamic parameters were supplied, ensuring a cleaner format when no extra data exists.
+[english] If the list returned by TextDrawing contains numerical values instead of strings, will this code execute correctly?
+[english] No. Since `','.join(params)` expects an iterable of strings, passing numbers would raise a TypeError. You should ensure parameters are explicitly converted to strings before joining.
+[english] That's very helpful; I appreciate the clarification on the data types.

@@ -1,0 +1,46 @@
+[english] How do I set up a command-line interface that needs specific filtering logic for fetching Git repository data?
+[english] This function sets up the argument parsing structure. It utilizes `BackendCommandArgumentParser` to define various flags, mandatory inputs, and mutual exclusion groups required for processing git logs.
+<switch:python>
+[python] def setup_cmd_parser(cls):
+        """Returns the Git argument parser."""
+
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              from_date=True,
+                                              to_date=True)
+
+        # Optional arguments
+        group = parser.parser.add_argument_group('Git arguments')
+        group.add_argument('--branches', dest='branches',
+                           nargs='+', type=str, default=None,
+                           help="Fetch commits only from these branches")
+
+        # Mutual exclusive parameters
+        exgroup = group.add_mutually_exclusive_group()
+        exgroup.add_argument('--git-path', dest='git_path',
+                             help="Path where the Git repository will be cloned")
+        exgroup.add_argument('--git-log', dest='git_log',
+                             help="Path to the Git log file")
+
+        exgroup_fetch = group.add_mutually_exclusive_group()
+        exgroup_fetch.add_argument('--latest-items', dest='latest_items',
+                                   action='store_true',
+                                   help="Fetch latest commits added to the repository")
+        exgroup_fetch.add_argument('--no-update', dest='no_update',
+                                   action='store_true',
+                                   help="Fetch all commits without updating the repository")
+
+        # Required arguments
+        parser.parser.add_argument('uri',
+                                   help="URI of the Git log repository")
+
+        return parser
+<switch:english>
+[english] The parser enforces constraints like requiring either a `--git-path` or a `--git-log`, ensuring that related Git fetching operations are logically consistent.
+[english] If I want to allow two specific types of fetch options (like latest items and no update) but prevent them from being used together, how would I define that in the parser?
+[english] You can use a new mutually exclusive group. For example:
+<switch:python>
+[python] group_fetch = group.add_mutually_exclusive_group()
+group_fetch.add_argument('--latest-items', action='store_true')
+group_fetch.add_argument('--no-update', action='store_true')
+<switch:english>
+[english] I see, so I need to group them first before adding the options.

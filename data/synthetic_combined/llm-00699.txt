@@ -1,0 +1,18 @@
+[english] I need a function that calculates the robust standard error using the Huber (H15) method to handle outliers in my data.
+[english] This function uses an external H15 standard deviation calculation and then normalizes it by the square root of the count of finite numbers, providing a robust estimate of dispersion scaled for sample size.
+<switch:python>
+[python] def H15_se(x):
+    """
+    Calculate the Huber (H15) Robust standard deviation of x.
+
+    For details, see:
+        http://www.cscjp.co.jp/fera/document/ANALYSTVol114Decpgs1693-97_1989.pdf
+        http://www.rsc.org/images/robust-statistics-technical-brief-6_tcm18-214850.pdf
+    """
+    sd = H15_std(x)
+    return sd / np.sqrt(sum(np.isfinite(x)))
+<switch:english>
+[english] By dividing by $\sqrt{\text{sum}(\\text{np.isfinite}(x))}$, the code correctly adjusts the robust standard deviation into a reliable standard error while gracefully skipping non-finite entries.
+[english] What happens if the input list only contains NaN or infinity?
+[english] If all elements are non-finite, $\text{sum}(\\text{np.isfinite}(x))$ will be 0. This leads to division by zero in the final step, making it impossible to calculate a meaningful standard error for that data.
+[english] That makes sense; I'll keep that edge case in mind.

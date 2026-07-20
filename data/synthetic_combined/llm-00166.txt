@@ -1,0 +1,37 @@
+[english] How do I correctly transform my 5x5 astrometric covariance matrix from its current coordinate system into a new one defined by spherical coordinates?
+[english] To change the representation of a statistical uncertainty like a covariance matrix, we must use the Jacobian transformation method. This function computes the required transformation and applies it to your original covariance matrix.
+<switch:python>
+[python] def transformCovarianceMatrix(self, phi, theta, covmat):
+        """
+        Transform the astrometric covariance matrix to its representation in the new coordinate system.
+
+        Parameters
+        ----------
+
+        phi       - The longitude-like angle of the position of the source (radians).
+        theta     - The latitude-like angle of the position of the source (radians).
+        covmat    - Covariance matrix (5x5) of the astrometric parameters.
+
+        Returns
+        -------
+
+        covmat_rot - Covariance matrix in its representation in the new coordinate system.
+        """
+
+        c, s = self._getJacobian(phi,theta)
+        jacobian = identity(5)
+        jacobian[0][0]=c
+        jacobian[1][1]=c
+        jacobian[3][3]=c
+        jacobian[4][4]=c
+        jacobian[0][1]=s
+        jacobian[1][0]=-s
+        jacobian[3][4]=s
+        jacobian[4][3]=-s
+
+        return dot( dot(jacobian, covmat), jacobian.T )
+<switch:english>
+[english] The function wraps the covariance with the Jacobian via $J C J^T$ to project the uncertainty onto the new coordinate basis while ensuring the mathematical integrity of the transformed data.
+[english] If $\phi$ and $\theta$ are very similar (e.g., near zero), does this transformation approach still remain numerically stable?
+[english] The transformation remains generally numerically stable because it relies on trigonometric functions $sin(s)$ and $cos(c)$, which handle small angles gracefully without division by zero.
+[english] This detailed explanation helps clarify the math involved in astrometry!

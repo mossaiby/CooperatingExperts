@@ -1,0 +1,24 @@
+[english] How do I programmatically create an XSD complex element definition that lists nested components derived from a model, while only including those relevant to a specific parent component?
+[english] This function constructs an XML schema segment using `xml.etree.ElementTree`. It starts by creating the root `<xs:element>` and then iterates through the provided structure, filtering for related objects before nesting them under sequences.
+<switch:python>
+[python] def build_component(m, c_c):
+    '''
+    Build an xsd complex element out of a C_C, including its packaged S_DT and O_OBJ.
+    '''
+    component = ET.Element('xs:element', name=c_c.name)
+    
+    classes = ET.SubElement(component, 'xs:complexType')
+    classes = ET.SubElement(classes, 'xs:sequence')
+    
+    scope_filter = lambda selected: ooaofooa.is_contained_in(selected, c_c)
+    
+    for o_obj in m.select_many('O_OBJ', scope_filter):
+        cls = build_class(o_obj)
+        classes.append(cls)
+    
+    return component
+<switch:english>
+[english] The core logic relies on `scope_filter`, which ensures that only objects determined to be contained within the target component are processed and added, defining the hierarchy.
+[english] What happens if none of the 'O_OBJ' items pass the scope filter for a given C_C? Does the resulting structure become empty or does it fail?
+[english] If no objects match the `scope_filter`, the function will return an XSD element containing nested structures that are otherwise completely empty (a sequence with no children).
+[english] That makes sense. Thanks for clarifying how the filtering affects the final output.

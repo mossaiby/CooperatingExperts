@@ -1,0 +1,20 @@
+[english] I need a way to trigger a personalized thank you response that also updates an internal score based on whatever custom text is provided.
+[english] This function handles generating a custom 'Thank You' message while supporting dynamic personalization. It checks if specific content `rest` is provided; if so, it uses that content for the reply and interacts with a global karma store before formatting the output.
+<switch:python>
+[python] def zorsupas(client, event, channel, nick, rest):
+    'Zor supas! — !زۆر سوپاس'
+    if rest:
+        rest = rest.strip()
+        Karma.store.change(rest, 1)
+        rcpt = rest
+    else:
+        rcpt = channel
+    return (
+        f'Zor supas {rcpt}, to zor zor barezi! —'
+        ' زۆر سوپاس، تۆ زۆر زۆر به‌ره‌زی'
+    )
+<switch:english>
+[english] The logic relies on the external `Karma` module to update user scores when personalized input is available via `rest`. Otherwise, the message defaults gracefully to the original channel destination.
+[english] What behavior should I expect if I pass an empty string or None into the 'rest' parameter?
+[english] If you pass an empty string or None, the function skips the karma update entirely. It will simply use the `channel` for the reply and return a standard thank you message.
+[english] This makes sense; the logic is quite clear now!

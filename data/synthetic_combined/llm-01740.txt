@@ -1,0 +1,84 @@
+[english] I need a way to mark specific class methods so they can be executed remotely or asynchronously by a distributed system.
+[english] The `replicated` function acts as a decorator that wraps your target method, transforming it into an asynchronous command handler. It manages internal state transitions and communication using structures like `SyncObj` and defines execution flow based on flags like 'sync' or the presence of a 'callback'.
+<switch:python>
+[python] def replicated(*decArgs, **decKwargs):
+    """Replicated decorator. Use it to mark your class members that modifies
+    a class state. Function will be called asynchronously. Function accepts
+    flowing additional parameters (optional):
+        'callback': callback(result, failReason), failReason - `FAIL_REASON <#pysyncobj.FAIL_REASON>`_.
+        'sync': True - to block execution and wait for result, False - async call. If callback is passed,
+            'sync' option is ignored.
+        'timeout': if 'sync' is enabled, and no result is available for 'timeout' seconds -
+            SyncObjException will be raised.
+    These parameters are reserved and should not be used in kwargs of your replicated method.
+
+    :param func: arbitrary class member
+    :type func: function
+    :param ver: (optional) - code version (for zero deployment)
+    :type ver: int
+    """
+    def replicatedImpl(func):
+        def newFunc(self, *args, **kwargs):
+
+            if kwargs.pop('_doApply', False):
+                return func(self, *args, **kwargs)
+            else:
+                if isinstance(self, SyncObj):
+                    applier = self._applyCommand
+                    funcName = self._getFuncName(func.__name__)
+                    funcID = self._methodToID[funcName]
+                elif isinstance(self, SyncObjConsumer):
+                    consumerId = id(self)
+                    funcName = self._syncObj._getFuncName((consumerId, func.__name__))
+                    funcID = self._syncObj._methodToID[(consumerId, funcName)]
+                    applier = self._syncObj._applyCommand
+                else:
+                    raise SyncObjException("Class should be inherited from SyncObj or SyncObjConsumer")
+
+                callback = kwargs.pop('callback', None)
+                if kwargs:
+                    cmd = (funcID, args, kwargs)
+                elif args and not kwargs:
+                    cmd = (funcID, args)
+                else:
+                    cmd = funcID
+                sync = kwargs.pop('sync', False)
+                if callback is not None:
+                    sync = False
+
+                if sync:
+                    asyncResult = AsyncResult()
+                    callback = asyncResult.onResult
+
+                timeout = kwargs.pop('timeout', None)
+                applier(pickle.dumps(cmd), callback, _COMMAND_TYPE.REGULAR)
+
+                if sync:
+                    res = asyncResult.event.wait(timeout)
+                    if not res:
+                        raise SyncObjException('Timeout')
+                    if not asyncResult.error == 0:
+                        raise SyncObjException(asyncResult.error)
+                    return asyncResult.result
+
+        func_dict = newFunc.__dict__ if is_py3 else newFunc.func_dict
+        func_dict['replicated'] = True
+        func_dict['ver'] = int(decKwargs.get('ver', 0))
+        func_dict['origName'] = func.__name__
+
+        callframe = sys._getframe(1 if decKwargs else 2)
+        namespace = callframe.f_locals
+        newFuncName = func.__name__ + '_v' + str(func_dict['ver'])
+        namespace[newFuncName] = __copy_func(newFunc, newFuncName)
+        functools.update_wrapper(newFunc, func)
+        return newFunc
+
+    if len(decArgs) == 1 and len(decKwargs) == 0 and callable(decArgs[0]):
+        return replicatedImpl(decArgs[0])
+
+    return replicatedImpl
+<switch:english>
+[english] Note that this implementation is highly specialized for systems utilizing `SyncObj`, handling function lookup, versioning, and asynchronous result retrieval via command IDs.
+[english] In your logic, if I pass both a 'callback' argument and set 'sync': True during the method call, what governs the final execution mode?
+[english] When a 'callback' is provided in the arguments, it takes precedence, forcing the function to execute asynchronously (i.e., `async_result = AsyncResult()` is used) regardless of whether the 'sync' flag was set to True.
+[english] Perfect, that makes sense.

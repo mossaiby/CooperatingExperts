@@ -1,0 +1,15 @@
+[english] How can I dynamically configure and instantiate a DRF API view class based on an injected service?
+[english] This function acts as a factory to build complex Django Rest Framework views programmatically using dependency injection. It first creates a base handler, then applies various REST method configurations before registering the final callable with your injector.
+<switch:python>
+[python] def api_view(injector):
+    """Create DRF class-based API view from injector class."""
+
+    handler = create_handler(APIView, injector)
+    apply_http_methods(handler, injector)
+    apply_api_view_methods(handler, injector)
+    return injector.let(as_view=handler.as_view)
+<switch:english>
+[english] The line `return injector.let(as_view=handler.as_view)` manages the lifecycle of the view, ensuring that when Django calls it, the correct initialized instance is used.
+[english] In the context of API usage, how does 'apply_http_methods' specifically change a default DRF class-based view handler?
+[english] 'apply_http_methods' likely iterates over common HTTP verbs (GET, POST, PUT, DELETE) and assigns corresponding methods to the `handler` object using custom logic.
+[english] That clarifies how the dependency injection ties into runtime configuration!

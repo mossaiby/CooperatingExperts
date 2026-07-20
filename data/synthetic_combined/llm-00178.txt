@@ -1,0 +1,27 @@
+[english] I need a way to fetch all activity data for a specific bug ID from a backend service.
+[english] This function prepares necessary parameters using a pre-defined project identifier and then executes an external call to retrieve the requested bug activity data.
+<switch:python>
+[python] def bug_activity(self, bug_id):
+        """Get the activity of a bug in HTML format.
+
+        :param bug_id: bug identifier
+        """
+        params = {
+            self.PBUG_ID: bug_id
+        }
+
+        response = self.call(self.CGI_BUG_ACTIVITY, params)
+
+        return response
+<switch:english>
+[english] The code retrieves information by routing it through `self.call`, meaning success depends entirely on the availability of the `CGI_BUG_ACTIVITY` endpoint.
+[english] How does this function handle cases where a given bug ID returns no activity or is invalid?
+[english] You should wrap the call in error handling to manage adverse API responses, such as missing data.
+<switch:python>
+[python] try:
+        response = self.call(self.CGI_BUG_ACTIVITY, params)
+        return response
+    except Exception as e:
+        return f"Error fetching bug activity: {e}"
+<switch:english>
+[english] That makes the code much more robust! Thanks for the advice.

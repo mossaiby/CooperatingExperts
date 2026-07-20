@@ -1,0 +1,40 @@
+[english] How can I automate the process of exporting several specified gene panels into a standardized .bed format?
+[english] This function handles exporting gene panels to various formats. It first checks that valid panels are supplied and then directs data generation based on whether the output should be a structured BED file.
+<switch:python>
+[python] def panel(context, panel, build, bed, version):
+    """Export gene panels to .bed like format.
+    
+        Specify any number of panels on the command line
+    """
+    LOG.info("Running scout export panel")
+    adapter = context.obj['adapter']
+    # Save all chromosomes found in the collection if panels
+    chromosomes_found = set()
+    
+    if not panel:
+        LOG.warning("Please provide at least one gene panel")
+        context.abort()
+
+    LOG.info("Exporting panels: {}".format(', '.join(panel)))
+    if bed:
+        if version:
+            version = [version]
+        lines = export_panels(
+            adapter=adapter, 
+            panels=panel, 
+            versions=version, 
+            build=build,
+        )
+    else:
+        lines = export_gene_panels(
+            adapter=adapter, 
+            panels=panel, 
+            version=version,
+            )
+    for line in lines:
+        click.echo(line)
+<switch:english>
+[english] The core logic routes panel export through either `export_panels` or `export_gene_panels`, ensuring the correct adapter context is used for final formatting.
+[english] If I pass multiple versions in the `version` parameter, does only one version get processed if the `bed` flag is set to False?
+[english] When `bed` is false, only a single version can be effectively utilized. The code handles this by passing `version=version`, which implies that if it's a list, the downstream function must handle picking an appropriate element.
+[english] This clarifies how the versions are handled for me.

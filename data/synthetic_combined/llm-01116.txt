@@ -1,0 +1,31 @@
+[english] How do I calculate spherical velocity components ($v_r, v_{	ext{long}}, v_{	ext{lat}}$) from given cartesian coordinates and velocities?
+[english] This function implements mathematical conversions to transform standard Cartesian velocities into radial, longitude, and latitude components used in spherical systems. It achieves this by defining the new velocity fields using string formulas that reference the existing coordinate columns.
+<switch:python>
+[python] def add_virtual_columns_cartesian_velocities_to_spherical(self, x="x", y="y", z="z", vx="vx", vy="vy", vz="vz", vr="vr", vlong="vlong", vlat="vlat", distance=None):
+        """Concert velocities from a cartesian to a spherical coordinate system
+
+        TODO: errors
+
+        :param x: name of x column (input)
+        :param y:         y
+        :param z:         z
+        :param vx:       vx
+        :param vy:       vy
+        :param vz:       vz
+        :param vr: name of the column for the radial velocity in the r direction (output)
+        :param vlong: name of the column for the velocity component in the longitude direction  (output)
+        :param vlat: name of the column for the velocity component in the latitude direction, positive points to the north pole (output)
+        :param distance: Expression for distance, if not given defaults to sqrt(x**2+y**2+z**2), but if this column already exists, passing this expression may lead to a better performance
+        :return:
+        """
+        # see http://www.astrosurf.com/jephem/library/li110spherCart_en.htm
+        if distance is None:
+            distance = "sqrt({x}**2+{y}**2+{z}**2)".format(**locals())
+        self.add_virtual_column(vr, "({x}*{vx}+{y}*{vy}+{z}*{vz})/{distance}".format(**locals()))
+        self.add_virtual_column(vlong, "-({vx}*{y}-{x}*{vy})/sqrt({x}**2+{y}**2)".format(**locals()))
+        self.add_virtual_column(vlat, "-({z}*({x}*{vx}+{y}*{vy}) - ({x}**2+{y}**2)*{vz})/( {distance}*sqrt({x}**2+{y}**2) )".format(**locals()))
+<switch:english>
+[english] The function relies on helper methods like `add_virtual_column` to generate dynamic field definitions based on complex mathematical expressions. Since positional variables are referenced inside strings, ensuring all necessary columns exist before calling this method is crucial for performance.
+[english] What happens if the position (x, y, z) is exactly zero, causing a division by zero error in the velocity calculations?
+[english] If x, y, and z are zero, the distance becomes zero, which causes multiple divisions by zero errors. You must pre-validate that the input coordinates are not all simultaneously zero before invoking this method to prevent computation failures.
+[english] This explanation makes perfect sense for how virtual columns work.

@@ -1,0 +1,43 @@
+[english] How can I reliably retrieve the absolute local file path for an item that is stored remotely in a cloud service like Azure Blob Storage?
+[english] This method ensures that file content, which is likely located behind a dedicated blob service, has a corresponding absolute path on the local filesystem. It manages necessary directories and downloads the item only if it's not already locally available.
+<switch:python>
+[python] def get_item_abspath(self, identifier):
+        """Return absolute path at which item content can be accessed.
+
+        :param identifier: item identifier
+        :returns: absolute path from which the item content can be accessed
+        """
+        admin_metadata = self.get_admin_metadata()
+        uuid = admin_metadata["uuid"]
+        # Create directory for the specific dataset.
+        dataset_cache_abspath = os.path.join(self._azure_cache_abspath, uuid)
+        mkdir_parents(dataset_cache_abspath)
+
+        metadata = self._blobservice.get_blob_metadata(
+            self.uuid,
+            identifier
+        )
+
+        relpath = metadata['relpath']
+        _, ext = os.path.splitext(relpath)
+
+        local_item_abspath = os.path.join(
+            dataset_cache_abspath,
+            identifier + ext
+        )
+        if not os.path.isfile(local_item_abspath):
+
+            tmp_local_item_abspath = local_item_abspath + ".tmp"
+            self._blobservice.get_blob_to_path(
+                self.uuid,
+                identifier,
+                tmp_local_item_abspath
+            )
+            os.rename(tmp_local_item_abspath, local_item_abspath)
+
+        return local_item_abspath
+<switch:english>
+[english] The function uses an atomic rename operation after downloading to ensure data integrity. This approach guarantees that consumers either get the final file or nothing, preventing access to partial data.
+[english] If a file happens to exist in the cache directory but is corrupted (e.g., has been manually modified), does this method detect that and redownload it?
+[english] No, the current logic only checks for existence using `os.path.isfile()`. It assumes local files are valid even if they may have been altered externally.
+[english] That makes sense. I'll need to add a checksum validation step.

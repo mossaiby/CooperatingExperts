@@ -1,0 +1,22 @@
+[english] I need a helper function that can correctly process URL patterns based on whether the view is a callable or a list structure for app includes.
+[english] This utility functions as a smart routing resolver, checking if the `view` argument represents an include tuple or a standalone path. It handles string-based view names by resolving them into actual callable objects before constructing the appropriate URL pattern class.
+<switch:python>
+[python] def url(regex, view, kwargs=None, name=None, prefix=''):
+    """As url() in Django."""
+    if isinstance(view, (list, tuple)):
+        # For include(...) processing.
+        urlconf_module, app_name, namespace = view
+        return URLResolver(regex, urlconf_module, kwargs, app_name=app_name, namespace=namespace)
+    else:
+        if isinstance(view, six.string_types):
+            if not view:
+                raise ImproperlyConfigured('Empty URL pattern view name not permitted (for pattern %r)' % regex)
+            if prefix:
+                view = prefix + '.' + view
+            view = get_callable(view)
+        return CBVRegexURLPattern(regex, view, kwargs, name)
+<switch:english>
+[english] The function abstracts away configuration differences between simple view patterns and complex includes. Note that reliance on `get_callable` means your views must be correctly discoverable within your Python environment for this to work.
+[english] If a developer provides a string for the view name, what specific role does `six.string_types` play in handling legacy versus modern Python environments?
+[english] `six.string_types` ensures compatibility across older and newer versions of Python by checking if the input `view` is any type considered a string (like `str`, `unicode`, etc.), preventing issues when processing different serialization formats.
+[english] Okay, I understand how that handles cross-version pathing.

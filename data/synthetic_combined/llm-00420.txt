@@ -1,0 +1,86 @@
+[english] I need a Python function that reliably converts raw exon data dictionaries into structured Exon objects while ensuring all necessary fields are present and correctly typed.
+[english] This function systematically checks for essential keys in the input dictionary and validates their types. If any required piece of information is missing or incorrectly formatted, it raises specific errors to ensure data integrity before object creation.
+<switch:python>
+[python] def build_exon(exon_info, build='37'):
+    """Build a Exon object object
+
+        Args:
+            exon_info(dict): Exon information
+
+        Returns:
+            exon_obj(Exon)
+        
+        "exon_id": str, # str(chrom-start-end)
+        "chrom": str, 
+        "start": int, 
+        "end": int,     
+        "transcript": str, # ENST ID
+        "hgnc_id": int,      # HGNC_id
+        "rank": int, # Order of exon in transcript
+        "build": str, # Genome build
+    """
+
+    try:
+        chrom = exon_info['chrom']
+    except KeyError:
+        raise KeyError("Exons has to have a chromosome")
+
+    try:
+        start = int(exon_info['start'])
+    except KeyError:
+        raise KeyError("Exon has to have a start")
+    except TypeError:
+        raise TypeError("Exon start has to be integer")
+    
+    try:
+        end = int(exon_info['end'])
+    except KeyError:
+        raise KeyError("Exon has to have a end")
+    except TypeError:
+        raise TypeError("Exon end has to be integer")
+
+    try:
+        rank = int(exon_info['rank'])
+    except KeyError:
+        raise KeyError("Exon has to have a rank")
+    except TypeError:
+        raise TypeError("Exon rank has to be integer")
+
+    try:
+        exon_id = exon_info['exon_id']
+    except KeyError:
+        raise KeyError("Exons has to have a id")
+
+    try:
+        transcript = exon_info['transcript']
+    except KeyError:
+        raise KeyError("Exons has to have a transcript")
+
+    try:
+        hgnc_id = int(exon_info['hgnc_id'])
+    except KeyError:
+        raise KeyError("Exons has to have a hgnc_id")
+    except TypeError:
+        raise TypeError("hgnc_id has to be integer")
+
+    exon_obj = Exon(
+        exon_id = exon_id,
+        chrom = chrom,
+        start = start,
+        end = end,
+        rank = rank,
+        transcript = transcript,
+        hgnc_id = hgnc_id,
+        build = build,
+    )
+
+    return exon_obj
+<switch:english>
+[english] The code uses a sequential try/except block structure to validate each attribute. While robust, relying on exceptions for flow control can sometimes be less Pythonic than pre-checking inputs using dictionary methods.
+[english] What happens if the entire `exon_info` argument passed to `build_exon` is None or not a dictionary?
+[english] The function would likely throw an immediate runtime error when it attempts to access `exon_info['chrom']`, as indexing a non-dictionary object (like None) raises a TypeError. You could add a check at the beginning:
+<switch:python>
+[python] if not isinstance(exon_info, dict):
+    raise TypeError("Exon info must be a dictionary")
+<switch:english>
+[english] That makes sense; explicit type checking is safer to ensure.

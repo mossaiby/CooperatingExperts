@@ -1,0 +1,16 @@
+[english] How can I automatically ensure that all custom HStoreField instances in my Django models are properly registered when they are defined?
+[english] This function intercepts a model definition right after it is created. It iterates through all locally defined fields on that model, specifically checking for the presence of HStoreField types.
+<switch:python>
+[python] def create_model(self, model):
+        """Ran when a new model is created."""
+
+        for field in model._meta.local_fields:
+            if not isinstance(field, HStoreField):
+                continue
+
+            self.add_field(model, field)
+<switch:english>
+[english] Successfully identifying and filtering for `HStoreField` ensures they are correctly processed by `self.add_field` during the initial setup phase of the model.
+[english] What is the impact if a field type we want to process, like HStoreField, was defined in a base class rather than locally?
+[english] Since this function iterates exclusively over `model._meta.local_fields`, any fields inherited from parent classes would be skipped by this specific logic.
+[english] That makes sense; I need to make sure my custom field types are applied directly.

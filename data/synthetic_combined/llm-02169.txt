@@ -1,0 +1,49 @@
+[english] How can I find all installable Python packages (distributions) located within a specific system search path or directory?
+[english] This function scans a provided directory to discover various package distributions. It looks for standard Python packaging conventions like `.egg-info`/`.dist-info` folders while also checking symbolic links and other cached entries.
+<switch:python>
+[python] def find_on_path(importer, path_item, only=False):
+    """Yield distributions accessible on a sys.path directory"""
+    path_item = _normalize_cached(path_item)
+
+    if os.path.isdir(path_item) and os.access(path_item, os.R_OK):
+        if path_item.lower().endswith('.egg'):
+            # unpacked egg
+            yield Distribution.from_filename(
+                path_item, metadata=PathMetadata(
+                    path_item, os.path.join(path_item,'EGG-INFO')
+                )
+            )
+        else:
+            # scan for .egg and .egg-info in directory
+            for entry in os.listdir(path_item):
+                lower = entry.lower()
+                if lower.endswith('.egg-info') or lower.endswith('.dist-info'):
+                    fullpath = os.path.join(path_item, entry)
+                    if os.path.isdir(fullpath):
+                        # egg-info directory, allow getting metadata
+                        metadata = PathMetadata(path_item, fullpath)
+                    else:
+                        metadata = FileMetadata(fullpath)
+                    yield Distribution.from_location(
+                        path_item, entry, metadata, precedence=DEVELOP_DIST
+                    )
+                elif not only and lower.endswith('.egg'):
+                    dists = find_distributions(os.path.join(path_item, entry))
+                    for dist in dists:
+                        yield dist
+                elif not only and lower.endswith('.egg-link'):
+                    with open(os.path.join(path_item, entry)) as entry_file:
+                        entry_lines = entry_file.readlines()
+                    for line in entry_lines:
+                        if not line.strip():
+                            continue
+                        path = os.path.join(path_item, line.rstrip())
+                        dists = find_distributions(path)
+                        for item in dists:
+                            yield item
+                        break
+<switch:english>
+[english] The code handles multiple distribution types—including unpacked eggs, metadata folders, and egg-link files—to ensure comprehensive discovery of packages on the path.
+[english] If `only=True`, does this prevent the function from looking inside subdirectories for other distributions?
+[english] The current implementation primarily scans the top level of the provided directory. It focuses specifically on items directly within that path rather than searching recursively into all subfolders.
+[english] Got it, thanks for clarifying how the recursion works!

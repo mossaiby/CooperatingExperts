@@ -1,0 +1,15 @@
+[english] How can I programmatically write a specific deletion marker file into a given project directory?
+[english] This function first constructs the full file path using `os.path.join` to handle operating system differences. It then uses a `with open...` block to safely write the required message.
+<switch:python>
+[python] def write_delete_marker_file(directory):
+    """
+    Write the pip delete marker file into this directory.
+    """
+    filepath = os.path.join(directory, PIP_DELETE_MARKER_FILENAME)
+    with open(filepath, 'w') as marker_fp:
+        marker_fp.write(DELETE_MARKER_MESSAGE)
+<switch:english>
+[english] The use of the `with` statement ensures that the file is properly closed after writing, even if errors occur during the operation.
+[english] What happens if the input directory does not already exist?
+[english] If the directory doesn't exist, you should add a step to create it before writing the file. You could modify the function like this:
+[english] This makes sense for robust script execution.

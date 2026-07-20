@@ -1,0 +1,22 @@
+[english] I need a way to merge adjacent tokens into single units if they share the same annotation and have no HTML tags separating them.
+[english] This function iterates through a list of tokens, deciding whether to keep a token separate or combine it with the previous one. It uses specific conditions relating to pre/post tags and annotations to determine when merging is appropriate.
+<switch:python>
+[python] def compress_tokens(tokens):
+    """
+    Combine adjacent tokens when there is no HTML between the tokens, 
+    and they share an annotation
+    """
+    result = [tokens[0]] 
+    for tok in tokens[1:]: 
+        if (not result[-1].post_tags and 
+            not tok.pre_tags and 
+            result[-1].annotation == tok.annotation): 
+            compress_merge_back(result, tok)
+        else: 
+            result.append(tok)
+    return result
+<switch:english>
+[english] The core logic relies on checking if the current token's pre-tags and the previous token's post-tags are both empty before attempting to merge them using `compress_merge_back`.
+[english] What happens if the input list has only one token?
+[english] If there is only one item, the function returns a new list containing that single item because the loop over `tokens[1:]` never executes. It simply initializes and exits with `result = [tokens[0]]`.
+[english] That makes sense.

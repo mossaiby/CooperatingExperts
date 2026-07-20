@@ -1,0 +1,21 @@
+[english] How can I safely unregister a specific callback from an event listener after it has been set up?
+[english] This method removes a registered callback for a given event name. It first checks if the provided callable is actually present in the internal list of listeners before proceeding to remove it.
+<switch:python>
+[python] def off(self, name, callback):
+        """
+        Stop listening for the named event via the specified callback.
+
+        :param name: the name of the event
+        :type name: string
+
+        :param callback: the callback that was originally used
+        :type callback: callable
+        """
+        if callback not in self.__listeners[name]:
+            raise InvalidListenerError
+        self.__listeners[name].remove(callback)
+<switch:english>
+[english] If you attempt to unregister a listener that was never added, this function raises an InvalidListenerError to prevent silent failures and ensure data integrity.
+[english] Does this method handle cases where the event name itself might not exist in __listeners at all?
+[english] The current code assumes “name” exists. To safely handle that, you could add a check: if name not in self.__listeners: raise InvalidListenerError.
+[english] That clarifies its error handling.

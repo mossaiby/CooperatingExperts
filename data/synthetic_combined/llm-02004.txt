@@ -1,0 +1,23 @@
+[english] Can you write a function to retrieve all associated comments for a given set of bug identifiers?
+[english] This method utilizes an internal API client to fetch relevant comment data for specific bugs. It first creates a resource URL related to the commenting features and then uses the bug IDs as query parameters in the request.
+<switch:python>
+[python] def comments(self, *bug_ids):
+        """Get the comments of the given bugs.
+
+        :param bug_ids: list of bug identifiers
+        """
+        # Hack. The first value must be a valid bug id
+        resource = urijoin(self.RBUG, bug_ids[0], self.RCOMMENT)
+
+        params = {
+            self.PIDS: bug_ids
+        }
+
+        response = self.call(resource, params)
+
+        return response
+<switch:english>
+[english] The code sends all provided bug IDs via the `PIDS` parameter within the call. However, it relies on the input list having at least one element for initial resource construction.
+[english] What happens if I pass an empty list of bug identifiers into this function?
+[english] Since the code attempts to access `bug_ids[0]` during resource creation, providing an empty list will trigger an IndexError. Validation should be performed before calling it.
+[english] Thanks for clarifying that potential runtime error!

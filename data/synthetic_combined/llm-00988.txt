@@ -1,0 +1,37 @@
+[english] How can I automatically discover and import application modules from several custom paths defined within my setup?
+[english] This function dynamically locates and imports Python modules by iterating through predefined search paths. It temporarily adds a local base directory to the system path to ensure module lookup success before attempting each import.
+<switch:python>
+[python] def modules(self):
+        """return modules that match module_name"""
+
+        # since the module has to be importable we go ahead and put the
+        # basepath as the very first path to check as that should minimize
+        # namespace collisions, this is what unittest does also
+        sys.path.insert(0, self.basedir)
+        for p in self.paths():
+            # http://stackoverflow.com/questions/67631/
+            try:
+                module_name = self.module_path(p)
+                logger.debug("Importing {} from path {}".format(module_name, p))
+                m = importlib.import_module(module_name)
+                yield m
+
+            except Exception as e:
+                logger.warning('Caught exception while importing {}: {}'.format(p, e))
+                logger.warning(e, exc_info=True)
+                error_info = getattr(self, 'error_info', None)
+                if not error_info:
+                    exc_info = sys.exc_info()
+                    #raise e.__class__, e, exc_info[2]
+                    #self.error_info = (e, exc_info)
+                    self.error_info = exc_info
+                continue
+
+        sys.path.pop(0)
+<switch:english>
+[english] The function yields successfully imported modules and uses a try-except block to gracefully handle individual import failures without halting the entire process.
+[english] How is `self.basedir` used to manage module discovery, and what happens when an unexpected exception occurs during one of these imports?
+[english] `sys.path.insert(0, self.basedir)` ensures the current project's base directory is checked first for module lookups, preventing namespace collisions with installed packages.
+
+The `except Exception as e:` block catches any errors that prevent a successful import, logging warnings and storing details about the failure in `self.error_info` without stopping iteration.
+[english] This detailed breakdown helps me understand how your dynamic module loading mechanism works!

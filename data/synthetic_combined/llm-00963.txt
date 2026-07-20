@@ -1,0 +1,22 @@
+[english] How can I map a list of message objects directly to their corresponding line numbers?
+[english] This function iterates through all provided messages and uses each message's `lineno` attribute as the key in a new dictionary.
+<switch:python>
+[python] def get_messages_by_line(messages):
+    """Return dictionary that maps line number to message."""
+    line_messages = {}
+    for message in messages:
+        line_messages[message.lineno] = message
+    return line_messages
+<switch:english>
+[english] The resulting dictionary allows for quick lookups based on any specific line number, though duplicate lineno values will overwrite previous entries.
+[english] What happens if two different messages share the same line number?
+[english] Since dictionaries require unique keys, if duplicates exist, the last message encountered in the input list will overwrite any prior message with that identical `lineno`.
+<switch:python>
+[python] def get_messages_by_line(messages):
+    """Return dictionary that maps line number to message."""
+    line_messages = {}
+    for message in messages:
+        line_messages[message.lineno] = message
+    return line_messages
+<switch:english>
+[english] That makes sense, thanks for the clarification!

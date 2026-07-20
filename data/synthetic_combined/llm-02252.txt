@@ -1,0 +1,25 @@
+[english] How do I generate an index file for my BAM files using SAMtools within our data processing pipeline?
+[english] This function automates the creation of required BAM index files (.bai) by managing local file storage and executing an external Docker job.
+<switch:python>
+[python] def run_samtools_index(job, bam):
+    """
+    Runs SAMtools index to create a BAM index file
+
+    :param JobFunctionWrappingJob job: passed automatically by Toil
+    :param str bam: FileStoreID of the BAM file
+    :return: FileStoreID for BAM index file
+    :rtype: str
+    """
+    work_dir = job.fileStore.getLocalTempDir()
+    job.fileStore.readGlobalFile(bam, os.path.join(work_dir, 'sample.bam'))
+    # Call: index the bam
+    parameters = ['index', '/data/sample.bam']
+    dockerCall(job=job, workDir=work_dir, parameters=parameters,
+               tool='quay.io/ucsc_cgl/samtools:0.1.19--dd5ac549b95eb3e5d166a5e310417ef13651994e')
+    # Write to fileStore
+    return job.fileStore.writeGlobalFile(os.path.join(work_dir, 'sample.bam.bai'))
+<switch:english>
+[english] The process relies on the `job` object's infrastructure to transfer the input file, run SAMtools via a container, and then write back the resulting index file.
+[english] What happens if I provide an input BAM file that is empty or corrupted?
+[english] If the input file is invalid, the external `dockerCall` command will typically fail because SAMtools requires a valid header to create any indexing structure. To prevent this, code could be added to check for the file's size before execution.
+[english] That makes sense, thanks.

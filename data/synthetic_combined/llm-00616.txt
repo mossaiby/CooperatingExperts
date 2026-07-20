@@ -1,0 +1,29 @@
+[english] I need a stable way to execute SQL queries against a database and retrieve all resulting records.
+[english] This function provides a robust wrapper for database operations. It uses context managers like closing() on the connection and cursor to ensure everything is properly cleaned up after execution.
+<switch:python>
+[python] def get_records(self, sql, parameters=None):
+        """
+        Executes the sql and returns a set of records.
+
+        :param sql: the sql statement to be executed (str) or a list of
+            sql statements to execute
+        :type sql: str or list
+        :param parameters: The parameters to render the SQL query with.
+        :type parameters: mapping or iterable
+        """
+        with closing(self.get_conn()) as conn:
+            with closing(conn.cursor()) as cur:
+                if parameters is not None:
+                    cur.execute(sql, parameters)
+                else:
+                    cur.execute(sql)
+                return cur.fetchall()
+<switch:english>
+[english] The `get_records` method reliably executes the provided SQL query using parameterized input, returning all fetched rows once the operation is complete.
+[english] How should I structure my parameters if I need to safely pass a user-provided ID and a username into the query?
+[english] If you have multiple values, you pass them as an iterable (like a tuple or list) corresponding to the placeholders in your SQL statement. For example: 
+
+coding_example = "SELECT * FROM users WHERE id = %s AND name = %s"
+parameters_list = (101, 'Alice')
+data = get_records(coding_example, parameters=parameters_list)
+[english] That makes perfect sense; this looks very helpful.

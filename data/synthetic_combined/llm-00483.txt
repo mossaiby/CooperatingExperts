@@ -1,0 +1,28 @@
+[english] I need to implement a specific complex quantum gate definition using standard hardware primitives like U3 and CNOT gates.
+[english] This function defines the required circuit by assembling a list of elementary quantum operations. It initializes a quantum register and constructs a sequence of parameterized unitary gates and controlled rotations based on input parameters.
+<switch:python>
+[python] def _define(self):
+        """
+        gate cu3(theta,phi,lambda) c, t
+        { u1((lambda-phi)/2) t; cx c,t;
+          u3(-theta/2,0,-(phi+lambda)/2) t; cx c,t;
+          u3(theta/2,phi,0) t;
+        }
+        """
+        definition = []
+        q = QuantumRegister(2, "q")
+        rule = [
+            (U1Gate((self.params[2] - self.params[1]) / 2), [q[1]], []),
+            (CnotGate(), [q[0], q[1]], []),
+            (U3Gate(-self.params[0] / 2, 0, -(self.params[1] + self.params[2]) / 2), [q[1]], []),
+            (CnotGate(), [q[0], q[1]], []),
+            (U3Gate(self.params[0] / 2, self.params[1], 0), [q[1]], [])
+        ]
+        for inst in rule:
+            definition.append(inst)
+        self.definition = definition
+<switch:english>
+[english] The function stores this structured sequence of instructions in `self.definition`. This effectively translates the high-level gate description into executable quantum circuit components.
+[english] If all input parameters (theta, phi, lambda) were zero, would the resulting gate be equivalent to an identity operation?
+[english] Yes. When theta, phi, and lambda are zero, all rotation angles within the U1Gate and U3Gate calls become zero or simplify, causing the circuit operations to effectively cancel out or reduce to identity transformations.
+[english] That makes sense—it simplifies the required hardware gates when no active rotations are needed.

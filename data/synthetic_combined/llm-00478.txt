@@ -1,0 +1,15 @@
+[english] How can I implement a status message when my bot connects to a specific account?
+[english] This snippet checks if an `account` object exists on `self`. If it does, it uses `bot.info()` to display a human-readable connection status using the account's name.
+<switch:python>
+[python] def _speak(self):
+        '''if you want to add an extra print (of a parameter, for example)
+           for the user when the client initalizes, write it here, eg:
+           bot.info('[setting] value')
+        '''
+        if hasattr(self, 'account'):
+            bot.info('connected to %s' %self.account.name.display_name)
+<switch:english>
+[english] The function relies on external dependencies (`bot`) and assumes the `self.account` structure has standard properties like `.name.display_name` defined.
+[english] What happens if the 'account' attribute exists but doesn't have a display_name?
+[english] If `self.account.name.display_name` is missing, the code will raise an AttributeError because it attempts to access that property directly without checking for its existence first.
+[english] That makes sense.

@@ -1,0 +1,15 @@
+[english] How can I compute the Hamming distance (the number of differing positions) between two given hashes?
+[english] This function calculates the Hamming distance by iterating through both sequences simultaneously using zip.
+It then uses a lambda function within map to count every position where characters do not match.
+<switch:python>
+[python] def hash_distance(left_hash, right_hash):
+    """Compute the hamming distance between two hashes"""
+    if len(left_hash) != len(right_hash):
+        raise ValueError('Hamming distance requires two strings of equal length')
+
+    return sum(map(lambda x: 0 if x[0] == x[1] else 1, zip(left_hash, right_hash)))
+<switch:english>
+[english] The total sum counts differences (1), but this approach only works if inputs consist of comparable types, like strings or lists.
+[english] What happens if I pass two empty strings, and is it efficient for very long hashes?
+[english] If both inputs are empty, the function returns 0 because zip produces no iterations. The time complexity is O(N), where N is the length of the shorter string.
+[english] Got it! This makes perfect sense.

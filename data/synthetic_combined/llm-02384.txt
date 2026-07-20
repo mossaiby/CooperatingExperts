@@ -1,0 +1,27 @@
+[english] I need a way to iterate over every node within a specific subtree of a tree structure.
+[english] This method lets you walk through a given subtree using a generator. You can specify either a standard breadth-first traversal or a post-order depth-first approach via the `mode` parameter.
+<switch:python>
+[python] def walk(self, mode=None):
+        """
+        Traverses the (sub)tree rooted at self, yielding each visited Node.
+
+        .. seealso:: https://en.wikipedia.org/wiki/Tree_traversal
+
+        :param mode: Specifies the algorithm to use when traversing the subtree rooted \
+        at self. `None` for breadth-first, `'postorder'` for post-order depth-first \
+        search.
+        :return: Generator of the visited Nodes.
+        """
+        if mode == 'postorder':
+            for n in self._postorder():
+                yield n
+        else:  # default to a breadth-first search
+            yield self
+            for node in self.descendants:
+                for n in node.walk():
+                    yield n
+<switch:english>
+[english] The function uses recursion for its default search pattern, which effectively walks down every descendant before yielding.
+[english] If I pass an invalid string to 'mode', what kind of traversal does it perform?
+[english] Because the structure only checks for `if mode == 'postorder'`, any other input defaults to the bread-like search implemented in the `else` block.
+[english] Got it, thanks!

@@ -1,0 +1,39 @@
+[english] How can I wrap my existing WSGI application to reliably catch all exceptions and standardize error responses in a structured JSON format?
+[english] The approach here is to use a higher-order function that wraps your main WSGI app. This wrapper intercepts execution, using tailored try/except blocks to differentiate between known errors and fatal system failures before logging the incident.
+<switch:python>
+[python] def register_app_for_error_handling(wsgi_app, app_name, app_logger, custom_logging_service=None):
+    """Wraps a WSGI app and handles uncaught exceptions and defined exception and outputs a the exception in a
+    structured format.
+    Parameters:
+    - wsgi_app is the app.wsgi_app of flask,
+    - app_name should in correct format e.g. APP_NAME_1,
+    - app_logger is the logger object"""
+
+    logging_service = LoggingService(app_logger) if custom_logging_service is None else custom_logging_service
+    exception_manager = ExceptionHandler(app_name, logging_service)
+
+    def wrapper(environ, start_response):
+        try:
+            return wsgi_app(environ, start_response)
+        except RootException as e:
+            app_request = Request(environ)
+            stack_trace = traceback.format_exc().splitlines()[-1]
+            exception_manager.update_with_exception_data(e, app_request, stack_trace)
+        except Exception:
+            app_request = Request(environ)
+            stack_trace = traceback.format_exc()
+            e = RootException("FATAL_000", {}, {}, {}, status_code=500)
+            e.error_message = "Unknown System Error"
+            exception_manager.update_with_exception_data(e, app_request, stack_trace)
+
+        error_details = exception_manager.construct_error_details()
+        http_status_code = exception_manager.get_http_status_code()
+        response = Response(json.dumps(error_details), status=http_status_code, content_type='application/json')
+
+        return response(environ, start_response)
+    return wrapper
+<switch:english>
+[english] By wrapping the application call within this logic, you ensure every request is processed through the error management pipeline, guaranteeing a standardized JSON response even upon unexpected system crashes.
+[english] If `wsgi_app` itself triggers an asynchronous operation that fails outside of the main try block, will this wrapper still catch it?
+[english] Since Python's standard WSGI is synchronous, exceptions must occur during the call to `wsgi_app(environ, start_response)`. If you are using asyncio or need true parallelism, the execution model within this specific wrapper would require modification.
+[english] That makes a lot of sense for robust server design.

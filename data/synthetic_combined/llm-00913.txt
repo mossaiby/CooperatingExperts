@@ -1,0 +1,24 @@
+[english] I need a function that takes an existing filename and a custom keyword to return a new, structured filename like 'original_name__mykey__.ext'.
+[english] This approach starts by attempting to separate the base name from the file extension. If splitting fails because there is no dot in the filename, it defaults the extension to 'jpg', ensuring the function always processes the input.
+<switch:python>
+[python] def get_filtered_filename(filename, filename_key):
+    """
+    Return the 'filtered filename' (according to `filename_key`)
+    in the following format:
+    `filename`__`filename_key`__.ext
+    """
+    try:
+        image_name, ext = filename.rsplit('.', 1)
+    except ValueError:
+        image_name = filename
+        ext = 'jpg'
+    return "%(image_name)s__%(filename_key)s__.%(ext)s" % ({
+        'image_name': image_name,
+        'filename_key': filename_key,
+        'ext': ext
+    })
+<switch:english>
+[english] The function uses string formatting to assemble the parts into the required `name__key__.ext` structure, gracefully handling missing extensions while preserving existing ones.
+[english] What happens if the original filename contains multiple dots, for example, 'photo.data.jpg'?
+[english] Because it utilizes `.rsplit('.', 1)`, the function only splits off the final extension. For 'photo.data.jpg', `image_name` will correctly be 'photo.data' and `ext` will be 'jpg'.
+[english] That makes perfect sense, thank you!

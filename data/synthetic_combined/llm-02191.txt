@@ -1,0 +1,30 @@
+[english] How can I programmatically generate a standardized JSON schema dictionary from a structured record representation?
+[english] This function takes a record object and systematically builds its corresponding JSON schema. It iterates through defined fields to create property definitions, ensuring the output conforms to standard schema practices.
+<switch:python>
+[python] def get_schema_dict(record, state=None):
+    """Return a python dict representing the jsonschema of a record
+
+    Any references to sub-schemas will be URI fragments that won't be
+    resolvable without a root schema, available from get_root_schema_dict.
+    """
+    state = state or SchemaGeneratorState()
+    schema = OrderedDict([
+        ('type', 'object'),
+        ('id', record._schema_name),
+    ])
+    fields = dict()
+    for field_name, field_type in record._fields.iteritems():
+        fields[field_name] = field_type.jsonschema_type_schema(state)
+
+    required = set(fields.keys())
+    schema['properties'] = fields
+    schema['required'] = sorted(list(required))
+    schema['additionalProperties'] = False
+
+    state.record_schemas[record._schema_name] = schema
+    return schema
+<switch:english>
+[english] The function defines required properties and explicitly sets 'additionalProperties' to false, preventing unexpected fields in the data.
+[english] If a field type returns a sub-schema (like an array of objects), how are those references tracked within this structure?
+[english] Sub-schemas reference other defined schemas using URI fragments. This function stores them internally via the `state` object, which is responsible for linking these fragments to the complete definitions in `record_schemas`.
+[english] That clarifies the schema generation process perfectly!

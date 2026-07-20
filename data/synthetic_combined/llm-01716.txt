@@ -1,0 +1,17 @@
+[english] I need a helper function to convert and wrap a Java object provided by Py4j into a Python Model.
+[english] This function takes a Py4J Java object, passes it directly into a `Sequential` model constructor, and then explicitly sets that same value onto the resulting model's attribute.
+<switch:python>
+[python] def from_jvalue(jvalue, bigdl_type="float"):
+        """
+        Create a Python Model base on the given java value
+        :param jvalue: Java object create by Py4j
+        :return: A Python Model
+        """
+        model = Sequential(jvalue=jvalue)
+        model.value = jvalue
+        return model
+<switch:english>
+[english] By assigning `model.value = jvalue`, this code guarantees that the imported Java data is correctly stored within the new Python Model instance.
+[english] What happens if the provided jvalue isn't a complex object, but just a simple primitive like an integer?
+[english] The current implementation assumes a structure compatible with `Sequential`. If `jvalue` is a standard Python type, it should work fine; however, if you encounter issues, you might need to ensure the input adheres to expected Py4J serialization.
+[english] That makes sense, I'll adjust my inputs accordingly.

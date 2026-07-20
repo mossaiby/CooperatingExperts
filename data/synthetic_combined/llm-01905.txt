@@ -1,0 +1,14 @@
+[english] I need to write a utility method that takes raw string content and attaches it as the main body of an email message.
+[english] This method is responsible for taking the plain text stored in `self.body` and packaging it correctly as an email attachment using Python's MIME library.
+<switch:python>
+[python] def _add_body(self):
+        """Add body content of email."""
+        if self.body:
+            b = MIMEText("text", "plain")
+            b.set_payload(self.body)
+            self.message.attach(b)
+<switch:english>
+[english] It ensures that even if multiple parts are added later, this base content remains accessible to all clients through a specific character set.
+[english] What happens if `self.body` is None or an empty string when the method runs?
+[english] The initial check `if self.body:` prevents any errors by skipping the attachment process entirely for null or empty content. If you wanted to handle this differently, you could explicitly add a debug log before raising an error.
+[english] That makes sense, thanks!

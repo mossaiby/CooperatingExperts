@@ -1,0 +1,63 @@
+[english] I need a way to delete all objects within a specific container path, even if new items appear while I am deleting.
+[english] This function first retrieves a list of all objects within the specified container. It then uses concurrency to spawn deletion tasks for each item found while continuously checking for execution errors.
+<switch:python>
+[python] def cli_empty_container(context, path, until_empty=False):
+    """
+    Deletes all objects in the container.
+
+    By default, this will perform one pass at deleting all objects in
+    the container; so if objects revert to previous versions or if new
+    objects otherwise arise during the process, the container may not be
+    empty once done.
+
+    Set `until_empty` to True if you want multiple passes to keep trying
+    to fully empty the container. Note until_empty=True could run
+    forever if something else is making new objects faster than they're
+    being deleted.
+
+    See :py:mod:`swiftly.cli.delete` for context usage information.
+
+    See :py:class:`CLIDelete` for more information.
+    """
+    path = path.rstrip('/').decode('utf8')
+    conc = Concurrency(context.concurrency)
+
+    def check_conc():
+        for (exc_type, exc_value, exc_tb, result) in \
+                six.itervalues(conc.get_results()):
+            if exc_value:
+                with context.io_manager.with_stderr() as fp:
+                    fp.write(str(exc_value))
+                    fp.write('\n')
+                    fp.flush()
+
+    marker = None
+    while True:
+        with context.client_manager.with_client() as client:
+            status, reason, headers, contents = client.get_container(
+                path, marker=marker, headers=context.headers,
+                query=context.query, cdn=context.cdn)
+        if status // 100 != 2:
+            if status == 404 and context.ignore_404:
+                return
+            raise ReturnCode(
+                'listing container %r: %s %s' % (path, status, reason))
+        if not contents:
+            if until_empty and marker:
+                marker = None
+                continue
+            break
+        for item in contents:
+            newpath = '%s/%s' % (path, item['name'])
+            new_context = context.copy()
+            new_context.ignore_404 = True
+            check_conc()
+            conc.spawn(newpath, cli_delete, new_context, newpath)
+        marker = item['name']
+        conc.join()
+        check_conc()
+<switch:english>
+[english] The use of `conc.spawn` executes deletions in parallel, which improves efficiency; however, setting `until_empty=True` prevents premature exits if objects are constantly being recreated.
+[english] If `until_empty` is set to `False`, and the process stops before all files are gone because it couldn't list more items, what will happen?
+[english] When not running until empty, the function breaks after one pass through the current contents. Any objects that might be added or hidden in subsequent updates will remain in the container.
+[english] Perfect, this makes sense.

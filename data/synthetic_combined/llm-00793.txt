@@ -1,0 +1,12 @@
+[english] How can I reliably calculate the minimal quantum of a number given a desired level of decimal precision?
+[english] To determine the smallest possible step size for a specific precision, we need to compute $10^{-	ext{precision}}$. We use Python's `decimal` module instead of floats to maintain high-fidelity arithmetic where standard types might introduce rounding errors.
+<switch:python>
+[python] def get_decimal_quantum(precision):
+    """Return minimal quantum of a number, as defined by precision."""
+    assert isinstance(precision, (int, decimal.Decimal))
+    return decimal.Decimal(10) ** (-precision)
+<switch:english>
+[english] The function computes ten raised to the negative power of the input. Care must be taken that the `decimal` library is imported in your scope for this code to run successfully.
+[english] What would happen if I passed a negative integer, like -2, as an argument? Does it handle it gracefully?
+[english] If you provide a negative precision of -2, the function effectively increases the quantum by calculating $10^{|-2|}$. This returns Decimal('100'), which is 1 followed by two zeros.
+[english] Thanks for explaining this robust way to handle fixed-point math.

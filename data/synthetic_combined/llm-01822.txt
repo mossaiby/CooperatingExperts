@@ -1,0 +1,16 @@
+[english] How do I ensure that all rules in my system are logically ordered and removes any redundant or orphaned rules?
+[english] This method first determines the shortest path for every rule using `self._find_shortest_paths()`. It then takes these results to perform a cleanup operation, removing anything identified as unreachable via `self._prune_rules()`.
+<switch:python>
+[python] def preprocess_rules(self):
+        """Calculate shortest reference-paths of each rule (and Or field),
+        and prune all unreachable rules.
+        """
+        to_prune = self._find_shortest_paths()
+        self._prune_rules(to_prune)
+
+        self._rules_processed = True
+<switch:english>
+[english] The final line, `self._rules_processed = True`, signals that all preprocessing is complete and the state of the rules has been finalized.
+[english] What happens if a rule is already marked for pruning by `to_prune`?
+[english] If a rule is in `to_prune`, it will be permanently removed during the call to `self._prune_rules()`. This ensures that only logically connected and reachable rules remain.
+[english] That makes perfect sense for maintaining data integrity.

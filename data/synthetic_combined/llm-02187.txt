@@ -1,0 +1,31 @@
+[english] How can I programmatically retrieve all available video stream qualities from a specific ITV content URL?
+[english] To find streams, this function first sends device and security information to fetch detailed video metadata. It then iterates through the playlist structure to build and yield individual HLS stream objects.
+<switch:python>
+[python] def _get_streams(self):
+        """
+            Find all the streams for the ITV url
+            :return: Mapping of quality to stream
+        """
+        self.session.http.headers.update({"User-Agent": useragents.FIREFOX})
+        video_info = self.video_info()
+        video_info_url = video_info.get("data-html5-playlist") or video_info.get("data-video-id")
+
+        res = self.session.http.post(video_info_url,
+                        data=json.dumps(self.device_info),
+                        headers={"hmac": video_info.get("data-video-hmac")})
+        data = self.session.http.json(res, schema=self._video_info_schema)
+
+        log.debug("Video ID info response: {0}".format(data))
+
+        stype = data['Playlist']['VideoType']
+
+        for media in data['Playlist']['Video']['MediaFiles']:
+            url = urljoin(data['Playlist']['Video']['Base'], media['Href'])
+            name_fmt = "{pixels}_{bitrate}" if stype == "CATCHUP" else None
+            for s in HLSStream.parse_variant_playlist(self.session, url, name_fmt=name_fmt).items():
+                yield s
+<switch:english>
+[english] It yields streams one by one after parsing the complex playlist data into usable quality formats. Note that it relies on external utilities like `urljoin` and `HLSStream` for processing.
+[english] How does this function handle a video that might have different types of stream variants, besides standard CATCHUP?
+[english] The code iterates over all entries in the 'MediaFiles' list within the playlist. For each file found, it calls `HLSStream.parse_variant_playlist`, allowing you to process multiple quality options for that specific video segment.
+[english] This makes sense; thanks for clarifying how the loop works.

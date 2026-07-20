@@ -1,0 +1,26 @@
+[english] How can I configure an SSL server within my Python application to advertise a specific list of supported protocols during the Next Protocol Negotiation phase?
+[english] To control which protocols your server announces, you need to register a custom callback with the underlying OpenSSL context. This function wraps your provided Python `callback` into the necessary helper structure and then calls the C-level API.
+<switch:python>
+[python] def set_npn_advertise_callback(self, callback):
+        """
+        Specify a callback function that will be called when offering `Next
+        Protocol Negotiation
+        <https://technotes.googlecode.com/git/nextprotoneg.html>`_ as a server.
+
+        :param callback: The callback function.  It will be invoked with one
+            argument, the :class:`Connection` instance.  It should return a
+            list of bytestrings representing the advertised protocols, like
+            ``[b'http/1.1', b'spdy/2']``.
+
+        .. versionadded:: 0.15
+        """
+        _warn_npn()
+        self._npn_advertise_helper = _NpnAdvertiseHelper(callback)
+        self._npn_advertise_callback = self._npn_advertise_helper.callback
+        _lib.SSL_CTX_set_next_protos_advertised_cb(
+            self._context, self._npn_advertise_callback, _ffi.NULL)
+<switch:english>
+[english] This method sets up the NPN advertising mechanism, ensuring that when a client connects, they receive the list of protocols returned by your registered code. Note that this setup might issue warnings if NPN usage has been deprecated in newer library versions.
+[english] What is the expected format for the argument passed to the callback function upon invocation?
+[english] The callback receives a `Connection` instance representing the active TLS connection, which you use to determine and return your list of supported protocols.
+[english] I appreciate the concise breakdown of how that works.

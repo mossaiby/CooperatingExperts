@@ -1,0 +1,36 @@
+[english] How can I create a reusable method to read user input, ensuring proper handling for both basic console input and custom stream readers?
+[english] This function is designed to provide flexible line reading by prioritizing the use of 'raw' methods when enabled. It checks if the raw mode flag is set before deciding whether to utilize Python's built-in `input()` or call a method from an internal class attribute.
+<switch:python>
+[python] def readline(self, use_raw=None, prompt=''):
+        """Read a line of input. EOFError will be raised on EOF.
+
+        Note: some user interfaces may decide to arrange to call
+        DebuggerOutput.write() first with the prompt rather than pass
+        it here.. If `use_raw' is set raw_input() will be used in that
+        is supported by the specific input input. If this option is
+        left None as is normally expected the value from the class
+        initialization is used.
+        """
+        # FIXME we don't do command completion.
+        if use_raw is None:
+            use_raw = self.use_raw
+            pass
+        if use_raw:
+            try:
+                inp = input(prompt)
+                # import pdb; pdb.set_trace()
+                return inp
+            except ValueError:
+                raise EOFError
+            pass
+
+        else:
+            line = self.input.readline()
+            if not line: raise EOFError
+            return line.rstrip("\n")
+        pass
+<switch:english>
+[english] The function gracefully handles End-Of-File (EOF) signals across different input mechanisms, ensuring your application reacts correctly when there is no more data to read. Note that command completion features are explicitly noted as unimplemented in this version.
+[english] What happens if `use_raw` is set to `None` and the class hasn't defined a value for `self.use_raw`?
+[english] If `use_raw` is `None`, it defaults to whatever value was stored during class initialization (`self.use_raw`).
+[english] Thanks, that clears up my implementation concerns.

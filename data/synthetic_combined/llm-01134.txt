@@ -1,0 +1,35 @@
+[english] How do I securely generate and store an Ed25519 cryptographic key pair for package signing?
+[english] This function handles generating a new Ed25519 keypair, serializing it into native formats, and then using the provided keyring abstraction to safely store the private key.
+<switch:python>
+[python] def keygen(get_keyring=get_keyring):
+    """Generate a public/private key pair."""
+    WheelKeys, keyring = get_keyring()
+
+    ed25519ll = signatures.get_ed25519ll()
+
+    wk = WheelKeys().load()
+
+    keypair = ed25519ll.crypto_sign_keypair()
+    vk = native(urlsafe_b64encode(keypair.vk))
+    sk = native(urlsafe_b64encode(keypair.sk))
+    kr = keyring.get_keyring()
+    kr.set_password("wheel", vk, sk)
+    sys.stdout.write("Created Ed25519 keypair with vk={0}\n".format(vk))
+    if isinstance(kr, keyring.backends.file.BaseKeyring):
+        sys.stdout.write("in {0}\n".format(kr.file_path))
+    else:
+        sys.stdout.write("in %r\n" % kr.__class__)
+
+    sk2 = kr.get_password('wheel', vk)
+    if sk2 != sk:
+        raise WheelError("Keyring is broken. Could not retrieve secret key.")
+
+    sys.stdout.write("Trusting {0} to sign and verify all packages.\n".format(vk))
+    wk.add_signer('+', vk)
+    wk.trust('+', vk)
+    wk.save()
+<switch:english>
+[english] The function ensures security by writing the keypair securely using the keyring, and it adds trust to `WheelKeys` for verification purposes.
+[english] If an existing 'wheel' entry is already in the keyring, what happens when this function runs?
+[english] The current implementation uses `kr.set_password("wheel", vk, sk)`. If a key exists, `set_password` typically overwrites it with the new pair, effectively replacing any old secret.
+[english] Thanks for clarifying how that key security works.

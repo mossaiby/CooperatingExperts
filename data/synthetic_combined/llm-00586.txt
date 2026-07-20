@@ -1,0 +1,31 @@
+[english] I need a thread-safe way to look up a task inside my registry and raise an error if it's not found.
+[english] This function retrieves a task using its ID. It uses a read lock for safe concurrent access, ensuring that the underlying data structure is only accessed while guarded against modification.
+<switch:python>
+[python] def get(self, task_id):
+        """Get a task from the registry.
+
+        Retrieve a task from the registry using its task identifier. When
+        the task does not exist, a `NotFoundError` exception will be
+        raised.
+
+        :param task_id: task identifier
+
+        :returns: a task object
+
+        :raises NotFoundError: raised when the requested task is not
+            found on the registry
+        """
+        try:
+            self._rwlock.reader_acquire()
+            task = self._tasks[task_id]
+        except KeyError:
+            raise NotFoundError(element=str(task_id))
+        finally:
+            self._rwlock.reader_release()
+
+        return task
+<switch:english>
+[english] The use of the `try...except` block combined with a mandatory `finally` section ensures that the read lock is always released.
+[english] What happens if an exception occurs while accessing self._tasks besides a KeyError?
+[english] Because `self._rwlock.reader_release()` is placed in the `finally` block, it will execute regardless of whether the task lookup succeeds or raises any other exception, preventing potential deadlocks.
+[english] That clarifies how concurrency and error handling work together.

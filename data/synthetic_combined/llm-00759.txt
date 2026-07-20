@@ -1,0 +1,17 @@
+[english] I need a function to programmatically render a visual badge for a specific user object using an existing SVG template.
+[english] To achieve this, the approach is to use a templating system that allows you to inject user data into a pre-defined HTML or SVG structure.
+<switch:python>
+[python] def render_badge(user):
+    ''' Renders a single user's badge. '''
+
+    data = {
+        "user": user,
+    }
+
+    t = loader.get_template('registrasion/badge.svg')
+    return t.render(data)
+<switch:english>
+[english] This function assumes that the `loader` object and the specific SVG template path are correctly configured in your project environment.
+[english] What happens if the data inside the 'user' object is missing a property that the badge template requires?
+[english] If required properties are missing, the templating engine might insert null or empty values, potentially breaking the display. It is safer to pass a structured input with all expected fields populated.
+[english] That helps clarify how I should structure my user objects!

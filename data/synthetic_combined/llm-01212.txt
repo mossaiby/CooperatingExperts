@@ -1,0 +1,55 @@
+[english] I need a function that scans this structured text to identify all external links and return them as properly represented ExternalLink objects.
+[english] This method iterates over link detections using `EXTERNAL_LINK_FINDITER` and manages how those detected spans relate to existing entries. It starts by checking if any 'ExternalLink' spans are already defined in the object's type map.
+<switch:python>
+[python] def external_links(self) -> List['ExternalLink']:
+        """Return a list of found external link objects.
+
+        Note:
+            Templates adjacent to external links are considered part of the
+            link. In reality, this depends on the contents of the template:
+
+            >>> WikiText(
+            ...    'http://example.com{{dead link}}'
+            ...).external_links[0].url
+            'http://example.com{{dead link}}'
+
+            >>> WikiText(
+            ...    '[http://example.com{{space template}} text]'
+            ...).external_links[0].url
+            'http://example.com{{space template}}'
+        """
+        external_links = []  # type: List['ExternalLink']
+        external_links_append = external_links.append
+        type_to_spans = self._type_to_spans
+        lststr = self._lststr
+        ss, se = self._span
+        spans = type_to_spans.setdefault('ExternalLink', [])
+        if not spans:
+            # All the added spans will be new.
+            spans_append = spans.append
+            for m in EXTERNAL_LINK_FINDITER(self._ext_link_shadow):
+                s, e = m.span()
+                span = [ss + s, ss + e]
+                spans_append(span)
+                external_links_append(
+                    ExternalLink(lststr, type_to_spans, span, 'ExternalLink'))
+            return external_links
+        # There are already some ExternalLink spans. Use the already existing
+        # ones when the detected span is one of those.
+        span_tuple_to_span_get = {(s[0], s[1]): s for s in spans}.get
+        for m in EXTERNAL_LINK_FINDITER(self._ext_link_shadow):
+            s, e = m.span()
+            span = s, e = [s + ss, e + ss]
+            old_span = span_tuple_to_span_get((s, e))
+            if old_span is None:
+                insort(spans, span)
+            else:
+                span = old_span
+            external_links_append(
+                ExternalLink(lststr, type_to_spans, span, 'ExternalLink'))
+        return external_links
+<switch:english>
+[english] The function handles two cases: creating new span records from scratch, or correctly integrating newly found links into a pre-existing set of link definitions using `insort` and tuple mapping. It ensures that external elements are fully accounted for in the final list.
+[english] If multiple overlapping external links were detected by the iterator, how would this function decide which span data to keep?
+[english] The current implementation processes each detection independently. If a new detection's span matches an existing entry, it reuses that `old_span`. Otherwise, if no match is found, it uses `insort` to insert the detected span into the list in order.
+[english] This makes sense regarding how you manage uniqueness!

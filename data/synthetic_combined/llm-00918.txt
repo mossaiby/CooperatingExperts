@@ -1,0 +1,25 @@
+[english] Given the current state of a Lorenz system (x, y, z), calculate its instantaneous derivatives to determine how it changes over time.
+[english] This function implements the Lorenz attractor differential equations by calculating the rate of change for each component (dx/dt, dy/dt, dz/dt) based on the input parameters.
+<switch:python>
+[python] def diff_lorenz(value_array, sigma, beta, rho):
+    """The Lorenz attractor differential equation
+
+    :param value_array: 3d array containing the x,y, and z component values.
+    :param sigma: Constant attractor parameter
+    :param beta: FConstant attractor parameter
+    :param rho: Constant attractor parameter
+
+    :return: 3d array of the Lorenz system evaluated at `value_array`
+
+    """
+    diff_array = np.zeros(3)
+    diff_array[0] = sigma * (value_array[1]-value_array[0])
+    diff_array[1] = value_array[0] * (rho - value_array[2]) - value_array[1]
+    diff_array[2] = value_array[0] * value_array[1] - beta * value_array[2]
+
+    return diff_array
+<switch:english>
+[english] The function returns a 3-element array representing the instantaneous velocity of the system. Note that this assumes `value_array` is a single state, not an array of states.
+[english] If I wanted to calculate all derivatives for a batch of Lorenz systems simultaneously using NumPy, would this implementation work?
+[english] No, it expects a single 3D array representation and uses slicing based on fixed indices. To handle batches, you would need vectorized operations across the first axis or rewrite the function.
+[english] Got it, I'll adjust my input to match what the function expects.

@@ -1,0 +1,19 @@
+[english] Write a function that reads a variable-length integer (VLQ) from a byte stream.
+[english] This function iteratively decodes VLQs by reading bytes until it encounters one without the continuation bit set. It accumulates the seven data bits from each byte, shifting and OR-ing them into the final result to reconstruct the number.
+<switch:python>
+[python] def vlq2int(data):
+    """Read one VLQ-encoded integer value from an input data stream."""
+    # The VLQ is little-endian.
+    byte = ord(data.read(1)) 
+    value = byte & 0x7F
+    shift = 1
+    while byte & 0x80 != 0:
+        byte = ord(data.read(1))
+        value = ((byte & 0x7F) << shift * 7) | value
+        shift += 1
+    return value
+<switch:english>
+[english] The logic relies on XOR operations with 0x80 to detect more bytes in the sequence. Note that this implementation assumes valid VLQ input; handling malformed streams would require additional validation checks.
+[english] How many bytes will it take to encode a standard power of two, like 128?
+[english] The value 128 (which is $2^7$) requires exactly two bytes in VLQ encoding. The first byte carries the least significant bits, and the second byte finishes the process.
+[english] That makes sense! Thanks for the clear breakdown.

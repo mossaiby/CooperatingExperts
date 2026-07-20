@@ -1,0 +1,38 @@
+[english] How can I set up a sample 'live record' fixture using database transactions suitable for testing?
+[english] This function sets up a test environment, first creating a user, then defining and inserting a persistent identifier into the database transactionally.
+<switch:python>
+[python] def records():
+    """Load test data fixture."""
+    import uuid
+    from invenio_records.api import Record
+    from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+
+    create_test_user()
+
+    indexer = RecordIndexer()
+
+    # Record 1 - Live record
+    with db.session.begin_nested():
+        rec_uuid = uuid.uuid4()
+        pid1 = PersistentIdentifier.create(
+            'recid', '1', object_type='rec', object_uuid=rec_uuid,
+            status=PIDStatus.REGISTERED)
+        Record.create({
+            'title': 'Registered',
+            'description': 'This is an awesome description',
+            'control_number': '1',
+            'access_right': 'restricted',
+            'access_conditions': 'fuu',
+            'owners': [1, 2],
+            'recid': 1
+        }, id_=rec_uuid)
+        indexer.index_by_id(pid1.object_uuid)
+
+    db.session.commit()
+
+    sleep(3)
+<switch:english>
+[english] The code uses `db.session.begin_nested()` to manage atomic operations when saving both the record data and the PID object.
+[english] Is there any possibility that indexing might fail if another process tries to access or modify this ID immediately after creation?
+[english] The use of `RecordIndexer().index_by_id(pid1.object_uuid)` ensures that while a write occurs in the nested transaction, the index is updated synchronously.
+[english] That clarifies how it handles data consistency!

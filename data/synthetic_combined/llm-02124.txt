@@ -1,0 +1,25 @@
+[english] I need a function that cleans agency data, ensuring mandatory fields like URL and timezones are present to avoid transitfeed validation errors.
+[english] This generator ensures that every resulting entry includes required fields by supplying sensible defaults when the input data is missing information.
+<switch:python>
+[python] def patch_agencies(agencies):
+    """Fill the fields that are necessary for passing transitfeed checks."""
+    # First return the unknown agency entry
+    yield Agency(-1, 'http://hiposfer.com', 'Unknown agency', 'Europe/Berlin')
+
+    # Then return the rest.
+    for agency_id, agency_url, agency_name, agency_timezone in agencies:
+        if not agency_url:
+            agency_url = 'http://hiposfer.com'
+        if not agency_timezone:
+            # Set everything to one time zone to get rid of transitfeeds error.
+            agency_timezone = 'Europe/Berlin'
+        yield Agency(agency_id, agency_url, agency_name, agency_timezone)
+<switch:english>
+[english] Note that this function forces all undefined time zones to 'Europe/Berlin' to prevent external feed errors, regardless of the actual location of the agency.
+[english] What happens if one of the original agencies already has a custom URL that might need modification?
+[english] The current implementation only checks if `agency_url` is empty; you could update it with logic like:
+<switch:python>
+[python] action = 'http://hiposfer.com' if not agency_url else agency_url
+yield Agency(agency_id, action, agency_name, agency_timezone)
+<switch:english>
+[english] That makes sense.

@@ -1,0 +1,49 @@
+[english] I need a robust way to read chunks of data from an underlying stream while prioritizing any pre-existing data that is buffered locally.
+[english] This function manages data continuity by first checking if there is any cached content in `self._initial_data`. It handles three scenarios: reading solely from the buffer, drawing partially from the buffer and the stream, or reading entirely from the stream when the buffer is empty.
+<switch:python>
+[python] def _read(self, fileobj, amount, truncate=True):
+        """
+        Reads a specific amount of data from a stream and returns it. If there
+        is any data in initial_data, that will be popped out first.
+
+        :type fileobj: A file-like object that implements read
+        :param fileobj: The stream to read from.
+
+        :type amount: int
+        :param amount: The number of bytes to read from the stream.
+
+        :type truncate: bool
+        :param truncate: Whether or not to truncate initial_data after
+            reading from it.
+
+        :return: Generator which generates part bodies from the initial data.
+        """
+        # If the the initial data is empty, we simply read from the fileobj
+        if len(self._initial_data) == 0:
+            return fileobj.read(amount)
+
+        # If the requested number of bytes is less than the amount of
+        # initial data, pull entirely from initial data.
+        if amount <= len(self._initial_data):
+            data = self._initial_data[:amount]
+            # Truncate initial data so we don't hang onto the data longer
+            # than we need.
+            if truncate:
+                self._initial_data = self._initial_data[amount:]
+            return data
+
+        # At this point there is some initial data left, but not enough to
+        # satisfy the number of bytes requested. Pull out the remaining
+        # initial data and read the rest from the fileobj.
+        amount_to_read = amount - len(self._initial_data)
+        data = self._initial_data + fileobj.read(amount_to_read)
+
+        # Zero out initial data so we don't hang onto the data any more.
+        if truncate:
+            self._initial_data = b''
+        return data
+<switch:english>
+[english] The logic ensures that after a successful read, the internal state (`self._initial_data`) is updated to reflect only the unconsumed bytes if truncation was requested. This prevents unnecessary data retention.
+[english] If `truncate` is false and I keep calling this function until `self._initial_data` is empty, what happens next time?
+[english] Once initial data is exhausted or explicitly cleared, the first conditional block will execute, causing subsequent calls to read the full requested amount directly from the provided file-like object.
+[english] That clarifies how the buffer and stream interact!

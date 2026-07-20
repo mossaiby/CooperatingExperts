@@ -1,0 +1,14 @@
+[english] How can I decode a symbol from a stream of data while simultaneously determining how many bits were required to read that symbol?
+[english] This method decodes an index by isolating a fixed number of bits using a bitwise mask derived from `self.maxLength`, and then wraps this index into a Symbol object.
+<switch:python>
+[python] def decodePeek(self, data):
+        """Find which symbol index matches the given data (from peek, as a number)
+        and return the number of bits decoded.
+        Can also be used to figure out length of a symbol.
+        """
+        return self.maxLength, Symbol(self, data&(1<<self.maxLength)-1)
+<switch:english>
+[english] The function returns a tuple containing both the length used and the decoded symbol instance; remember that `maxLength` dictates how much of the input data is processed.
+[english] If the incoming bit stream has more bits than `self.maxLength`, does the extra data get lost or affect the decoding?
+[english] The masking operation (`data & (1 << self.maxLength) - 1`) ensures that only the lowest `self.maxLength` bits are used for the symbol index, effectively ignoring any higher-order bits in the input.
+[english] Perfect, this explanation clears up how the bitwise logic works.

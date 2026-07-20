@@ -1,0 +1,17 @@
+[english] How can I retrieve all database members that fall within a specific geohash or its adjacent geographic areas?
+[english] This function begins by parsing the 'NEIGHBORS' argument to determine if neighboring regions should be included. It then uses `compute_geohash_key` to generate the necessary unique identifier for the database query.
+<switch:python>
+[python] def do_GEOHASHMEMBERS(self, geoh):
+        """Return members of a geohash and its neighbors.
+        GEOHASHMEMBERS u09vej04 [NEIGHBORS 0]"""
+        geoh, with_neighbors = self._match_option('NEIGHBORS', geoh)
+        key = compute_geohash_key(geoh, with_neighbors != '0')
+        if key:
+            for id_ in DB.smembers(key):
+                r = Result(id_)
+                print('{} {}'.format(white(r), blue(r._id)))
+<switch:english>
+[english] Once the key is generated, the function looks up all member IDs using `DB.smembers(key)` and formats them nicely before printing each result.
+[english] If `compute_geohash_key` returns a falsy value, such as None, how does the code handle that situation?
+[english] The `if key:` statement ensures that if no valid database key can be made, the function simply skips the iteration and exits without executing any lookups.
+[english] Got it, thanks for explaining the flow!

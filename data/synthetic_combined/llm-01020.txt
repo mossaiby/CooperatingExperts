@@ -1,0 +1,11 @@
+[english] I need a way to print colored log messages specifically to standard error while ensuring each message includes my script's name.
+[english] This function is designed for robust logging by directing output to `sys.stderr`. It accepts a base message and then dynamically applies colors using an assumed helper function, effectively creating styled logs that are separated from normal program output.
+<switch:python>
+[python] def print_log(text, *colors):
+    """Print a log message to standard error."""
+    sys.stderr.write(sprint("{}: {}".format(script_name, text), *colors) + "\n")
+<switch:english>
+[english] Using standard error for logging ensures that crucial status messages are clearly separated from the rest of your console output. Note that this implementation relies on external definitions for `sys`, `script_name`, and the custom `sprint` function.
+[english] What happens if I call the function without providing any color specifications?
+[english] If no colors are passed in via `*colors`, the internal `sprint` function will typically format the log as a plain string. Therefore, you would still see the message and script name but without any ANSI escape codes for styling.
+[english] That makes sense; it's good to know how the formatting functions when arguments are missing.

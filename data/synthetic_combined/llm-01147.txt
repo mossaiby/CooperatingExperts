@@ -1,0 +1,23 @@
+[english] I need a way to fetch detailed information for a specific user given their Spotify ID.
+[english] This method is designed to retrieve a user object by first translating the string Spotify ID into its internal format and then calling an HTTP endpoint to get the raw data. Finally, it converts that JSON response into a reusable `User` instance, passing along a reference back to itself for context.
+<switch:python>
+[python] async def get_user(self, spotify_id: str) -> User:
+        """Retrive an user with a spotify ID.
+
+        Parameters
+        ----------
+        spotify_id : str
+            The ID to search for.
+
+        Returns
+        -------
+        user : User
+            The user from the ID
+        """
+        data = await self.http.user(to_id(spotify_id))
+        return User(self, data)
+<switch:english>
+[english] The use of the 'await' keyword indicates this is an asynchronous operation which can potentially improve performance when fetching multiple users concurrently.
+[english] What happens if the Spotify ID provided is invalid or the server returns a 404 error?
+[english] If the HTTP request fails (e.g., due to a 404), the underlying `self.http.user` method should ideally raise an appropriate exception, which you can then handle with a try-except block.
+[english] Thanks! That makes sense.

@@ -1,0 +1,23 @@
+[english] I need a way to fetch every item from a large collection endpoint that returns data across multiple pages.
+[english] This method handles API pagination by repeatedly fetching subsequent pages until no 'next' link is provided in the response. It acts as a generator, yielding each individual item found across all pages lazily.
+<switch:python>
+[python] def get_collection(self, url):
+        """ Pages through an object collection from the bitbucket API.
+        Returns an iterator that lazily goes through all the 'values'
+        of all the pages in the collection. """
+        url = self.BASE_API2 + url
+        while url is not None:
+            response = self.get_data(url)
+            for value in response['values']:
+                yield value
+            url = response.get('next', None)
+<switch:english>
+[english] This design ensures efficient memory usage because the function processes and yields data one item at a time rather than loading the entire collection into memory at once.
+[english] How would I make this code more robust against API responses that might be missing the 'values' key?
+[english] To prevent potential KeyErrors, you should check if 'values' exists or use .get() for safer access, like this:
+<switch:python>
+[python] if response.get('values'): 
+    for value in response['values']:
+        yield value
+<switch:english>
+[english] That makes sense; lazy loading is definitely the right approach here.

@@ -1,0 +1,17 @@
+[english] How can I generate a unique, canonical identifier that represents a specific class instantiation, including all its arguments?
+[english] This function creates a signature for the call by first collecting the memory IDs of the class itself and every argument provided in both positional (args) and keyword (kwargs) forms. It then sorts these identifiers to ensure the resulting key is consistent regardless of argument order.
+<switch:python>
+[python] def get_class_instance_key(cls, args, kwargs):
+    """
+    Returns a unique identifier for a class instantiation.
+    """
+    l = [id(cls)]
+    for arg in args:
+        l.append(id(arg))
+    l.extend((k, id(v)) for k, v in kwargs.items())
+    return tuple(sorted(l))
+<switch:english>
+[english] It's important to note that using `id()` means this function keys on object identity, not content; two different objects with identical values will generate unique keys.
+[english] What if one of the arguments passed into the constructor is a mutable object like a dictionary?
+[english] The key relies on the object's memory location (its ID). If you pass an existing dictionary, the ID remains constant for that lifetime. If you create a new dictionary in each function call with the same content, the resulting IDs and keys will change.
+[english] I see how identity versus value impacts this approach.

@@ -1,0 +1,45 @@
+[english] How do I safely set an 8-digit numeric password on a meter device using a serial call, providing both the old and new passwords?
+[english] This function manages setting a meter password by first validating input lengths. It then authenticates using the provided old password before constructing and sending a serialized hex request to the device.
+<switch:python>
+[python] def setMeterPassword(self, new_pwd, pwd="00000000"):
+        """ Serial Call to set meter password.  USE WITH CAUTION.
+
+        Args:
+            new_pwd (str): 8 digit numeric password to set
+            pwd (str): Old 8 digit numeric password.
+
+        Returns:
+            bool: True on completion with ACK.
+        """
+        result = False
+        self.setContext("setMeterPassword")
+        try:
+            if len(new_pwd) != 8 or len(pwd) != 8:
+                self.writeCmdMsg("Passwords must be exactly eight characters.")
+                self.setContext("")
+                return result
+
+            if not self.request(False):
+                self.writeCmdMsg("Pre command read failed: check serial line.")
+            else:
+                if not self.serialCmdPwdAuth(pwd):
+                    self.writeCmdMsg("Password failure")
+                else:
+                    req_pwd = binascii.hexlify(new_pwd.zfill(8))
+                    req_str = "015731023030323028" + req_pwd + "2903"
+                    req_str += self.calc_crc16(req_str[2:].decode("hex"))
+                    self.m_serial_port.write(req_str.decode("hex"))
+                    if self.m_serial_port.getResponse(self.getContext()).encode("hex") == "06":
+                        self.writeCmdMsg("Success(setMeterPassword): 06 returned.")
+                        result = True
+            self.serialPostEnd()
+        except:
+            ekm_log(traceback.format_exc(sys.exc_info()))
+
+        self.setContext("")
+        return result
+<switch:english>
+[english] The method relies on low-level serial communication (hex strings, CRC16 calculation) which requires careful timing but provides specific feedback when the operation succeeds or fails at each step.
+[english] What does the code do if `self.request(False)` returns False, and should that condition trigger a hard error?
+[english] If `self.request(False)` is false, it writes a 'Pre command read failed' message to logs but continues execution outside of the primary authentication logic.
+[english] Got it, thanks for explaining this complex serial interaction.

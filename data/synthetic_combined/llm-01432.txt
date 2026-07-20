@@ -1,0 +1,48 @@
+[english] How do I automatically identify and map structural relationships like inheritance or associations between classes?
+[english] This function iterates over all defined classes to classify them as interfaces or standard classes. It then systematically scans for inheritance (specialization) and implementation links.
+<switch:python>
+[python] def extract_relationships(self):
+        """extract relation ships between nodes in the diagram
+        """
+        for obj in self.classes():
+            node = obj.node
+            obj.attrs = self.get_attrs(node)
+            obj.methods = self.get_methods(node)
+            # shape
+            if is_interface(node):
+                obj.shape = "interface"
+            else:
+                obj.shape = "class"
+            # inheritance link
+            for par_node in node.ancestors(recurs=False):
+                try:
+                    par_obj = self.object_from_node(par_node)
+                    self.add_relationship(obj, par_obj, "specialization")
+                except KeyError:
+                    continue
+            # implements link
+            for impl_node in node.implements:
+                try:
+                    impl_obj = self.object_from_node(impl_node)
+                    self.add_relationship(obj, impl_obj, "implements")
+                except KeyError:
+                    continue
+            # associations link
+            for name, values in list(node.instance_attrs_type.items()) + list(
+                node.locals_type.items()
+            ):
+                for value in values:
+                    if value is astroid.Uninferable:
+                        continue
+                    if isinstance(value, astroid.Instance):
+                        value = value._proxied
+                    try:
+                        associated_obj = self.object_from_node(value)
+                        self.add_relationship(associated_obj, obj, "association", name)
+                    except KeyError:
+                        continue
+<switch:english>
+[english] The method captures specialization, implements, and complex association links by examining instance attributes and local types. Note that it safely skips any nodes that cannot be resolved into existing objects via `self.object_from_node`.
+[english] If a target type referenced in an 'association' link is not found within the analysis environment, what happens to that relationship?
+[english] The function uses a try-except block around relationship creation and simply continues if a KeyError occurs, meaning unresolvable associations are safely ignored.
+[english] That level of error handling makes this very reliable for large projects.

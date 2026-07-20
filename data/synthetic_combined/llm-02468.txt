@@ -1,0 +1,17 @@
+[english] I need a function that returns an opened file handle based on whether a file is gzipped or a standard text file.
+[english] This helper checks the file extension to determine if it needs special decompression, using `gzip.open` for compressed files and standard `open` otherwise. It ensures UTF-8 encoding is used consistently across both scenarios.
+<switch:python>
+[python] def get_file_handle(file_path):
+    """Return a opened file"""
+
+    if file_path.endswith('.gz'):
+        file_handle = getreader('utf-8')(gzip.open(file_path, 'r'), errors='replace')
+    else:
+        file_handle = open(file_path, 'r', encoding='utf-8')
+
+    return file_handle
+<switch:english>
+[english] Note that for compressed files, it relies on a custom `getreader` utility to handle line-by-line processing correctly.
+[english] What would happen if I pass a file with no extension?
+[english] If the file has no extension, the function treats it as a standard text file and attempts to open it using 'utf-8' encoding directly via the `else` block.
+[english] That makes sense!

@@ -1,0 +1,19 @@
+[english] How can I retrieve detailed data for a specific term within an ontology given its identifier and name?
+[english] This function constructs a precise URL by combining the provided IRI and ontology name, then uses the requests library to perform a GET request against that constructed endpoint.
+<switch:python>
+[python] def get_term(self, ontology, iri):
+        """Gets the data for a given term
+
+        :param str ontology: The name of the ontology
+        :param str iri: The IRI of a term
+        :rtype: dict
+        """
+        url = self.ontology_term_fmt.format(ontology, iri)
+        response = requests.get(url)
+
+        return response.json()
+<switch:english>
+[english] The final result is parsed from the HTTP response as JSON. Note that this assumes the API endpoint always returns a valid JSON structure or raises an exception upon error.
+[english] What happens if the API returns a 404 Not Found status instead of data?
+[english] If the request fails (like with a 404), `response.json()` will likely raise a HTTPError because the response body might not be valid JSON. You should add error checking around the call.
+[english] Got it, thanks for the clarification on error handling!

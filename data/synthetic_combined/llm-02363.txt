@@ -1,0 +1,27 @@
+[english] How can I securely generate a random and unguessable token, like one for CSRF protection?
+[english] This function generates a secure token by first combining a cryptographically strong unique identifier with your provided secret. It then hashes this combination to create a high-entropy base.
+<switch:python>
+[python] def csrf_generator(secret):
+        """
+        Generates CSRF token.
+
+        Inspired by this article:
+        http://blog.ptsecurity.com/2012/10/random-number-security-in-python.html
+
+        :returns:
+            :class:`str` Random unguessable string.
+
+        """
+
+        # Create hash from random string plus salt.
+        hashed = hashlib.md5(uuid.uuid4().bytes + six.b(secret)).hexdigest()
+
+        # Each time return random portion of the hash.
+        span = 5
+        shift = random.randint(0, span)
+        return hashed[shift:shift - span - 1]
+<switch:english>
+[english] The function combines randomness (UUID) and your secret into a single MD5 hash before slicing it randomly to create the final token.
+[english] Should I be concerned about using MD5 for generating tokens in modern web applications?
+[english] While this function is inspired by older security practices, MD5 is considered cryptographically weak. For robust modern solutions, consider using SHA-256 or Argon2/Bcrypt variants.
+[english] That makes sense; I'll update the implementation.

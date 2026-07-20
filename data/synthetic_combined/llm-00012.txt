@@ -1,0 +1,29 @@
+[english] I need to register a given function under different names or internal categories within a complex dictionary object.
+[english] This utility determines how to store your function based on a specific magic kind specified by you, handling special dual-registration cases when necessary.
+<switch:python>
+[python] def record_magic(dct, magic_kind, magic_name, func):
+    """Utility function to store a function as a magic of a specific kind.
+
+    Parameters
+    ----------
+    dct : dict
+      A dictionary with 'line' and 'cell' subdicts.
+
+    magic_kind : str
+      Kind of magic to be stored.
+
+    magic_name : str
+      Key to store the magic as.
+
+    func : function
+      Callable object to store.
+    """
+    if magic_kind == 'line_cell':
+        dct['line'][magic_name] = dct['cell'][magic_name] = func
+    else:
+        dct[magic_kind][magic_name] = func
+<switch:english>
+[english] The 'line_cell' case is unique as it duplicates the function storage across both the 'line' and 'cell' subdictionaries. All other kinds use standard direct nesting within the input dictionary.
+[english] What happens if the required internal keys, like 'line', don't already exist in the initial `dct` object?
+[english] If the necessary structure (like 'line') is missing from the input dictionary, the function will raise a KeyError. You should initialize those subdictionaries before calling `record_magic`, or use `.setdefault()` when creating the dictionary.
+[english] That clarifies potential setup issues; I appreciate the detailed response.

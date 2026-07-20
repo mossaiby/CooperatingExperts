@@ -1,0 +1,23 @@
+[english] I need to modify how Django handles string translations so that multiple translation files can be loaded based on context instead of being tied to a single `django.mo` file.
+[english] This function overrides Django's default activation mechanism for translations, allowing custom logic to load different language packs dynamically. It checks if Jinja translations are enabled and handles thread-specific translation setting depending on the installed Django version.
+<switch:python>
+[python] def activate(locale):
+    """
+    Override django's utils.translation.activate().  Django forces files
+    to be named django.mo (http://code.djangoproject.com/ticket/6376).  Since
+    that's dumb and we want to be able to load different files depending on
+    what part of the site the user is in, we'll make our own function here.
+    """
+    if INSTALL_JINJA_TRANSLATIONS:
+        install_jinja_translations()
+
+    if django.VERSION >= (1, 3):
+        django_trans._active.value = _activate(locale)
+    else:
+        from django.utils.thread_support import currentThread
+        django_trans._active[currentThread()] = _activate(locale)
+<switch:english>
+[english] The use of global state (`django_trans._active`) or thread-local storage ensures that only the currently requested locale affects translated strings, potentially increasing load time overhead.
+[english] If `INSTALL_JINJA_TRANSLATIONS` is false and we are in a multi-threaded environment, how does this function ensure safe concurrent access to translations?
+[english] Since it uses thread-local storage (`currentThread()`) for Django versions older than 1.3, each request's translation context remains isolated from other threads, preventing data races related to `django_trans._active`.
+[english] That makes perfect sense; I appreciate the detailed breakdown!

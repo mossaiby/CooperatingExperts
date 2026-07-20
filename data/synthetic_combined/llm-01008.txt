@@ -1,0 +1,56 @@
+[english] How can I reliably store a complex Python dictionary structure as a single object table within my hierarchical HDF5 file?
+[english] This function serializes a standard Python dictionary into an internal `ObjectTable` format, which is necessary for storing arbitrary data types in HDF5. After transforming the input, it uses dedicated methods to write this structured object table into the specified group.
+<switch:python>
+[python] def _prm_write_dict_as_table(self, key, data_to_store, group, fullname, **kwargs):
+        """Stores a python dictionary as pytable
+
+        :param key:
+
+            Name of data item to store
+
+        :param data_to_store:
+
+            Dictionary to store
+
+        :param group:
+
+            Group node where to store data in hdf5 file
+
+        :param fullname:
+
+            Full name of the `data_to_store`s original container, only needed for throwing errors.
+
+        """
+        if key in group:
+            raise ValueError(
+                'Dictionary `%s` already exists in `%s`. Appending is not supported (yet).')
+
+        if key in group:
+            raise ValueError('Dict `%s` already exists in `%s`. Appending is not supported (yet).')
+
+        temp_dict = {}
+        for innerkey in data_to_store:
+            val = data_to_store[innerkey]
+            temp_dict[innerkey] = [val]
+
+        # Convert dictionary to object table
+        objtable = ObjectTable(data=temp_dict)
+
+        # Then store the object table
+        self._prm_write_into_pytable(key, objtable, group, fullname, **kwargs)
+
+        new_table = group._f_get_child(key)
+
+        # Remember that the Object Table represents a dictionary
+        self._all_set_attributes_to_recall_natives(temp_dict, new_table,
+                                                   HDF5StorageService.DATA_PREFIX)
+
+        setattr(new_table._v_attrs, HDF5StorageService.STORAGE_TYPE,
+                HDF5StorageService.DICT)
+
+        self._hdf5file.flush()
+<switch:english>
+[english] The method ensures the stored object is correctly identified as a dictionary by setting specific attributes before flushing changes to the underlying HDF5 file.
+[english] I noticed there are two identical `if key in group:` checks at the start of the function; what was the purpose of including both?
+[english] Both instances check for the same condition and raise the exact same error, meaning they are redundant. One could safely be removed to clean up the code.
+[english] That cleanup makes perfect sense.

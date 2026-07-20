@@ -1,0 +1,56 @@
+[english] How can I serialize an IfContainer instance, which structures complex conditional logic, into a format suitable for generating hardware description language?
+[english] This function serializes the `IfContainer` by first attempting to build its main condition using `cls.condAsHdl`. It then recursively handles nested or sequential `if-else if` blocks within `elIfs`, falling back to simple statement serialization if an initial condition is unsupported.
+<switch:python>
+[python] def IfContainer(cls, ifc: IfContainer, ctx: SerializerCtx):
+        """
+        Srialize IfContainer instance
+        """
+        childCtx = ctx.withIndent()
+
+        def asHdl(statements):
+            return [cls.asHdl(s, childCtx) for s in statements]
+
+        try:
+            cond = cls.condAsHdl(ifc.cond, True, ctx)
+        except UnsupportedEventOpErr as e:
+            cond = None
+
+        if cond is None:
+            assert not ifc.elIfs
+            assert not ifc.ifFalse
+            stmBuff = [cls.asHdl(s, ctx) for s in ifc.ifTrue]
+            return "\n".join(stmBuff)
+
+        elIfs = []
+        ifTrue = ifc.ifTrue
+        ifFalse = ifc.ifFalse
+        if ifFalse is None:
+            ifFalse = []
+
+        for c, statements in ifc.elIfs:
+            try:
+                elIfs.append((cls.condAsHdl(c, True, ctx), asHdl(statements)))
+            except UnsupportedEventOpErr as e:
+                if len(ifc.elIfs) == 1 and not ifFalse:
+                    # register expression is in valid format and this
+                    # is just register with asynchronous reset or etc...
+                    ifFalse = statements
+                else:
+                    raise e
+
+        return cls.ifTmpl.render(
+            indent=getIndent(ctx.indent),
+            cond=cond,
+            ifTrue=asHdl(ifTrue),
+            elIfs=elIfs,
+            ifFalse=asHdl(ifFalse))
+<switch:english>
+[english] After processing all branches, the function uses a template (`cls.ifTmpl`) to structure and render the final conditional block using the collected signals and statements
+[english] In the `elIfs` loop, where does the code specifically check if an unsupported event operation is part of the last branch handling?
+[english] The code checks this by verifying if there's only one element in `ifc.elIfs` and if `ifFalse` is empty. If both conditions are met when a serialization error occurs, it treats the statements as an assignment:
+<switch:python>
+[python] os UnsupportedEventOpErr as e:
+            if len(ifc.elIfs) == 1 and not ifFalse:
+                ifFalse = statements
+<switch:english>
+[english] That makes sense; I will use this logic to handle my asynchronous reset paths.

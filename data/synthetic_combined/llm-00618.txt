@@ -1,0 +1,43 @@
+[english] I need to write a function that allows application logging levels to be configured dynamically via environment variables.
+[english] This function centralizes log configuration by reading the MESSAGELEVEL environment variable. It uses conditional logic and type checking to ensure raw user input is converted into the appropriate internal logging level constant.
+<switch:python>
+[python] def get_logging_level():
+    '''get_logging_level will configure a logging to standard out based on the user's
+    selected level, which should be in an environment variable called
+    MESSAGELEVEL. if MESSAGELEVEL is not set, the maximum level
+    (5) is assumed (all messages).
+    '''
+    level = os.environ.get("MESSAGELEVEL", INFO)
+
+    # User knows logging levels and set one
+    if isinstance(level, int):
+        return level
+
+    # Otherwise it's a string
+    if level == "CRITICAL":
+        return CRITICAL
+    elif level == "ABORT":
+        return ABORT
+    elif level == "ERROR":
+        return ERROR
+    elif level == "WARNING":
+        return WARNING
+    elif level == "LOG":
+        return LOG
+    elif level == "INFO":
+        return INFO
+    elif level == "QUIET":
+        return QUIET
+    elif level.startswith("VERBOSE"):
+        return VERBOSE3
+    elif level == "LOG":
+        return LOG
+    elif level == "DEBUG":
+        return DEBUG
+
+    return level
+<switch:english>
+[english] The code successfully provides a mapping from common string representations (like 'DEBUG') to their integer constants. Be aware that if an unknown level string is provided, the function returns that string directly rather than raising an explicit error.
+[english] What happens if MESSAGELEVEL is set to something invalid that isn't listed in your checks?
+[english] If an unrecognized string is passed, it falls through all `elif` conditions and returns the original string value. To prevent this, you should add validation to handle unexpected input gracefully.
+[english] That clarification on error handling was very helpful.

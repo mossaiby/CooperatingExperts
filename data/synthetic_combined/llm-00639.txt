@@ -1,0 +1,29 @@
+[english] I have a dictionary loaded from data where numeric keys became strings because of how it was deserialized by JSON tools; can you write a function to automatically convert those back to integers or floats?
+[english] This utility iterates through all string keys in your input dictionary. For each key, it attempts to safely cast the string value first as an integer, and if that fails, it tries casting it as a float before replacing the original string key with the correct numeric type.
+<switch:python>
+[python] def rekey(dikt):
+    """Rekey a dict that has been forced to use str keys where there should be
+    ints by json."""
+    for k in dikt.iterkeys():
+        if isinstance(k, basestring):
+            ik=fk=None
+            try:
+                ik = int(k)
+            except ValueError:
+                try:
+                    fk = float(k)
+                except ValueError:
+                    continue
+            if ik is not None:
+                nk = ik
+            else:
+                nk = fk
+            if nk in dikt:
+                raise KeyError("already have key %r"%nk)
+            dikt[nk] = dikt.pop(k)
+    return dikt
+<switch:english>
+[english] The function successfully converts common string representations of numbers into actual Python ints or floats. It defensively checks for duplicates after conversion to prevent data loss by overwriting existing keys.
+[english] What specific behavior occurs if the dictionary already contains a key that matches one of the newly converted values?
+[english] If the target numeric key (the int or float) is already present in the dictionary, the function will raise a KeyError and abort the replacement process to prevent accidental data overwrite.
+[english] Got it, this handles potential conflicts perfectly.

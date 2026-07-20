@@ -1,0 +1,23 @@
+[english] I need to ensure that certain internal values are applied to signals and sequence processing routines are initiated when the system is ready.
+[english] This function manages lifecycle tasks by scheduling necessary processes on a timeline. It first ensures value application runs, then conditionally schedules sequential process execution if they haven't started yet.
+<switch:python>
+[python] def _scheduleApplyValues(self) -> None:
+        """
+        Apply stashed values to signals
+        """
+        assert not self._applyValPlaned, self.now
+        self._add_process(self._applyValues(), PRIORITY_APPLY_COMB)
+        self._applyValPlaned = True
+
+        if self._runSeqProcessesPlaned:
+            # if runSeqProcesses is already scheduled
+            return
+
+        assert not self._seqProcsToRun and not self._runSeqProcessesPlaned, self.now
+        self._add_process(self._runSeqProcesses(), PRIORITY_APPLY_SEQ)
+        self._runSeqProcessesPlaned = True
+<switch:english>
+[english] The use of flags like self._applyValPlaned prevents redundant task scheduling, ensuring a controlled and predictable execution flow for data updates.
+[english] What happens if the system requires both value application and sequential processing to run multiple times before a complete state change?
+[english] The current implementation prevents re-scheduling for these specific phases unless the governing state flags are explicitly changed from within one of the scheduled processes.
+[english] That makes sense, thank you!

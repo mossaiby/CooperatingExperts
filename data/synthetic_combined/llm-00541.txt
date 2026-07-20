@@ -1,0 +1,47 @@
+[english] I need a reliable way to load a large text classification dataset, like 20 newsgroups, efficiently into a TensorFlow Dataset format.
+[english] This function streamlines data preparation by loading raw document lists and converting them into an optimized sparse matrix representation. It then sets up a tf.data pipeline that maps each index to its corresponding term frequency vector during training.
+<switch:python>
+[python] def newsgroups_dataset(directory, split_name, num_words, shuffle_and_repeat):
+  """20 newsgroups as a tf.data.Dataset."""
+  data = np.load(download(directory, FILE_TEMPLATE.format(split=split_name)))
+  # The last row is empty in both train and test.
+  data = data[:-1]
+
+  # Each row is a list of word ids in the document. We first convert this to
+  # sparse COO matrix (which automatically sums the repeating words). Then,
+  # we convert this COO matrix to CSR format which allows for fast querying of
+  # documents.
+  num_documents = data.shape[0]
+  indices = np.array([(row_idx, column_idx)
+                      for row_idx, row in enumerate(data)
+                      for column_idx in row])
+  sparse_matrix = scipy.sparse.coo_matrix(
+      (np.ones(indices.shape[0]), (indices[:, 0], indices[:, 1])),
+      shape=(num_documents, num_words),
+      dtype=np.float32)
+  sparse_matrix = sparse_matrix.tocsr()
+
+  dataset = tf.data.Dataset.range(num_documents)
+
+  # For training, we shuffle each epoch and repeat the epochs.
+  if shuffle_and_repeat:
+    dataset = dataset.shuffle(num_documents).repeat()
+
+  # Returns a single document as a dense TensorFlow tensor. The dataset is
+  # stored as a sparse matrix outside of the graph.
+  def get_row_py_func(idx):
+    def get_row_python(idx_py):
+      return np.squeeze(np.array(sparse_matrix[idx_py].todense()), axis=0)
+
+    py_func = tf.compat.v1.py_func(
+        get_row_python, [idx], tf.float32, stateful=False)
+    py_func.set_shape((num_words,))
+    return py_func
+
+  dataset = dataset.map(get_row_py_func)
+  return dataset
+<switch:english>
+[english] Since the sparse matrix is handled via `tf.compat.v1.py_func`, it requires Python execution outside of the main TF graph for efficient data retrieval, while the output remains compatible with standard TensorFlow models. The final dataset yields dense tensors representing a single document's word counts.
+[english] If I set shuffle_and_repeat to False, will the `tf.data` pipeline automatically stop after seeing each document exactly once?
+[english] Yes, without calling `.repeat()` on the dataset (which is controlled by that Boolean flag), the generator will naturally finish after processing all available documents in a single pass.
+[english] That clarifies how I can manage epoch length!

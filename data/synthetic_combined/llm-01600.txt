@@ -1,0 +1,13 @@
+[english] How can I dynamically generate a SQL RETURNING clause that specifies the primary key column name for an ORM query?
+[english] This function is designed to safely build the database-specific 'RETURNING' fragment of a query. It first gets the Primary Key attribute name from the model metadata and then uses connection utilities to quote it correctly.
+<switch:python>
+[python] def _form_returning(self):
+        """Builds the RETURNING part of the query."""
+
+        qn = self.connection.ops.quote_name
+        return ' RETURNING %s' % qn(self.query.model._meta.pk.attname)
+<switch:english>
+[english] The function relies on `quote_name` to ensure database compatibility for the PK attribute name, which is standard practice when constructing raw SQL dynamically.
+[english] What if I needed to return multiple fields instead of just the primary key?
+[english] To return multiple fields, you would simply list them separated by commas within the string formatting. For example, `RETURNING %s, %s` could be used with three arguments.
+[english] That makes sense; thanks for clarifying how that works.

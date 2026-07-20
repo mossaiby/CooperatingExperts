@@ -1,0 +1,45 @@
+[english] I need to write a function that searches for and retrieves all cryptographic objects within a PKCS#11 module, based on specific attribute matching criteria.
+[english] This method uses low-level C APIs (`C_FindObjectsInit` and `C_FindObjects`) to search the PKCS#11 session efficiently. It iteratively calls the search function until no more objects are found, handling potential errors along the way.
+<switch:python>
+[python] def findObjects(self, template=()):
+        """
+        find the objects matching the template pattern
+
+        :param template: list of attributes tuples (attribute,value).
+          The default value is () and all the objects are returned
+        :type template: list
+        :return: a list of object ids
+        :rtype: list
+        """
+        t = self._template2ckattrlist(template)
+
+        # we search for 10 objects by default. speed/memory tradeoff
+        result = PyKCS11.LowLevel.ckobjlist(10)
+
+        rv = self.lib.C_FindObjectsInit(self.session, t)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+
+        res = []
+        while True:
+            rv = self.lib.C_FindObjects(self.session, result)
+            if rv != CKR_OK:
+                raise PyKCS11Error(rv)
+            for x in result:
+                # make a copy of the handle: the original value get
+                # corrupted (!!)
+                a = CK_OBJECT_HANDLE(self)
+                a.assign(x.value())
+                res.append(a)
+            if len(result) == 0:
+                break
+
+        rv = self.lib.C_FindObjectsFinal(self.session)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+        return res
+<switch:english>
+[english] The function returns a list of object handles that match the template pattern after a complete enumeration process.
+[english] What happens if I need to find objects based on non-standard properties not covered by the initial `template`?
+[english] If an object is found but does not meet the criteria, you would typically use functions like `C_GetAttributeValue` or iterate through all available attributes of the resulting handle for manual inspection.
+[english] That makes sense. Thanks!

@@ -1,0 +1,23 @@
+[english] How can I retrieve a paginated list of bots from an external API while ensuring my requests don't exceed certain limits?
+[english] To safely fetch bot data, this function first checks if the provided limit exceeds 500 and then constructs the URL using string formatting before making an asynchronous GET request.
+<switch:python>
+[python] async def get_bots(self, limit, offset):
+        '''Gets an object of bots on DBL'''
+        if limit > 500:
+            limit = 50
+        return await self.request('GET', '{}/bots?limit={}&offset={}'.format(self.BASE, limit, offset))
+<switch:english>
+[english] The code uses `await self.request` to handle potential I/O operations asynchronously. Note that it hardcodes a maximum of 50 instead of 500, which might be stricter than intended for certain API endpoints.
+[english] If the underlying API call fails or returns an error status, how can I add robust error handling to `get_bots`?
+[english] You can wrap the request in a try/except block to catch potential exceptions like network failures or HTTP errors.
+<switch:python>
+[python] async def get_bots(self, limit, offset):
+    try:
+        if limit > 500:
+            limit = 50
+        return await self.request('GET', '{}/bots?limit={}&offset={}'.format(self.BASE, limit, offset))
+    except Exception as e:
+        print(f"Error fetching bots: {e}")
+        return None,
+<switch:english>
+[english] That makes sense; error handling is definitely crucial for API clients.

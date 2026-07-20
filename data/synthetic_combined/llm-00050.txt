@@ -1,0 +1,22 @@
+[english] How can I retrieve all recent Skype events using the established connection?
+[english] This function iterates through a generator provided by the API client to collect multiple event updates. It then converts each raw JSON payload into a structured `SkypeEvent` object before returning the final list.
+<switch:python>
+[python] def getEvents(self):
+        """
+        Retrieve a list of events since the last poll.  Multiple calls may be needed to retrieve all events.
+
+        If no events occur, the API will block for up to 30 seconds, after which an empty list is returned.  As soon as
+        an event is received in this time, it is returned immediately.
+
+        Returns:
+            :class:`.SkypeEvent` list: a list of events, possibly empty
+        """
+        events = []
+        for json in self.conn.endpoints["self"].getEvents():
+            events.append(SkypeEvent.fromRaw(self, json))
+        return events
+<switch:english>
+[english] The function uses a loop over the API's generator output to ensure continuous event collection. Note that the underlying connection handles the waiting period up to 30 seconds if no new data arrives.
+[english] If `getEvents()` is called multiple times, will the events from previous calls be included in the current results?
+[english] No, based on the docstring, it retrieves events *since the last poll*. If you call it again after a successful retrieval, the connection state should automatically advance and return new events.
+[english] Got it, thanks for clarifying how the polling works.

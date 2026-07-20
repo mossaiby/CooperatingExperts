@@ -1,0 +1,21 @@
+[english] How can I securely connect to an SMTP server using either 465 (SSL) or 587 (TLS)?
+[english] This method determines the necessary connection protocol based on the configured port and initializes the appropriate secure session object.
+<switch:python>
+[python] def _get_session(self):
+        """Start session with email server."""
+        if self.port in (465, "465"):
+            session = self._get_ssl()
+        elif self.port in (587, "587"):
+            session = self._get_tls()
+
+        try:
+            session.login(self.from_, self._auth)
+        except SMTPResponseException as e:
+            raise MessageSendError(e.smtp_error.decode("unicode_escape"))
+
+        return session
+<switch:english>
+[english] The function handles the connection logic and attempts to authenticate using provided credentials, raising a specific error if login fails.
+[english] What happens if an unsupported port is passed to this function?
+[english] If the port does not match 465 or 587 (or their string equivalents), `session` will remain undefined outside of its initialization scope, which would cause a `NameError` when calling `login()`.
+[english] That makes sense; I should definitely add input validation for the ports.

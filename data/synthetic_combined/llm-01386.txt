@@ -1,0 +1,14 @@
+[english] How do I initialize the internal state and metrics for a code linter or analyzer before starting an analysis?
+[english] To prepare this object for use, we need to allocate memory for tracking statistics, collecting return values, recording branch counts, and storing statements.
+<switch:python>
+[python] def open(self):
+        """initialize visit variables"""
+        self.stats = self.linter.add_stats()
+        self._returns = []
+        self._branches = defaultdict(int)
+        self._stmts = []
+<switch:english>
+[english] These lines effectively reset the necessary data structures—like `self.stats` and the internal lists/dictionaries—ensuring a clean start for any subsequent analysis or processing.
+[english] Where does `defaultdict` come from if it's not imported?
+[english] `defaultdict` is part of Python's standard library and must be explicitly imported, usually as `from collections import defaultdict`, to function correctly in this method.
+[english] That makes sense, thanks for the help!

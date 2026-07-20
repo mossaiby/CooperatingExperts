@@ -1,0 +1,28 @@
+[english] How do I start a configured Slack bot application by passing necessary arguments like tokens and channel layers via command line?
+[english] This function first parses the input arguments and ensures that a required Slack token is present. It then dynamically imports the specified channel layer module defined in the arguments.
+<switch:python>
+[python] def run(self, args):
+        """
+        Pass in raw arguments, instantiate Slack API and begin client.
+        """
+        args = self.parser.parse_args(args)
+        if not args.token:
+            raise ValueError('Supply the slack token through --token or setting DJANGOBOT_TOKEN')
+
+        # Import the channel layer
+        sys.path.insert(0, ".")
+        module_path, object_path = args.channel_layer.split(':', 1)
+        channel_layer = importlib.import_module(module_path)
+        for part in object_path.split('.'):
+            channel_layer = getattr(channel_layer, part)
+
+        # Boot up the client
+        Client(
+            channel_layer=channel_layer,
+            token=args.token,
+        ).run()
+<switch:english>
+[english] The code initializes and runs the `Client` using both the provided token and the imported message handling logic. Be aware that manually manipulating sys.path like this can sometimes cause issues in complex dependency environments.
+[english] If the user provides an incorrect string for the `channel_layer`, how does the function handle that failure?
+[english] If the path is invalid, `importlib` will raise an ImportError when trying to load the module or getattr() when trying to access the nested object. You could wrap the dynamic import section in a try/except block for better error handling.
+[english] Perfect, this makes sense now.

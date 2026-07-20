@@ -1,0 +1,17 @@
+[english] How can I reliably notify dependent objects when an internal value changes, while avoiding unnecessary notifications for repeated updates?
+[english] This function implements a state change notification mechanism by first comparing the incoming value to the stored previous value. If the new input is substantive, it updates the record and signals all interested observers.
+<switch:python>
+[python] def notify_of_external_update(self, value):
+        """
+        Notify observers of a new value.
+
+        value -- new value
+        """
+        if value is not None and value != self.last_value:
+            self.last_value = value
+            self.emit('update', value)
+<switch:english>
+[english] By checking `value != self.last_value`, you effectively prevent the system from emitting events when redundant data is passed.
+[english] If `self.last_value` were never initialized in the class constructor, how would this function handle a first-ever call with an initial value?
+[english] It's best practice to initialize `self.last_value = None` in the object's constructor (`__init__`). Assuming that happens, your code will correctly treat any non-None input as a new value on the very first call.
+[english] That clarifies how initial state is handled.

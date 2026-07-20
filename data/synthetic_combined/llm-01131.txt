@@ -1,0 +1,25 @@
+[english] How can I retrieve and examine the current status of a specific transfer operation within the Google Storage Transfer Service?
+[english] This function uses the service's client connection to specifically target and fetch an existing transfer operation based on its provided name.
+<switch:python>
+[python] def get_transfer_operation(self, operation_name):
+        """
+        Gets an transfer operation in Google Storage Transfer Service.
+
+        :param operation_name: (Required) Name of the transfer operation.
+        :type operation_name: str
+        :return: transfer operation
+            See:
+            https://cloud.google.com/storage-transfer/docs/reference/rest/v1/Operation
+        :rtype: dict
+        """
+        return (
+            self.get_conn()
+            .transferOperations()
+            .get(name=operation_name)
+            .execute(num_retries=self.num_retries)
+        )
+<switch:english>
+[english] Because the function calls `.execute()`, this method performs a synchronous call to the API and waits for the operation result before returning it.
+[english] If no transfer operation exists with that provided name, what kind of response or error will the code handle?
+[english] The Google client library typically handles missing resources by raising an appropriate exception (e.g., a NotFound error) rather than returning null.
+[english] Got it, so I should probably implement try-except blocks around that call.

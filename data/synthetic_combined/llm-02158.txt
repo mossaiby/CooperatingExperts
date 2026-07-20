@@ -1,0 +1,68 @@
+[english] How can I correctly serialize a LocateRequestPayload object into an output buffer while adhering to different KMIP version specifications?
+[english] This method uses an internal temporary buffer, `local_buffer`, to collect and serialize all payload components. It implements conditional logic to handle the encoding of attributes based on whether the target is KMIP 1.0 or a newer version.
+<switch:python>
+[python] def write(self, output_buffer, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the Locate request payload to a buffer.
+
+        Args:
+            output_buffer (stream): A data buffer in which to encode object
+                data, supporting a write method.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        local_buffer = utils.BytearrayStream()
+
+        if self._maximum_items:
+            self._maximum_items.write(local_buffer, kmip_version=kmip_version)
+
+        if self._offset_items:
+            self._offset_items.write(local_buffer, kmip_version=kmip_version)
+
+        if self._storage_status_mask:
+            self._storage_status_mask.write(
+                local_buffer,
+                kmip_version=kmip_version
+            )
+
+        if self._object_group_member:
+            self._object_group_member.write(
+                local_buffer,
+                kmip_version=kmip_version
+            )
+
+        if kmip_version < enums.KMIPVersion.KMIP_2_0:
+            if self._attributes:
+                for attribute in self.attributes:
+                    attribute.write(
+                        local_buffer,
+                        kmip_version=kmip_version
+                    )
+        else:
+            if self._attributes:
+                # TODO (ph) Add a new utility to avoid using TemplateAttributes
+                template_attribute = objects.TemplateAttribute(
+                    attributes=self.attributes
+                )
+                attributes = objects.convert_template_attribute_to_attributes(
+                    template_attribute
+                )
+                attributes.write(local_buffer, kmip_version=kmip_version)
+            else:
+                raise exceptions.InvalidField(
+                    "The Locate request payload is missing the attributes "
+                    "list."
+                )
+
+        self.length = local_buffer.length()
+        super(LocateRequestPayload, self).write(
+            output_buffer,
+            kmip_version=kmip_version
+        )
+        output_buffer.write(local_buffer.buffer)
+<switch:english>
+[english] The implementation handles attribute serialization differently depending on the version; for KMIP 2.0+, it leverages template conversion Utilities to write all attributes in one batch.
+[english] If I attempt to serialize this payload using KMIP Version 2.0 without any defined attributes, does it fail gracefully?
+[english] No, if the payload is encoded for KMIP 2.0+ but lacks attributes, it will intentionally raise an exceptions.InvalidField.
+[english] That clarifies how required fields are handled during serialization.

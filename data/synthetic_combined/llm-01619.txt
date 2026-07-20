@@ -1,0 +1,17 @@
+[english] I need a function that attempts to validate a token using several different compatible hashing algorithms until one of them succeeds.
+[english] This function iterates through all supported digest algorithms defined in `SUPPORTED_DIGEST_ALGORITHMS`, attempting to parse the token with each method sequentially. It dynamically creates an object for every algorithm and invokes its validation method.
+<switch:python>
+[python] def compat_validate_token(cls, *args, **kwargs):
+        """Multiple algorithm-compatible token validation."""
+        data = None
+        for algorithm in SUPPORTED_DIGEST_ALGORITHMS:
+            data = cls(algorithm_name=algorithm).validate_token(
+                *args, **kwargs)
+            if not data:  # move to next algorithm
+                continue
+        return data
+<switch:english>
+[english] If any algorithm successfully validates the token, it immediately returns the resulting data without checking subsequent algorithms. If all checks fail, the function will return `None` after exhausting the list of supported methods.
+[english] What value is returned by this function if none of the supported digest algorithms manage to validate the input?
+[english] If no algorithm successfully validates the token, the loop completes and returns the initial value assigned to `data`, which is `None`.
+[english] Thanks for explaining how that compatibility logic works.

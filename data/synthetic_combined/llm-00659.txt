@@ -1,0 +1,12 @@
+[english] How do I retrieve the list of y-axis coordinates formatted according to a specific scale and offset?
+[english] This method calculates and returns the scaled coordinates for the y positions stored on the object. It uses an external helper function to apply the necessary transformations.
+<switch:python>
+[python] def y(self):
+        """ Returns the scaled y positions of the points as doubles
+        """
+        return scale_dimension(self.Y, self.header.y_scale, self.header.y_offset)
+<switch:english>
+[english] The result is a sequence of scaled doubles, making it ready for graphical rendering or display purposes. Note that errors in `y_scale` could lead to distortion if not handled upstream.
+[english] If my object doesn't fully implement the scaling logic, what happens when I call y()?
+[english] The function relies on an external function called scale_dimension. If it isn't defined or receives incompatible inputs, it will likely raise a TypeError or AttributeError during execution.
+[english] That clarifies how the data is processed.

@@ -1,0 +1,29 @@
+[english] I need a way to load a raster image into an object, whether I have its file path or just a stream of raw data.
+[english] This function is designed for flexible input by first checking if the provided `path` string can be opened directly using GDAL’s typical mechanisms. If that fails, it attempts to treat the input as a readable file-like object containing image bytes.
+<switch:python>
+[python] def open(path, mode=gdalconst.GA_ReadOnly):
+    """Returns a Raster instance.
+
+    Arguments:
+    path -- local or remote path as str or file-like object
+    Keyword args:
+    mode -- gdal constant representing access mode
+    """
+    path = getattr(path, 'name', path)
+    try:
+        return Raster(vsiprefix(path), mode)
+    except AttributeError:
+        try:
+            imgdata = path.read()
+        except AttributeError:
+            raise TypeError('Not a file-like object providing read()')
+        else:
+            imgio = MemFileIO(delete=False)
+            gdal.FileFromMemBuffer(imgio.name, imgdata)
+            return Raster(imgio, mode)
+    raise ValueError('Failed to open raster from "%r"' % path)
+<switch:english>
+[english] This utility intelligently adapts its opening mechanism based on the input type, ensuring you can load data from either disk or an open memory buffer.
+[english] If the input is a stream providing large amounts of data, could there be any risk of excessive memory usage?
+[english] Yes, when reading from a file-like object like this, all `imgdata` must first be loaded into RAM. For very large datasets, it might be better to implement chunked or streaming readers outside of this function.
+[english] That makes sense; I appreciate the warning.

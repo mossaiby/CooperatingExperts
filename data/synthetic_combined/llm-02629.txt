@@ -1,0 +1,32 @@
+[english] How can I pre-calculate the decoding mapping and determine minimum/maximum bit constraints based on a required symbol length table?
+[english] This method first establishes the range of lengths used in the input. It then iteratively calculates necessary code prefixes using bit shifts to build a unique decoding scheme for each requested symbol length.
+<switch:python>
+[python] def setLength(self, lengthTable):
+        """Given the bit pattern lengths for symbols given in lengthTable,
+        set decodeTable, minLength, maxLength
+        """
+        self.lengthTable = lengthTable
+        self.minLength = min(lengthTable.values())
+        self.maxLength = max(lengthTable.values())
+        #compute the backwards codes first; then reverse them
+        #compute (backwards) first code for every separate lengths
+        nextCodes = []
+        #build codes for each length, from right to left
+        code = 0
+        for bits in range(self.maxLength+1):
+            code <<= 1
+            nextCodes.append(code)
+            code += sum(x==bits for x in lengthTable.values())
+        self.decodeTable = {}
+        #count codes for each length, and store reversed in the table
+        for symbol in sorted(lengthTable):
+            bits = lengthTable[symbol]
+            bitpattern = '{:0{}b}'.format(nextCodes[bits], bits)
+            self.decodeTable[int(bitpattern[::-1], 2)] = symbol
+            nextCodes[bits] += 1
+        self.switchToPrefix()
+<switch:english>
+[english] The function ultimately generates a reversed integer key paired with its original symbol inside self.decodeTable, ready for translation from binary data back to symbols.
+[english] If multiple symbols share the same required bit length in `lengthTable`, how does the code determine their specific unique assignments within the encoding scheme?
+[english] The subsequent loop iterates through sorted symbols; if lengths are identical, they will sequentially utilize the next available slot and increment the count for that specific length.
+[english] Got it, thanks so much for clarifying!

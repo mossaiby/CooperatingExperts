@@ -1,0 +1,40 @@
+[english] I need a way to remove specific trailing characters from all strings within a data column, similar to Python's built-in `rstrip` method.
+[english] This function wraps the native string stripping logic for a columnar structure. It first processes the input sequence using `rstrip`, handling the case where no stripping characters are provided.
+<switch:python>
+[python] def str_rstrip(x, to_strip=None):
+    """Remove trailing characters from a string sample.
+
+    :param str to_strip: The string to be removed
+    :returns: an expression containing the modified string column.
+
+    Example:
+
+    >>> import vaex
+    >>> text = ['Something', 'very pretty', 'is coming', 'our', 'way.']
+    >>> df = vaex.from_arrays(text=text)
+    >>> df
+      #  text
+      0  Something
+      1  very pretty
+      2  is coming
+      3  our
+      4  way.
+
+    >>> df.text.str.rstrip(to_strip='ing')
+    Expression = str_rstrip(text, to_strip='ing')
+    Length: 5 dtype: str (expression)
+    ---------------------------------
+    0       Someth
+    1  very pretty
+    2       is com
+    3          our
+    4         way.
+    """
+    # in c++ we give empty string the same meaning as None
+    sl = _to_string_sequence(x).rstrip('' if to_strip is None else to_strip) if to_strip != '' else x
+    return column.ColumnStringArrow(sl.bytes, sl.indices, sl.length, sl.offset, string_sequence=sl)
+<switch:english>
+[english] The core complexity here is managing 'ColumnStringArrow' objects, which dictates how the modified strings are stored and returned for data processing.
+[english] How does this function handle null or missing values in the input string column?
+[english] While not explicitly shown with internal checks, a robust implementation would typically ensure that `_to_string_sequence(x)` handles non-string types gracefully before calling `.rstrip()`, preserving them as is.
+[english] Thanks for clarifying how this specialized function works!

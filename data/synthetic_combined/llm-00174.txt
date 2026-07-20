@@ -1,0 +1,26 @@
+[english] How do I reliably gather all essential components of an incoming web request, such as the URL, HTTP method, and headers?
+[english] This function systematically pulls request data from global variables. It first grabs basic information like URI and method before cleaning out specific WSGI internal attributes from the header dictionary.
+<switch:python>
+[python] def extract_params():
+    """Extract request params."""
+
+    uri = _get_uri_from_request(request)
+    http_method = request.method
+    headers = dict(request.headers)
+    if 'wsgi.input' in headers:
+        del headers['wsgi.input']
+    if 'wsgi.errors' in headers:
+        del headers['wsgi.errors']
+    # Werkzeug, and subsequently Flask provide a safe Authorization header
+    # parsing, so we just replace the Authorization header with the extraced
+    # info if it was successfully parsed.
+    if request.authorization:
+        headers['Authorization'] = request.authorization
+
+    body = request.form.to_dict()
+    return uri, http_method, body, headers
+<switch:english>
+[english] The function handles special cases like deleting internal WSGI keys and automatically updates the Authorization header if available in the request.
+[english] What happens to parameters that aren't submitted via form data?
+[english] Since it specifically uses `request.form.to_dict()`, any non-form body content, such as JSON payloads or raw text, will be ignored and not included in the returned `body` dictionary.
+[english] Got it, thanks for clarifying how the different input types are handled.

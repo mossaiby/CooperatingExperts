@@ -1,0 +1,20 @@
+[english] How can I retrieve and display all unique IDs stored in a specific whitelist collection?
+[english] To fulfill this request, we first extract the necessary database adapter from the provided context. We then loop through every document within the dedicated whitelist collection to access its data.
+<switch:python>
+[python] def whitelist(context):
+    """Show all objects in the whitelist collection"""
+    LOG.info("Running scout view users")
+    adapter = context.obj['adapter']
+
+    ## TODO add a User interface to the adapter
+    for whitelist_obj in adapter.whitelist_collection.find():
+        click.echo(whitelist_obj['_id'])
+<switch:english>
+[english] The code iterates through all records using `adapter.whitelist_collection.find()`, printing the unique identifier (`_id`) of each entry found in the database.
+[english] If the whitelist collection contains extremely large amounts of data, are there ways to paginate or limit the output?
+[english] The current implementation retrieves all records at once. To limit results, you can add a `.limit(N)` call before iterating:
+<switch:python>
+[python] for whitelist_obj in adapter.whitelist_collection.find().limit(100):
+    click.echo(whitelist_obj['_id'])
+<switch:english>
+[english] That makes sense for handling large datasets!

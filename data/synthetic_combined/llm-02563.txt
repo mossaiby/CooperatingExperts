@@ -1,0 +1,16 @@
+[english] I need a method that resets an object's transformation by reversing its current translation.
+[english] This function first retrieves the object's current position coordinates, x, y, and z. It then applies a translation using those negative values to bring the object back toward its initial orientation.
+<switch:python>
+[python] def unset_state(self):
+        """
+        Resets the state required for this actor to the default state.
+        
+        Currently resets the matrix to its previous translation.
+        """
+        x,y,z = self.obj.pos
+        glTranslatef(-x,-y,-z)
+<switch:english>
+[english] While this correctly reverses position, remember that it only targets translation and does not affect any rotation or scaling already applied.
+[english] What happens to the matrix if the object's current position is at (0, 0, 0)?
+[english] If the coordinates are all zero, applying a negative translation of zero will result in calling `glTranslatef(0, 0, 0)`, which means no transformation occurs.
+[english] Got it, thanks for clarifying.

@@ -1,0 +1,26 @@
+[english] How can I dynamically retrieve a Python callable object given its type ('function', 'instancemethod'), module name, and class path stored in a task information dictionary?
+[english] This function is designed for dynamic resolution of callables based on metadata. It inspects the `func_type` within the task info to determine whether it needs to import a standalone function or retrieve a member (method) from a specific model class.
+<switch:python>
+[python] def func_from_info(self):
+        """Find and return a callable object from a task info dictionary"""
+        info = self.funcinfo
+        functype = info['func_type']
+        if functype in ['instancemethod', 'classmethod', 'staticmethod']:
+            the_modelclass = get_module_member_by_dottedpath(info['class_path'])
+            if functype == 'instancemethod':
+                the_modelobject = the_modelclass.objects.get(pk=info['model_pk'])
+                the_callable = get_member(the_modelobject, info['func_name'])
+            else:
+                the_callable = get_member(the_modelclass, info['func_name'])
+            return the_callable
+        elif functype == 'function':
+            mod = import_module(info['module_name'])
+            the_callable = get_member(mod, info['func_name'])
+            return the_callable
+        else:
+            raise ValueError(f"Unknown functype '{functype} in task {self.pk} ({self.label})")
+<switch:english>
+[english] The implementation efficiently handles both functions and methods, ensuring instance methods are retrieved from an object while static/class members pull directly from the class itself. Note that this relies on successful external helper calls like `get_module_member_by_dottedpath`.
+[english] If the task info specifies a 'function' but the module name is misspelled, how does the function behave?
+[english] In Python environments using standard libraries, calling `import_module(info['module_name'])` with an invalid string will typically raise a ModuleNotFoundError, which this function currently allows to propagate.
+[english] Thanks for detailing the error path; I'll make sure to wrap that import call in a try/except block.

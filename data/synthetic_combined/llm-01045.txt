@@ -1,0 +1,36 @@
+[english] I need a way to generate an entirely new client object that points to a specific API sub-path without losing my existing authentication.
+[english] This function allows you to create specialized clients for any endpoint by generating a new instance of the class. It intelligently constructs the new URL based on whether your provided path is relative or absolute.
+<switch:python>
+[python] def change_path(self, path):
+        """
+        Return a new LuminosoClient for a subpath of this one.
+
+        For example, you might want to start with a LuminosoClient for
+        `https://analytics.luminoso.com/api/v4/`, then get a new one for
+        `https://analytics.luminoso.com/api/v4/projects/myaccount/myprojectid`.
+        You accomplish that with the following call:
+
+            newclient = client.change_path('projects/myaccount/myproject_id')
+
+        If you start the path with `/`, it will start from the root_url
+        instead of the current url:
+
+            project_area = newclient.change_path('/projects/myaccount')
+
+        The advantage of using `.change_path` is that you will not need to
+        re-authenticate like you would if you ran `.connect` again.
+
+        You can use `.change_path` to split off as many sub-clients as you
+        want, and you don't have to stop using the old one just because you
+        got a new one with `.change_path`.
+        """
+        if path.startswith('/'):
+            url = self.root_url + path
+        else:
+            url = self.url + path
+        return self.__class__(self.session, url)
+<switch:english>
+[english] The primary benefit here is that the new client shares the original session and credentials, allowing for isolated requests across different sub-paths without needing to re-connect.
+[english] If I use `change_path('some/segment')`, how does it differ from using a path starting with `/`?
+[english] A relative path appends the segment to your current URL, while a path starting with '/' overwrites the subsequent part of the URL by using the base root. For example, if you are at `/v4/users` and call `change_path('projects')`, you get `/v4/users/projects`; but calling `change_path('/settings')` results in simply `/settings`.
+[english] That makes much more sense now.

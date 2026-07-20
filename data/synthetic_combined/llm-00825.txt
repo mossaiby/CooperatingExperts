@@ -1,0 +1,14 @@
+[english] I need a utility function that checks if a given data record satisfies all specified conditions.
+[english] To solve this, we iterate through the provided tests and check if each condition holds true for the corresponding field in the record. If any single test fails, the entire matching process stops immediately.
+<switch:python>
+[python] def _match_one(self, rec, tests):
+        """Check if a specific record matches tests."""
+        for key,test in tests.iteritems():
+            if not test(rec.get(key, None)):
+                return False
+        return True
+<switch:english>
+[english] The function employs short-circuit logic by returning False upon the first failed predicate. It handles missing keys gracefully by supplying None to the test functions.
+[english] If I pass an empty dictionary of tests, will the function always return True immediately?
+[english] Yes, if the `tests` dictionary is empty, the loop will not execute and the function will reach its final line, returning True for all purposes.
+[english] That makes sense; thanks for clarifying how that handles edge cases.

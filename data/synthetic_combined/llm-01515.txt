@@ -1,0 +1,79 @@
+[english] How can I retrieve and filter event logs from an API service like Webex Teams, allowing for specific filtering criteria?
+[english] This method first validates all key arguments against expected types using helper functions like `check_type`. It then structures these parameters into a dictionary suitable for the underlying API call.
+<switch:python>
+[python] def list(self, resource=None, type=None, actorId=None, _from=None, to=None,
+             max=None, **request_parameters):
+        """List events.
+
+        List events in your organization. Several query parameters are
+        available to filter the response.
+
+        Note: `from` is a keyword in Python and may not be used as a variable
+        name, so we had to use `_from` instead.
+
+        This method supports Webex Teams's implementation of RFC5988 Web
+        Linking to provide pagination support.  It returns a generator
+        container that incrementally yields all events returned by the
+        query.  The generator will automatically request additional 'pages' of
+        responses from Wevex as needed until all responses have been returned.
+        The container makes the generator safe for reuse.  A new API call will
+        be made, using the same parameters that were specified when the
+        generator was created, every time a new iterator is requested from the
+        container.
+
+        Args:
+            resource(basestring): Limit results to a specific resource type.
+                Possible values: "messages", "memberships".
+            type(basestring): Limit results to a specific event type. Possible
+                values: "created", "updated", "deleted".
+            actorId(basestring): Limit results to events performed by this
+                person, by ID.
+            _from(basestring): Limit results to events which occurred after a
+                date and time, in ISO8601 format (yyyy-MM-dd'T'HH:mm:ss.SSSZ).
+            to(basestring): Limit results to events which occurred before a
+                date and time, in ISO8601 format (yyyy-MM-dd'T'HH:mm:ss.SSSZ).
+            max(int): Limit the maximum number of items returned from the Webex
+                Teams service per request.
+            **request_parameters: Additional request parameters (provides
+                support for parameters that may be added in the future).
+
+        Returns:
+            GeneratorContainer: A GeneratorContainer which, when iterated,
+            yields the events returned by the Webex Teams query.
+
+        Raises:
+            TypeError: If the parameter types are incorrect.
+            ApiError: If the Webex Teams cloud returns an error.
+
+        """
+        check_type(resource, basestring)
+        check_type(type, basestring)
+        check_type(actorId, basestring)
+        check_type(_from, basestring)
+        check_type(to, basestring)
+        check_type(max, int)
+
+        params = dict_from_items_with_values(
+            request_parameters,
+            resource=resource,
+            type=type,
+            actorId=actorId,
+            _from=_from,
+            to=to,
+            max=max,
+        )
+
+        if _from:
+            params["from"] = params.pop("_from")
+
+        # API request - get items
+        items = self._session.get_items(API_ENDPOINT, params=params)
+
+        # Yield event objects created from the returned items JSON objects
+        for item in items:
+            yield self._object_factory(OBJECT_TYPE, item)
+<switch:english>
+[english] The function ultimately uses this configured parameter dict to request items from the server, and it yields generated object representations of those items as they are returned.
+[english] The docstring mentions that an `ApiError` might be raised; can you elaborate on how this error is handled within the current implementation or if there are specific checks for it?
+[english] While the function relies on external plumbing to catch and raise errors, the usage of `check_type` ensures data integrity before a request is even made. Any failure returned by the API call will be propagated as an ApiError externally.
+[english] That clarifies how error handling functions within this wrapper!

@@ -1,0 +1,20 @@
+[english] How can I perform a byte-wise exclusive OR operation between two sequences of bytes in Python?
+[english] To handle this efficiently, we use the `map` function along with `operator.xor`. This allows us to apply the XOR logic element by element across both input byte objects simultaneously.
+<switch:python>
+[python] def xor_bytes(a, b):
+    """
+    Calculate the byte wise exclusive of of two :class:`bytes` objects
+    of the same length.
+    """
+    assert len(a) == len(b)
+    return bytes(map(operator.xor, a, b))
+<switch:english>
+[english] The code relies on the `assert len(a) == len(b)` line to ensure inputs match.
+[english] What happens if I try to use this function with two byte strings that have different lengths?
+[english] Due to the assertion, Python will raise an AssertionError immediately if the input byte sequences are not equal in length:
+<switch:python>
+[python] def xor_bytes(a, b):
+    assert len(a) == len(b)
+    return bytes(map(operator.xor, a, b))
+<switch:english>
+[english] That makes sense.

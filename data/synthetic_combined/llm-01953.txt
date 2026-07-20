@@ -1,0 +1,41 @@
+[english] How can I convert a standard data item within my result structure into a specialized, sharable format?
+[english] This function is designed to upgrade an existing ordinary data entry in your results into a shared version. It inspects the type of the original data and automatically selects the correct container class for sharing.
+<switch:python>
+[python] def make_shared_result(result, key, trajectory, new_class=None):
+    """Turns an ordinary data item into a shared one.
+
+    Removes the old result from the trajectory and replaces it.
+    Empties the given result.
+
+    :param result: The result containing ordinary data
+    :param key: Name of ordinary data item
+    :param trajectory: Trajectory container
+    :param new_class:
+
+        Class of new shared data item.
+        Leave `None` for automatic detection.
+
+    :return: The `result`
+
+    """
+    data = result.f_get(key)
+    if new_class is None:
+        if isinstance(data, ObjectTable):
+            new_class = SharedTable
+        elif isinstance(data, pd.DataFrame):
+            new_class = SharedPandasFrame
+        elif isinstance(data, (tuple, list)):
+            new_class = SharedArray
+        elif isinstance(data, (np.ndarray, np.matrix)):
+            new_class = SharedCArray
+        else:
+            raise RuntimeError('Your data `%s` is not understood.' % key)
+    shared_data = new_class(result.f_translate_key(key), result, trajectory=trajectory)
+    result[key] = shared_data
+    shared_data._request_data('make_shared')
+    return result
+<switch:english>
+[english] The function handles several types like DataFrames and arrays, ensuring robust conversion across different data structures.
+[english] What happens if the data retrieved by the key doesn't match any of the predefined types (Table, PandasFrame, list, etc.)?
+[english] If the data type is unrecognized, a `RuntimeError` will be raised to prevent unexpected behavior and alert you that the data format needs explicit handling.
+[english] This makes sense; it ensures I'm aware if the automatic detection fails.

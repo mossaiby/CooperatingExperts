@@ -1,0 +1,23 @@
+[english] I need a command-line tool function that fetches new market prices using specific identifiers like symbols or namespaces.
+[english] This helper prepares our application by checking for help requests first, and then initializes the data handler. It ensures the currency input is properly formatted before initiating the download process.
+<switch:python>
+[python] def download(ctx, help: bool, symbol: str, namespace: str, agent: str, currency: str):
+    """ Download the latest prices """
+    if help:
+        click.echo(ctx.get_help())
+        ctx.exit()
+
+    app = PriceDbApplication()
+    app.logger = logger
+
+    if currency:
+        currency = currency.strip()
+        currency = currency.upper()
+
+    # Otherwise download the prices for securities listed in the database.
+    app.download_prices(currency=currency, agent=agent, symbol=symbol, namespace=namespace)
+<switch:english>
+[english] The function uses `PriceDbApplication` to manage data retrieval. It also standardizes the currency input by using `.strip()` and converting it to uppercase.
+[english] What happens if no security symbol is provided when calling this function?
+[english] If no security parameters are provided, the code automatically downloads all prices listed in the database without filtering based on a specific `symbol` or `namespace` because those arguments will be passed through as they exist.
+[english] That makes sense; it's flexible enough to retrieve bulk data if needed.

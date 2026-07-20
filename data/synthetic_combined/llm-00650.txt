@@ -1,0 +1,24 @@
+[english] I have a list of tokenized text and I need to convert each list into a sequence of integer IDs for use in a model.
+[english] This function iterates through your input tokens and converts each word (string) into its corresponding numerical index using the `self.word_index` mapping. It handles unknown words by assigning them a default 'out-of-vocabulary' ID.
+<switch:python>
+[python] def tokenized_texts_to_sequences_generator(self, tok_texts):
+        """Transforms tokenized text to a sequence of integers.
+        Only top "num_words" most frequent words will be taken into account.
+        Only words known by the tokenizer will be taken into account.
+        # Arguments
+            tokenized texts:  List[List[str]]
+        # Yields
+            Yields individual sequences.
+        """
+        for seq in tok_texts:
+            vect = []
+            for w in seq:
+                # if the word is missing you get oov_index
+                i = self.word_index.get(w, 1)
+                vect.append(i)
+            yield vect
+<switch:english>
+[english] It uses a generator (`yield`) instead of returning a list, which is memory efficient for large datasets as it produces sequences one at a time. If a word isn't found in `self.word_index`, it defaults to index 1 (usually reserved for padding or unknown tokens).
+[english] What happens if I pass an empty tokenized list?
+[english] If you pass an empty tokenized list, the function will iterate over zero sequences and yield nothing. You would need external logic to handle the case where no output sequences are generated.
+[english] That makes sense; thanks for clarifying how it handles edge cases!

@@ -1,0 +1,25 @@
+[english] How can I dynamically register multiple subcommands for my CLI application using an argument parser?
+[english] This function iterates through defined sub-commands, leveraging `parser.add_subparsers()` to create a structured command tree.
+<switch:python>
+[python] def register_sub_commands(self, parser):
+        """
+        Add any sub commands to the argument parser.
+
+        :param parser: The argument parser object
+        """
+        sub_commands = self.get_sub_commands()
+        if sub_commands:
+            sub_parsers = parser.add_subparsers(dest=self.sub_parser_dest_name)
+
+            for name, cls in sub_commands.items():
+                cmd = cls(name)
+
+                sub_parser = sub_parsers.add_parser(name, help=name, description=cmd.get_help(), formatter_class=cmd.get_formatter_class())
+
+                cmd.add_args(sub_parser)
+                cmd.register_sub_commands(sub_parser)
+<switch:english>
+[english] The function recursively calls itself for each sub-command, ensuring nested commands are properly registered by adding them to the `sub_parser` of their parent.
+[english] If a command requires specific arguments that differ from its siblings, where in this loop should I modify the argument handling?
+[english] You should use the `cmd.add_args(sub_parser)` line; the class `cls` instantiated within the loop is responsible for defining and adding unique arguments to its dedicated sub_parser.
+[english] Thanks, that makes sense!

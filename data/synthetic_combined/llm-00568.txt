@@ -1,0 +1,77 @@
+[english] I need to create a robust function that searches a database via Redis using complex criteria like text search, range filtering, and sorting.
+[english] This function first processes input filters into temporary structures and uses the `intersect` command to narrow down result sets based on your criteria. It then applies sorting or pagination logic before fetching the final list of results.
+<switch:python>
+[python] def search(self, conn, filters, order_by, offset=None, count=None, timeout=None):
+        '''
+        Search for model ids that match the provided filters.
+
+        Arguments:
+
+            * *filters* - A list of filters that apply to the search of one of
+              the following two forms:
+
+                1. ``'column:string'`` - a plain string will match a word in a
+                   text search on the column
+
+                .. note:: Read the documentation about the ``Query`` object
+                  for what is actually passed during text search
+
+                2. ``('column', min, max)`` - a numeric column range search,
+                   between min and max (inclusive by default)
+
+                .. note:: Read the documentation about the ``Query`` object
+                  for information about open-ended ranges
+
+                3. ``['column:string1', 'column:string2']`` - will match any
+                   of the provided words in a text search on the column
+
+                4. ``Prefix('column', 'prefix')`` - will match prefixes of
+                   words in a text search on the column
+
+                5. ``Suffix('column', 'suffix')`` - will match suffixes of
+                   words in a text search on the column
+
+                6. ``Pattern('column', 'pattern')`` - will match patterns over
+                   words in a text search on the column
+
+            * *order_by* - A string that names the numeric column by which to
+              sort the results by. Prefixing with '-' will return results in
+              descending order
+
+            .. note:: While you can technically pass a non-numeric index as an
+              *order_by* clause, the results will basically be to order the
+              results by string comparison of the ids (10 will come before 2).
+
+            .. note:: If you omit the ``order_by`` argument, results will be
+              ordered by the last filter. If the last filter was a text
+              filter, see the previous note. If the last filter was numeric,
+              then results will be ordered by that result.
+
+            * *offset* - A numeric starting offset for results
+            * *count* - The maximum number of results to return from the query
+        '''
+        # prepare the filters
+        pipe, intersect, temp_id = self._prepare(conn, filters)
+
+        # handle ordering
+        if order_by:
+            reverse = order_by and order_by.startswith('-')
+            order_clause = '%s:%s:idx'%(self.namespace, order_by.lstrip('-'))
+            intersect(temp_id, {temp_id:0, order_clause: -1 if reverse else 1})
+
+        # handle returning the temporary result key
+        if timeout is not None:
+            pipe.expire(temp_id, timeout)
+            pipe.execute()
+            return temp_id
+
+        offset = offset if offset is not None else 0
+        end = (offset + count - 1) if count and count > 0 else -1
+        pipe.zrange(temp_id, offset, end)
+        pipe.delete(temp_id)
+        return pipe.execute()[-2]
+<switch:english>
+[english] If a timeout is provided, the search generates a temporary result key that expires later; otherwise, it immediately retrieves the paginated data and cleans up the temporary Redis key.
+[english] You mentioned non-numeric ordering isn't ideal. What happens if I provide 'id' as an order_by column name for standard string sorting?
+[english] 'id' will be treated as a simple string comparison in the sort clause, meaning results are ordered alphabetically by ID rather than numerically.
+[english] That clarifies how ordering works!

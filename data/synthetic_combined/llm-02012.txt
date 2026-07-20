@@ -1,0 +1,53 @@
+[english] How can I inspect and view records within a migration dump organized across multiple source files?
+[english] This function iterates through a list of data sources, loading each into memory to help locate specific records or display structural information.
+<switch:python>
+[python] def inspectrecords(sources, recid, entity=None):
+    """Inspect records in a migration dump."""
+    for idx, source in enumerate(sources, 1):
+        click.echo('Loading dump {0} of {1} ({2})'.format(idx, len(sources),
+                                                          source.name))
+        data = json.load(source)
+
+        # Just print record identifiers if none are selected.
+        if not recid:
+            click.secho('Record identifiers', fg='green')
+            total = 0
+            for r in (d['recid'] for d in data):
+                click.echo(r)
+                total += 1
+            click.echo('{0} records found in dump.'.format(total))
+            return
+
+        data = list(filter(lambda d: d['recid'] == recid, data))
+
+        if not data:
+            click.secho("Record not found.", fg='yellow')
+            return
+
+        for record in data:
+            if entity is None:
+                click.echo(json.dumps(record, indent=2))
+            if entity == 'files':
+                click.secho('Files', fg='green')
+                click.echo(
+                    json.dumps(record['files'], indent=2))
+
+            if entity == 'json':
+                click.secho('Records (JSON)', fg='green')
+                for revision in record['record']:
+                    click.secho('Revision {0}'.format(
+                        revision['modification_datetime']), fg='yellow')
+                    click.echo(json.dumps(revision['json'], indent=2))
+
+            if entity == 'marcxml':
+                click.secho('Records (MARCXML)', fg='green')
+                for revision in record['record']:
+                    click.secho(
+                        'Revision {0}'.format(revision['marcxml']),
+                        fg='yellow')
+                    click.echo(revision)
+<switch:english>
+[english] The function uses `recid` for targeted lookups or, when `recid` is empty, it prints all available record identifiers.
+[english] What happens if a single source file contains multiple records matching the provided recid?
+[english] If there are multiple matches in one source, they will all be appended to the `data` list and then processed sequentially by the function loops.
+[english] That was very helpful for debugging!

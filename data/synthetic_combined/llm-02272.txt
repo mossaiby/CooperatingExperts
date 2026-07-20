@@ -1,0 +1,30 @@
+[english] How can I verify that all specified downstream tasks in my DAG have successfully completed before starting subsequent work?
+[english] This function checks the task's dependencies by querying the database for records matching successful states among the defined downstream Task IDs.
+<switch:python>
+[python] def are_dependents_done(self, session=None):
+        """
+        Checks whether the dependents of this task instance have all succeeded.
+        This is meant to be used by wait_for_downstream.
+
+        This is useful when you do not want to start processing the next
+        schedule of a task until the dependents are done. For instance,
+        if the task DROPs and recreates a table.
+        """
+        task = self.task
+
+        if not task.downstream_task_ids:
+            return True
+
+        ti = session.query(func.count(TaskInstance.task_id)).filter(
+            TaskInstance.dag_id == self.dag_id,
+            TaskInstance.task_id.in_(task.downstream_task_ids),
+            TaskInstance.execution_date == self.execution_date,
+            TaskInstance.state == State.SUCCESS,
+        )
+        count = ti[0][0]
+        return count == len(task.downstream_task_ids)
+<switch:english>
+[english] The logic relies on comparing the count of successful dependents to the total required number. If `downstream_task_ids` is empty, it correctly returns true immediately.
+[english] If one or more dependent tasks have failed instead of succeeded, will this function still return True?
+[english] No. The query explicitly filters for `TaskInstance.state == State.SUCCESS`. If any dependent has a different state (like FAILED), the count will not match the total number of dependencies, and it will return False.
+[english] That makes sense; I should handle the non-success case separately.

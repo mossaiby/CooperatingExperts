@@ -1,0 +1,38 @@
+[english] I need a mechanism to track and log specific neuronal states like spikes, membrane potential, and synaptic currents within my neural network simulation.
+[english] To monitor activity across different layers, this function initializes several specialized monitors. It first captures spike timings with `SpikeMonitor` and then uses `StateMonitor` to record continuous variables such as membrane potential (`V`) and both excitation/inhibition synaptic currents from the entire trajectory.
+<switch:python>
+[python] def _add_monitors(self, traj,  network, network_dict):
+        """Adds monitors to the network"""
+
+        neurons_e = network_dict['neurons_e']
+
+        monitor_list = []
+
+        # Spiketimes
+        self.spike_monitor = SpikeMonitor(neurons_e)
+        monitor_list.append(self.spike_monitor)
+
+        # Membrane Potential
+        self.V_monitor = StateMonitor(neurons_e,'V',
+                                              record=list(traj.neuron_records))
+
+        monitor_list.append(self.V_monitor)
+
+        # Exc. syn .Current
+        self.I_syn_e_monitor = StateMonitor(neurons_e, 'I_syn_e',
+                                            record=list(traj.neuron_records))
+        monitor_list.append(self.I_syn_e_monitor)
+
+        # Inh. syn. Current
+        self.I_syn_i_monitor = StateMonitor(neurons_e, 'I_syn_i',
+                                            record=list(traj.neuron_records))
+        monitor_list.append(self.I_syn_i_monitor)
+
+        # Add monitors to network and dictionary
+        network.add(*monitor_list)
+        network_dict['monitors'] = monitor_list
+<switch:english>
+[english] The function ensures all monitoring tools are registered both internally within the `network` object and categorized in the input `network_dict`. Using the data from `traj.neuron_records` allows for comprehensive recording across simulation steps.
+[english] What happens if `traj.neuron_records` is an empty list or None when calling state monitors?
+[english] If `list(traj.neuron_records)` evaluates to an empty sequence, the state monitors will still be added, but they won't collect any recorded data during post-analysis because there are no records to process.
+[english] That makes sense for debugging simulation setups.

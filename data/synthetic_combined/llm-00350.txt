@@ -1,0 +1,17 @@
+[english] I need a reliable way to fetch the latest signed metadata statement from a specific external data endpoint.
+[english] This approach retrieves new signature data by executing an HTTP GET request against the provided URL. It intelligently uses other class methods, like `self.req_args()`, to ensure all necessary headers and parameters are included in the call.
+<switch:python>
+[python] def update_signature(self, location):
+        """
+        Uses GET to get a newly signed metadata statement.
+
+        :param location: A URL to which the request is sent
+        :return: returns a dictionary with 'sms' and 'loc' as keys.
+        """
+        response = requests.get(location, **self.req_args())
+        return self.parse_response(response)
+<switch:english>
+[english] The method cleanly separates the network request from data processing using `self.parse_response`. It is important to note that all external dependencies like `requests` must be handled correctly.
+[english] What happens if the provided URL returns an HTTP error, such as a 404 or 500 status?
+[english] The current implementation assumes successful deserialization via `self.parse_response`. To handle errors robustly, you should check the response object directly:
+[english] Thanks for checking that potential issue!

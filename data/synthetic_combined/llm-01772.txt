@@ -1,0 +1,29 @@
+[english] I need to automatically renew a resource lock so it doesn't expire while my service processes it.
+[english] To ensure your entity remains locked, this method initiates a background process rather than blocking execution. It first captures the starting time and then uses `asyncio.ensure_future` to schedule the renewal task asynchronously.
+<switch:python>
+[python] def register(self, renewable, timeout=300):
+        """Register a renewable entity for automatic lock renewal.
+
+        :param renewable: A locked entity that needs to be renewed.
+        :type renewable: ~azure.servicebus.aio.async_message.Message or
+         ~azure.servicebus.aio.async_receive_handler.SessionReceiver
+        :param timeout: A time in seconds that the lock should be maintained for.
+         Default value is 300 (5 minutes).
+        :type timeout: int
+        """
+        starttime = renewable_start_time(renewable)
+        renew_future = asyncio.ensure_future(self._auto_lock_renew(renewable, starttime, timeout), loop=self.loop)
+        self._futures.append(renew_future)
+<switch:english>
+[english] This setup delegates the responsibility of keeping the lock alive to an asynchronous loop. Be aware that failures in the scheduled renewal future won't immediately crash your main process.
+[english] If the automatic renewal fails multiple times, is there a way to stop rescheduling or alert me?
+[english] The current function schedules indefinitely; you would need to add logic within `_auto_lock_renew` or track and cancel the futures stored in `self._futures`. For example:
+<switch:python>
+[python] future = asyncio.ensure_future(...) # Inside renew handler
+try:
+    await future
+except Exception: # Exponential backoff/retry logic goes here
+    print('Critical failure, stopping renewals.') 
+    raise e
+<switch:english>
+[english] Got it, so I have control over how often the renewal process checks its status.

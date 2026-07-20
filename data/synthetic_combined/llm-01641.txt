@@ -1,0 +1,30 @@
+[english] I need to programmatically connect to an Azure DevOps TFS Git repository using my API token.
+[english] This function establishes a connection to the specified URL and attempts to retrieve a Git client instance. It first checks if you provided a token, falling back to environment variables for secure access.
+<switch:python>
+[python] def create_tfs_git_client(url, token=None):
+    """
+    Creates a TFS Git Client to pull Git repo info
+    """
+    if token is None:
+        token = os.environ.get('TFS_API_TOKEN', None)
+
+    tfs_connection = create_tfs_connection(url, token)
+    tfs_git_client = tfs_connection.get_client('vsts.git.v4_1.git_client.GitClient')
+
+    if tfs_git_client is None:
+        msg = 'Unable to create TFS Git Client, failed to connect to TFS Enterprise (%s) with provided token.'
+        raise RuntimeError(msg, url)
+
+    return tfs_git_client
+<switch:english>
+[english] The function relies on the external `create_tfs_connection` utility and includes robust error raising if the client creation fails.
+[english] If the connection object is successfully created but the token is invalid for that specific URL, will this function still return a non-functional client?
+[english] Yes. The current logic only checks if `tfs_git_client` is `None`. To validate credentials fully, you might add a check after creation:
+<switch:python>
+[python] try:
+    # Attempt a simple metadata fetch to verify connection
+    # tfs_git_client.get_repository('repo-name') 
+except Exception as e:
+    raise PermissionError(f"Invalid token or insufficient permissions: {e}")
+<switch:english>
+[english] Got it, that makes sense for defensive coding.

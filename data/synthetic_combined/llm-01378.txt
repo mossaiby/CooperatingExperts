@@ -1,0 +1,43 @@
+[english] How do I update my application configuration using a structure similar to CherryPy's keypath syntax or by merging nested dictionaries?
+[english] This `update` method is designed to allow flexible configuration changes, accepting either simple keypaths via `options` or structured data via `data`. It processes these inputs in two distinct stages.
+<switch:python>
+[python] def update(self, data={}, options={}):
+        """
+        Update the configuration with new data.
+
+        This can be passed either or both `data` and `options`.
+
+        `options` is a dict of keypath/value pairs like this (similar to
+        CherryPy's config mechanism:
+
+            >>> c.update(options={
+            ...     'server.port': 8080,
+            ...     'server.host': 'localhost',
+            ...     'admin.email': 'admin@lol'
+            ... })
+
+        `data` is a dict of actual config data, like this:
+
+            >>> c.update(data={
+            ...     'server': {
+            ...         'port': 8080,
+            ...         'host': 'localhost'
+            ...     },
+            ...     'admin': {
+            ...         'email': 'admin@lol'
+            ...     }
+            ... })
+        """
+        # Handle an update with a set of options like CherryPy does
+        for key in options:
+            self[key] = options[key]
+
+        # Merge in any data in `data`
+        if isinstance(data, ConfigNode):
+            data = data._get_value()
+        update_dict(self._get_value(), data)
+<switch:english>
+[english] The function first overwrites settings based on the flat key paths provided in `options`. Then, it recursively merges any nested structure found in `data` using an assumed helper function.
+[english] If `data` contains a configuration object that doesn't inherit from `ConfigNode`, will the function crash?
+[english] It would likely raise an AttributeError because it attempts to call `_get_value()` on the input. You should ensure the data passed is either a standard dictionary or a subclass of `ConfigNode`.
+[english] Got it, thanks for clarifying how those inputs are validated.

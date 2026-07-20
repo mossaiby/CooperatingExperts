@@ -1,0 +1,31 @@
+[english] I need a function that mathematically derives the 8 perspective transform coefficients required to warp an original image based on corner mappings.
+[english] This function determines the necessary coefficients for the perspective transform by setting up and solving a system of linear equations. It uses PyTorch's `torch.gels` utility to find the unique parameter set that correctly maps the starting coordinates to the target endpoints.
+<switch:python>
+[python] def _get_perspective_coeffs(startpoints, endpoints):
+    """Helper function to get the coefficients (a, b, c, d, e, f, g, h) for the perspective transforms.
+
+    In Perspective Transform each pixel (x, y) in the orignal image gets transformed as,
+     (x, y) -> ( (ax + by + c) / (gx + hy + 1), (dx + ey + f) / (gx + hy + 1) )
+
+    Args:
+        List containing [top-left, top-right, bottom-right, bottom-left] of the orignal image,
+        List containing [top-left, top-right, bottom-right, bottom-left] of the transformed
+                   image
+    Returns:
+        octuple (a, b, c, d, e, f, g, h) for transforming each pixel.
+    """
+    matrix = []
+
+    for p1, p2 in zip(endpoints, startpoints):
+        matrix.append([p1[0], p1[1], 1, 0, 0, 0, -p2[0] * p1[0], -p2[0] * p1[1]])
+        matrix.append([0, 0, 0, p1[0], p1[1], 1, -p2[1] * p1[0], -p2[1] * p1[1]])
+
+    A = torch.tensor(matrix, dtype=torch.float)
+    B = torch.tensor(startpoints, dtype=torch.float).view(8)
+    res = torch.gels(B, A)[0]
+    return res.squeeze_(1).tolist()
+<switch:english>
+[english] The returned octuple $(a, b, c, d, e, f, g, h)$ defines the full transformation needed for image warping. Be aware that this method relies on solving a linear system and might fail if the input points are degenerate or non-unique.
+[english] What happens inside the function's matrix setup if two of the given corner correspondences happen to be identical?
+[english] If two startpoints map to identical endpoints, the corresponding rows in the `matrix` will become dependent. This could lead to a singular or poorly conditioned system when solving with `torch.gels`, meaning no unique solution is guaranteed.
+[english] Got it, I appreciate the detailed breakdown!

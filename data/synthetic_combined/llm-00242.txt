@@ -1,0 +1,21 @@
+[english] How can I retrieve emojis associated with a specific note across different items using the GitLab API?
+[english] To fetch this data, the function constructs a precise URI by joining the item's context and the required endpoints. It then prepares request parameters to ensure the results are sorted by update time.
+<switch:python>
+[python] def note_emojis(self, item_type, item_id, note_id):
+        """Get emojis of a note"""
+
+        payload = {
+            'order_by': 'updated_at',
+            'sort': 'asc',
+            'per_page': PER_PAGE
+        }
+
+        path = urijoin(item_type, str(item_id), GitLabClient.NOTES,
+                       str(note_id), GitLabClient.EMOJI)
+
+        return self.fetch_items(path, payload)
+<switch:english>
+[english] This method relies heavily on `self.fetch_items` handling all the necessary API authentication and HTTP requests once the path and payload are defined correctly. Remember that the data returned is dependent on how GitLab structures its note emoji endpoints.
+[english] Does this function handle cases where the item_id or note_id might be null?
+[english] While not explicitly checked in the snippet, passing a non-existent ID will likely result in a 404 from the API. You could add input validation before building the path.
+[english] Thanks for clarifying how it structures the request.

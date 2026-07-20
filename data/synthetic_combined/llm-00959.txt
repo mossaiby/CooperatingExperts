@@ -1,0 +1,23 @@
+[english] How do I instantiate a specific elliptic curve object using its OpenSSL NID in Python?
+[english] This function helps create an `EllipticCurve` instance by bridging the gap between the low-level integer NID provided by OpenSSL and our higher-level class. It uses the library binding to convert that numerical ID into a human-readable string representation.
+<switch:python>
+[python] def from_nid(cls, lib, nid):
+        """
+        Instantiate a new :py:class:`_EllipticCurve` associated with the given
+        OpenSSL NID.
+
+        :param lib: The OpenSSL library binding object.
+
+        :param nid: The OpenSSL NID the resulting curve object will represent.
+            This must be a curve NID (and not, for example, a hash NID) or
+            subsequent operations will fail in unpredictable ways.
+        :type nid: :py:class:`int`
+
+        :return: The curve object.
+        """
+        return cls(lib, nid, _ffi.string(lib.OBJ_nid2sn(nid)).decode("ascii"))
+<switch:english>
+[english] The conversion relies on a successful mapping from the integer NID; if you pass a hash or other non-curve NID, the method will likely raise an error during processing.
+[english] Could there be issues with the system's locale when decoding the NID, and how should I handle that?
+[english] Since the function explicitly uses `.decode("ascii")`, it assumes the resulting string from `lib.OBJ_nid2sn` is always ASCII compatible and will fail if non-ASCII characters are encountered.
+[english] Got it. Thanks for clarifying how to handle NID conversions.

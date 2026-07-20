@@ -1,0 +1,39 @@
+[english] How can I generate boilerplate configurations for boolean flags that control specific traits in my application?
+[english] This function automates the creation of flag definitions, allowing you to easily set up both positive and negative switches (e.g., `--use-feature` and `--no-feature`) using a single trait string.
+<switch:python>
+[python] def boolean_flag(name, configurable, set_help='', unset_help=''):
+    """Helper for building basic --trait, --no-trait flags.
+
+    Parameters
+    ----------
+
+    name : str
+        The name of the flag.
+    configurable : str
+        The 'Class.trait' string of the trait to be set/unset with the flag
+    set_help : unicode
+        help string for --name flag
+    unset_help : unicode
+        help string for --no-name flag
+
+    Returns
+    -------
+
+    cfg : dict
+        A dict with two keys: 'name', and 'no-name', for setting and unsetting
+        the trait, respectively.
+    """
+    # default helpstrings
+    set_help = set_help or "set %s=True"%configurable
+    unset_help = unset_help or "set %s=False"%configurable
+
+    cls,trait = configurable.split('.')
+
+    setter = {cls : {trait : True}}
+    unsetter = {cls : {trait : False}}
+    return {name : (setter, set_help), 'no-'+name : (unsetter, unset_help)}
+<switch:english>
+[english] The function first splits the configured trait string into a class and its name to prepare configuration dictionaries. It then returns a dictionary containing configurations for both setting (`True`) and unsetting (`False`) the feature.
+[english] If `configurable` is already just a simple string like 'trait' instead of a dot-separated path like 'Class.trait', what will happen when running this function?
+[english] It will raise a ValueError because it attempts to split the input into two parts using `.split('.')`, and if no period exists, there won't be enough resulting elements.
+[english] That makes sense; I need to ensure my configuration strings always include the class name.

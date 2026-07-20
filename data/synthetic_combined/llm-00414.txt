@@ -1,0 +1,22 @@
+[english] I need a Python function that recursively finds either the newest or oldest modification time among all files within a directory and its subdirectories.
+[english] This function uses `os.walk` to traverse the entire directory structure. It iterates through every file and compares its modification timestamp against the current extreme value it has found, updating it if a newer (or older) file is encountered.
+<switch:python>
+[python] def recursive_mtime(path, newest=True):
+    """Gets the newest/oldest mtime for all files in a directory."""
+    if os.path.isfile(path):
+        return mtime(path)
+    current_extreme = None
+    for dirname, dirnames, filenames in os.walk(path, topdown=False):
+        for filename in filenames:
+            mt = mtime(pjoin(dirname, filename))
+            if newest:  # Put outside of loop?
+                if mt >= (current_extreme or mt):
+                    current_extreme = mt
+            elif mt <= (current_extreme or mt):
+                current_extreme = mt
+    return current_extreme
+<switch:english>
+[english] The use of `topdown=False` ensures that files are processed before their parent directories in the walk, which is often necessary when dealing with complex directory structures and recursive operations.
+[english] If I have an empty folder, will this function correctly return None?
+[english] Yes, if a directory contains no files at all, `filenames` will be empty during iteration, and the initial `current_extreme = None` will be returned.
+[english] That makes sense.

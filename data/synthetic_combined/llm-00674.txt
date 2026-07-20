@@ -1,0 +1,87 @@
+[english] How can I implement an exponentially weighted moving mean and variance update in TensorFlow for a continuous data stream?
+[english] This function implements the recurrence relations defined by Finch (2009) to incrementally update the mean and variance as new values arrive. It performs validation on input dtypes before performing sequential updates using assign operations.
+<switch:python>
+[python] def assign_moving_mean_variance(
+    mean_var, variance_var, value, decay, name=None):
+  """Compute exponentially weighted moving {mean,variance} of a streaming value.
+
+  The `value` updated exponentially weighted moving `mean_var` and
+  `variance_var` are given by the following recurrence relations:
+<switch:english>
+[english] python
+  variance_var = decay * (variance_var + (1 - decay) * (value - mean_var)**2)
+  mean_var     = decay * mean_var + (1 - decay) * value
+<switch:python>
+[python] Note: `mean_var` is updated *after* `variance_var`, i.e., `variance_var` uses
+  the lag-1 mean.
+
+  For derivation justification, see [Finch (2009; Eq. 143)][1].
+  Parameterization: Finch's `alpha` is `1 - decay`.
+
+  Args:
+    mean_var: `float`-like `Variable` representing the exponentially weighted
+      moving mean. Same shape as `variance_var` and `value`.
+    variance_var: `float`-like `Variable` representing the
+      exponentially weighted moving variance. Same shape as `mean_var` and
+      `value`.
+    value: `float`-like `Tensor`. Same shape as `mean_var` and `variance_var`.
+    decay: A `float`-like `Tensor`. The moving mean decay. Typically close to
+      `1.`, e.g., `0.999`.
+    name: Optional name of the returned operation.
+
+  Returns:
+    mean_var: `Variable` representing the `value`-updated exponentially weighted
+      moving mean.
+    variance_var: `Variable` representing the `value`-updated
+      exponentially weighted moving variance.
+
+  Raises:
+    TypeError: if `mean_var` does not have float type `dtype`.
+    TypeError: if `mean_var`, `variance_var`, `value`, `decay` have different
+      `base_dtype`.
+
+  #### References
+
+  [1]: Tony Finch. Incremental calculation of weighted mean and variance.
+       _Technical Report_, 2009.
+       http://people.ds.cam.ac.uk/fanf2/hermes/doc/antiforgery/stats.pdf
+  """
+  with tf.compat.v1.name_scope(name, "assign_moving_mean_variance",
+                               [variance_var, mean_var, value, decay]):
+    with tf.compat.v1.colocate_with(variance_var):
+      with tf.compat.v1.colocate_with(mean_var):
+        base_dtype = mean_var.dtype.base_dtype
+        if not base_dtype.is_floating:
+          raise TypeError(
+              "mean_var.base_dtype({}) does not have float type "
+              "`dtype`.".format(base_dtype.name))
+        if base_dtype != variance_var.dtype.base_dtype:
+          raise TypeError(
+              "mean_var.base_dtype({}) != variance_var.base_dtype({})".format(
+                  base_dtype.name,
+                  variance_var.dtype.base_dtype.name))
+        value = tf.convert_to_tensor(
+            value=value, dtype=base_dtype, name="value")
+        decay = tf.convert_to_tensor(
+            value=decay, dtype=base_dtype, name="decay")
+        delta = value - mean_var
+        with tf.control_dependencies([delta]):
+          # We want mean_{t+1} = decay * mean_t + (1. - decay) * value
+          # We compute mean += decay * mean_t - mean_t + (1. - decay) * value =
+          #   = (1. - decay) * (value - mean_t)
+          mean_var = mean_var.assign_add((1. - decay) * delta)
+          # We want variance_{t+1} = decay * (variance_t +
+          #   + (1 - decay) * (value - mean_var)**2).
+          # We compute variance -= variance_t - decay * (variance_t +
+          #     + (1 - decay) * (value - mean_var)**2) =
+          #   = (1 - decay) * variance_t
+          #     - decay * (1 - decay) * (value - mean_var)**2
+          #   = (1 - decay) * (variance_t - decay * (value - mean_var)**2).
+          variance_var = variance_var.assign_sub(
+              (1. - decay) * (variance_var - decay * tf.square(delta)))
+        return mean_var, variance_var
+<switch:english>
+[english] The implementation carefully adheres to the requirement that the moving variance is calculated using the *lag-1* version of the mean, which ensures consistency in each time step.
+[english] What would happen if `decay` was set very close to 0 (e.g., 0.01) instead of a value close to 1?
+[english] If `decay` approaches 0, the updates become extremely volatile; while this will assign weights heavily to the latest observation, it might lead to numerical instability since the previous state contributions are minimized.
+[english] That makes sense, I appreciate the detailed breakdown!

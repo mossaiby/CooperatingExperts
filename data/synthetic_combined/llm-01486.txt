@@ -1,0 +1,14 @@
+[english] How can I create an exact duplicate of my current cursor object?
+[english] This function handles creating a copy by first instantiating a new object of the same type and then meticulously transferring all relevant state variables from the original to the new instance.
+<switch:python>
+[python] def copy(self):
+        """ Create a copy, and return it."""
+        new_cursor = self.__class__(self.x, self.y)
+        new_cursor.set_bounds(self.xmin, self.ymin, self.xmax, self.ymax, self.ymaxmax)
+        new_cursor.set_deltas(self.dx, self.dy)
+        return new_cursor
+<switch:english>
+[english] The logic ensures that positions, boundaries, and movement deltas are accurately transferred to maintain identical behavior in the clone.
+[english] What if the class has custom methods I need copied as well?
+[english] This implementation only copies attributes; it does not copy methods or internal states (like function calls). To achieve a true deep copy, you would generally use `copy.deepcopy()` from Python's standard library.
+[english] Got it, so this is just for data duplication.

@@ -1,0 +1,45 @@
+[english] How do I synchronously run a defined pipeline using specific environmental settings and execution configurations?
+[english] This function provides a synchronous execution method for a pipeline definition. It first validates all input parameters and sets up necessary environments to manage intermediate states.
+<switch:python>
+[python] def execute_pipeline(pipeline, environment_dict=None, run_config=None):
+    '''
+    "Synchronous" version of :py:func:`execute_pipeline_iterator`.
+
+    Note: raise_on_error is very useful in testing contexts when not testing for error
+    conditions
+
+    Parameters:
+      pipeline (PipelineDefinition): Pipeline to run
+      environment_dict (dict): The enviroment configuration that parameterizes this run
+      run_config (RunConfig): Configuration for how this pipeline will be executed
+
+    Returns:
+      :py:class:`PipelineExecutionResult`
+    '''
+
+    check.inst_param(pipeline, 'pipeline', PipelineDefinition)
+    environment_dict = check.opt_dict_param(environment_dict, 'environment_dict')
+    run_config = check_run_config_param(run_config)
+    environment_config = create_environment_config(pipeline, environment_dict)
+    intermediates_manager = construct_intermediates_manager(
+        run_config, environment_config, pipeline
+    )
+
+    with _pipeline_execution_context_manager(
+        pipeline, environment_config, run_config, intermediates_manager
+    ) as pipeline_context:
+        event_list = list(_execute_pipeline_iterator(pipeline_context))
+
+    return PipelineExecutionResult(
+        pipeline,
+        run_config.run_id,
+        event_list,
+        lambda: _pipeline_execution_context_manager(
+            pipeline, environment_config, run_config, intermediates_manager
+        ),
+    )
+<switch:english>
+[english] The core logic executes the generator via `list(_execute_pipeline_iterator(...))` and returns a result object that holds the final state of the run.
+[english] What happens if the pipeline execution fails during the context management phase?
+[english] If an error occurs within the `with` block, it is propagated synchronously. For controlled failure handling, you would typically add try-except blocks around the call or rely on testing utilities that check. You can also set a flag within the run config to enforce raising errors.
+[english] Could you provide an example of how I might modify this function for asynchronous execution?

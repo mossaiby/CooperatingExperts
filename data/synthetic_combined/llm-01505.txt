@@ -1,0 +1,31 @@
+[english] I need a way to sample normalized random directions consistently across multiple state components while maintaining reproducibility via seeding.
+[english] This function generates independent normal tensors for each input part, coordinating them using a shared seed stream to ensure batch-wide consistency. It then calculates a global normalization factor by summing the squared magnitudes of all generated direction components before normalizing individual fragments.
+<switch:python>
+[python] def _choose_random_direction(current_state_parts, batch_rank, seed=None):
+  """Chooses a random direction in the event space."""
+  seed_gen = distributions.SeedStream(seed, salt='_choose_random_direction')
+  # Chooses the random directions across each of the input components.
+  rnd_direction_parts = [
+      tf.random.normal(
+          tf.shape(input=current_state_part), dtype=tf.float32, seed=seed_gen())
+      for current_state_part in current_state_parts
+  ]
+
+  # Sum squares over all of the input components. Note this takes all
+  # components into account.
+  sum_squares = sum(
+      tf.reduce_sum(
+          input_tensor=rnd_direction**2.,
+          axis=tf.range(batch_rank, tf.rank(rnd_direction)),
+          keepdims=True) for rnd_direction in rnd_direction_parts)
+
+  # Normalizes the random direction fragments.
+  rnd_direction_parts = [rnd_direction / tf.sqrt(sum_squares)
+                         for rnd_direction in rnd_direction_parts]
+
+  return rnd_direction_parts
+<switch:english>
+[english] The output returns normalized direction segments where the overall magnitude is constrained by the sum of squares across all inputs, ensuring coherent scaling.
+[english] If one of the input tensors in `current_state_parts` is entirely zeros, what happens to the normalization step and could it cause an error?
+[english] A zero-filled tensor contributes nothing to `sum_squares`, but if the total sum across all parts is zero, dividing by `tf.sqrt(0)` will result in NaN or Inf values during normalization.
+[english] That makes sense; thanks for flagging that potential pitfall!

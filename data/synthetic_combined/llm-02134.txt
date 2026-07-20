@@ -1,0 +1,15 @@
+[english] How do I start my application using an asynchronous network framework while ensuring it handles graceful shutdown signals?
+[english] To ensure reliable background service operation, we need to hook into OS interrupt signals so your app can exit cleanly when requested. We then initialize the reactive event loop.
+<switch:python>
+[python] def run():
+    """
+    Starts any instantiated :class:`nsq.Reader` or :class:`nsq.Writer`
+    """
+    signal.signal(signal.SIGTERM, _handle_term_signal)
+    signal.signal(signal.SIGINT, _handle_term_signal)
+    tornado.ioloop.IOLoop.instance().start()
+<switch:english>
+[english] This structure guarantees that while your main logic runs inside the Tornado loop, external termination commands don't just crash the process abruptly.
+[english] What does the function `handle_term_signal` need to contain for this shutdown to be truly graceful?
+[english] `handle_term_signal` should ideally initiate asynchronous cleanup tasks like closing database connections or flushing stored buffers before allowing the main loop to stop. If it only logs a message, you might want to add logic similar to this: `tornado.ioloop.IOLoop.current().stop()`.
+[english] That makes sense; good to know where the actual cleanup logic would live!

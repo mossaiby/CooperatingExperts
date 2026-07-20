@@ -1,0 +1,89 @@
+[english] How do I write a robust function to parse and decode a KeyWrappingData structure, which is encoded sequentially within an input stream?
+[english] This function decodes structured cryptographic data iteratively. It begins by reading the basic object metadata before systematically checking for and decoding specific attributes based on expected tags.
+<switch:python>
+[python] def read(self, input_stream, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Read the data encoding the KeyWrappingData struct and decode it into
+        its constituent parts.
+
+        Args:
+            input_stream (stream): A data stream containing encoded object
+                data, supporting a read method; usually a BytearrayStream
+                object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be decoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        super(KeyWrappingData, self).read(
+            input_stream,
+            kmip_version=kmip_version
+        )
+        local_stream = BytearrayStream(input_stream.read(self.length))
+
+        if self.is_tag_next(enums.Tags.WRAPPING_METHOD, local_stream):
+            self._wrapping_method = primitives.Enumeration(
+                enum=enums.WrappingMethod,
+                tag=enums.Tags.WRAPPING_METHOD
+            )
+            self._wrapping_method.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+        else:
+            raise ValueError(
+                "Invalid struct missing the wrapping method attribute."
+            )
+
+        if self.is_tag_next(
+                enums.Tags.ENCRYPTION_KEY_INFORMATION,
+                local_stream
+        ):
+            self._encryption_key_information = EncryptionKeyInformation()
+            self._encryption_key_information.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+        if self.is_tag_next(
+                enums.Tags.MAC_SIGNATURE_KEY_INFORMATION,
+                local_stream
+        ):
+            self._mac_signature_key_information = MACSignatureKeyInformation()
+            self._mac_signature_key_information.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+
+        if self.is_tag_next(enums.Tags.MAC_SIGNATURE, local_stream):
+            self._mac_signature = primitives.ByteString(
+                tag=enums.Tags.MAC_SIGNATURE
+            )
+            self._mac_signature.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+
+        if self.is_tag_next(enums.Tags.IV_COUNTER_NONCE, local_stream):
+            self._iv_counter_nonce = primitives.ByteString(
+                tag=enums.Tags.IV_COUNTER_NONCE
+            )
+            self._iv_counter_nonce.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+
+        if self.is_tag_next(enums.Tags.ENCODING_OPTION, local_stream):
+            self._encoding_option = primitives.Enumeration(
+                enum=enums.EncodingOption,
+                tag=enums.Tags.ENCODING_OPTION
+            )
+            self._encoding_option.read(
+                local_stream,
+                kmip_version=kmip_version
+            )
+
+        self.is_oversized(local_stream)
+<switch:english>
+[english] The method verifies that no excess data remains in the stream after processing all optional fields using `self.is_oversized` to ensure structural integrity.
+[english] If a required tag, such as WRAPPING_METHOD, is unexpectedly missing from the input stream, what kind of error is raised?
+[english] The function explicitly checks if `WRAPPING_METHOD` is present and will raise a `ValueError` stating that the struct is 'missing the wrapping method attribute' if it isn't found.
+[english] That level of detail on validation is exactly what I needed.

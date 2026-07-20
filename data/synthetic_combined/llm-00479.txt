@@ -1,0 +1,14 @@
+[english] How can I validate that a user cannot select both accept and reject options on my form?
+[english] To enforce mutual exclusivity, we need to check if the relevant data is present in both fields at the same time. If both are populated, we trigger an error.
+<switch:python>
+[python] def validate_accept(form, field):
+        """Validate that accept have not been set."""
+        if field.data and form.reject.data:
+            raise validators.ValidationError(
+                _("Both reject and accept cannot be set at the same time.")
+            )
+<switch:english>
+[english] This function relies on truthiness for `field.data` and `form.reject.data`, assuming that presence means non-empty or defined values.
+[english] If one of these fields exists but contains an empty string, will this validation still pass?
+[english] Yes, because the function checks if `.data` is truthy. An empty string evaluates to False in Python's boolean context, causing the condition to fail without raising an error.
+[english] That makes perfect sense; I appreciate the clarification on how it handles empty input.

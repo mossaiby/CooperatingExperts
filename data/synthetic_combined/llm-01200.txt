@@ -1,0 +1,21 @@
+[english] How can I retrieve specific operation nodes that contain exactly two arguments from a multi-graph structure?
+[english] This method iterates through all nodes in self._multi_graph, filtering for 'op' types while ensuring the node has precisely two required arguments.
+<switch:python>
+[python] def get_2q_nodes(self):
+        """Deprecated. Use twoQ_gates()."""
+        warnings.warn('The method get_2q_nodes() is being replaced by twoQ_gates()',
+                      'Returning a list of data_dicts is also deprecated, twoQ_gates() '
+                      'returns a list of DAGNodes.',
+                      DeprecationWarning, 2)
+
+        two_q_nodes = []
+        for node in self._multi_graph.nodes():
+            if node.type == 'op' and len(node.qargs) == 2:
+                two_q_nodes.append(node.data_dict)
+
+        return two_q_nodes
+<switch:english>
+[english] The function returns a list of data dictionaries corresponding to these two-argument operations. However, please be aware this method is deprecated and should be replaced by `twoQ_gates()`.
+[english] If an operation node had three inputs instead of two, would it still be considered a 2q node by this logic?
+[english] No, the conditional check explicitly requires len(node.qargs) to be exactly 2, meaning operations with one or more than two arguments will be excluded.
+[english] That makes sense, thank you for explaining.

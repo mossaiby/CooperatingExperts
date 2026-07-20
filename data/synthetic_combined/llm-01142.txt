@@ -1,0 +1,41 @@
+[english] How can I update or modify the custom headers and metadata associated with a specific file within a cloud storage container?
+[english] This function handles object updates by constructing the full resource path and then sending an HTTP POST request. It allows you to supply various configuration details like additional headers, query parameters, and CDN settings.
+<switch:python>
+[python] def post_object(self, container, obj, headers=None, query=None, cdn=False,
+                    body=None):
+        """
+        POSTs the object and returns the results. This is used to
+        update the object's header values. Note that all headers must
+        be sent with the POST, unlike the account and container POSTs.
+        With account and container POSTs, existing headers are
+        untouched. But with object POSTs, any existing headers are
+        removed. The full list of supported headers depends on the
+        Swift cluster, but usually include Content-Type,
+        Content-Encoding, and any X-Object-Meta-xxx headers.
+
+        :param container: The name of the container.
+        :param obj: The name of the object.
+        :param headers: Additional headers to send with the request.
+        :param query: Set to a dict of query values to send on the
+            query string of the request.
+        :param cdn: If set True, the CDN management interface will be
+            used.
+        :param body: No known Swift POSTs take a body; but the option
+            is there for the future.
+        :returns: A tuple of (status, reason, headers, contents).
+
+            :status: is an int for the HTTP status code.
+            :reason: is the str for the HTTP status (ex: "Ok").
+            :headers: is a dict with all lowercase keys of the HTTP
+                headers; if a header has multiple values, it will be a
+                list.
+            :contents: is the str for the HTTP body.
+        """
+        path = self._object_path(container, obj)
+        return self.request(
+            'POST', path, body or '', headers, query=query, cdn=cdn)
+<switch:english>
+[english] Remember that this is an 'object' operation, meaning it replaces all existing metadata; any headers not explicitly passed will be removed during the update process.
+[english] I see that headers are fully replaced. If I only want to change a single header value while keeping all my other previous custom headers intact, how should I use this function?
+[english] To ensure no headers are lost, you must provide the full set of desired headers within the `headers` parameter of this call. You should copy all existing metadata into that dictionary and then overwrite or add your specific changes.
+[english] Thanks for explaining the header behavior; it helps clarify how to approach configuration updates.

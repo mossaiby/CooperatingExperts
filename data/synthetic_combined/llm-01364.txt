@@ -1,0 +1,20 @@
+[english] How can I create a flexible text processing pipeline that cleans and tokenizes documents while optionally adding start and end tokens?
+[english] This function acts as a factory, creating specialized processing functions on demand. It captures configuration parameters like tokenizers and cleaning methods to build reusable pipelines.
+<switch:python>
+[python] def process_text_constructor(cleaner: Callable,
+                             tokenizer: Callable,
+                             append_indicators: bool,
+                             start_tok: str,
+                             end_tok: str):
+    """Generate a function that will clean and tokenize text."""
+    def process_text(text):
+        if append_indicators:
+            return [[start_tok] + tokenizer(cleaner(doc)) + [end_tok] for doc in text]
+        return [tokenizer(cleaner(doc)) for doc in text]
+
+    return process_text
+<switch:english>
+[english] This structure allows you to define complex preprocessing steps once and then apply them consistently across many different datasets. Be aware that the inner function assumes `text` is iterable (e.g., a list of strings).
+[english] How does this function handle inputs that are single documents versus batches of multiple documents?
+[english] The current implementation treats the input `text` as an iterable (like a list), performing the cleaning and tokenization on each item in that collection.
+[english] That makes sense, I'll try implementing this pipeline now!

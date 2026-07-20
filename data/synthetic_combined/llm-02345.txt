@@ -1,0 +1,17 @@
+[english] How do I convert a StreamItem key, which consists of an MD5 hash and a timestamp, into a fixed-size bytes format for storage?
+[english] To serialize this key, we first validate that the provided MD5 hash is exactly 16 bytes long. Then, we use Python's `struct` module to pack these two components—the binary hash and the integer timestamp—into a buffer.
+<switch:python>
+[python] def serialize_si_key(si_key):
+    '''
+    Return packed bytes representation of StreamItem kvlayer key.
+    The result is 20 bytes, 16 of md5 hash, 4 of int timestamp.
+    '''
+    if len(si_key[0]) != 16:
+        raise ValueError('bad StreamItem key, expected 16 byte '
+                         'md5 hash binary digest, got: {0!r}'.format(si_key))
+    return struct.pack('>16si', si_key[0], si_key[1])
+<switch:english>
+[english] The function relies on `struct.pack` with the format string `' > 16 s i'` to ensure the hash (s) is packed first, followed by the timestamp (i), both in network byte order (>). The size of the resulting buffer will be $20$ bytes as expected.
+[english] What should I do if `si_key[1]` (the timestamp) exceeds the limits of a standard 4-byte integer?
+[english] If your timestamps are very large, you should use `%q` instead of `% i` in the format string. The `% q` specifier will pack a Python arbitrary precision integer into variable-length bytes.
+[english] That is much clearer; thank you for the explanation!

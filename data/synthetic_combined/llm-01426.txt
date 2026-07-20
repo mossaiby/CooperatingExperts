@@ -1,0 +1,20 @@
+[english] How can I get the specific URL for a team's offensive coordinator (OC) coach ID for a given year?
+[english] This method fetches the OC details using an internal helper function and then extracts a specific attribute from the returned anchor object to provide the desired link.
+<switch:python>
+[python] def off_coordinator(self, year):
+        """Returns the coach ID for the team's OC in a given year.
+
+        :year: An int representing the year.
+        :returns: A string containing the coach ID of the OC.
+        """
+        try:
+            oc_anchor = self._year_info_pq(year, 'Offensive Coordinator')('a')
+            if oc_anchor:
+                return oc_anchor.attr['href']
+        except ValueError:
+            return None
+<switch:english>
+[english] The use of a try-except block ensures that if the year or data is invalid, the function safely returns None instead of raising an error.
+[english] What happens if 'Offensive Coordinator' isn't found for that year?
+[english] If the specified role doesn't exist within the year's data via `self._year_info_pq`, a KeyError or similar exception might occur, which is handled by the function returning None.
+[english] This makes sense!

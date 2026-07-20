@@ -1,0 +1,25 @@
+[english] How can I determine from a specific execution frame whether a required name was introduced via an import statement?
+[english] This function inspect the Abstract Syntax Tree (AST) of the provided frame to locate all import statements. It systematically checks both the module names and any assigned aliases against your target name.
+<switch:python>
+[python] def _find_frame_imports(name, frame):
+    """
+    Detect imports in the frame, with the required
+    *name*. Such imports can be considered assignments.
+    Returns True if an import for the given name was found.
+    """
+    imports = frame.nodes_of_class((astroid.Import, astroid.ImportFrom))
+    for import_node in imports:
+        for import_name, import_alias in import_node.names:
+            # If the import uses an alias, check only that.
+            # Otherwise, check only the import name.
+            if import_alias:
+                if import_alias == name:
+                    return True
+            elif import_name and import_name == name:
+                return True
+    return None
+<switch:english>
+[english] It successfully finds direct imports matching the name, but remember it only considers explicit import statements rather than general variable assignments.
+[english] If there are multiple ways for a name to be imported (e.g., `import os` and `from sys import path`), will this function return all matches?
+[english] No, it returns `True` as soon as the first match is found within the imports. If no matching import is found after checking all nodes, the function returns `None`.
+[english] Thanks for clarifying the early exit behavior.

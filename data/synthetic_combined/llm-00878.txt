@@ -1,0 +1,22 @@
+[english] How can I automatically substitute specific config tokens within a data structure using an external applicator?
+[english] This method first checks if the primary path is a string and applies any substitutions there before traversing its children.
+<switch:python>
+[python] def apply_config(self, applicator):
+        """
+        Replace any config tokens with values from the config.
+        """
+        if type(self._path) == str:
+            self._path = applicator.apply(self._path)
+
+        for key in self._children:
+            self._children[key].apply_config(applicator)
+<switch:english>
+[english] It ensures that both the main attribute and all contained elements undergo configuration processing recursively.
+[english] Does this function handle configuration application for attributes that were not defined by type?
+[english] The current implementation only processes the path if it is explicitly of type string. For other types, you would need an additional check or a more generic traversal logic. 
+```python
+def apply_config(self, applicator):
+    if isinstance(self._path, str):
+        self._path = applicator.apply(self._path)
+    # ... rest of function
+[english] That makes sense; I'll adjust the type check then.

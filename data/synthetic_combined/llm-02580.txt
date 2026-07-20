@@ -1,0 +1,27 @@
+[english] I need a function that can inspect an imported Python module and extract all the command functions defined within it.
+[english] This function checks if the module defines an `__all__` list to determine which variables are public; otherwise, it examines everything in the namespace. It then uses an internal helper to filter those namespaces down to only valid Click commands.
+<switch:python>
+[python] def get_commands_from_module(imported):
+    """
+    从传入的 ``imported`` 中获取所有 ``click.core.Command``
+
+    :param module imported: 导入的Python包
+    :return: 包描述文档，仅含终端命令函数的对象字典
+    :rtype: (str, dict(str, object))
+    """
+    # 如果存在 <module>.__all__ ，则遵守
+    imported_vars = vars(imported)
+    if "__all__" in imported_vars:
+        imported_vars = [
+            (name, imported_vars[name]) for name in
+            imported_vars if name in imported_vars["__all__"]]
+    else:
+        imported_vars = imported_vars.items()
+
+    cmd_dict = extract_commands(imported_vars)
+    return imported.__doc__, cmd_dict
+<switch:english>
+[english] The result is a tuple providing both the module's overall documentation and a mapping of command names to their respective functions.
+[english] What happens if the imported module does not have a `__doc__` attribute?
+[english] If the module lacks a docstring, `imported.__doc__` will evaluate to `None`, which is gracefully returned in the first element of the tuple. We can verify this behavior with a simple test.
+[english] That makes sense, thanks for explaining that.

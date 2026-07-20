@@ -1,0 +1,22 @@
+[english] How can I determine if a specific data type supports a particular output format dynamically?
+[english] To check for supported formats, this function first retrieves the actual type object associated with your input parameter.
+<switch:python>
+[python] def is_known_format(self, type, format):
+        """
+        Check if format is known for given type.
+
+        Returns boolean indicating if format is valid for the specified type.
+        """
+
+        typeobj = self.get_type(type)
+
+        formatter = "format_%s" % str(format)
+        if not hasattr(typeobj, formatter):
+            return False
+
+        return True
+<switch:english>
+[english] The core logic relies on constructing a method name (like 'format_json') and using `hasattr` to see if that function exists within the type object.
+[english] What happens if 'type' is None or improperly mapped by get_type?
+[english] If `get_type(type)` returns an invalid or non-existent object, an error will likely occur before the check. It assumes valid input for successful execution.
+[english] That clarifies how to handle these formatting checks.

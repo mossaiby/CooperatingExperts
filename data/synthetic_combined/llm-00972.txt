@@ -1,0 +1,20 @@
+[english] I need a function to retrieve service level objective details for a specific Azure SQL Database server.
+[english] This function first validates that the provided server name is not null before calling an internal method. It performs an API request using the constructed path and then converts the resulting XML response into a usable Python object structure.
+<switch:python>
+[python] def list_service_level_objectives(self, server_name):
+        '''
+        Gets the service level objectives for an Azure SQL Database server.
+
+        server_name:
+            Name of the server.
+        '''
+        _validate_not_none('server_name', server_name)
+        response = self._perform_get(
+            self._get_service_objectives_path(server_name), None)
+        return _MinidomXmlToObject.parse_service_resources_response(
+            response, ServiceObjective)
+<switch:english>
+[english] The helper class _MinidomXmlToObject is specifically used to parse the raw service responses, ensuring the data conforms to the expected ServiceObjective format.
+[english] If an error occurs during the API call (e.g., server not found), how is that handled?
+[english] Assuming this function relies on higher-level exception handling within _perform_get, a missing or inaccessible server would typically trigger an exception indicating a failed resource retrieval status code.
+[english] That makes sense, thanks for the detailed explanation!

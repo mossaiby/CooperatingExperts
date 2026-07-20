@@ -1,0 +1,32 @@
+[english] I want a decorator that automatically provides and manages a database session for my functions.
+[english] This function checks if the decorated method explicitly accepts a 'session' argument. If not, it dynamically creates a new session using `create_session()` and ensures it is closed when the operation finishes via a context manager.
+<switch:python>
+[python] def provide_session(func):
+    """
+    Function decorator that provides a session if it isn't provided.
+    If you want to reuse a session or run the function as part of a
+    database transaction, you pass it to the function, if not this wrapper
+    will create one and close it for you.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        arg_session = 'session'
+
+        func_params = func.__code__.co_varnames
+        session_in_args = arg_session in func_params and \
+            func_params.index(arg_session) < len(args)
+        session_in_kwargs = arg_session in kwargs
+
+        if session_in_kwargs or session_in_args:
+            return func(*args, **kwargs)
+        else:
+            with create_session() as session:
+                kwargs[arg_session] = session
+                return func(*args, **kwargs)
+
+    return wrapper
+<switch:english>
+[english] By checking both positional arguments (`args`) and keyword arguments (`kwargs`), this wrapper allows developers to easily inject sessions without manually managing their lifecycle in every view or function call.
+[english] If I pass other required arguments positionally, how does it ensure the injected 'session' doesn't get misaligned?
+[english] The logic determines where 'session' should be placed by checking if its name exists in `func.__code__.co_varnames`. If it is expected but missing from both args and kwargs, it injectS it into `kwargs`, allowing the function to receive it correctly.
+[english] I see. This makes database management much cleaner.

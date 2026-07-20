@@ -1,0 +1,39 @@
+[english] How do I translate a specialized resource recursion (`RECUR`) into a corresponding Python AST node structure?
+[english] This function handles the transformation of a structured `RECUR` operation—which likely represents an internal recursive call in a type system definition—into standard Python code. It prepares this by iterating through all expressions and identifying their dependencies.
+<switch:python>
+[python] def __deftype_method_recur_to_py_ast(
+    ctx: GeneratorContext, node: Recur
+) -> GeneratedPyAST:
+    """Return a Python AST node for `recur` occurring inside a `deftype*` method."""
+    assert node.op == NodeOp.RECUR
+    recur_nodes: List[ast.AST] = []
+    recur_deps: List[ast.AST] = []
+    for expr in node.exprs:
+        expr_ast = gen_py_ast(ctx, expr)
+        recur_nodes.append(expr_ast.node)
+        recur_deps.extend(expr_ast.dependencies)
+
+    this_entry = ctx.symbol_table.find_symbol(ctx.current_this)
+    assert this_entry is not None, "Field type local must have this"
+
+    return GeneratedPyAST(
+        node=ast.Call(
+            func=_TRAMPOLINE_ARGS_FN_NAME,
+            args=list(
+                chain(
+                    [
+                        ast.NameConstant(ctx.recur_point.is_variadic),
+                        ast.Name(id=this_entry.munged, ctx=ast.Load()),
+                    ],
+                    recur_nodes,
+                )
+            ),
+            keywords=[],
+        ),
+        dependencies=recur_deps,
+    )
+<switch:english>
+[english] The function converts the recursion into a call to `TRAMPOLINE_ARGS_FN_NAME`. It constructs arguments by combining constant flags and the current instance (`this_entry.munged`) with all generated expression AST nodes.
+[english] What happens if `ctx.current_this` cannot be found in the symbol table, which triggers an assertion failure?
+[english] The code asserts that a local field type must have associated 'this' context. If this entry is not found (`this_entry is None`), it means the required instance reference for method dispatch is missing, and the function raises an AssertionError to prevent incorrect AST generation.
+[english] That clarifies how dependencies are tracked during AST generation.

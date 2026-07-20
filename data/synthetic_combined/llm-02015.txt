@@ -1,0 +1,25 @@
+[english] How can I create a helper function to automatically generate an HTML image tag from Python while ensuring local relative URLs are properly prefixed?
+[english] This utility functions as a simple wrapper for generating `<img>` tags in HTML. It specifically handles path resolution by checking if a given URL is absolute or relative, appending the static file URL if needed.
+<switch:python>
+[python] def img(url, alt='', classes='', style=''):
+    '''
+    Image tag helper.
+    '''
+
+    if not url.startswith('http://') and not url[:1] == '/':
+        #add media_url for relative paths
+        url = settings.STATIC_URL + url
+
+    attr = {
+        'class': classes,
+        'alt': alt,
+        'style': style,
+        'src': url
+    }
+
+    return html.tag('img', '', attr)
+<switch:english>
+[english] The function efficiently builds an attribute dictionary and uses the `html.tag` function to construct the final string. Note that successful execution usually depends on having `settings` and `html` imported.
+[english] What would happen if I wanted to pass additional standard HTML attributes, like 'width' or 'loading', through this helper?
+[english] The current implementation only explicitly supports alt, classes, style, and src. To include other attributes, you can merge them into the 'attr' dictionary before returning the tag.
+[english] That clarifies how to extend it, great!

@@ -1,0 +1,21 @@
+[english] How can I reliably shut down a system by cleanly closing all registered plugins and capturing any failures gracefully?
+[english] This method systematically iterates through all components in `self.plugins` to trigger their cleanup routines. It utilizes a try-except block around each call to ensure that one plugin failing does not prevent others from closing.
+<switch:python>
+[python] def close(self):
+        """
+        Call close() for all plugins
+        """
+        logger.info("Close allocated resources...")
+        for plugin in self.plugins.values():
+            logger.debug("Close %s", plugin)
+            try:
+                plugin.close()
+            except Exception as ex:
+                logger.error("Failed closing plugin %s: %s", plugin, ex)
+                logger.debug(
+                    "Failed closing plugin: %s", traceback.format_exc(ex))
+<switch:english>
+[english] The use of exception handling ensures the process continues even if individual plugins have issues during shutdown, logging errors and full tracebacks for debugging.
+[english] Does the order in which these plugins are closed matter for proper resource cleanup?
+[english] Since `self.plugins.values()` iterates based on dictionary structure and not a defined sequence, you should ensure critical components are addressed first if they have dependencies.
+[english] That makes sense for ensuring proper system shutdown.

@@ -1,0 +1,18 @@
+[english] I need a way to pull specific metric configuration data from a predefined list using only its unique name.
+[english] To find the requested definition, we iterate over all stored metric configurations and check if the 'name' key matches the input argument.
+<switch:python>
+[python] def getMetricDefinition(self, name):
+        """
+        Looks up the metric definition from the definitions from the API call
+        """
+        metric = None
+        for m in self.metric_definitions:
+            if m['name'] == name:
+                metric = m
+                break
+        return metric
+<switch:english>
+[english] The function efficiently scans the internal collection until it finds a single match or reaches the end of the list.
+[english] What value will this function return if the name provided isn't found in `self.metric_definitions`?
+[english] If no matching definition is found, the loop completes without assigning anything to 'metric', and it returns its initial value which is None.
+[english] That perfectly explains how missing keys are handled during retrieval.

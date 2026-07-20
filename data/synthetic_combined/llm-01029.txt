@@ -1,0 +1,38 @@
+[english] I need a robust way to capture and expose all relevant internal metrics and debug information regarding the cluster's current state.
+[english] To provide a comprehensive view of the system, this function constructs a single status dictionary. It aggregates static configurations (like versions) alongside dynamic operational states derived from Raft protocol properties.
+<switch:python>
+[python] def getStatus(self):
+        """Dumps different debug info about cluster to dict and return it"""
+
+        status = {}
+        status['version'] = VERSION
+        status['revision'] = REVISION
+        status['self'] = self.__selfNode
+        status['state'] = self.__raftState
+        status['leader'] = self.__raftLeader
+        status['partner_nodes_count'] = len(self.__otherNodes)
+        for node in self.__otherNodes:
+            status['partner_node_status_server_' + node.id] = 2 if node in self.__connectedNodes else 0
+        status['readonly_nodes_count'] = len(self.__readonlyNodes)
+        for node in self.__readonlyNodes:
+            status['readonly_node_status_server_' + node.id] = 2 if node in self.__connectedNodes else 0
+        status['log_len'] = len(self.__raftLog)
+        status['last_applied'] = self.__raftLastApplied
+        status['commit_idx'] = self.__raftCommitIndex
+        status['raft_term'] = self.__raftCurrentTerm
+        status['next_node_idx_count'] = len(self.__raftNextIndex)
+        for node, idx in iteritems(self.__raftNextIndex):
+            status['next_node_idx_server_' + node.id] = idx
+        status['match_idx_count'] = len(self.__raftMatchIndex)
+        for node, idx in iteritems(self.__raftMatchIndex):
+            status['match_idx_server_' + node.id] = idx
+        status['leader_commit_idx'] = self.__leaderCommitIndex
+        status['uptime'] = int(time.time() - self.__startTime)
+        status['self_code_version'] = self.__selfCodeVersion
+        status['enabled_code_version'] = self.__enabledCodeVersion
+        return status
+<switch:english>
+[english] This dictionary contains a significant amount of internal Raft state data useful purely for debugging cluster operations. Because it relies heavily on specific internal attributes and node lists, its structure is tightly coupled to the class definition.
+[english] In the line where partner status is calculated, you check if nodes are in `self.__connectedNodes`. How would this function handle cases where `self.__otherNodes` might be empty?
+[english] If `__otherNodes` is empty, both loops iterating over these nodes will simply run zero times. The resulting dictionary will contain no entries for partner or readonly node status updates.
+[english] That makes sense; I just needed confirmation that the system wouldn't crash if it's running as a single-node instance.

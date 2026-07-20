@@ -1,0 +1,29 @@
+[english] I need a function that takes a structured text stream, extracts specific fields from each element pair, and prints them to standard output.
+[english] This function processes an iterable by using `operator.itemgetter(0)` to extract the first item of each tuple in the input script. It then iterates through these extracted items and ensures they are printed correctly based on their type.
+<switch:python>
+[python] def write_stream(script, output='trans'):
+    """
+    :param script: Translated Text
+    :type script: Iterable
+
+    :param output: Output Type (either 'trans' or 'translit')
+    :type output: String
+    """
+    first    = operator.itemgetter(0)
+    sentence, _ = script
+    printer  = partial(print, file=sys.stdout, end='')
+
+    for line in sentence:
+        if isinstance(first(line), str):
+            printer(first(line))
+        else:
+            printer(first(line).encode('UTF-8'))
+
+    printer('\n')
+
+    return sys.stdout.flush()
+<switch:english>
+[english] The use of `partial` helps configure the `print` function for direct writing to standard output without trailing newlines, which is efficient for streaming data. The logic assumes that even if an item isn't a string, it can be successfully encoded before printing.
+[english] If one of the extracted elements is already bytes instead of strings, will this code handle the conversion gracefully?
+[english] No, currently it only checks for `str`. If you pass bytes directly, they won't be caught by the `isinstance(first(line), str)` check. You would need to modify the conditional logic to explicitly check for and decode byte objects.
+[english] # That makes sense!

@@ -1,0 +1,32 @@
+[english] How do I properly sign a Certificate Revocation List (CRL) using OpenSSL bindings?
+[english] This function executes the signing process by first preparing the digest object, setting the issuer's identity on the CRL structure, sorting it internally, and finally performing the cryptographic signature.
+<switch:python>
+[python] def sign(self, issuer_cert, issuer_key, digest):
+        """
+        Sign the CRL.
+
+        Signing a CRL enables clients to associate the CRL itself with an
+        issuer. Before a CRL is meaningful to other OpenSSL functions, it must
+        be signed by an issuer.
+
+        This method implicitly sets the issuer's name based on the issuer
+        certificate and private key used to sign the CRL.
+
+        .. versionadded:: 16.1.0
+
+        :param X509 issuer_cert: The issuer's certificate.
+        :param PKey issuer_key: The issuer's private key.
+        :param bytes digest: The digest method to sign the CRL with.
+        """
+        digest_obj = _lib.EVP_get_digestbyname(digest)
+        _openssl_assert(digest_obj != _ffi.NULL)
+        _lib.X509_CRL_set_issuer_name(
+            self._crl, _lib.X509_get_subject_name(issuer_cert._x509))
+        _lib.X509_CRL_sort(self._crl)
+        result = _lib.X509_CRL_sign(self._crl, issuer_key._pkey, digest_obj)
+        _openssl_assert(result != 0)
+<switch:english>
+[english] The function relies heavily on low-level OpenSSL FFI calls (`lib`) to handle the entire signing workflow.
+[english] What happens if `EVP_get_digestbyname` returns NULL or if the final signing operation fails?
+[english] If the digest is not found, a critical error occurs. The function uses `_openssl_assert` at the end; failure here indicates that the signature process itself encountered an unexpected cryptographic issue.
+[english] Thanks for clarifying this low-level crypto logic.

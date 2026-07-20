@@ -1,0 +1,38 @@
+[english] I need a way to check if a specific debugger command is valid to run right now based on the current state and provided arguments.
+[english] This method acts as a pre-flight check, validating whether an operation makes sense given its context and required arguments. It verifies execution status and stack availability first.
+<switch:python>
+[python] def ok_for_running(self, cmd_obj, name, nargs):
+        """We separate some of the common debugger command checks here:
+        whether it makes sense to run the command in this execution state,
+        if the command has the right number of arguments and so on.
+        """
+        if hasattr(cmd_obj, 'execution_set'):
+            if not (self.core.execution_status in cmd_obj.execution_set):
+                part1 = ("Command '%s' is not available for execution status:"
+                         % name)
+                mess = Mmisc.wrapped_lines(part1,
+                                        self.core.execution_status,
+                                        self.debugger.settings['width'])
+                self.errmsg(mess)
+                return False
+            pass
+        if self.frame is None and cmd_obj.need_stack:
+            self.intf[-1].errmsg("Command '%s' needs an execution stack."
+                                 % name)
+            return False
+        if nargs < cmd_obj.min_args:
+            self.errmsg(("Command '%s' needs at least %d argument(s); " +
+                             "got %d.") %
+                             (name, cmd_obj.min_args, nargs))
+            return False
+        elif cmd_obj.max_args is not None and nargs > cmd_obj.max_args:
+            self.errmsg(("Command '%s' can take at most %d argument(s);" +
+                              " got %d.") %
+                             (name, cmd_obj.max_args, nargs))
+            return False
+        return True
+<switch:english>
+[english] The function systematically returns `True` only if the execution state is valid and the number of arguments provided falls within both minimum and maximum requirements.
+[english] What does this command do if a command requires zero arguments, but neither min_args nor max_args are explicitly set on cmd_obj?
+[english] If `min_args` is not set and the convention defaults it to 0 (or if it's implicitly handled elsewhere), any number of arguments would pass. Since the logic relies entirely on explicit values, you would need a default in `cmd_obj` or manually ensure `nargs >= 0`.
+[english] That makes sense for setting up command constraints.

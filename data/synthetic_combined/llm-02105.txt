@@ -1,0 +1,27 @@
+[english] I need a script that downloads every individual part of an entire course, given the complete API response payload.
+[english] This function systematically iterates through all topics and then all corresponding parts within each topic found in the provided course data. It calls another helper function for each segment to manage the actual download and save process.
+<switch:python>
+[python] def wanmen_download_by_course(json_api_content, output_dir='.', merge=True, info_only=False, **kwargs):
+    """int->None
+    
+    Download a WHOLE course.
+    Reuse the API call to save time."""
+
+    for tIndex in range(len(json_api_content[0]['Topics'])):
+        for pIndex in range(len(json_api_content[0]['Topics'][tIndex]['Parts'])):
+            wanmen_download_by_course_topic_part(json_api_content,
+                                                 tIndex,
+                                                 pIndex,
+                                                 output_dir=output_dir,
+                                                 merge=merge,
+                                                 info_only=info_only,
+                                                 **kwargs)
+<switch:english>
+[english] The core logic relies on nested loops to ensure every 'part' is processed, but it delegates the specific download tasks to `wanmen_download_by_course_topic_part` using variable scope parameters like `merge`. Note that this assumes a fixed structure in `json_api_content[0]}.
+[english] If the course data potentially contains multiple courses instead of just one, how would I modify this function to handle them all?
+[english] You would remove the assumption about index 0 and loop over the main list containing all courses. For example:
+<switch:python>
+[python] for course_data in json_api_content:
+    # Process course_data here
+<switch:english>
+[english] That makes perfect sense; I appreciate the structural review.

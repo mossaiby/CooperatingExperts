@@ -1,0 +1,28 @@
+[english] I need a function that automatically stops processing data points once an initial sequence of excluded (downhole) records is detected in various samples.
+[english] This method first checks if specific samples were provided, refining the list via internal helper methods. It then iterates through every recognized sample, applying the exclusion logic directly to each individual data object.
+<switch:python>
+[python] def filter_exclude_downhole(self, threshold, filt=True, samples=None, subset=None):
+        """
+        Exclude all points down-hole (after) the first excluded data.
+
+        Parameters
+        ----------
+        threhold : int
+            The minimum number of contiguous excluded data points
+            that must exist before downhole exclusion occurs.
+        file : valid filter string or bool
+            Which filter to consider. If True, applies to currently active
+            filters.
+        """
+        if samples is not None:
+            subset = self.make_subset(samples)
+
+        samples = self._get_samples(subset)
+
+        for s in samples:
+            self.data[s].filter_exclude_downhole(threshold, filt)
+<switch:english>
+[english] The function acts as a driver that delegates the core downhole filtering task to an internal method (`filter_exclude_downhole`) within the dataset itself. Ensure your custom implementation for that method handles the threshold correctly.
+[english] If the `samples` argument is left as None, how does the function determine which dataset objects should be processed?
+[english] If samples is None, the process of generating a subset or specific sample list likely relies on other internal state or configuration within the class instance. The logic currently assumes either external definition or an empty set.
+[english] That makes sense; it depends on the overall state of the object.

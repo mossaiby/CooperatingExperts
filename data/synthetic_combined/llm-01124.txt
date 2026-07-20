@@ -1,0 +1,72 @@
+[english] How do I implement a method to serve file content as a download with automatic filename generation and proper HTTP headers?
+[english] This function is designed to send data back to the client as a downloadable file attachment. It determines the correct filename by checking explicit arguments, cached request state, or falling back to the request path.
+<switch:python>
+[python] def download(self, content, filename=None,
+                 media_type=None, charset='UTF-8'):
+        """Send content as attachment (downloadable file).
+
+        The *content* is sent after setting Content-Disposition header
+        such that the client prompts the user to save the content
+        locally as a file. An HTTP response status code may be specified
+        as *content*. If the status code is not ``200``, then this
+        method does nothing and returns the status code.
+
+        The filename used for the download is determined according to
+        the following rules. The rules are followed in the specified
+        order.
+
+          1. If *filename* is specified, then the base name from this
+             argument, i.e. ``os.path.basename(filename)``, is used as the
+             filename for the download.
+          2. If *filename* is not specified or specified as ``None``
+             (the default), then the base name from the file path
+             specified to a previous :meth:`static` call made while
+             handling the current request is used.
+          3. If *filename* is not specified and there was no
+             :meth:`static` call made previously for the current
+             request, then the base name from the current HTTP request
+             path is used.
+          4. As a result of the above steps, if the resultant *filename*
+             turns out to be empty, then :exc:`ice.LogicError` is raised.
+
+        The *media_type* and *charset* arguments are used in the same
+        manner as they are used in :meth:`static`.
+
+        Arguments:
+          content (str, bytes or int): Content to be sent as download or
+            HTTP status code of the response to be returned.
+          filename (str): Filename to use for saving the content
+          media_type (str, optional): Media type of file.
+          charset (str, optional): Character set of file.
+
+        Returns:
+          content, i.e. the first argument passed to this method.
+
+        Raises:
+          LogicError: When filename cannot be determined.
+        """
+        if isinstance(content, int) and content != 200:
+            return content
+        if filename is not None:
+            filename = os.path.basename(filename)
+        elif 'filename' in self.response.state:
+            filename = self.response.state['filename']
+        else:
+            filename = os.path.basename(self.request.path)
+
+        if filename == '':
+            raise LogicError('Cannot determine filename for download')
+
+        if media_type is not None:
+            self.response.media_type = media_type
+        else:
+            self.response.media_type = mimetypes.guess_type(filename)[0]
+        self.response.charset = charset
+        self.response.add_header('Content-Disposition', 'attachment; '
+                                 'filename="{}"'.format(filename))
+        return content
+<switch:english>
+[english] The code ensures compatibility by setting the `Content-Disposition` header and automatically guessing the media type if one isn't provided, guaranteeing proper client handling.
+[english] If I specify a custom filename like 'document.pdf', how is that file's MIME type determined?
+[english] The function uses the specified filename to look up its corresponding MIME type via `mimetypes.guess_type(filename)[0]`. If the file extension isn't recognized, it might default to a generic binary type.
+[english] I appreciate the detailed explanation of those fallback rules.

@@ -1,0 +1,44 @@
+[english] How can I make my program occasionally print brightly colored social media and GitHub links as a thank you message?
+[english] This function uses time to generate a pseudo-random value, which determines whether it randomly triggers a set of colorful feedback messages. The output is contingent on configuration settings.
+<switch:python>
+[python] def stay_safe():  # pragma: no cover
+    """
+    Print a friendly message.
+    """
+
+    random = int(choice(str(int(time()))))
+
+    if not CONFIGURATION["quiet"] and random % 3 == 0:
+        print("\n" + Fore.GREEN + Style.BRIGHT + "Thanks for using PyFunceble!")
+        print(
+            Fore.YELLOW
+            + Style.BRIGHT
+            + "Share your experience on "
+            + Fore.CYAN
+            + "Twitter"
+            + Fore.YELLOW
+            + " with "
+            + Fore.CYAN
+            + "#PyFunceble"
+            + Fore.YELLOW
+            + "!"
+        )
+        print(
+            Fore.GREEN
+            + Style.BRIGHT
+            + "Have a feedback, an issue or an improvement idea ?"
+        )
+        print(
+            Fore.YELLOW
+            + Style.BRIGHT
+            + "Let us know on "
+            + Fore.CYAN
+            + "GitHub"
+            + Fore.YELLOW
+            + "!"
+        )
+<switch:english>
+[english] The messages are purely decorative, using ANSI escape codes from imported libraries like Fore and Style. Note that the message will only appear if your system isn't configured to be silent.
+[english] What happens when I set CONFIGURATION["quiet"] to true?
+[english] If `CONFIGURATION["quiet"]` is set to true, the initial conditional check fails, and the entire block of promotional messages will be skipped. The function will run but print nothing.
+[english] Got it, thanks for clarifying!

@@ -1,0 +1,19 @@
+[english] How can I convert an internal Abstract Syntax Tree (AST) representation of a concatenation operation into runnable Python source code?
+[english] This method handles the conversion of an internal AST node representing a concatenation operation into its corresponding Python source code format by utilizing operand hoisting.
+<switch:python>
+[python] def _ast_op_concat_to_code(self, opr, *, ignore_whitespace, **kwargs):
+    """Convert an AST concatenate op to python source code."""
+    hoist_target = OP_CONCAT if ignore_whitespace else OP_WS_CONCAT
+    operands = self._hoist_operands(opr.operands, lambda t: isinstance(t, OptreeNode) and t.opnode.operator is hoist_target)
+
+    lines = ["concatenation(["]
+    for op in operands:
+      lines.extend(self._indent(self._ast_to_code(op, ignore_whitespace=ignore_whitespace)))
+      lines[-1] += ","
+    lines.append("], ignore_whitespace={})".format(bool(ignore_whitespace)))
+    return lines
+<switch:english>
+[english] It generates the concatenated sequence as an argument to a `concatenation()` function, dynamically handling whitespace suppression based on input flags and related helper nodes.
+[english] If `ignore_whitespace` is set to true, does the resulting code use a specific helper node type?
+[english] Yes, when `ignore_whitespace` is True, it sets `hoist_target = OP_CONCAT`; otherwise, it uses `OP_WS_CONCAT`. This ensures that the correct internal operation type is used during operand processing.
+[english] That makes sense for optimizing output size.

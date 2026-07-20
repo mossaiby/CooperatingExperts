@@ -1,0 +1,58 @@
+[english] How can I programmatically inspect and print the current filtering status for specific samples, subsets, or all available data groups?
+[english] This function provides a clear way to view the status of various filters. It handles three main scenarios: displaying a single sample, iterating through provided subsets, or outputting an overall summary when no parameters are given.
+<switch:python>
+[python] def filter_status(self, sample=None, subset=None, stds=False):
+        """
+        Prints the current status of filters for specified samples.
+
+        Parameters
+        ----------
+        sample : str
+            Which sample to print.
+        subset : str
+            Specify a subset
+        stds : bool
+            Whether or not to include standards.
+        """
+        s = ''
+        if sample is None and subset is None:
+            if not self._has_subsets:
+                s += 'Subset: All Samples\n\n'
+                s += self.data[self.subsets['All_Samples'][0]].filt.__repr__()
+            else:
+                for n in sorted(str(sn) for sn in self._subset_names):
+                    if n in self.subsets:
+                        pass
+                    elif int(n) in self.subsets:
+                        n = int(n)
+                        pass
+                    s += 'Subset: ' + str(n) + '\n'
+                    s += 'Samples: ' + ', '.join(self.subsets[n]) + '\n\n'
+                    s += self.data[self.subsets[n][0]].filt.__repr__()
+                if len(self.subsets['not_in_set']) > 0:
+                    s += '\nNot in Subset:\n'
+                    s += 'Samples: ' + ', '.join(self.subsets['not_in_set']) + '\n\n'
+                    s += self.data[self.subsets['not_in_set'][0]].filt.__repr__()
+            print(s)
+            return
+
+        elif sample is not None:
+            s += 'Sample: ' + sample + '\n'
+            s += self.data[sample].filt.__repr__()
+            print(s)
+            return
+
+        elif subset is not None:
+            if isinstance(subset, (str, int, float)):
+                subset = [subset]
+            for n in subset:
+                s += 'Subset: ' + str(n) + '\n'
+                s += 'Samples: ' + ', '.join(self.subsets[n]) + '\n\n'
+                s += self.data[self.subsets[n][0]].filt.__repr__()
+            print(s)
+            return
+<switch:english>
+[english] The logic is complex because it dynamically checks internal state attributes like `self._has_subsets`. Be aware that accessing data relies entirely on the integrity of the underlying self.data and self.subsets structures.
+[english] If I pass a subset name to the function, but that name isn't defined in self.subsets, what happens?
+[english] The current implementation does not validate subset existence before access. If a non-existent subset is passed as an argument, it will raise a KeyError when attempting to retrieve data from `self.subsets[n]` or `self.data[key]`, though checking keys first would make it more robust.
+[english] That clarifies how the input validation works.

@@ -1,0 +1,32 @@
+[english] How can I design a method that continuously updates data about an inspection from external log and trace files while gracefully handling missing or problematic files?
+[english] This function provides a wrapper to manage continuous state updates by calling specific parsing methods for logs and traces. It uses `try-except` blocks to catch common file issues, implementing a retry mechanism for robustness.
+<switch:python>
+[python] def update_inspection(self):
+        """Wrapper method that calls the appropriate main updating methods of
+        the inspection.
+
+        It is meant to be used inside a loop (like while), so that it can
+        continuously update the class attributes from the trace and log files.
+        It already implements checks to parse these files only when they
+        change, and they ignore entries that have been previously processes.
+        """
+
+        try:
+            self.log_parser()
+        except (FileNotFoundError, StopIteration) as e:
+            logger.debug("ERROR: " + str(sys.exc_info()[0]))
+            self.log_retry += 1
+            if self.log_retry == self.MAX_RETRIES:
+                raise e
+        try:
+            self.trace_parser()
+        except (FileNotFoundError, StopIteration) as e:
+            logger.debug("ERROR: " + str(sys.exc_info()[0]))
+            self.trace_retry += 1
+            if self.trace_retry == self.MAX_RETRIES:
+                raise e
+<switch:english>
+[english] The method ensures that if either the log or trace parser fails repeatedly, it raises an exception after exhausting all retries rather than silently failing long-term.
+[english] What happens if `FileNotFoundError` is caught repeatedly instead of just during the initial run?
+[english] If `FileNotFoundError` persists, the associated retry counter (`self.log_retry` or `self.trace_retry`) increments until it hits `MAX_RETRIES`. Once reached, a critical exception detailing the original error is raised.
+[english] Does this method guarantee that processing stops if one file is continually unavailable?

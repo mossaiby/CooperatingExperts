@@ -1,0 +1,15 @@
+[english] How can I find a specific module object using only its string name from within this class?
+[english] This function iterates over every available module provided by `self.modules()`. It checks if the internal node name of each item matches the target name before returning it.
+<switch:python>
+[python] def module(self, name):
+        """return a module by its name, raise KeyError if not found
+        """
+        for mod in self.modules():
+            if mod.node.name == name:
+                return mod
+        raise KeyError(name)
+<switch:english>
+[english] If the loop completes without finding any match for the given `name`, it reliably raises a `KeyError` to indicate that no such module exists.
+[english] What happens if there are two different modules in the list that happen to share the same node name?
+[english] It will return the first matching module encountered during iteration, as the function stops immediately upon finding a match and does not check for duplicates.
+[english] Got it, thanks for explaining how that error handling works!

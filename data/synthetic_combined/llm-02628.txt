@@ -1,0 +1,21 @@
+[english] How can I gracefully cancel a `task_id` using the scheduler and handle cases where the task might not exist?
+[english] To safely remove a task, we attempt to use the internal scheduler's cancellation method inside a try block. We wrap this logic with exception handling so that if the specific task ID isn't found, we log the event instead of crashing.
+<switch:python>
+[python] def remove_task(self, task_id):
+        """Remove and cancel a task.
+
+        :param task_id: id of the task to be removed
+        """
+        try:
+            self._scheduler.cancel_task(task_id)
+        except NotFoundError as e:
+            logger.info("Cannot cancel %s task because it does not exist.",
+                        task_id)
+            return False
+        else:
+            return True
+<switch:english>
+[english] If the cancellation succeeds, `else` returns True. Notably, if it fails because of a `NotFoundError`, the code logs via the logger and explicitly returns False to indicate the operation failed as expected.
+[english] What happens if another error occurs during task removal that is not related to existence?
+[english] Currently, any other unexpected exception (like PermissionError) will propagate out of this function instead of being caught by the specific `NotFoundError` block. You would need a different except handler for general issues.
+[english] Got it, thanks for the clear breakdown!

@@ -1,0 +1,18 @@
+[english] How can I run a pre-defined list of shell commands sequentially within a specific directory?
+[english] This function iterates through your stored `self.actions` and executes each one as a separate process using Python's `subprocess` module.
+<switch:python>
+[python] def execute_actions(self, cwd):
+        """Iterates over the actions and executes them in order."""
+        self._execute_globals(cwd)
+        for action in self.actions:
+            logger.info("executing {}".format(action))
+            p = subprocess.Popen(action, shell=True, cwd=cwd)
+            p.wait()
+<switch:english>
+[english] The use of p.wait() ensures that subsequent actions do not start until the previous command has completely finished, which is crucial for sequential task runners.
+[english] What happens if one of the commands in self.actions returns a non-zero exit code or throws an unhandled exception?
+[english] Currently, this function will only log and continue to the next action, even if a previous process fails. To handle errors effectively, you should check p.returncode after wait(), like so:
+<switch:python>
+[python] if p.returncode != 0: logger.error(f"Action failed with code {p.returncode}: {action}")
+<switch:english>
+[english] This makes sense for maintaining the workflow integrity.

@@ -1,0 +1,74 @@
+[english] How can I visually represent the operation dependencies found within a complex quantum circuit's DAG?
+[english] We will use this function, which leverages NetworkX and specialized drawing tools to convert your graph structure into a visualization. It allows you to customize the appearance, such as assigning unique colors to different node types.
+<switch:python>
+[python] def dag_drawer(dag, scale=0.7, filename=None, style='color'):
+    """Plot the directed acyclic graph (dag) to represent operation dependencies
+    in a quantum circuit.
+
+    Note this function leverages
+    `pydot <https://github.com/erocarrera/pydot>`_ (via
+    `nxpd <https://github.com/chebee7i/nxpd`_) to generate the graph, which
+    means that having `Graphviz <https://www.graphviz.org/>`_ installed on your
+    system is required for this to work.
+
+    Args:
+        dag (DAGCircuit): The dag to draw.
+        scale (float): scaling factor
+        filename (str): file path to save image to (format inferred from name)
+        style (str): 'plain': B&W graph
+                     'color' (default): color input/output/op nodes
+
+    Returns:
+        Ipython.display.Image: if in Jupyter notebook and not saving to file,
+            otherwise None.
+
+    Raises:
+        VisualizationError: when style is not recognized.
+        ImportError: when nxpd or pydot not installed.
+    """
+    try:
+        import nxpd
+        import pydot  # pylint: disable=unused-import
+    except ImportError:
+        raise ImportError("dag_drawer requires nxpd, pydot, and Graphviz. "
+                          "Run 'pip install nxpd pydot', and install graphviz")
+
+    G = dag.to_networkx()
+    G.graph['dpi'] = 100 * scale
+
+    if style == 'plain':
+        pass
+    elif style == 'color':
+        for node in G.nodes:
+            n = G.nodes[node]
+            n['label'] = node.name
+            if node.type == 'op':
+                n['color'] = 'blue'
+                n['style'] = 'filled'
+                n['fillcolor'] = 'lightblue'
+            if node.type == 'in':
+                n['color'] = 'black'
+                n['style'] = 'filled'
+                n['fillcolor'] = 'green'
+            if node.type == 'out':
+                n['color'] = 'black'
+                n['style'] = 'filled'
+                n['fillcolor'] = 'red'
+        for e in G.edges(data=True):
+            e[2]['label'] = e[2]['name']
+    else:
+        raise VisualizationError("Unrecognized style for the dag_drawer.")
+
+    if filename:
+        show = False
+    elif ('ipykernel' in sys.modules) and ('spyder' not in sys.modules):
+        show = 'ipynb'
+    else:
+        show = True
+
+    return nxpd.draw(G, filename=filename, show=show)
+<switch:english>
+[english] A crucial caveat is that while Python handles the mapping, the underlying system must have Graphviz installed for this plotting function to execute successfully. The complexity of the style definitions is handled internally by modifying node and edge attributes in the NetworkX graph object.
+[english] If I provide a filename without an extension (e.g., 'dag_output'), how will the resulting image format be determined?
+[english] The function relies on `nxpd.draw`, which infers the file format from the path provided. If no extension is present, it will likely use a default format or raise an error depending on its internal configuration.
+[english] I understand; I'll make sure to include specific file extensions next time!

@@ -1,0 +1,13 @@
+[english] I need a function that can extract the content following existing delimiters within a string up to a specified cursor position.
+[english] This solution first determines the effective substring based on whether a `cursor_pos` is provided or not. It then uses an internal regex object (`self._delim_re`) to split this specific portion of the line and returns the last element found after splitting.
+<switch:python>
+[python] def split_line(self, line, cursor_pos=None):
+        """Split a line of text with a cursor at the given position.
+        """
+        l = line if cursor_pos is None else line[:cursor_pos]
+        return self._delim_re.split(l)[-1]
+<switch:english>
+[english] The function relies on `self._delim_re`, so its behavior (what constitutes a delimiter) depends entirely on how that Regex object is initialized. Using index slicing (`line[:cursor_pos]`) correctly ensures splits only happen in the requested area of the text.
+[english] If there are multiple delimiters, will this function return all parts after each one or just the final segment?
+[english] It returns only the final segment (`[-1]`). If you need every part that follows a delimiter up to that position, you would iterate through the results of `self._delim_re.split(l)` instead.
+[english] That makes perfect sense for limiting context scope.

@@ -1,0 +1,14 @@
+[english] How can I generate a standardized URL query string from a collection of attributes in my class?
+[english] To create a URL parameter string, this function iterates over all key-value pairs in `self.attrs`. It formats each pair into 'key=value' and uses the `str.join()` method to combine them using the '&' separator.
+<switch:python>
+[python] def parameters(self) -> str:
+        """URL parameters used."""
+        return '&'.join('{0}={1}'.format(*item) for item in self.attrs.items())
+<switch:english>
+[english] The code uses a generator expression inside `str.join()` to efficiently build the relationship between keys and values.
+[english] What if one of my attribute values is None or an empty string?
+[english] If a value is None, it will be converted to the string 'None'. If you want to omit parameters entirely when their value is falsy (like None or ''), you can filter them before joining:
+<switch:python>
+[python] return '&'.join('='.join(str(k) + '=' + str(v)) for k, v in self.attrs.items() if v)
+<switch:english>
+[english] That makes sense; I'll adjust the filtering logic then.

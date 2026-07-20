@@ -1,0 +1,27 @@
+[english] I need a function that retrieves the unique HGNC ID for a specific gene symbol from our database.
+[english] This method searches the collection using the provided 'hgnc_symbol' and 'build' parameters. It constructs a query to find matching records and projects only the '_id' field, which corresponds to the internal HGNC ID we need.
+<switch:python>
+[python] def hgnc_id(self, hgnc_symbol, build='37'):
+        """Query the genes with a hgnc symbol and return the hgnc id
+
+        Args:
+            hgnc_symbol(str)
+            build(str)
+
+        Returns:
+            hgnc_id(int)
+        """
+        #LOG.debug("Fetching gene %s", hgnc_symbol)
+        query = {'hgnc_symbol':hgnc_symbol, 'build':build}
+        projection = {'hgnc_id':1, '_id':0}
+        res = self.hgnc_collection.find(query, projection)
+
+        if res.count() > 0:
+            return res[0]['hgnc_id']
+        else:
+            return None
+<switch:english>
+[english] The function efficiently returns the first match found for the symbol or returns None if no corresponding entry is discovered in the database.
+[english] What happens if this method is called with an hgnc_symbol that results in multiple matches instead of one?
+[english] This implementation uses `.find()` and then accesses index `[0]`, meaning it will only return the first matching record it encounters. For safety against duplicates, you might want to add a check for its count after retrieval.
+[english] Thanks for catching that; I should modify the query to ensure singularity.

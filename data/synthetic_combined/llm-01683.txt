@@ -1,0 +1,21 @@
+[english] How can I retrieve a list of all coordinate pairs associated with a specific group ID within my feature front definition?
+[english] To solve this, we check if the provided 'id' matches any element in the input array. If it's a standard lookup, we use NumPy to find where the id exists; otherwise, special range logic is applied for final offsets.
+<switch:python>
+[python] def _get_front_idxs_from_id(fronts, id):
+    """
+    Return a list of tuples of the form (frequency_idx, sample_idx),
+    corresponding to all the indexes of the given front.
+    """
+    if id == -1:
+        # This is the only special case.
+        # -1 is the index of the catch-all final column offset front.
+        freq_idxs = np.arange(fronts.shape[0], dtype=np.int64)
+        sample_idxs = np.ones(len(freq_idxs), dtype=np.int64) * (fronts.shape[1] - 1)
+    else:
+        freq_idxs, sample_idxs = np.where(fronts == id)
+    return [(f, i) for f, i in zip(freq_idxs, sample_idxs)]
+<switch:english>
+[english] Note that when handling the catch-all ID (-1), the function relies on the predetermined shape of 'front' and manually calculates specific index ranges instead of searching directly.
+[english] - If the input array is empty, what behavior should we expect from this function?
+[english] If `front` is empty or has no matches for the provided `id`, both the general case and the special -1 case will return an empty list because NumPy arrays with size zero produce empty index results.
+[english] This logic makes sense now, thank you.

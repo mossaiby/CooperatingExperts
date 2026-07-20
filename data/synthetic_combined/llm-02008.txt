@@ -1,0 +1,48 @@
+[english] How can I configure a command-line interface to handle various search parameters and authentication requirements for Twitter data retrieval?
+[english] This function initializes a specialized parser designed for backend commands, ensuring that essential system settings like categories and token authentication are handled first.
+<switch:python>
+[python] def setup_cmd_parser(cls):
+        """Returns the Twitter argument parser."""
+
+        parser = BackendCommandArgumentParser(cls.BACKEND.CATEGORIES,
+                                              token_auth=True,
+                                              archive=True)
+
+        # Backend token is required
+        action = parser.parser._option_string_actions['--api-token']
+        action.required = True
+
+        # Meetup options
+        group = parser.parser.add_argument_group('Twitter arguments')
+        group.add_argument('--max-items', dest='max_items',
+                           type=int, default=MAX_ITEMS,
+                           help="Maximum number of items requested on the same query")
+        group.add_argument('--no-entities', dest='include_entities',
+                           action='store_false',
+                           help=" Exclude entities node")
+        group.add_argument('--geo-code', dest='geocode',
+                           help="Select tweets by users located at latitude,longitude,radius")
+        group.add_argument('--lang', dest='lang',
+                           help="Select tweets to the given language in ISO 639-1 code")
+        group.add_argument('--tweets-type', dest='tweets_type', default=TWEET_TYPE_MIXED,
+                           help="Type of tweets returned. Default is 'mixed', others are 'recent' and 'popular'")
+        group.add_argument('--sleep-for-rate', dest='sleep_for_rate',
+                           action='store_true',
+                           help="sleep for getting more rate")
+        group.add_argument('--min-rate-to-sleep', dest='min_rate_to_sleep',
+                           default=MIN_RATE_LIMIT, type=int,
+                           help="sleep until reset when the rate limit reaches this value")
+        group.add_argument('--sleep-time', dest='sleep_time',
+                           default=SLEEP_TIME, type=int,
+                           help="minimun sleeping time to avoid too many request exception")
+
+        # Required arguments
+        parser.parser.add_argument('query',
+                                   help="Search query including operators, max 500 chars")
+
+        return parser
+<switch:english>
+[english] The configuration method clearly groups related options, making the command-line usage intuitive while enforcing required parameters like the search query.
+[english] If I need to dynamically add a new custom flag specific to Twitter API versions, where would be the best place in this function to insert that argument?
+[english] You should insert your new argument within the 'Twitter arguments' group using `group.add_argument()`, just like the other options shown.
+[english] This makes it easy to see all API-specific flags at a glance.

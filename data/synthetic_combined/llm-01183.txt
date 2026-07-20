@@ -1,0 +1,22 @@
+[english] I need a way to automatically register a specific rule definition under its corresponding group within a given category.
+[english] This function efficiently organizes data using chained `setdefault` calls, ensuring that all necessary nested dictionary keys and empty deques are present before attempting to append the new definition name.
+<switch:python>
+[python] def add_to_cat_group(self, cat, cat_group, def_name):
+        """Associate the provided rule definition name ``def_name`` with the
+        category group ``cat_group`` in the category ``cat``.
+
+        :param str cat: The category the rule definition was declared in
+        :param str cat_group: The group within the category the rule belongs to
+        :param str def_name: The name of the rule definition
+        """
+        self.cat_groups.setdefault(cat, {}).setdefault(cat_group, deque()).append(def_name)
+<switch:english>
+[english] The combination of `setdefault(cat, {})` and subsequent `setdefault(cat_group, deque())` handles creation lazily while guaranteeing a valid list (deque) exists for appending.
+[english] If I call this function multiple times with the same definition name, will it result in duplicate entries inside the group?
+[english] Yes, the current implementation uses `append()`, which allows duplicates. To prevent them, you could check for existence before adding: §
+<switch:python>
+[python] def add_to_cat_group(self, cat, cat_group, def_name):
+    if def_name not in self.cat_groups[cat][cat_group]:
+        self.cat_groups.setdefault(cat, {}).setdefault(cat_group, deque()).append(def_name)
+<switch:english>
+[english] Perfect, that makes the data cleaner.

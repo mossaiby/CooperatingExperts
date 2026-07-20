@@ -1,0 +1,20 @@
+[english] I need a way to instantiate a custom class and guarantee that the resulting object is immediately set up as read-only or closed.
+[english] We can achieve this utility by taking the target class, instantiating it with all necessary arguments, and then explicitly calling its cleanup method, which we assume handles closing.
+<switch:python>
+[python] def readonly(cls, *args, **kwargs):
+        """
+        Return an already closed read-only instance of Fridge.
+        Arguments are the same as for the constructor.
+        """
+        fridge = cls(*args, **kwargs)
+        fridge.close()
+        return fridge
+<switch:english>
+[english] Because the function calls `fridge.close()` immediately before returning the instance, any methods relying on an active state will likely fail during usage.
+[english] What error would occur if the provided class does not actually have a `close` method defined?
+[english] If the class lacks the necessary cleanup functionality, Python will raise an `AttributeError`. You could defensively check for its existence before attempting to call it.
+<switch:python>
+[python] if hasattr(fridge, 'close'): 
+    fridge.close()
+<switch:english>
+[english] Got it; that prevents crashes if I use a standard library class.

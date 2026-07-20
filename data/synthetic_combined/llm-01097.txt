@@ -1,0 +1,21 @@
+[english] How do I check if a given value matches my current `node_type`, or any of several possible types provided as a tuple?
+[english] This function determines equality between a node's type and a target value. It specifically handles cases where the target is either a single value or a collection of acceptable values.
+<switch:python>
+[python] def is_type(self, value):
+    """Returns True if node_type == value.
+
+    If value is a tuple, node_type is checked against each member and True is returned if any of
+    them match.
+    """
+    if isinstance(value, tuple):
+      for opt in value:
+        if self.node_type == opt:
+          return True
+      return False
+    else:
+      return self.node_type == value
+<switch:english>
+[english] The logic ensures that if `value` is a tuple, it iterates through every option to find an exact match for `self.node_type`. If not a tuple, it performs a simple direct comparison.
+[english] What happens if the input value itself contains complex objects instead of strings?
+[english] If the input `value` is a tuple containing non-comparable types (like another function), Python will raise a TypeError. The code relies on standard equality checks for its elements.
+[english] Is there any other way to handle heterogeneous type checking like this?

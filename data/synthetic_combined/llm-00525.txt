@@ -1,0 +1,16 @@
+[english] I need a way to copy or move a specific object from one location to another using IDs.
+[english] This method facilitates file operations by determining whether to perform a simple copy or a full move, then passes these instructions to an underlying API call.
+<switch:python>
+[python] def copy(self, obj_id, folder_id, move=False):
+		'''Copy specified file (object) to a folder with a given ID.
+				Well-known folder names (like "me/skydrive")
+				don't seem to work here.
+			Folders cannot be copied; this is an API limitation.'''
+		return self( obj_id,
+			method='copy' if not move else 'move',
+			data=dict(destination=folder_id), auth_header=True )
+<switch:english>
+[english] Remember that this function requires numeric folder IDs rather than human-readable names, and it cannot operate on folder objects directly as per API limits.
+[english] If I set the 'move' parameter to True, does the original object stay in place temporarily?
+[english] No. When `move=True`, the method sets the internal API call method to 'move', which is designed to transfer ownership and delete the source after a successful operation.
+[english] I appreciate the detailed breakdown of how that works!

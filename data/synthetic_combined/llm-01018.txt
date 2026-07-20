@@ -1,0 +1,34 @@
+[english] I need to save structural data for a molecule into an Atom PDB file format.
+[english] This function generates a basic molecular structure in the standard PDB text format by handling necessary headers and then iterating through the atom coordinates to write individual records. It uses specific modulo operations and string formatting required by the PDB specification.
+<switch:python>
+[python] def write_pdb(outfile, title, atoms, box):
+    """
+    Write a PDB file.
+
+    Parameters
+    ----------
+    outfile
+        The stream to write in.
+    title
+        The title of the GRO file. Must be a single line.
+    atoms
+        An instance of Structure containing the atoms to write.
+    box
+        The periodic box as a 3x3 matrix.
+    """
+    # Print the title
+    print('TITLE ' + title, file=outfile)
+
+    # Print the box
+    print(pdbBoxString(box), file=outfile)
+
+    # Print the atoms
+    for idx, atname, resname, resid, x, y, z in atoms:
+        print(pdbline % (idx % 1e5, atname[:4], resname[:3], "",
+                         resid % 1e4, '', 10*x, 10*y, 10*z, 0, 0, ''),
+              file=outfile)
+<switch:english>
+[english] The implementation assumes that the 'atoms' input provides a sequence of tuples containing all necessary parameters, while 'pdbBoxString' handles the periodic boundary box details.
+[english] What are the constraints on the atom and residue strings to ensure the PDB output is valid?
+[english] For standard PDB compliance, `atname` should typically not exceed 4 characters (padded) and `resname` should be between 1-3 letters; these lengths are strictly enforced by the string slicing in the function.
+[english] Got it, thanks for helping me understand this!

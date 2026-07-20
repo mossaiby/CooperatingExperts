@@ -1,0 +1,14 @@
+[english] I need a reliable function to load all known genetic variants within a specific chromosomal region into an existing case.
+[english] This function acts as an orchestration layer, designed specifically to process genomic regions and update case data. It first safely extracts an adaptor object from the provided context before delegating the primary loading task.
+<switch:python>
+[python] def region(context, hgnc_id, case_id, chromosome, start, end):
+    """Load all variants in a region to a existing case"""
+    adapter = context.obj['adapter']
+    load_region(
+        adapter=adapter, case_id=case_id, hgnc_id=hgnc_id, chrom=chromosome, start=start, end=end
+    )
+<switch:english>
+[english] The responsibility for data persistence is entirely delegated to the external `load_region` function. This pattern makes the `region` function highly reusable across different parts of the application.
+[english] How should I handle it if 'adapter' isn't present in context.obj?
+[english] If 'adapter' is missing, a KeyError will crash the current function call. You could defensively check for its presence before assigning it: `if 'adapter' not in context.obj: raise ValueError(...)`.
+[english] That makes sense, thanks!

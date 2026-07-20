@@ -1,0 +1,107 @@
+[english] How can I verify if XPath offsets generated for each character in a document stream item are correctly mapped to the actual visible text?
+[english] This function validates XPath correctness by comparing sliced content derived from two different offset types (`CHARS` and `XPATH_CHARS`). It iterates over all tokens, performing an exhaustive test to ensure the Xpath range matches the token's visible string.
+<switch:python>
+[python] def stream_item_roundtrip_xpaths(si, quick=False):
+    '''Roundtrip all Xpath offsets in the given stream item.
+
+    For every token that has both ``CHARS`` and ``XPATH_CHARS``
+    offsets, slice the ``clean_html`` with the ``XPATH_CHARS`` offset
+    and check that it matches slicing ``clean_visible`` with the
+    ``CHARS`` offset.
+
+    If this passes without triggering an assertion, then we're
+    guaranteed that all ``XPATH_CHARS`` offsets in the stream item are
+    correct. (Note that does not check for completeness. On occasion, a
+    token's ``XPATH_CHARS`` offset cannot be computed.)
+
+    There is copious debugging output to help make potential bugs
+    easier to track down.
+
+    This is used in tests in addition to the actual transform. It's
+    expensive to run, but not running it means silent and hard to
+    debug bugs.
+    '''
+    def debug(s):
+        logger.warning(s)
+
+    def print_window(token, size=200):
+        coffset = token.offsets[OffsetType.CHARS]
+        start = max(0, coffset.first - size)
+        end = min(len(html), coffset.first + coffset.length + size)
+        debug('-' * 49)
+        debug(coffset)
+        debug('window size: %d' % size)
+        debug(html[start:end])
+        debug('-' * 49)
+
+    def debug_all(token, xprange, expected, err=None, got=None):
+        debug('-' * 79)
+        if err is not None:
+            debug(err)
+        debug(xprange)
+        debug('expected: "%s"' % expected)
+        if got is not None:
+            debug('got: "%s"' % got)
+        debug('token value: "%s"' % unicode(token.token, 'utf-8'))
+        print_window(token, size=10)
+        print_window(token, size=30)
+        print_window(token, size=100)
+        print_window(token, size=200)
+        debug('-' * 79)
+
+    def slice_clean_visible(token):
+        coffset = token.offsets[OffsetType.CHARS]
+        return cleanvis[coffset.first:coffset.first + coffset.length]
+
+    def test_token(token):
+        coffset = token.offsets.get(OffsetType.CHARS)
+        if coffset is None:
+            return False
+        xoffset = token.offsets.get(OffsetType.XPATH_CHARS)
+        if xoffset is None:
+            return False
+        crange = (coffset.first, coffset.first + coffset.length)
+        xprange = XpathRange.from_offset(xoffset)
+        expected = slice_clean_visible(token)
+        if expected != unicode(token.token, 'utf-8'):
+            # Yeah, apparently this can happen. Maybe it's a bug
+            # in Basis? I'm trying to hustle, and this only happens
+            # in two instances for the `random` document, so I'm not
+            # going to try to reproduce a minimal counter-example.
+            # ---AG
+            return False
+        try:
+            got = xprange.slice_node(html_root)
+        except InvalidXpathError as err:
+            debug_all(token, xprange, expected, err=err)
+            raise XpathMismatchError(html, cleanvis, xprange, crange)
+        if expected != got:
+            debug_all(token, xprange, expected, got=got)
+            raise XpathMismatchError(html, cleanvis, xprange, crange)
+        return True
+
+    cleanvis = unicode(si.body.clean_visible, 'utf-8')
+    html = unicode(si.body.clean_html, 'utf-8')
+    html_root = XpathRange.html_node(html)
+    total, has_valid_xpath = 0, 0
+    for sentences in si.body.sentences.itervalues():
+        for sentence in sentences:
+            if quick:
+                for i in xrange(len(sentence.tokens) - 1, -1, -1):
+                    if test_token(sentence.tokens[i]):
+                        break
+            else:
+                # Exhaustive test.
+                for token in sentence.tokens:
+                    total += 1
+                    if test_token(token):
+                        has_valid_xpath += 1
+    if not quick:
+        # This is nonsense if we have quick checking enabled.
+        logger.info('stream item %s: %d/%d tokens with valid xpaths',
+                    si.stream_id, has_valid_xpath, total)
+<switch:english>
+[english] The process is computationally expensive because it involves running XPath queries for every token. This function is primarily intended for robust testing rather than production runtime use.
+[english] If a token lacks an `XPATH_CHARS` offset, how does the function handle this inconsistency during validation?
+[english] The internal `test_token` helper first checks if both character and XPath offsets exist. If either is missing, it returns False, effectively skipping that token's validation without raising an error.
+[english] This makes sense; I didn'll know why certain tokens might be skipped.

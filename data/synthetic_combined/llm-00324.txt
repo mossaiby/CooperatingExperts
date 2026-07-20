@@ -1,0 +1,33 @@
+[english] How can I write a Python function that automates running the mysqldump utility to create and execute database backups?
+[english] The `dump` function works by dynamically constructing a command string that passes all configuration parameters to the external `mysqldump` executable. It then executes this combined shell command using the `sh()` helper.
+<switch:python>
+[python] def dump(filename, dbname, username=None, password=None, host=None,
+    port=None, tempdir='/tmp', mysqldump_path='mysqldump'):
+    """Perfoms a mysqldump backup.
+    Create a database dump for the given database.
+    returns statuscode and shelloutput
+    """
+
+    filepath = os.path.join(tempdir, filename)
+
+    cmd = mysqldump_path
+    cmd += ' --result-file=' + os.path.join(tempdir, filename)
+
+    if username:
+        cmd += ' --user=%s' % username
+    if host:
+        cmd += ' --host=%s' % host
+    if port:
+        cmd += ' --port=%s' % port
+    if password:
+        cmd += ' --password=%s' % password
+
+    cmd += ' ' + dbname
+
+    ## run mysqldump
+    return sh(cmd)
+<switch:english>
+[english] This approach is effective for simple automation, but ensure any input variables are sanitized before building the command string to prevent potential security risks like shell injection.
+[english] Since it uses string concatenation for arguments, what safeguards should I consider if a username or password contains special characters?
+[english] If your credentials have complex characters, they must be properly escaped according to the shell's syntax. A safer way would involve using `subprocess.run()` with an argument list instead of building one single command string.
+[english] Got it, I will adjust the parameter handling.

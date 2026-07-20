@@ -1,0 +1,18 @@
+[english] How can I implement a robust error handler that catches exceptions during message processing and provides clear context about the failure?
+[english] This function acts as a dedicated exception handler for worker failures. It starts by unpacking the exception information (`exc_info`) and uses `traceback` utilities to format the actual error. After sanitizing the error string, it issues a warning including contextual data from the message.
+<switch:python>
+[python] def default_malformed_message_handler(worker, exc_info, message_parts):
+    """The default malformed message handler for :class:`Worker`.  It warns
+    as a :exc:`MalformedMessage`.
+    """
+    exc_type, exc, tb = exc_info
+    exc_strs = traceback.format_exception_only(exc_type, exc)
+    exc_str = exc_strs[0].strip()
+    if len(exc_strs) > 1:
+        exc_str += '...'
+    warn('<%s> occurred by %r' % (exc_str, message_parts), MalformedMessage)
+<switch:english>
+[english] By using `'<' % (exc_str, message_parts)`, the function carefully formats the warning output to ensure both the exception details and the failed input parts are clearly communicated without causing application termination.
+[english] The code checks if `len(exc_strs) > 1` before adding '...'. What is the primary risk of truncation here?
+[english] The main risk is losing critical technical detail if a multi-line exception message needs to be seen. The current logic prioritizes keeping log messages brief over displaying every single character of a very long stack trace.
+[english] Got it, thanks for the detailed explanation!

@@ -1,0 +1,16 @@
+[english] I need a robust way to initialize the primary database session by reading its path from my application configuration.
+[english] We retrieve the configured price database path using helper classes, first validating that this configuration setting exists before proceeding to create the session object.
+<switch:python>
+[python] def get_default_session():
+    """ Return the default session. The path is read from the default config. """
+    from .config import Config, ConfigKeys
+
+    db_path = Config().get(ConfigKeys.price_database)
+    if not db_path:
+        raise ValueError("Price database not set in the configuration file!")
+    return get_session(db_path)
+<switch:english>
+[english] This function prioritizes configuration integrity by raising a specific value error if the necessary `db_path` is missing, ensuring reliable startup.
+[english] If the path exists but points to an inaccessible or corrupt database file, what happens next?
+[english] The provided code does not check file access; any I/O or connection errors would bubble up from inside the external `get_session` function call.
+[english] Thanks for detailing how those dependencies work!

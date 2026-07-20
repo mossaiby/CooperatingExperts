@@ -1,0 +1,49 @@
+[english] How do I create a flexible decoder function that takes latent codes and produces image probability distributions?
+[english] This utility function dynamically builds and returns a Keras-based decoder network tailored to your desired output shape. It uses `functools.partial` to predefine the convolutional layer configurations before assembling the sequential model steps.
+<switch:python>
+[python] def make_decoder(activation, latent_size, output_shape, base_depth):
+  """Creates the decoder function.
+
+  Args:
+    activation: Activation function in hidden layers.
+    latent_size: Dimensionality of the encoding.
+    output_shape: The output image shape.
+    base_depth: Smallest depth for a layer.
+
+  Returns:
+    decoder: A `callable` mapping a `Tensor` of encodings to a
+      `tfd.Distribution` instance over images.
+  """
+  deconv = functools.partial(
+      tf.keras.layers.Conv2DTranspose, padding="SAME", activation=activation)
+  conv = functools.partial(
+      tf.keras.layers.Conv2D, padding="SAME", activation=activation)
+
+  decoder_net = tf.keras.Sequential([
+      deconv(2 * base_depth, 7, padding="VALID"),
+      deconv(2 * base_depth, 5),
+      deconv(2 * base_depth, 5, 2),
+      deconv(base_depth, 5),
+      deconv(base_depth, 5, 2),
+      deconv(base_depth, 5),
+      conv(output_shape[-1], 5, activation=None),
+  ])
+
+  def decoder(codes):
+    original_shape = tf.shape(input=codes)
+    # Collapse the sample and batch dimension and convert to rank-4 tensor for
+    # use with a convolutional decoder network.
+    codes = tf.reshape(codes, (-1, 1, 1, latent_size))
+    logits = decoder_net(codes)
+    logits = tf.reshape(
+        logits, shape=tf.concat([original_shape[:-1], output_shape], axis=0))
+    return tfd.Independent(tfd.Bernoulli(logits=logits),
+                           reinterpreted_batch_ndims=len(output_shape),
+                           name="image")
+
+  return decoder
+<switch:english>
+[english] The core logic transforms the flat latent codes into a suitable rank-4 tensor for convolution, finally wrapping the logits in an independent Bernoulli distribution for probabilistic image generation.
+[english] What happens if I don't provide a `latent_size` that matches the input dimension of my encoder?
+[english] The decoder assumes the length of the latent code slice must match its initial convolutional kernel size requirements. If they mismatch, you will encounter shape incompatibility errors during model execution.
+[english] Got it! This makes building generative models much cleaner.

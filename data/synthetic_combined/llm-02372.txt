@@ -1,0 +1,30 @@
+[english] How do I initialize a Vaex application within a Jupyter Notebook environment?
+[english] This function is designed to bridge the gap between standard Python execution and the specialized requirements needed for Vaex's UI components when running inside environments like notebooks.
+<switch:python>
+[python] def app(*args, **kwargs):
+    """Create a vaex app, the QApplication mainloop must be started.
+
+    In ipython notebook/jupyter do the following:
+
+    >>> import vaex.ui.main # this causes the qt api level to be set properly
+    >>> import vaex
+
+    Next cell:
+
+    >>> %gui qt
+
+    Next cell:
+
+    >>> app = vaex.app()
+
+    From now on, you can run the app along with jupyter
+
+    """
+
+    import vaex.ui.main
+    return vaex.ui.main.VaexApp()
+<switch:english>
+[english] The function handles necessary imports and sets up the core application structure, ensuring that `vaex` is properly configured for use within a Jupyter display system.
+[english] What happens if I call this `app()` function outside of a standard Jupyter Notebook?
+[english] If called outside of a suitable environment, the internal imports might fail or behave unexpectedly because the configuration relies on specific Qt APIs being available in the notebook session. For general scripts, you should use `vaex.App()`.
+[english] That makes sense for environmental dependencies!

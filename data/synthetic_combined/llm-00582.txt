@@ -1,0 +1,93 @@
+[english] How can I convert specific character ranges in an HTML string into corresponding XPath offsets?
+[english] This function iterates over provided character offsets and uses an internal XpathTextCollector to map raw text segments to XML/HTML paths. It carefully feeds preceding and intervening content into the parser to ensure context is maintained before finding the start and end XPath for each segment.
+<switch:python>
+[python] def char_offsets_to_xpaths(html, char_offsets):
+    '''Converts HTML and a sequence of char offsets to xpath offsets.
+
+    Returns a generator of :class:`streamcorpus.XpathRange` objects
+    in correspondences with the sequence of ``char_offsets`` given.
+    Namely, each ``XpathRange`` should address precisely the same text
+    as that ``char_offsets`` (sans the HTML).
+
+    Depending on how ``char_offsets`` was tokenized, it's possible that
+    some tokens cannot have their xpaths generated reliably. In this
+    case, a ``None`` value is yielded instead of a ``XpathRange``.
+
+    ``char_offsets`` must be a sorted and non-overlapping sequence of
+    character ranges. They do not have to be contiguous.
+    '''
+    html = uni(html)
+    parser = XpathTextCollector()
+    prev_end = 0
+    prev_progress = True
+    for start, end in char_offsets:
+        if start == end:
+            # Zero length tokens shall have no quarter!
+            # Note that this is a special case. If we let zero-length tokens
+            # be handled normally, then it will be recorded as if the parser
+            # did not make any progress. But of course, there is no progress
+            # to be had!
+            yield None
+            continue
+        # If we didn't make any progress on the previous token, then we'll
+        # need to try and make progress before we can start tracking offsets
+        # again. Otherwise the parser will report incorrect offset info.
+        #
+        # (The parser can fail to make progress when tokens are split at
+        # weird boundaries, e.g., `&amp` followed by `;`. The parser won't
+        # make progress after `&amp` but will once `;` is given.)
+        #
+        # Here, we feed the parser one character at a time between where the
+        # last token ended and where the next token will start. In most cases,
+        # this will be enough to nudge the parser along. Once done, we can pick
+        # up where we left off and start handing out offsets again.
+        #
+        # If this still doesn't let us make progress, then we'll have to skip
+        # this token too.
+        if not prev_progress:
+            for i in xrange(prev_end, start):
+                parser.feed(html[i])
+                prev_end += 1
+                if parser.made_progress:
+                    break
+            if not parser.made_progress:
+                yield None
+                continue
+        # Hand the parser everything from the end of the last token to the
+        # start of this one. Then ask for the Xpath, which should be at the
+        # start of `char_offsets`.
+        if prev_end < start:
+            parser.feed(html[prev_end:start])
+            if not parser.made_progress:
+                parser.feed(html[start:end])
+                prev_progress = parser.made_progress
+                prev_end = end
+                yield None
+                continue
+        xstart = parser.xpath_offset()
+        # print('START', xstart)
+        # Hand it the actual token and ask for the ending offset.
+        parser.feed(html[start:end])
+        xend = parser.xpath_offset()
+        # print('END', xend)
+        prev_end = end
+
+        # If we couldn't make progress then the xpaths generated are probably
+        # incorrect. (If the parser doesn't make progress, then we can't rely
+        # on the callbacks to have been called, which means we may not have
+        # captured all state correctly.)
+        #
+        # Therefore, we simply give up and claim this token is not addressable.
+        if not parser.made_progress:
+            prev_progress = False
+            yield None
+        else:
+            prev_progress = True
+            yield XpathRange(xstart[0], xstart[1], xend[0], xend[1])
+    parser.feed(html[prev_end:])
+    parser.close()
+<switch:english>
+[english] The function handles non-contiguous tokens by maneuvering the internal parser state between offsets. Be aware that if the underlying parser cannot make progress, it yields `None`, indicating an unaddressable segment.
+[english] How does the function handle segments with zero length offsets?
+[english] If a segment has a start and end position that are identical (`start == end`), the function explicitly checks this condition at the beginning of the loop. It immediately yields `None` because there is no content to map.
+[english] That clarifies how zero-length tokens are managed.

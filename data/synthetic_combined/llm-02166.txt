@@ -1,0 +1,23 @@
+[english] How can I control when a specific routing exception should be raised based on the application's debug mode and the HTTP method of the request?
+[english] This function manages how certain routing exceptions are handled, conditionally raising them depending on whether debugging is enabled or if the request uses safe methods like GET or HEAD. It prevents unnecessarily triggering specialized error handlers for non-critical requests while ensuring errors are still caught.
+<switch:python>
+[python] def raise_routing_exception(self, request):
+        """Exceptions that are recording during routing are reraised with
+        this method.  During debug we are not reraising redirect requests
+        for non ``GET``, ``HEAD``, or ``OPTIONS`` requests and we're raising
+        a different error instead to help debug situations.
+
+        :internal:
+        """
+        if not self.debug \
+           or not isinstance(request.routing_exception, RequestRedirect) \
+           or request.method in ('GET', 'HEAD', 'OPTIONS'):
+            raise request.routing_exception
+
+        from .debughelpers import FormDataRoutingRedirect
+        raise FormDataRoutingRedirect(request)
+<switch:english>
+[english] The initial `if` block dictates that the original exception is raised immediately unless specific conditions (debug mode, redirect type, and unsafe method) are all met, in which case a custom debug helper is used instead.
+[english] If the `request.routing_exception` is not an instance of `RequestRedirect`, what determines whether the original exception is raised?
+[english] The initial conditional check relies on `isinstance(request.routing_exception, RequestRedirect)`. If this condition is false (meaning it's any other type of error), the function skips the custom logic and executes 'raise request.routing_exception'.
+[english] This provides a clear way to manage exception handling across different environments.

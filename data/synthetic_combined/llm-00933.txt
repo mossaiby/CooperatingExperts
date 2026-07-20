@@ -1,0 +1,12 @@
+[english] I have a dictionary of function parameters and need to automatically remove any entries where the value is None or where the key is 'self'.
+[english] We can use a compact dictionary comprehension to process the input parameters. This approach iterates over every item while applying filtering logic within the loop.
+<switch:python>
+[python] def _prep_params(params):
+        '''Remove empty (None) valued keywords and self from function parameters'''
+
+        return {k: v for (k, v) in params.items() if v is not None and k != 'self'}
+<switch:english>
+[english] This method efficiently removes both self-references and null values, ensuring only valid data points remain in the resulting parameter set.
+[english] If I have an empty string ('') or an empty list ([]) as a value, will it be removed by this function?
+[english] No. The current logic checks specifically for 'None' values (`v is not None`). Empty strings and lists are valid objects in Python and will therefore be kept.
+[english] Okay, thanks for clarifying the strict type checking.

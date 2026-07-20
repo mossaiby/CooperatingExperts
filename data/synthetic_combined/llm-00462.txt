@@ -1,0 +1,15 @@
+[english] How can I create a helper method within my class that logs messages to the console only when verbose mode is enabled?
+[english] This method serves as an internal utility for logging. It checks an instance attribute before calling the private `print2` function, ensuring messages are only displayed during debugging or detailed operation.
+<switch:python>
+[python] def _print(self, msg, flush=False, end="\n"):
+        """Helper function to print connection status messages when in verbose mode."""
+        if self._verbose:
+            print2(msg, end=end, flush=flush)
+<switch:english>
+[english] The message output is conditional upon `self._verbose`, and it delegates standard printing to a helper function while maintaining explicit control over flushing and line endings automatically.
+[english] What if I want the printed message to always go to stderr, regardless of whether verbosity is on or off?
+[english] You would need to modify the logic to bypass the `if self._verbose:` check. To force it to stderr specifically in this setup:
+<switch:python>
+[python] def _print(self, msg, flush=True): ... print2(msg, file=sys.stderr) # Assuming print2 supports a 'file' argument
+<switch:english>
+[english] That detail about standard error is helpful to know.

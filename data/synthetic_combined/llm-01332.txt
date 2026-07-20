@@ -1,0 +1,38 @@
+[english] How can I programmatically retrieve the specific visual icon (like a folder or drive) associated with any given file or item in my application?
+[english] This method first checks if the input specification is an Item instance. If so, it uses `self.type()` to convert that item into a categorical type before checking which predefined icon should be returned.
+<switch:python>
+[python] def icon(self, specification):
+        '''Return appropriate icon for *specification*.
+
+        *specification* should be either:
+
+            * An instance of :py:class:`riffle.model.Item`
+            * One of the defined icon types (:py:class:`IconType`)
+
+        '''
+        if isinstance(specification, riffle.model.Item):
+            specification = self.type(specification)
+
+        icon = None
+
+        if specification == IconType.Computer:
+            icon = QtGui.QIcon(':riffle/icon/computer')
+
+        elif specification == IconType.Mount:
+            icon = QtGui.QIcon(':riffle/icon/drive')
+
+        elif specification == IconType.Directory:
+            icon = QtGui.QIcon(':riffle/icon/folder')
+
+        elif specification == IconType.File:
+            icon = QtGui.QIcon(':riffle/icon/file')
+
+        elif specification == IconType.Collection:
+            icon = QtGui.QIcon(':riffle/icon/collection')
+
+        return icon
+<switch:english>
+[english] The function relies on mapping various `IconType` enumerations—like File or Mount—to specific internal resource paths using Qt's QIcon system.
+[english] If I were to add a new icon, say for 'Server', would I need to modify this long series of if/elif statements?
+[english] Yes. Because the function uses explicit conditional branching (`if`/`elif`), any new type in `IconType` must be explicitly handled by adding another branch here.
+[english] That makes sense, thanks for explaining how it works.

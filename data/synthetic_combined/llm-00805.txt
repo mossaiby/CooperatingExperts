@@ -1,0 +1,46 @@
+[english] How can I programmatically provision a new website resource with specific configurations like region and compute mode?
+[english] To create the site, we first serialize all the provided configuration parameters into an XML format. We then use a POST request helper method to send that XML payload to the correct API endpoint.
+<switch:python>
+[python] def create_site(self, webspace_name, website_name, geo_region, host_names,
+                    plan='VirtualDedicatedPlan', compute_mode='Shared',
+                    server_farm=None, site_mode=None):
+        '''
+        Create a website.
+
+        webspace_name:
+            The name of the webspace.
+        website_name:
+            The name of the website.
+        geo_region:
+            The geographical region of the webspace that will be created.
+        host_names:
+            An array of fully qualified domain names for website. Only one
+            hostname can be specified in the azurewebsites.net domain.
+            The hostname should match the name of the website. Custom domains
+            can only be specified for Shared or Standard websites.
+        plan:
+            This value must be 'VirtualDedicatedPlan'.
+        compute_mode:
+            This value should be 'Shared' for the Free or Paid Shared
+            offerings, or 'Dedicated' for the Standard offering. The default
+            value is 'Shared'. If you set it to 'Dedicated', you must specify
+            a value for the server_farm parameter.
+        server_farm:
+            The name of the Server Farm associated with this website. This is
+            a required value for Standard mode.
+        site_mode:
+            Can be None, 'Limited' or 'Basic'. This value is 'Limited' for the
+            Free offering, and 'Basic' for the Paid Shared offering. Standard
+            mode does not use the site_mode parameter; it uses the compute_mode
+            parameter.
+        '''
+        xml = _XmlSerializer.create_website_to_xml(webspace_name, website_name, geo_region, plan, host_names, compute_mode, server_farm, site_mode)
+        return self._perform_post(
+            self._get_sites_path(webspace_name),
+            xml,
+            Site)
+<switch:english>
+[english] This function relies heavily on several internal methods and serializers to handle complex resource creation logic, so reviewing the parameter requirements (like Plan or Compute Mode constraints) is essential.
+[english] Since this is part of a class, how do I tell if the `server_farm` argument is truly required before calling this method?
+[english] Based on the documentation provided in the docstring, `server_farm` is explicitly listed as a required value when using Standard mode. If it is not supplied for that mode, the underlying API call would likely fail.
+[english] That makes sense; I'll ensure my setup handles all these conditional dependencies.

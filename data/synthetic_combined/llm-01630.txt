@@ -1,0 +1,38 @@
+[english] I need a mechanism that allows my application to pause execution and reliably wait for the next block in the blockchain chain, optionally timing out.
+[english] This function acts as a factory, creating a custom waiting function tailored to your app instance. It sets up an event listener that triggers whenever a new block is mined on the chain.
+<switch:python>
+[python] def wait_next_block_factory(app, timeout=None):
+    """Creates a `wait_next_block` function, that
+    will wait `timeout` seconds (`None` = indefinitely)
+    for a new block to appear.
+
+    :param app: the app-instance the function should work for
+    :param timeout: timeout in seconds
+    """
+
+    chain = app.services.chain
+
+    # setup new block callbacks and events
+    new_block_evt = gevent.event.Event()
+
+    def _on_new_block(app):
+        log.DEV('new block mined')
+        new_block_evt.set()
+    chain.on_new_head_cbs.append(_on_new_block)
+
+    def wait_next_block():
+        bn = chain.chain.head.number
+        chain.consensus_manager.log('waiting for new block', block=bn)
+        new_block_evt.wait(timeout)
+        new_block_evt.clear()
+        if chain.chain.head.number > bn:
+            chain.consensus_manager.log('new block event', block=chain.chain.head.number)
+        elif chain.chain.head.number == bn:
+            chain.consensus_manager.log('wait_next_block timed out', block=bn)
+
+    return wait_next_block
+<switch:english>
+[english] The returned function blocks until the `new_block_evt` is set by the callback or the timeout expires, then logs if progress was made.
+[english] If I call this waiting function multiple times sequentially, does it effectively implement reentrancy for block watching?
+[english] No. Since `new_block_evt.clear()` is called immediately after waiting in that specific instance of the returned function, subsequent calls would wait indefinitely until another event fires unless you restructure how state is managed.
+[english] Got it! I need to handle the persistence of that event object.

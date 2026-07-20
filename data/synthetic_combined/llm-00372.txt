@@ -1,0 +1,17 @@
+[english] I need to take an XML fragment and wrap it inside a specific root element that adheres to Azure's required namespaces.
+[english] This function constructs the necessary XML wrappers by manually joining strings. It explicitly adds required Azure namespaces (like xmlns) onto the specified root element before inserting your content.
+<switch:python>
+[python] def doc_from_xml(document_element_name, inner_xml):
+        '''Wraps the specified xml in an xml root element with default azure
+        namespaces'''
+        xml = ''.join(['<', document_element_name,
+                      ' xmlns:i="http://www.w3.org/2001/XMLSchema-instance"',
+                      ' xmlns="http://schemas.microsoft.com/windowsazure">'])
+        xml += inner_xml
+        xml += ''.join(['</', document_element_name, '>'])
+        return xml
+<switch:english>
+[english] Because this is built using string concatenation, it assumes that 'inner_xml' is a valid fragment and does not require any further internal structural modification.
+[english] What if the document name I pass in has spaces or other special characters?
+[english] String concatenation will treat spaces as literal characters, which might invalidate XML. For safer handling of complex tags, consider using dedicated libraries like `xml.etree.ElementTree` instead.
+[english] Got it, thanks for clarifying that!

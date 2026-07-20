@@ -1,0 +1,24 @@
+[english] I need a robust utility function that tries to convert an input argument into an integer, allowing for arithmetic expressions, but safely falls back to a default value if the conversion fails.
+[english] This function checks if an argument is provided and non-empty. It then attempts to evaluate the argument as a Python expression before casting it to an integer. If evaluation or casting fails, it raises an error using a custom logging utility.
+<switch:python>
+[python] def get_int(errmsg, arg, default=1, cmdname=None):
+    """If arg is an int, use that otherwise take default."""
+    if arg:
+        try:
+            # eval() is used so we will allow arithmetic expressions,
+            # variables etc.
+            default = int(eval(arg))
+        except (SyntaxError, NameError, ValueError):
+            if cmdname:
+                errmsg("Command '%s' expects an integer; got: %s." %
+                       (cmdname, str(arg)))
+            else:
+                errmsg('Expecting an integer, got: %s.' % str(arg))
+                pass
+            raise ValueError
+    return default
+<switch:english>
+[english] The function is powerful because it uses `eval()` to interpret expressions. However, be cautious when using `eval()` on untrusted user input due to potential security risks.
+[english] What happens if the argument passed is a string that isn't an expression or number, like 'hello'?
+[english] If you pass 'hello', it will fail evaluation within the try block and trigger the specific error message defined in `errmsg`, ultimately raising a `ValueError`.
+[english] This makes dependency injection much cleaner for configuration parsing.

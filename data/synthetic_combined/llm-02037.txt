@@ -1,0 +1,23 @@
+[english] How can I programmatically select the most appropriate media renderer given an incoming HTTP request's Accept header?
+[english] This function determines the best renderer by extracting the ACCEPT header from the request. It uses the `mimeparse` library to find a match within your list of renderers, with special handling if no suitable renderer is found.
+<switch:python>
+[python] def select_renderer(request: web.Request, renderers: OrderedDict, force=True):
+    """
+    Given a request, a list of renderers, and the ``force`` configuration
+    option, return a two-tuple of:
+    (media type, render callable). Uses mimeparse to find the best media
+    type match from the ACCEPT header.
+    """
+    header = request.headers.get('ACCEPT', '*/*')
+    best_match = mimeparse.best_match(renderers.keys(), header)
+    if not best_match or best_match not in renderers:
+        if force:
+            return tuple(renderers.items())[0]
+        else:
+            raise web.HTTPNotAcceptable
+    return best_match, renderers[best_match]
+<switch:english>
+[english] If `force` is set to true and no match exists, it defaults to the first available renderer in the provided collection.
+[english] When force=True results in an initial fallback, how does the function guarantee that it selects a specific rendering order?
+[english] The function returns the very first item from the `renderers` ordered dictionary. This relies on the caller ensuring the dictionary is pre-sorted by preference.
+[english] That clarifies how prioritization works!

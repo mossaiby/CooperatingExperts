@@ -1,0 +1,37 @@
+[english] I need to load configuration settings from default YAML files while allowing custom data and overriding values with environment variables.
+[english] This method ensures that configurations are loaded correctly, handling dependencies between defaults, main application data, and optional environment variable overrides. It starts by reading base settings before merging in specific user-defined data points.
+<switch:python>
+[python] def load(self, reload=False):
+        """
+        Load the config and defaults from files.
+        """
+        if reload or not self._loaded:
+            # load defaults
+            if self._defaults_file and type(self._defaults_file) == str:
+                self._defaults_file = File(self._defaults_file, parent=self._parent)
+            defaults = {}
+            if self._defaults_file:
+                defaults = yaml.safe_load(self._defaults_file.read().replace('\t', '    '))
+
+            # load data
+            data = {}
+            if self.exists:
+                data = yaml.safe_load(self.read().replace('\t', '    '))
+
+            # initialise with the loaded data
+            self._defaults = defaults
+            self._data = copy.deepcopy(self._defaults)
+            self.update(data=data)
+
+            # if specified, apply environment variables
+            if self._apply_env:
+                self.update(ConfigEnv(self._env_prefix))
+
+            self._loaded = True
+
+        return self
+<switch:english>
+[english] The implementation uses `copy.deepcopy` to initialize `self._data` from the defaults. This is crucial as it isolates your mutable configuration state from the original immutable default values.
+[english] If the custom data file and the environment variables both try to set the same key, which value takes precedence in the final configuration?
+[english] Environment variables are applied last using `self.update(ConfigEnv(...))`. Therefore, if a conflict occurs between custom data and environment variables, the environment variable will overwrite the configured data.
+[english] That makes sense; I appreciate the detailed explanation of the loading order.

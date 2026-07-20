@@ -1,0 +1,42 @@
+[english] How can I write a function to check if a Jenkins job failed based on its console output text?
+[english] This Python function analyzes lines from a Jenkins build to identify failure patterns. It checks for specific substrings within the input line against a stored failure message, updating global variables when a match is found.
+<switch:python>
+[python] def find_build_failure(each_line,temp_func_list):
+    """
+    Find if a Jenkins job has failed to build.  It will save this
+    information in g_failed_test_info_dict.  In addition, it will delete this particular
+    function handle off the temp_func_list as we do not need to perform this action again.
+
+    Parameters
+    ----------
+
+    each_line :  str
+        contains a line read in from jenkins console
+    temp_func_list :  list of Python function handles
+        contains a list of functions that we want to invoke to extract information from
+        the Jenkins console text.
+
+    :return: bool to determine if text mining should continue on the jenkins console text
+    """
+    global g_build_success
+    global g_build_success_tests
+    global g_failed_test_info_dict
+    global g_failure_occurred
+    global g_build_failed_message
+
+    for ind in range(0,len(g_build_failed_message)):
+        if g_build_failed_message[ind] in each_line.lower():
+            if ((ind == 0) and (len(g_failed_jobs) > 0)):
+                continue
+            else:
+                g_failure_occurred = True
+                g_failed_test_info_dict["7.build_failure"] = 'Yes'
+                temp_func_list.remove(find_build_failure)
+                return False
+
+    return True
+<switch:english>
+[english] The function manages state transitions using several global variables and cleans up its own reference in `temp_func_list` upon finding a failure.
+[english] If multiple lines contain different failure messages after the first one has been detected, will this specific cleanup logic in temp_func_list cause any unexpected behavior?
+[english] Since it removes itself from `temp_func_list` immediately after finding the first match and returning False, subsequent calls for other failures on that line or future lines might be affected. If you need to find multiple failures across all lines, managing this clean-up outside of this callback is safer.
+[english] Thanks for clarifying how that global deletion works!

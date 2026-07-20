@@ -1,0 +1,24 @@
+[english] I need to run a one-dimensional cellular automaton simulation using data from my trajectory container and save the evolving pattern.
+[english] This wrapper prepares your simulation by first building an initial state using parameters like seeds and cell counts, then it runs the main CA function with your specified rule number. It finally stores the resulting pattern back into your trajectory object for later analysis.
+<switch:python>
+[python] def wrap_automaton(traj):
+    """ Simple wrapper function for compatibility with *pypet*.
+
+    We will call the original simulation functions with data extracted from ``traj``.
+
+    The resulting automaton patterns wil also be stored into the trajectory.
+
+    :param traj: Trajectory container for data
+
+    """
+    # Make initial state
+    initial_state = make_initial_state(traj.initial_name, traj.ncells, traj.seed)
+    # Run simulation
+    pattern = cellular_automaton_1D(initial_state, traj.rule_number, traj.steps)
+    # Store the computed pattern
+    traj.f_add_result('pattern', pattern, comment='Development of CA over time')
+<switch:english>
+[english] The logic relies on specific methods provided by your `traj` container, notably `f_add_result`, to append simulation results automatically after each run.
+[english] If the trajectory or initial state data is missing, how does this function handle it?
+[english] Currently, if necessary inputs like 'seed' are not present in `traj`, the underlying helper functions might raise an error. It assumes required fields exist on the trajectory object.
+[english] That makes sense; I should add checks for those attributes.

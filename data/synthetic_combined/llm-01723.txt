@@ -1,0 +1,15 @@
+[english] I need a function that reads specific CLI arguments and formats them into an internal URL parameter dictionary.
+[english] This method first calls the parent class to load all available command-line arguments. It then checks if the `hostGroupName` argument was provided in the input; if so, it maps that value directly into the instance attribute `self.url_parameters` under the key 'name.'
+<switch:python>
+[python] def get_arguments(self):
+        """
+        Extracts the specific arguments of this CLI
+        """
+        ApiCli.get_arguments(self)
+        if self.args.hostGroupName is not None:
+            self.url_parameters = {"name": self.args.hostGroupName}
+<switch:english>
+[english] The function relies on `ApiCli.get_arguments(self)` successfully populating `self.args` before execution. If `hostGroupName` is not given, `self.url_parameters` remains unchanged or empty.
+[english] If I were to pass multiple host group names in the CLI input, would this function support handling all of them?
+[english] No, this specific logic only checks for and processes a single value assigned to `hostGroupName`. If it is provided, it overwrites any previous definition of `self.url_parameters` with that one name.
+[english] That clears things up!

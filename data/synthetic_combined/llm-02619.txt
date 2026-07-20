@@ -1,0 +1,18 @@
+[english] I need a way to find all registered workspaces matching a given name and print their current status, handling cases where no matches are found.
+[english] This method first delegates the task of finding paths to an external utility. It then checks if any results were returned; if not, it logs an error. Finally, it iterates through all discovered workspaces and prints the detailed status for each one.
+<switch:python>
+[python] def print_workspace(self, name):
+        """Print workspace status."""
+        path_list = find_path(name, self.config)
+
+        if len(path_list) == 0:
+            self.logger.error("No matches for `%s`" % name)
+            return False
+
+        for name, path in path_list.items():
+            self.print_status(name, path)
+<switch:english>
+[english] The function efficiently handles the discovery and reporting of statuses based on configuration matches. Note that it relies heavily on `find_path` correctly returning a dictionary-like object containing both names and corresponding paths.
+[english] If multiple items match under one specific name, will the loop handle them sequentially, or could there be issues with iteration?
+[english] The `for item in path_list.items():` structure guarantees that all discovered matches are processed individually. If an issue occurred during the status print for one item, it would continue to the next matching entry.
+[english] That makes sense! Thanks for clarifying how the iteration works.

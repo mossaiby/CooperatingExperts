@@ -1,0 +1,32 @@
+[english] How can I modify a Marshmallow schema to enforce custom type checking during deserialization without changing the base schema definition?
+[english] This helper examines every field within a provided Marshmallow schema class. It then dynamically patches specific fields, replacing their original `_deserialize` method with a powerful validation function.
+<switch:python>
+[python] def _create_validation_schema(schema_cls):
+        """Create a patched Schema for validating models.
+
+        Model validation is not part of Marshmallow. Schemas have a ``validate``
+        method but this delegates execution on ``load`` and discards the result.
+        Similarly, ``load`` will call ``_deserialize`` on every field in the
+        schema.
+
+        This function patches the ``_deserialize`` instance method of each
+        field to make it call a custom defined method ``check_type``
+        provided by Qiskit in the different fields at
+        ``qiskit.validation.fields``.
+
+        Returns:
+            BaseSchema: a copy of the original Schema, overriding the
+                ``_deserialize()`` call of its fields.
+        """
+        validation_schema = schema_cls()
+        for _, field in validation_schema.fields.items():
+            if isinstance(field, ModelTypeValidator):
+                validate_function = field.__class__.check_type
+                field._deserialize = MethodType(validate_function, field)
+
+        return validation_schema
+<switch:english>
+[english] The use of MethodType allows us to inject custom behavior (`check_type`) directly into the instance methods that are responsible for data transformation during load calls.
+[english] What happens if multiple instances of ModelTypeValidator exist within a single schema?
+[english] Each existing field will have its `_deserialize` attribute replaced individually, meaning every occurrence in the schema uses the patched validation logic.
+[english] Does this approach slow down deserialization significantly?

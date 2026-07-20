@@ -1,0 +1,25 @@
+[english] I need to automate the process of registering a complex task definition with a remote backend service via an API.
+[english] This function manages the registration by sending the provided task definition as data in an HTTP POST request. It then checks the API response status code to determine if the task was successfully recorded.
+<switch:python>
+[python] def register_task(self, task_def):
+        '''
+        Register a task for a python dict
+        :param task_def: dict defining gbdx task
+        '''
+        r = self.session.post(
+            self.task_url,
+            data=task_def,
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'}
+        )
+
+        task_dict = json.loads(task_def)
+
+        if r.status_code == 200:
+            return r.status_code, 'Task %s registered' % task_dict['name']
+        else:
+            return r.status_code, 'Task %s was not registered: %s' % (task_dict['name'], r.text)
+<switch:english>
+[english] The method correctly handles success (200) and failure by returning a tuple containing the status code and a descriptive message, which is useful for debugging integration issues.
+[english] If the server returns an error other than 400 (like 503 Service Unavailable), does this function adequately capture that detailed information?
+[english] Yes, since it checks `r.status_code` explicitly before proceeding, any unexpected status code will execute the `else` block and return the specific HTTP status along with the raw error message from the server via `r.text`.
+[english] Perfect, that clarifies how the function handles API failures.

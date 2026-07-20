@@ -1,0 +1,25 @@
+[english] How can I create a function that automatically determines if a service, based on its file path, is an ARM resource and identifies its specific repository name?
+[english] This approach involves standard string manipulation: first converting the path to lowercase for consistent matching, then stripping unwanted prefixes like 'specification/', and finally breaking the remaining path into segments to extract the required details.
+<switch:python>
+[python] def guess_service_info_from_path(spec_path):
+    """Guess Python Autorest options based on the spec path.
+
+    Expected path:
+    specification/compute/resource-manager/readme.md
+    """
+    spec_path = spec_path.lower()
+    spec_path = spec_path[spec_path.index("specification"):] # Might raise and it's ok
+    split_spec_path = spec_path.split("/")
+
+    rp_name = split_spec_path[1]
+    is_arm = split_spec_path[2] == "resource-manager"
+
+    return {
+        "rp_name": rp_name,
+        "is_arm": is_arm
+    }
+<switch:english>
+[english] It is important to note that this function assumes a rigid directory structure; any deviation from the expected segment order will likely result in an incorrect service classification or an indexing error.
+[english] What happens if the input string does not contain 'specification' at all, which would cause the path slicing and subsequent splitting code to fail?
+[english] If 'specification' is missing, `spec_path.index("specification")` will raise a ValueError. To handle this gracefully without crashing, you should wrap those operations in a try-except block or verify the string content before proceeding.
+[english] That makes sense; I'll need to add error handling for deployment paths that don't follow our standard naming convention.

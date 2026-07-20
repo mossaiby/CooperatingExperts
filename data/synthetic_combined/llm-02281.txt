@@ -1,0 +1,35 @@
+[english] How do I securely check if an access token contains specific required parameters without decryptig the entire payload?
+[english] This function validates a secret link token by first loading its internal data using load_token. It then iteratively checks the 'data' field against any expected keys provided in `expected_data` to ensure all necessary claims are present and match.
+<switch:python>
+[python] def validate_token(self, token, expected_data=None):
+        """Validate secret link token.
+
+        :param token: Token value.
+        :param expected_data: A dictionary of key/values that must be present
+            in the data part of the token (i.e. included via ``extra_data`` in
+            ``create_token``).
+        """
+        try:
+            # Load token and remove random data.
+            data = self.load_token(token)
+
+            # Compare expected data with data in token.
+            if expected_data:
+                for k in expected_data:
+                    if expected_data[k] != data["data"].get(k):
+                        return None
+            return data
+        except BadData:
+            return None
+<switch:english>
+[english] The token validation is robust, as it handles exceptions by returning `None` when bad data prevents successful loading.
+[english] If `expected_data` contains a key that exists but has the same value in the token as expected, does this function return those values? It seems to be designed to check for presence and correctness rather than extracting them all.
+[english] Yes. If the checks pass all required keys, the entire data structure loaded by load_token is returned successfully.
+
+```python
+def validate_token(self, token, expected_data=None):
+        try:
+            return data # Returns full data if validation succeeds
+        except BadData:
+            return None
+[english] Got it! This makes the logic very clear.

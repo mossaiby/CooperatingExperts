@@ -1,0 +1,26 @@
+[english] I need a Python decorator for Flask that enforces HTTP Basic Authentication, ensuring only users with valid usernames and passwords can access specific API endpoints.
+[english] This is a sophisticated decorator pattern used to protect routes. It intercepts incoming requests, looks for authentication headers, and calls an external validation function before deciding whether the route logic should execute.
+<switch:python>
+[python] def requires_basic_auth(resource):
+    '''
+    Flask decorator protecting ressources using username/password scheme
+    '''
+    @functools.wraps(resource)
+    def decorated(*args, **kwargs):
+        ''' Check provided username/password '''
+        auth = flask.request.authorization
+        user = check_credentials(auth.username, auth.password)
+
+        if not auth or user is None:
+            log.warn('authentification failed', credentials=auth)
+            return auth_failed()
+
+        log.info('authentification succeeded', credentials=auth)
+        flask.g.user = user
+        return resource(*args, **kwargs)
+    return decorated
+<switch:english>
+[english] The decorated resource only runs if `check_credentials` returns a user object; otherwise, access is denied via `auth_failed()`. Remember to define `check_credentials` separately.
+[english] What specific action does this function take if the client sends a request but omits the Authorization header entirely?
+[english] If the authentication header (`auth`) is missing or falsy, the condition `if not auth or user is None:` is immediately met. In that case, it logs a warning and returns the result of `auth_failed()` without ever calling your resource.
+[english] Thank you, this gives me exactly what I need to secure my routes.

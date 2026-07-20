@@ -1,0 +1,50 @@
+[english] How can I simulate task scheduling on a parallel system while enforcing required dependencies and visualizing execution metrics?
+[english] This function simulates job execution by first creating a random Directed Acyclic Graph (DAG) using `random_dag`. It then submits these tasks to a parallel client, waiting for all jobs to complete before gathering timing data.
+<switch:python>
+[python] def main(nodes, edges):
+    """Generate a random graph, submit jobs, then validate that the
+    dependency order was enforced.
+    Finally, plot the graph, with time on the x-axis, and
+    in-degree on the y (just for spread).  All arrows must
+    point at least slightly to the right if the graph is valid.
+    """
+    from matplotlib import pyplot as plt
+    from matplotlib.dates import date2num
+    from matplotlib.cm import gist_rainbow
+    print("building DAG")
+    G = random_dag(nodes, edges)
+    jobs = {}
+    pos = {}
+    colors = {}
+    for node in G:
+        jobs[node] = randomwait
+    
+    client = parallel.Client()
+    view = client.load_balanced_view()
+    print("submitting %i tasks with %i dependencies"%(nodes,edges))
+    results = submit_jobs(view, G, jobs)
+    print("waiting for results")
+    view.wait()
+    print("done")
+    for node in G:
+        md = results[node].metadata
+        start = date2num(md.started)
+        runtime = date2num(md.completed) - start
+        pos[node] = (start, runtime)
+        colors[node] = md.engine_id
+    validate_tree(G, results)
+    nx.draw(G, pos, node_list=colors.keys(), node_color=colors.values(), cmap=gist_rainbow,
+            with_labels=False)
+    x,y = zip(*pos.values())
+    xmin,ymin = map(min, (x,y))
+    xmax,ymax = map(max, (x,y))
+    xscale = xmax-xmin
+    yscale = ymax-ymin
+    plt.xlim(xmin-xscale*.1,xmax+xscale*.1)
+    plt.ylim(ymin-yscale*.1,ymax+yscale*.1)
+    return G,results
+<switch:english>
+[english] After collection, the code validates that dependencies were respected and uses Matplotlib (`plt.xlim`, `nx.draw`) to visualize the execution times on an x-axis against run duration on the y-axis.
+[english] If the input edges created a cycle instead of a DAG, how would this affect the job submission process?
+[english] The system is designed assuming a valid DAG. If a dependency cycle exists, `view.wait()` would likely hang indefinitely because the prerequisites for those tasks could never be met.
+[english] That makes sense; enforcing that validity early seems prudent.

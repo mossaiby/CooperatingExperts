@@ -1,0 +1,82 @@
+[english] I need a function to visualize my dataset's probability distribution alongside an estimated power-law curve.
+[english] This function, `plotpdf`, handles the entire visualization process by calculating histogram statistics and then fitting a theoretical power law based on your data properties. It manages three modes: density plotting (`dnds`), log-scaled histograms (`dolog`), or linear histograms.
+<switch:python>
+[python] def plotpdf(self, x=None, xmin=None, alpha=None, nbins=50, dolog=True,
+                dnds=False, drawstyle='steps-post', histcolor='k', plcolor='r',
+                fill=False, dohist=True, **kwargs):
+        """
+        Plots PDF and powerlaw.
+
+        kwargs is passed to pylab.hist and pylab.plot
+        """
+        if x is None:
+            x=self.data
+        if xmin is None:
+            xmin=self._xmin
+        if alpha is None:
+            alpha=self._alpha
+
+        x=np.sort(x)
+        #n=len(x)
+
+        pylab.gca().set_xscale('log')
+        pylab.gca().set_yscale('log')
+
+        if dnds:
+            hb = pylab.histogram(x,bins=np.logspace(log10(min(x)),log10(max(x)),nbins))
+            h = hb[0]
+            b = hb[1]
+            db = hb[1][1:]-hb[1][:-1]
+            h = h/db
+            if dohist:
+                pylab.plot(b[:-1],h,drawstyle=drawstyle,color=histcolor,**kwargs)
+            #alpha -= 1
+        elif dolog:
+            hb = pylab.hist(x, bins=np.logspace(log10(min(x)), log10(max(x)),
+                                                nbins), log=True, fill=fill,
+                            edgecolor=histcolor, **kwargs)
+            alpha -= 1
+            h,b=hb[0],hb[1]
+            if not dohist:
+                for rect in hb[2]:
+                    rect.set_visible(False)
+        else:
+            hb = pylab.hist(x, bins=np.linspace((min(x)), (max(x)), nbins),
+                            fill=fill, edgecolor=histcolor, **kwargs)
+            h,b=hb[0],hb[1]
+            if not dohist:
+                for rect in hb[2]:
+                    rect.set_visible(False)
+        # plotting points are at the center of each bin
+        b = (b[1:]+b[:-1])/2.0
+
+        q = x[x>=xmin]
+        px = (alpha-1)/xmin * (q/xmin)**(-alpha)
+
+        # Normalize by the median ratio between the histogram and the power-law
+        # The normalization is semi-arbitrary; an average is probably just as valid
+        plotloc = (b>xmin)*(h>0)
+        norm = np.median(h[plotloc] / ((alpha-1)/xmin *
+                                       (b[plotloc]/xmin)**(-alpha)))
+        px = px*norm
+
+        plotx = pylab.linspace(q.min(),q.max(),1000)
+        ploty = (alpha-1)/xmin * (plotx/xmin)**(-alpha) * norm
+
+        #pylab.loglog(q,px,'r',**kwargs)
+        pylab.plot(plotx, ploty, color=plcolor, **kwargs)
+
+        axlims = pylab.axis()
+        pylab.vlines(xmin, axlims[2], max(px), colors=plcolor,
+                     linestyle='dashed')
+
+        if dolog and min(x) <= 0:
+            lolim = 0.1
+        else:
+            lolim = min(x)
+        pylab.gca().set_xlim(lolim, max(x))
+<switch:english>
+[english] The core logic involves normalizing the fitted power law curve to match the median ratio observed between the histogram heights (h) and the theoretical PDF (px). Note that this normalization step is semi-arbitrary as stated in the comments.
+[english] What happens if my data minimum, `self._xmin`, is less than or equal to zero when running a log-scaled plot?
+[english] If you are plotting logarithmically (`dolog=True`) and your input minimum value is non-positive, the function defaults the lower limit for logarithmic scaling (`lolim`) to 0.1 to ensure valid axis settings.
+[english] That makes perfect sense; I'll adjust my data preprocessing accordingly.

@@ -1,0 +1,26 @@
+[english] I need a Python function to load an audio file, detect its current pitch deviation from a standard, and then automatically apply a corrective pitch shift.
+[english] This script uses Librosa to perform automated audio tuning. It first isolates the harmonic content of the input audio using `librosa.effects.harmonic`, estimates the inherent pitch error via `estimate_tuning`, and applies the inverse correction.
+<switch:python>
+[python] def adjust_tuning(input_file, output_file):
+    '''Load audio, estimate tuning, apply pitch correction, and save.'''
+    print('Loading ', input_file)
+    y, sr = librosa.load(input_file)
+
+    print('Separating harmonic component ... ')
+    y_harm = librosa.effects.harmonic(y)
+
+    print('Estimating tuning ... ')
+    # Just track the pitches associated with high magnitude
+    tuning = librosa.estimate_tuning(y=y_harm, sr=sr)
+
+    print('{:+0.2f} cents'.format(100 * tuning))
+    print('Applying pitch-correction of {:+0.2f} cents'.format(-100 * tuning))
+    y_tuned = librosa.effects.pitch_shift(y, sr, -tuning)
+
+    print('Saving tuned audio to: ', output_file)
+    librosa.output.write_wav(output_file, y_tuned, sr)
+<switch:english>
+[english] It's important to remember that `pitch_shift` adjusts the entire frequency spectrum, which can subtly alter the natural sounding quality of the voice or music.
+[english] What if I want to limit how much pitch is corrected so it doesn't sound artificial?
+[english] You can clamp the calculated correction factor before passing it to `librosa.effects.pitch_shift` by wrapping `-tuning` in a range check, for example:
+[english] Got it! I'll integrate that clamping logic into my script.

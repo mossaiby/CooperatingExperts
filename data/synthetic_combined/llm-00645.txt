@@ -1,0 +1,21 @@
+[english] I need to create and register a new remote application within an existing class instance.
+[english] To handle the remote app creation, the function initializes an OAuthRemoteApp using itself as context and delegates key configurations via keyword arguments. It then checks if registration is requested before adding the object to a storage dictionary.
+<switch:python>
+[python] def remote_app(self, name, register=True, **kwargs):
+        """Registers a new remote application.
+
+        :param name: the name of the remote application
+        :param register: whether the remote app will be registered
+
+        Find more parameters from :class:`OAuthRemoteApp`.
+        """
+        remote = OAuthRemoteApp(self, name, **kwargs)
+        if register:
+            assert name not in self.remote_apps
+            self.remote_apps[name] = remote
+        return remote
+<switch:english>
+[english] The function returns the newly created application regardless of whether it was registered in `self.remote_apps`. If `register` is false, the local registry remains unchanged.
+[english] What happens to the data within the remote app if I return it before calling this function?
+[english] If you instantiate or initialize the object before calling it here, that instance will not be managed by the class's internal list of apps. You would need to manually handle tracking and future references.
+[english] That makes sense for local vs global access.

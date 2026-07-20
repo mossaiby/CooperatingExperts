@@ -1,0 +1,18 @@
+[english] How do I safely remove a tier from my system and handle any associated cleanup?
+[english] To accomplish this, we use the `del` keyword to immediately remove the item from the internal tiers dictionary. We then check if cleaning is requested before running a separate maintenance method.
+<switch:python>
+[python] def remove_tier(self, id_tier, clean=True):
+        """Remove a tier.
+
+        :param str id_tier: Name of the tier.
+        :param bool clean: Flag to also clean the timeslots.
+        :raises KeyError: If tier is non existent.
+        """
+        del(self.tiers[id_tier])
+        if clean:
+            self.clean_time_slots()
+<switch:english>
+[english] The function relies on external methods like `clean_time_slots`, so ensure those dependent functions handle potential cascades correctly by themselves.
+[english] What happens to data in the time slots that are 'cleaned' if I call this without setting clean=True?
+[english] If clean is False, the tier is removed immediately, and the associated timeslot cleanup method is never executed, so old data remains until manually cleared.
+[english] Thanks for clarifying how this deletion behaves.

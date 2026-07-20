@@ -1,0 +1,52 @@
+[english] I need a function that allows me to search for specific HPO terms within a database using different input types like partial queries or full text.
+[english] This function facilitates searching an HPO term collection by utilizing various parameters. It prioritizes searches: first, it performs case-insensitive regex matching against `query`, then utilizes MongoDB's `$text` search if the `text` parameter is set, and finally allows for direct ID lookups via `hpo_term`.
+<switch:python>
+[python] def hpo_terms(self, query=None, hpo_term=None, text=None, limit=None):
+        """Return all HPO terms
+
+        If a query is sent hpo_terms will try to match with regex on term or
+        description.
+
+        Args:
+            query(str): Part of a hpoterm or description
+            hpo_term(str): Search for a specific hpo term
+            limit(int): the number of desired results
+
+        Returns:
+            result(pymongo.Cursor): A cursor with hpo terms
+        """
+        query_dict = {}
+        search_term = None
+        if query:
+            query_dict = {'$or':
+                [
+                    {'hpo_id': {'$regex': query, '$options':'i'}},
+                    {'description': {'$regex': query, '$options':'i'}},
+                ]   
+            }
+            search_term = query
+        elif text:
+            new_string = ''
+            for i,word in enumerate(text.split(' ')):
+                if i == 0:
+                    new_string += word
+                else:
+                    new_string += ' \"{0}\"'.format(word)
+            LOG.info("Search HPO terms with %s", new_string)
+            query_dict['$text'] = {'$search': new_string}
+            search_term = text
+        elif hpo_term:
+            query_dict['hpo_id'] = hpo_term
+            search_term = hpo_term
+
+        limit = limit or int(10e10)
+        res = self.hpo_term_collection.find(query_dict).limit(limit).sort('hpo_number',ASCENDING)
+        
+
+        LOG.info("Found {0} terms with search word {1}".format(res.count(), search_term))
+        return res
+<switch:english>
+[english] The code skillfully leverages different MongoDB operators (`$regex`, `$text`) to handle diverse search needs. It also enforces limits and sorts results by HPO number ascending.
+[english] What happens if I try to pass both a regex `query` and an exact `hpo_term` in the same function call?
+[english] Because it uses an `if/elif` structure, only one search branch is executed. If you provide a `query`, the logic for `$or` regex searches runs and ignores any subsequent checks for `hpo_term`.
+[english] That clarifies how the priority chain works.

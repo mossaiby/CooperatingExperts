@@ -1,0 +1,14 @@
+[english] I need a way to temporarily update my system's environment variables so that python module lookups include all directories currently in sys.path.
+[english] This function captures a copy of the existing operating system environment and then specifically overrides the 'PYTHONPATH'. By joining sys.path elements, it ensures your current working directories are made available for imports within this new map.
+<switch:python>
+[python] def _get_env():
+    """Extracts the environment PYTHONPATH and appends the current sys.path to
+    those."""
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(sys.path)
+    return env
+<switch:english>
+[english] The function returns a new dictionary containing all previous environment settings but with the PYTHONPATH explicitly set relative to the current program execution context.
+[english] What happens if sys.path is empty; does this result in an error?
+[english] If sys.path is empty, os.pathsep.join([]) returns an empty string (''), which safely overwrites the PYTHONPATH key with an empty value. This doesn't cause an operational error.
+[english] Thanks for clarifying that edge case!

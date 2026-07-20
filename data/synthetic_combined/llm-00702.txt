@@ -1,0 +1,28 @@
+[english] How can I ensure that certain signal components in an operation are properly registered as either a driver or an endpoint based on predefined outputs?
+[english] This function iterates through the operands of an object to classify and register signals. It checks if an operand is a specific type of signal (`RtlSignalBase`) to manage how it relates back to the parent object.
+<switch:python>
+[python] def registerSignals(self, outputs=[]):
+        """
+        Register potential signals to drivers/endpoints
+        """
+        for o in self.operands:
+            if isinstance(o, RtlSignalBase):
+                if o in outputs:
+                    o.drivers.append(self)
+                else:
+                    o.endpoints.append(self)
+            elif isinstance(o, Value):
+                pass
+            else:
+                raise NotImplementedError(
+                    "Operator operands can be"
+                    " only signal or values got:%r" % (o))
+<switch:english>
+[english] The function centralizes registration logic, ensuring that signals are correctly tied to the operation as either a driver (if listed in outputs) or an endpoint.
+[english] What happens if `self.operands` contains multiple objects of type `RtlSignalBase`, and only one should be considered the 'driver'?
+[english] The function currently appends all matching signals to various lists (`drivers` or `endpoints`), allowing for multiple connections, but it doesn't enforce a single selection:
+<switch:python>
+[python] # All matches are handled as written.
+# If singularity is required, an explicit check would be needed here.
+<switch:english>
+[english] That clarifies the registration process.

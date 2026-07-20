@@ -1,0 +1,18 @@
+[english] I need a function to dynamically generate a unique and descriptive name for each step in my process workflow.
+[english] This approach first attempts to retrieve the fully qualified internal name of the object at the given index. It then checks if that retrieved name is empty or contains specific characters, falling back to a standardized numerical naming convention if necessary.
+<switch:python>
+[python] def get_step_name(self, index: int) -> str:
+        """
+        Give the waterfall step a unique name
+        """
+        step_name = self._steps[index].__qualname__
+
+        if not step_name or ">" in step_name :
+            step_name = f"Step{index + 1}of{len(self._steps)}"
+
+        return step_name
+<switch:english>
+[english] By providing this robust fallback mechanism, the function guarantees a predictable and unique identifier for logging even when objects lack suitable method names.
+[english] If I pass an index that is far outside the length of `self._steps`, what behavior should I expect?
+[english] Accessing an out-of-bounds index will cause Python to raise a standard `IndexError`. You might want to explicitly add bounds checking if you want custom error handling.
+[english] That helps clarify how safely this function operates.

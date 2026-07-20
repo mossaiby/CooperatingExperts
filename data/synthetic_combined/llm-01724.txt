@@ -1,0 +1,50 @@
+[english] I need a way to reliably fetch data from an external URL while handling potential network delays and timeouts.
+[english] This function uses asynchronous programming with `aiohttp` to perform HTTP requests efficiently. It first introduces a configurable delay before setting up a timeout using `async_timeout.timeout` to manage the request duration.
+<switch:python>
+[python] async def fetch(self) -> Response:
+        """Fetch all the information by using aiohttp"""
+        if self.request_config.get('DELAY', 0) > 0:
+            await asyncio.sleep(self.request_config['DELAY'])
+
+        timeout = self.request_config.get('TIMEOUT', 10)
+        try:
+            async with async_timeout.timeout(timeout):
+                resp = await self._make_request()
+            try:
+                resp_data = await resp.text(encoding=self.encoding)
+            except UnicodeDecodeError:
+                resp_data = await resp.read()
+
+            response = Response(
+                url=self.url,
+                method=self.method,
+                encoding=resp.get_encoding(),
+                html=resp_data,
+                metadata=self.metadata,
+                cookies=resp.cookies,
+                headers=resp.headers,
+                history=resp.history,
+                status=resp.status,
+                aws_json=resp.json,
+                aws_text=resp.text,
+                aws_read=resp.read)
+            # Retry middleware
+            aws_valid_response = self.request_config.get('VALID')
+            if aws_valid_response and iscoroutinefunction(aws_valid_response):
+                response = await aws_valid_response(response)
+            if response.ok:
+                return response
+            else:
+                return await self._retry(error_msg='request url failed!')
+        except asyncio.TimeoutError:
+            return await self._retry(error_msg='timeout')
+        except Exception as e:
+            return await self._retry(error_msg=e)
+        finally:
+            # Close client session
+            await self._close_request_session()
+<switch:english>
+[english] The code ensures that whether the response is Unicode or raw bytes, it correctly extracts and structures all necessary metadata into a final Response object.
+[english] What happens if the configured 'VALID' function detects an unsuccessful status code?
+[english] If `aws_valid_response` is provided and `response.ok` is false, the request automatically triggers a retry by calling `await self._retry(error_msg='request url failed!')`.
+[english] That clarifies how the error handling works during the fetching process.

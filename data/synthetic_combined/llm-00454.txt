@@ -1,0 +1,46 @@
+[english] I need a robust way to run external system commands that supports custom working directories, environment variables, and defined error handling.
+[english] This function abstracts command execution by leveraging `subprocess.Popen` for detailed control over how the process runs. It carefully captures standard output and errors while allowing customization of the execution context (cwd and env).
+<switch:python>
+[python] def _exec(cmd, cwd=None, env=None, ignored_error_codes=None,
+              encoding='utf-8'):
+        """Run a command.
+
+        Execute `cmd` command in the directory set by `cwd`. Environment
+        variables can be set using the `env` dictionary. The output
+        data is returned as encoded bytes.
+
+        Commands which their returning status codes are non-zero will
+        be treated as failed. Error codes considered as valid can be
+        ignored giving them in the `ignored_error_codes` list.
+
+        :returns: the output of the command as encoded bytes
+
+        :raises RepositoryError: when an error occurs running the command
+        """
+        if ignored_error_codes is None:
+            ignored_error_codes = []
+
+        logger.debug("Running command %s (cwd: %s, env: %s)",
+                     ' '.join(cmd), cwd, str(env))
+
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    cwd=cwd, env=env)
+            (outs, errs) = proc.communicate()
+        except OSError as e:
+            raise RepositoryError(cause=str(e))
+
+        if proc.returncode != 0 and proc.returncode not in ignored_error_codes:
+            err = errs.decode(encoding, errors='surrogateescape')
+            cause = "git command - %s" % err
+            raise RepositoryError(cause=cause)
+        else:
+            logger.debug(errs.decode(encoding, errors='surrogateescape'))
+
+        return outs
+<switch:english>
+[english] The core logic relies on checking `proc.returncode`. If the code is non-zero but not listed in `ignored_error_codes`, a detailed RepositoryError is raised, using captured stderr for diagnostics.
+[english] What happens if the command provided in 'cmd' does not exist or cannot be found by the operating system?
+[english] If the underlying OS fails to execute the process (e.g., command missing), an `OSError` is caught inside the function and raised immediately as a RepositoryError.
+[english] Got it, that covers all the necessary failure modes I was concerned about.

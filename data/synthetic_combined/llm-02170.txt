@@ -1,0 +1,16 @@
+[english] How can I create a default, configurable GUI component with specific visual properties and basic movement controls?
+[english] This function acts as a trait initialiser by creating an instance of Container. It configures essential parameters like background color and automatically enables sizing before adding necessary tools.
+<switch:python>
+[python] def _component_default(self):
+        """ Trait initialiser.
+        """
+        component = Container(fit_window=False, auto_size=True,
+            bgcolor="green")#, position=list(self.pos) )
+        component.tools.append( MoveTool(component) )
+#        component.tools.append( TraitsTool(component) )
+        return component
+<switch:english>
+[english] The returned container is set up for automatic resizing with a green background, and it is guaranteed to have the MoveTool enabled for interaction.
+[english] If I wanted this component always visible in the center of the screen upon creation without needing manual adjustment, how would I modify the initialization?
+[english] You need to uncomment the position line when creating the container instance, like using `position=list(self.pos)` during setup.
+[english] That makes the positioning much clearer.

@@ -1,0 +1,38 @@
+[english] How do I programmatically extract structured data from a raw NNTP article string?
+[english] This function leverages Python's built-in `email` library to correctly handle complex message structures, treating the input as a standard email object before transforming it into a usable dictionary.
+<switch:python>
+[python] def parse_article(raw_article):
+        """Parse a NNTP article.
+
+        This method parses a NNTP article stored in a string object
+        and returns an dictionary.
+
+        :param raw_article: NNTP article string
+
+        :returns: a dictionary of type `requests.structures.CaseInsensitiveDict`
+
+        :raises ParseError: when an error is found parsing the article
+        """
+        try:
+            message = email.message_from_string(raw_article)
+            article = message_to_dict(message)
+        except UnicodeEncodeError as e:
+            raise ParseError(cause=str(e))
+        return article
+<switch:english>
+[english] It specifically catches Unicode encoding errors and wraps them in a custom ParseError, providing robust handling for malformed or non-standard inputs.
+[english] The function handles `UnicodeEncodeError`; what other parsing issues might occur if the raw article contains highly unconventional headers or formatting?
+[english] If the message uses an unknown character set not supported by your environment, you would likely encounter a different decoding error. You can enhance this with explicit encoding handling:
+<switch:python>
+[python] import email
+from email import header as eheader
+
+def parse_article(raw_article):
+    try:
+        message = email.message_from_string(raw_article)
+        # Handle potential decoding issues here if a custom dict creator is used
+        return message_to_dict(message)
+    except Exception as e: # Catch broader exceptions for structural failure
+        raise ParseError(cause=f"Failed to parse structure: {e}")
+<switch:english>
+[english] That makes sense; I appreciate the clarification.

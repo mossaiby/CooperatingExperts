@@ -1,0 +1,23 @@
+[english] How can I recursively extract all related classes from a starting node, including its ancestors and associated nodes?
+[english] This function uses recursion to traverse complex relationships. It first adds the current class before recursively checking both its ancestors and its directly associated nodes.
+<switch:python>
+[python] def extract_classes(self, klass_node, anc_level, association_level):
+        """extract recursively classes related to klass_node"""
+        if self.classdiagram.has_node(klass_node) or not self.show_node(klass_node):
+            return
+        self.add_class(klass_node)
+
+        for ancestor in self.get_ancestors(klass_node, anc_level):
+            self.extract_classes(ancestor, anc_level - 1, association_level)
+
+        for node in self.get_associated(klass_node, association_level):
+            self.extract_classes(node, anc_level, association_level - 1)
+<switch:english>
+[english] The function manages traversal depth using `anc_level` and `association_level` to control the scope of its search.
+[english] What happens if the `klass_node` has already been added to the results? Is it possible for this function to enter an infinite loop?
+[english] If `self.classdiagram.has_node(klass_node)` is true, the recursion immediately stops.
+<switch:python>
+[python] if self.classdiagram.has_node(klass_node) or not self.show_node(klass_node):
+            return
+<switch:english>
+[english] That clears up my concerns about state management and termination.

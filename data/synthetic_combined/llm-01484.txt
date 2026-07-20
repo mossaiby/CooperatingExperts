@@ -1,0 +1,14 @@
+[english] How do I generate evenly spaced coordinates for chroma bins given a total count 'n' and specific resolution settings?
+[english] We can use numpy's linspace function here, which is perfect for uniformly dividing a range into a set number of points.
+<switch:python>
+[python] def __coord_chroma(n, bins_per_octave=12, **_kwargs):
+    '''Get chroma bin numbers'''
+    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n+1, endpoint=True)
+<switch:english>
+[english] This method returns n+1 values to represent the starting and ending boundaries of your chroma intervals.
+[english] What happens to the granularity if I set bins_per_octave to something very large?
+[english] Increasing `bins_per_octave` reduces the maximum value in each interval, increasing the overall resolution.
+<switch:python>
+[python] def check(n): return np.linspace(0, (12 * n) / 60, num=n+1)
+<switch:english>
+[english] That makes perfect sense for controlling the detail level.

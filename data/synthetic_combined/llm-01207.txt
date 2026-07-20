@@ -1,0 +1,34 @@
+[english] I need a way to convert standard Python containers like lists, dictionaries, and tuples encountered during AST traversal into uniform, referencable custom node types.
+[english] This utility recursively normalizes data structures by replacing all built-in Python container types with designated subclass nodes. It specifically checks for dict keys, list indices, and object attributes to ensure deep transformation throughout the structure.
+<switch:python>
+[python] def normalize(ast: Node) -> Node:
+    """
+    Normalize an AST nodes.
+
+    all builtins containers are replace by referencable subclasses
+    """
+    res = ast
+    typemap = {DictNode, ListNode, TupleNode}
+    if type(ast) is dict:
+        res = DictNode(ast)
+    elif type(ast) is list:
+        res = ListNode(ast)
+    elif type(ast) is tuple:
+        res = TupleNode(ast)
+    # in-depth change
+    if hasattr(res, 'items'):
+        for k, v in res.items():
+            res[k] = normalize(v)
+    elif hasattr(res, '__getitem__'):
+        for idx, v in zip(range(len(res)), res):
+            res[idx] = normalize(v)
+    if type(res) not in typemap and hasattr(res, '__dict__'):
+        subattr = vars(res)
+        for k, v in subattr.items():
+            setattr(res, k, normalize(v))
+    return res
+<switch:english>
+[english] The function successfully standardizes the structural representation of AST objects. Keep in mind that this relies heavily on the node classes implementing proper attribute handling for the recursive traversal to work effectively.
+[english] What happens if the input object is already one of these specialized nodes, like a pre-existing DictNode?
+[english] If the object is already an AST node (like DictNode), the function does not convert it but proceeds to recursively normalize its internal contents by iterating over its attributes or items.
+[english] That makes perfect sense! Thanks for the detailed breakdown.

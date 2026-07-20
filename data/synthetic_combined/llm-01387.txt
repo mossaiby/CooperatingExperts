@@ -1,0 +1,25 @@
+[english] How do I programmatically fetch information about a single institute using its unique ID from our data collection?
+[english] This function retrieves a specific document by performing a targeted query on the institute's database collection.
+<switch:python>
+[python] def institute(self, institute_id):
+        """Featch a single institute from the backend
+
+            Args:
+                institute_id(str)
+
+            Returns:
+                Institute object
+        """
+        LOG.debug("Fetch institute {}".format(institute_id))
+        institute_obj = self.institute_collection.find_one({
+            '_id': institute_id
+        })
+        if institute_obj is None:
+            LOG.debug("Could not find institute {0}".format(institute_id))
+
+        return institute_obj
+<switch:english>
+[english] The code safely handles the possibility of no match by returning None if the requested ID does not exist in the system.
+[english] What happens if there is an issue with the `institute_id` being passed, such as if it's missing or incorrectly formatted?
+[english] If the ID is malformed or absent, the database query will simply fail to find a match and return None, which is then logged.
+[english] Perfect, I understand how this fetching mechanism works now.

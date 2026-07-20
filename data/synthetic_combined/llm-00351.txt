@@ -1,0 +1,50 @@
+[english] I need a function that fetches an SSL certificate chain from a URL and rigorously verifies it against specific security requirements, such as those mandated by Amazon Alexa.
+[english] This code handles the complex task of validating a trust chain in multiple steps. It starts by fetching the certificates from the provided URL and then runs sequential checks for validity, expiry, name matching, and chain integrity.
+<switch:python>
+[python] def verify_cert(signature_chain_url: str) -> Optional[crypto.X509]:
+    """Conducts series of Alexa SSL certificate verifications against Amazon Alexa requirements.
+
+    Args:
+        signature_chain_url: Signature certificate URL from SignatureCertChainUrl HTTP header.
+    Returns:
+        result: Amazon certificate if verification was successful, None if not.
+    """
+    try:
+        certs_chain_get = requests.get(signature_chain_url)
+    except requests.exceptions.ConnectionError as e:
+        log.error(f'Amazon signature chain get error: {e}')
+        return None
+
+    certs_chain_txt = certs_chain_get.text
+    certs_chain = extract_certs(certs_chain_txt)
+
+    amazon_cert: crypto.X509 = certs_chain.pop(0)
+
+    # verify signature chain url
+    sc_url_verification = verify_sc_url(signature_chain_url)
+    if not sc_url_verification:
+        log.error(f'Amazon signature url {signature_chain_url} was not verified')
+
+    # verify not expired
+    expired_verification = not amazon_cert.has_expired()
+    if not expired_verification:
+        log.error(f'Amazon certificate ({signature_chain_url}) expired')
+
+    # verify subject alternative names
+    sans_verification = verify_sans(amazon_cert)
+    if not sans_verification:
+        log.error(f'Subject alternative names verification for ({signature_chain_url}) certificate failed')
+
+    # verify certs chain
+    chain_verification = verify_certs_chain(certs_chain, amazon_cert)
+    if not chain_verification:
+        log.error(f'Certificates chain verification for ({signature_chain_url}) certificate failed')
+
+    result = (sc_url_verification and expired_verification and sans_verification and chain_verification)
+
+    return amazon_cert if result else None
+<switch:english>
+[english] The function returns the certificate object only if all individual validation criteria are met. If any specific Amazon requirement fails, the process terminates early, and None is returned.
+[english] What if the provided URL successfully downloads a certificate chain, but one of the intermediate certificates has an expired validity period?
+[english] If any component in the chain (including intermediates) is expired, the `has_expired()` check or subsequent chain validation will fail, ensuring the function returns None.
+[english] That makes sense; I should rely on this structure to handle all failure modes reliably.

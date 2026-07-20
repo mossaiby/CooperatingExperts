@@ -1,0 +1,30 @@
+[english] How do I retrieve a specific number of rows from an active database query result set?
+[english] To fetch data in batches, we loop up to the desired size and repeatedly call `self.fetchone()` until either the count is reached or no more records remain.
+<switch:python>
+[python] def fetchmany(self, size=None):
+        """
+        Fetch the next set of rows of a query result, returning a sequence of sequences
+        (e.g. a list of tuples). An empty sequence is returned when no more rows are
+        available. The number of rows to fetch per call is specified by the parameter.
+        If it is not given, the cursor's arraysize determines the number of rows to be
+        fetched. The method should try to fetch as many rows as indicated by the size
+        parameter. If this is not possible due to the specified number of rows not being
+        available, fewer rows may be returned. An :py:class:`~pyhive.exc.Error`
+        (or subclass) exception is raised if the previous call to
+        :py:meth:`execute` did not produce any result set or no call was issued yet.
+        """
+        if size is None:
+            size = self.arraysize
+        result = []
+        for _ in range(size):
+            one = self.fetchone()
+            if one is None:
+                break
+            else:
+                result.append(one)
+        return result
+<switch:english>
+[english] The function gracefully handles reaching the end of the dataset by breaking the loop when a row returns `None` from the underlying cursor.
+[english] What if I initialize the query but never run it using execute()?
+[english] If no results have been produced yet, this method will raise a `pyhive.exc.Error`, as defined in the docstring for an invalid operation.
+[english] Okay, that clarifies the behavior of fetchmany!

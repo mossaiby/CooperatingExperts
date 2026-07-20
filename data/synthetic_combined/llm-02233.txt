@@ -1,0 +1,21 @@
+[english] How can I securely save file data associated with a model, ensuring it is correctly encoded and encrypted?
+[english] This private method acts as a wrapper to manage the complex process of saving a non-notebook file. It packages the content from your model into its final form, incorporating encryption parameters and size limits before invoking the main save logic.
+<switch:python>
+[python] def _save_file(self, db, model, path):
+        """
+        Save a non-notebook file.
+        """
+        save_file(
+            db,
+            self.user_id,
+            path,
+            to_b64(model['content'], model.get('format', None)),
+            self.crypto.encrypt,
+            self.max_file_size_bytes,
+        )
+        return None
+<switch:english>
+[english] The function delegates the actual storage to an external `save_file` utility, abstracting away file system or object storage details.
+[english] Does this method handle cases where the 'content' key is missing from the model dictionary?
+[english] No. If `model['content']` is absent, calling `to_b64()` will raise a KeyError. You should ensure your input models always contain valid content before calling this function.
+[english] Got it; I'll add validation checks for the model structure.

@@ -1,0 +1,21 @@
+[english] I need a reliable way in Python to automatically determine the correct character encoding for an unknown text file.
+[english] This function attempts to predict the correct encoding by reading a small chunk of the file and then validates that guess by successfully decoding the content using built-in helpers. If any common errors occur during this verification process, it defaults to 'latin-1' as a fallback.
+<switch:python>
+[python] def detect_encoding(filename, limit_byte_check=-1):
+    """Return file encoding."""
+    try:
+        with open(filename, 'rb') as input_file:
+            encoding = _detect_encoding(input_file.readline)
+
+            # Check for correctness of encoding.
+            with open_with_encoding(filename, encoding) as input_file:
+                input_file.read(limit_byte_check)
+
+        return encoding
+    except (LookupError, SyntaxError, UnicodeDecodeError):
+        return 'latin-1'
+<switch:english>
+[english] The core logic ensures robustness by handling multiple exceptions like UnicodeDecodeError or SyntaxError, guaranteeing that the function always returns a usable encoding rather than crashing.
+[english] What happens if the file is extremely large and exceeds the default byte limit used for checking?
+[english] Due to the use of `input_file.read(limit_byte_check)`, the function limits how much data it consumes from the disk, preventing excessive memory usage even with very large files.
+[english] This looks like a solid piece of utility code I can use.

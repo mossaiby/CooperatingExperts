@@ -1,0 +1,17 @@
+[english] How do I programmatically save a Pandas DataFrame into a CSV format using a specific delimiter and controlling whether it has headers?
+[english] This function handles writing a DataFrame to an output stream by first ensuring the stream is properly encoded for UTF-8 characters. It then uses pandas' `to_csv` method, passing the decorated writer object as the destination.
+<switch:python>
+[python] def _dataframe_to_csv(writer, dataframe, delimiter, with_header):
+    """serialize the dataframe with different delimiters"""
+    encoding_writer = codecs.getwriter('utf-8')(writer)
+    dataframe.to_csv(
+        path_or_buf=encoding_writer,
+        sep=delimiter,
+        header=with_header,
+        index=False
+    )
+<switch:english>
+[english] The use of `#index=False` prevents Pandas from writing the DataFrame row numbers as a column in the output file.
+[english] What happens if I pass a StringIO object instead of an open file handle to this function?
+[english] If you pass a `StringIO` buffer, the function will serialize the data directly into that string-like object's memory and return the populated buffer when it is closed.
+[english] This makes streaming output much cleaner than writing to disk manually.

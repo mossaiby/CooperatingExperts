@@ -1,0 +1,20 @@
+[english] How can I add a new time category named 'Morning' with specific bounds (300-600) to my system?
+[english] I see this function is designed to register a unique label within `self.categories`. It first checks if the provided name already exists before storing the associated range data and refreshing the view.
+<switch:python>
+[python] def addCategory(self,name,nmin=0,n=0,nmax=100):
+        """
+        Adds a category with the given name.
+        
+        If the category already exists, a :py:exc:`KeyError` will be thrown. Use
+        :py:meth:`updateCategory()` instead if you want to update a category.
+        """
+        assert isinstance(name,basestring) # py2 compat is done at the top
+        if name in self.categories:
+            raise KeyError("Category with name '%s' already exists"%name)
+        self.categories[name]=[nmin,n,nmax]
+        self.redraw()
+<switch:english>
+[english] The code utilizes an initial check for uniqueness, raising a specific KeyError if a conflict occurs, and concludes by calling `self.redraw()` to update any necessary visual state.
+[english] If I call this function with a name that already exists, what kind of behavior do I see?
+[english] It throws a KeyError because the code explicitly checks for existence using `if name in self.categories` and raises an error if found, preventing accidental overwrites.
+[english] That makes more sense now!

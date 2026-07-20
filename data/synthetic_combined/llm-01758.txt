@@ -1,0 +1,41 @@
+[english] How can I write a robust Airflow operator that executes Databricks jobs and waits for completion while handling retries?
+[english] This function manages the lifecycle of a Databricks job within an Airflow task by polling its status until a terminal state is reached.
+It pushes run IDs to XComs, logs progress, and implements a controlled loop using `time.sleep` based on configuration.
+<switch:python>
+[python] def _handle_databricks_operator_execution(operator, hook, log, context):
+    """
+    Handles the Airflow + Databricks lifecycle logic for a Databricks operator
+
+    :param operator: Databricks operator being handled
+    :param context: Airflow context
+    """
+    if operator.do_xcom_push:
+        context['ti'].xcom_push(key=XCOM_RUN_ID_KEY, value=operator.run_id)
+    log.info('Run submitted with run_id: %s', operator.run_id)
+    run_page_url = hook.get_run_page_url(operator.run_id)
+    if operator.do_xcom_push:
+        context['ti'].xcom_push(key=XCOM_RUN_PAGE_URL_KEY, value=run_page_url)
+
+    log.info('View run status, Spark UI, and logs at %s', run_page_url)
+    while True:
+        run_state = hook.get_run_state(operator.run_id)
+        if run_state.is_terminal:
+            if run_state.is_successful:
+                log.info('%s completed successfully.', operator.task_id)
+                log.info('View run status, Spark UI, and logs at %s', run_page_url)
+                return
+            else:
+                error_message = '{t} failed with terminal state: {s}'.format(
+                    t=operator.task_id,
+                    s=run_state)
+                raise AirflowException(error_message)
+        else:
+            log.info('%s in run state: %s', operator.task_id, run_state)
+            log.info('View run status, Spark UI, and logs at %s', run_page_url)
+            log.info('Sleeping for %s seconds.', operator.polling_period_seconds)
+            time.sleep(operator.polling_period_seconds)
+<switch:english>
+[english] The code effectively encapsulates the wait logic but relies heavily on external constants like XCOM keys and custom methods from the operator class for functionality.
+[english] What happens if the Databricks job fails after several attempts, given that this function is expected to be called repeatedly?
+[english] If a terminal state indicates failure (`run_state.is_successful` is false), it immediately raises an `AirflowException`, stopping execution and signaling a task failure.
+[english] I think this pattern makes much more sense now.

@@ -1,0 +1,31 @@
+[english] How can I calculate perpendicular velocities (`vl`, `vb`) from proper motion components and distance?
+[english] This function begins by defining a constant 'k' using a fixed value. It then defines two new virtual columns, vl and vb, where their values are calculated based on the provided proper motions, distances, and this factor.
+<switch:python>
+[python] def add_virtual_columns_proper_motion2vperpendicular(self, distance="distance", pm_long="pm_l", pm_lat="pm_b",
+                                                     vl="vl", vb="vb",
+                                                     propagate_uncertainties=False,
+                                                     radians=False):
+    """Convert proper motion to perpendicular velocities.
+
+    :param distance:
+    :param pm_long:
+    :param pm_lat:
+    :param vl:
+    :param vb:
+    :param cov_matrix_distance_pm_long_pm_lat:
+    :param uncertainty_postfix:
+    :param covariance_postfix:
+    :param radians:
+    :return:
+    """
+    k = 4.74057
+    self.add_variable("k", k, overwrite=False)
+    self.add_virtual_column(vl, "k*{pm_long}*{distance}".format(**locals()))
+    self.add_virtual_column(vb, "k* {pm_lat}*{distance}".format(**locals()))
+    if propagate_uncertainties:
+        self.propagate_uncertainties([self[vl], self[vb]])
+<switch:english>
+[english] Once the velocity components are defined, the function checks a flag to optionally carry over and compute uncertainties for these new virtual columns.
+[english] If `propagate_uncertainties` is true, does it automatically consider covariance in the 'distance' variable?
+[english] Yes, when calling `self.propagate_uncertainties`, the underlying framework generally accounts for the known errors and covariances of all input variables used in the calculation.
+[english] That clarifies how dependence is handled.

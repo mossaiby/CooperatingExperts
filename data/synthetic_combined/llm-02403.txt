@@ -1,0 +1,15 @@
+[english] I need a function that identifies and returns the best member of a population, where 'best' means having the lowest score.
+[english] This approach uses TensorFlow to first calculate the minimum value from the scores and then determines the corresponding index within the input tensor.
+<switch:python>
+[python] def _find_best_in_population(population, values):
+  """Finds the population member with the lowest value."""
+  best_value = tf.math.reduce_min(input_tensor=values)
+  best_index = tf.where(tf.math.equal(values, best_value))[0, 0]
+
+  return ([population_part[best_index] for population_part in population],
+          best_value)
+<switch:english>
+[english] The code finds the single best individual. Note that using `tf.where` will only return the index of the first occurrence if multiple ties exist.
+[english] What happens if there are multiple population members with the exact same lowest value?
+[english] Currently, because it uses `[0, 0]` on the result of `tf.where`, it will always return the index of the very first matching member found in the tensor.
+[english] Got it, thanks for clarifying.

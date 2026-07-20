@@ -1,0 +1,23 @@
+[english] I need a way to dynamically load the correct set of models based on an API version string, primarily for handling schema migrations across different SDK versions.
+[english] This function acts as a dispatcher or factory pattern that routes requests to the appropriate specialized module. It checks the provided `api_version` and imports the corresponding implementation if it is supported.
+<switch:python>
+[python] def models(cls, api_version=DEFAULT_API_VERSION):
+        """Module depends on the API version:
+
+           * 2016-06-01: :mod:`v2016_06_01.models<azure.mgmt.resource.subscriptions.v2016_06_01.models>`
+        """
+        if api_version == '2016-06-01':
+            from .v2016_06_01 import models
+            return models
+        raise NotImplementedError("APIVersion {} is not available".format(api_version))
+<switch:english>
+[english] The code centralizes version control, ensuring that modules are only loaded once the API version has been explicitly verified by the conditional check.
+[english] What happens if I pass a very old or completely unrecognized api_version string to this function?
+[english] If the provided `api_version` does not match one of the supported versions (like '2016-06-01'), it will immediately raise an error:
+<switch:python>
+[python] try:
+    models('unknown-version')
+except NotImplementedError as e:
+    print(e)
+<switch:english>
+[english] Perfect, that covers the failure conditions I was worried about!

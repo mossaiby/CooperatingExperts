@@ -1,0 +1,24 @@
+[english] How do I check if a function call in my Abstract Syntax Tree (AST) involves instantiating an abstract base class using metaclasses?
+[english] This code iterates through all possible types inferred for a function call and checks if those inferred classes are defined as abstract, specifically targeting cases related to ABCMetaclass usage.
+<switch:python>
+[python] def visit_call(self, node):
+        """ Check instantiating abstract class with
+        abc.ABCMeta as metaclass.
+        """
+        try:
+            for inferred in node.func.infer():
+                self._check_inferred_class_is_abstract(inferred, node)
+        except astroid.InferenceError:
+            return
+<switch:english>
+[english] By wrapping the logic in a try-except block, it safely handles situations where type inference fails during the traversal without crashing the analysis.
+[english] If `node.func` does not have an infer method, will this function correctly skip the check?
+[english] While there is no explicit check for the existence of `.infer`, if the attribute is missing, accessing it would raise an AttributeError. A robust solution might include a type check:
+<switch:python>
+[python] try:
+    for inferred in node.func.infer():
+        self._check_inferred_class_is_abstract(inferred, node)
+except (astroid.InferenceError, AttributeError):
+    return
+<switch:english>
+[english] That clear explanation really helped me understand the safety mechanisms here!

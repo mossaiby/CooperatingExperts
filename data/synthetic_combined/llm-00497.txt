@@ -1,0 +1,33 @@
+[english] I need a method to completely substitute an existing case record in the database with a new, updated version, keeping its original identifier.
+[english] This function uses MongoDB's `find_one_and_replace` operation to swap the entire document matched by its unique ID. It first logs the action and updates the timestamp before executing the replacement against the case collection.
+<switch:python>
+[python] def replace_case(self, case_obj):
+        """Replace a existing case with a new one
+
+        Keeps the object id
+
+        Args:
+            case_obj(dict)
+
+        Returns:
+            updated_case(dict)
+        """
+        # Todo: Figure out and describe when this method destroys a case if invoked instead of
+        # update_case
+        LOG.info("Saving case %s", case_obj['_id'])
+        # update updated_at of case to "today"
+
+        case_obj['updated_at'] = datetime.datetime.now(),
+
+        updated_case = self.case_collection.find_one_and_replace(
+            {'_id': case_obj['_id']},
+            case_obj,
+            return_document=pymongo.ReturnDocument.AFTER
+        )
+
+        return updated_case
+<switch:english>
+[english] Since `find_one_and_replace` replaces the whole document, any fields not present in `case_obj` will be implicitly removed or overwritten from the database record.
+[english] What happens to fields that existed on the original case object but were accidentally left out of the new `case_obj`?
+[english] When using replace instead of update, any field missing in `case_obj` will be completely erased from the corresponding document in MongoDB.
+[english] Got it. This clarifies how data integrity is maintained during replacement.

@@ -1,0 +1,22 @@
+[english] How can I make the system re-prompt a user within an existing, active dialogue context?
+[english] This function checks if there is an active dialog associated with the current process before attempting any actions. It then uses the ID of that active object to fetch the full dialog instance and requests a reprompt.
+<switch:python>
+[python] async def reprompt_dialog(self):
+        """
+        Calls reprompt on the currently active dialog, if there is one. Used with Prompts that have a reprompt behavior.
+        :return:
+        """
+        # Check for a dialog on the stack
+        if self.active_dialog != None:
+            # Look up dialog
+            dialog = await self.find_dialog(self.active_dialog.id)
+            if not dialog:
+                raise Exception("DialogSet.reprompt_dialog(): Can't find A dialog with an id of '%s'." % self.active_dialog.id)
+
+            # Ask dialog to re-prompt if supported
+            await dialog.reprompt_dialog(self.context, self.active_dialog)
+<switch:english>
+[english] Note that this entire sequence relies on asynchronous operations (`await`) to ensure that finding the dialog or executing the reprompt logic does not block other tasks.
+[english] What happens if the active dialog object is found, but its internal `reprompt_dialog` method doesn't actually exist?
+[english] Since there isn't specific error handling for missing methods in this code, trying to call it on an unsupported dialog would raise an standard Python Attribute Error.
+[english] That clears everything up about how dialogue persistence is handled here.

@@ -1,0 +1,34 @@
+[english] How can I asynchronously send a message to an Azure Service Bus queue while handling potential connection failures?
+[english] This `send` method first validates the input, ensures connections are established by calling `self.open()` if needed, and then attempts to dispatch the provided message.
+<switch:python>
+[python] def send(self, message):
+        """Send a message and blocks until acknowledgement is received or the operation fails.
+
+        :param message: The message to be sent.
+        :type message: ~azure.servicebus.common.message.Message
+        :raises: ~azure.servicebus.common.errors.MessageSendFailed if the message fails to send.
+
+        Example:
+            .. literalinclude:: ../examples/test_examples.py
+                :start-after: [START send_message]
+                :end-before: [END send_message]
+                :language: python
+                :dedent: 4
+                :caption: Send a message and block
+
+        """
+        if not isinstance(message, Message):
+            raise TypeError("Value of message must be of type 'Message'.")
+        if not self.running:
+            self.open()
+        if self.session_id and not message.properties.group_id:
+            message.properties.group_id = self.session_id
+        try:
+            self._handler.send_message(message.message)
+        except Exception as e:
+            raise MessageSendFailed(e)
+<switch:english>
+[english] The function handles custom logic for session IDs before trying the send operation via the internal handler, raising a specific error type on failure.
+[english] If the connection is already open when this method runs, what happens to the `self.open()` call?
+[english] `self.open()` will simply run again, but it should be idempotent or safe against repeated calls if implemented correctly within the class logic.
+[english] Got it, thanks for clarifying that!

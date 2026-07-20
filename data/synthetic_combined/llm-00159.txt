@@ -1,0 +1,31 @@
+[english] How can I create an interactive process wrapper that simultaneously reads and forwards data from a child process while handling user input?
+[english] This function manages the complex dual task of monitoring two sources—the subprocess's output and standard input—to keep an interactive session alive. It uses `select` for efficient I/O multiplexing before processing incoming data against provided filters.
+<switch:python>
+[python] def __interact_copy(self, escape_character = None, input_filter = None, output_filter = None):
+
+        """This is used by the interact() method.
+        """
+
+        while self.isalive():
+            r,w,e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
+            if self.child_fd in r:
+                data = self.__interact_read(self.child_fd)
+                if output_filter: data = output_filter(data)
+                if self.logfile is not None:
+                    self.logfile.write (data)
+                    self.logfile.flush()
+                os.write(self.STDOUT_FILENO, data)
+            if self.STDIN_FILENO in r:
+                data = self.__interact_read(self.STDIN_FILENO)
+                if input_filter: data = input_filter(data)
+                i = data.rfind(escape_character)
+                if i != -1:
+                    data = data[:i]
+                    self.__interact_writen(self.child_fd, data)
+                    break
+                self.__interact_writen(self.child_fd, data)
+<switch:english>
+[english] The loop coordinates data flow to ensure that output is logged and displayed while appropriately sanitized user input is sent to the child process.
+[english] What happens if the subprocess terminates abruptly or raises an exception during execution?
+[english] The function relies on `self.isalive()` to detect termination, but you would need to implement try-except blocks around the I/O operations to handle unexpected crashes gracefully within the loop.
+[english] This clarifies how I/O is managed in this context.

@@ -1,0 +1,49 @@
+[english] How can I automatically generate the necessary header information for my filterbank data files?
+[english] This approach involves reading an initial global parameter header, translating specific telescope identifiers into numerical codes based on their names, and then populating a structured dictionary with required observational metadata.
+<switch:python>
+[python] def generate_filterbank_header(self, nchans=1, ):
+        """ Generate a blimpy header dictionary """
+        gp_head = self.read_first_header()
+        fb_head = {}
+
+        telescope_str = gp_head.get("TELESCOP", "unknown")
+        if telescope_str in ('GBT', 'GREENBANK'):
+            fb_head["telescope_id"] = 6
+        elif telescope_str in ('PKS', 'PARKES'):
+            fb_head["telescop_id"] = 7
+        else:
+            fb_head["telescop_id"] = 0
+
+        # Using .get() method allows us to fill in default values if not present
+        fb_head["source_name"] = gp_head.get("SRC_NAME", "unknown")
+        fb_head["az_start"] = gp_head.get("AZ", 0)
+        fb_head["za_start"] = gp_head.get("ZA", 0)
+
+        fb_head["src_raj"] = Angle(str(gp_head.get("RA", 0.0)) + "hr")
+        fb_head["src_dej"] = Angle(str(gp_head.get("DEC", 0.0)) + "deg")
+        fb_head["rawdatafile"] = self.filename
+
+        # hardcoded
+        fb_head["machine_id"] = 20
+        fb_head["data_type"] = 1  # blio datatype
+        fb_head["barycentric"] = 0
+        fb_head["pulsarcentric"] = 0
+        fb_head["nbits"] = 32
+
+        # TODO - compute these values. Need to figure out the correct calcs
+        fb_head["tstart"] = 0.0
+        fb_head["tsamp"] = 1.0
+        fb_head["fch1"] = 0.0
+        fb_head["foff"] = 187.5 / nchans
+
+        # Need to be updated based on output specs
+        fb_head["nchans"] = nchans
+        fb_head["nifs"] = 1
+        fb_head["nbeams"] = 1
+
+        return fb_head
+<switch:english>
+[english] Note that several critical fields like `tstart`, `tsamp`, and various time/frequency parameters are currently hardcoded placeholders and will require future development for proper scientific calculations.
+[english] What happens if the source name ('SRC_NAME') or other key header values are missing from the input data?
+[english] The function uses the `.get()` method throughout, which allows it to safely retrieve values and automatically default them (e.g., using 'unknown' for a missing source name) instead of crashing.
+[english] Got it. Thanks for walking through that!

@@ -1,0 +1,31 @@
+[english] I need a robust way to execute an external shell command using Python, capturing all standard output and error streams into one stream.
+[english] This function wraps the `subprocess` module to handle external commands. It configures the process to merge standard error (stderr) directly into standard output (stdout), ensuring a single combined data capture for ease of handling.
+<switch:python>
+[python] def run_command(cmd):
+    """
+    Run the command, piping stderr to stdout.
+    Sends output to stdout.
+    :param cmd: The list for args to pass to the process
+    """
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        outdata, _ = process.communicate()
+        return outdata
+    except subprocess.CalledProcessError as e:
+        return e
+<switch:english>
+[english] The use of `process.communicate()` waits for the command to finish and collects all captured input and output at once. Note that returning an exception object on failure might require specific logic downstream to interpret it.
+[english] How can I check if the command succeeded without relying solely on catching a ProcessError?
+[english] You should inspect `process.returncode` after calling `communicate()`:
+<switch:python>
+[python] if process.returncode == 0:
+    # Success
+else:
+    # Failure
+<switch:english>
+[english] Got it, thanks for the detailed breakdown!

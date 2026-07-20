@@ -1,0 +1,85 @@
+[english] How can I efficiently update my inverse Hessian estimate using the BFGS formula during an optimization loop?
+[english] This function implements the BFGS update for the inverse Hessian matrix while leveraging pre-computed terms to maximize tensor efficiency.
+<switch:python>
+[python] def _bfgs_inv_hessian_update(grad_delta, position_delta, normalization_factor,
+                             inv_hessian_estimate):
+  """Applies the BFGS update to the inverse Hessian estimate.
+
+  The BFGS update rule is (note A^T denotes the transpose of a vector/matrix A).
+<switch:english>
+[english] None
+    rho = 1/(grad_delta^T * position_delta)
+    U = (I - rho * position_delta * grad_delta^T)
+    H_1 =  U * H_0 * U^T + rho * position_delta * position_delta^T
+<switch:python>
+[python] Here, `H_0` is the inverse Hessian estimate at the previous iteration and
+  `H_1` is the next estimate. Note that `*` should be interpreted as the
+  matrix multiplication (with the understanding that matrix multiplication for
+  scalars is usual multiplication and for matrix with vector is the action of
+  the matrix on the vector.).
+
+  The implementation below utilizes an expanded version of the above formula
+  to avoid the matrix multiplications that would be needed otherwise. By
+  expansion it is easy to see that one only needs matrix-vector or
+  vector-vector operations. The expanded version is:
+<switch:english>
+[english] None
+    f = 1 + rho * (grad_delta^T * H_0 * grad_delta)
+    H_1 - H_0 = - rho * [position_delta * (H_0 * grad_delta)^T +
+                        (H_0 * grad_delta) * position_delta^T] +
+                  rho * f * [position_delta * position_delta^T]
+<switch:python>
+[python] All the terms in square brackets are matrices and are constructed using
+  vector outer products. All the other terms on the right hand side are scalars.
+  Also worth noting that the first and second lines are both rank 1 updates
+  applied to the current inverse Hessian estimate.
+
+  Args:
+    grad_delta: Real `Tensor` of shape `[..., n]`. The difference between the
+      gradient at the new position and the old position.
+    position_delta: Real `Tensor` of shape `[..., n]`. The change in position
+      from the previous iteration to the current one.
+    normalization_factor: Real `Tensor` of shape `[...]`. Should be equal to
+      `grad_delta^T * position_delta`, i.e. `1/rho` as defined above.
+    inv_hessian_estimate: Real `Tensor` of shape `[..., n, n]`. The previous
+      estimate of the inverse Hessian. Should be positive definite and
+      symmetric.
+
+  Returns:
+    A tuple containing the following fields
+      is_valid: A Boolean `Tensor` of shape `[...]` indicating batch members
+        where the update succeeded. The update can fail if the position change
+        becomes orthogonal to the gradient change.
+      next_inv_hessian_estimate: A `Tensor` of shape `[..., n, n]`. The next
+        Hessian estimate updated using the BFGS update scheme. If the
+        `inv_hessian_estimate` is symmetric and positive definite, the
+        `next_inv_hessian_estimate` is guaranteed to satisfy the same
+        conditions.
+  """
+  # The quadratic form: y^T.H.y; where H is the inverse Hessian and y is the
+  # gradient change.
+  conditioned_grad_delta = _mul_right(inv_hessian_estimate, grad_delta)
+  conditioned_grad_delta_norm = tf.reduce_sum(
+      input_tensor=conditioned_grad_delta * grad_delta, axis=-1)
+
+  # The first rank 1 update term requires the outer product: s.y^T.
+  cross_term = _tensor_product(position_delta, conditioned_grad_delta)
+
+  def _expand_scalar(s):
+    # Expand dimensions of a batch of scalars to multiply or divide a matrix.
+    return s[..., tf.newaxis, tf.newaxis]
+
+  # Symmetrize
+  cross_term += _tensor_product(conditioned_grad_delta, position_delta)
+  position_term = _tensor_product(position_delta, position_delta)
+  with tf.control_dependencies([position_term]):
+    position_term *= _expand_scalar(
+        1 + conditioned_grad_delta_norm / normalization_factor)
+
+  return (inv_hessian_estimate +
+          (position_term - cross_term) / _expand_scalar(normalization_factor))
+<switch:english>
+[english] The implementation relies on specific helper functions like `tf.reduce_sum` and internal logic, so ensure all required dependencies are initialized correctly for batch processing.
+[english] What happens if the norm term (denominator) in the final update becomes zero or very small?
+[english] If `normalization_factor` approaches zero, it means $\nabla f$ is orthogonal to $s$. This indicates a failure point where numerical stability issues arise as the division would lead to NaNs.
+[english] Got it, thanks for reviewing this complex tensor operation.

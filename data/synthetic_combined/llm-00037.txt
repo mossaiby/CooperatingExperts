@@ -1,0 +1,21 @@
+[english] How do I merge all trajectory files located in my current working directory into a single file?
+[english] This script uses the provided helper function, merging every detectable file in the current path. It's configured to aggressively clean up by deleting other data files after the merger is complete.
+<switch:python>
+[python] def main():
+    """Simply merge all trajectories in the working directory"""
+    folder = os.getcwd()
+    print('Merging all files')
+    merge_all_in_folder(folder,
+                        delete_other_files=True,  # We will only keep one trajectory
+                        dynamic_imports=FunctionParameter,
+                        backup=False)
+    print('Done')
+<switch:english>
+[english] The `delete_other_files=True` flag ensures only one trajectory remains; be sure your input folder contains no critical non-trajectory assets before running this.
+[english] What happens if there are multiple types of files in the directory that aren't trajectories?
+[english] If other file types exist, they will remain untouched unless `delete_other_files` is set to True. However, since it merges all files and then deletes others, ensure only trajectory data is present.
+<switch:python>
+[python] def main():
+    # ... (original function) ...
+<switch:english>
+[english] That makes sense for managing large simulation output.

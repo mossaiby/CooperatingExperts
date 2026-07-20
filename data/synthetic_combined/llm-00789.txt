@@ -1,0 +1,14 @@
+[english] How do I get a tuple representing the dimensions of my data structure?
+[english] This function calculates the total number of rows by mapping over an RDD and summing the first dimension, then combines that count with the other dimension sizes.
+<switch:python>
+[python] def shape(self):
+        """Returns the shape of the data."""
+        # TODO cache
+        first = self.first().shape
+        shape = self._rdd.map(lambda x: x.shape[0]).sum()
+        return (shape,) + first[1:]
+<switch:english>
+[english] Since it uses RDD operations, the calculation for `shape` requires data processing and might be computationally intensive.
+[english] What would happen if the underlying RDD is empty?
+[english] If the RDD is empty, `.sum()` on an empty set results in 0. However, calling `self.first()` will likely fail or return a default value based on your library's implementation details for handling missing data.
+[english] Thanks for clarifying that!

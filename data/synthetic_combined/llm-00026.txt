@@ -1,0 +1,42 @@
+[english] How can I create an API request that submits various parameters, including a list of targets and multiple files, using specific authentication?
+[english] This function systematically prepares the necessary data by copying keyword arguments into a payload and injecting authentication details like api_key. It intelligently handles complex inputs such as iterables for 'to' or lists of 'files', formatting them correctly for multipart API submissions.
+<switch:python>
+[python] def _get(self, method, **kwargs):
+        """Builds the url for the specified method and arguments and returns
+        the response as a dictionary.
+        """
+
+        payload = kwargs.copy()
+        payload['api_key'] = self.api_key
+        payload['api_secret'] = self.api_secret
+
+        to = payload.pop('to', None)
+        if to:
+            if isinstance(to, basestring):
+                payload['to'] = to
+            else:
+                # Presumably it's a list or tuple
+                for num_i, fax_num in enumerate(to):
+                    payload['to[%d]' % num_i] = fax_num
+
+        files = payload.pop('files', [])
+        if not isinstance(files, (list, tuple)): files = (files,)
+
+        req_files = {}
+        for file_i, f in enumerate(files):
+            if isinstance(f, basestring):
+                req_files['filename[%d]' % file_i] = open(f, 'rb')
+            else:
+                f.seek(0)
+                req_files['filename[%d]' % file_i] = f
+
+        url = '%s/v%d/%s' % (self.BASE_URL, self.VERSION, method)
+
+        r = requests.post(url, data=payload, files=req_files)
+
+        return self.parse_response(r)
+<switch:english>
+[english] The code uses explicit manual indexing (e.g., `payload['to[0]']`) to handle list data, which is a common pattern when constructing form-encoded URLs.
+[english] What happens if the 'files' argument passed into this function is already an open file object?
+[english] If it's already open and positioned correctly, the code will skip opening it again but call `f.seek(0)` to ensure reading starts from the beginning before uploading.
+[english] That makes sense; I need to make sure my input handling is robust.

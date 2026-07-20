@@ -1,0 +1,18 @@
+[english] I'm trying to format a string using ReStructuredText before passing it through my internal messaging system.
+[english] This function is designed to handle the necessary text preprocessing for reStructuredText. It first checks your current debugger settings, such as whether highlighting is active or what the maximum display width is allowed to be. Then, it uses those settings to format the input text using a utility called Mformat.
+<switch:python>
+[python] def rst_msg(self, text, opts={}):
+        """Convert ReStructuredText and run through msg()"""
+        text = Mformat.rst_text(text,
+                                'plain' == self.debugger.settings['highlight'],
+                                self.debugger.settings['width'])
+        return self.msg(text)
+<switch:english>
+[english] This ensures that the content passed to `self.msg` adheres to specific presentation requirements determined by your configuration. Be aware that this method heavily relies on internal states like `self.debugger` and external utilities like `Mformat`.
+[english] If I provide values in the `opts` dictionary, will those values override the settings derived from `self.debugger.settings`?
+[english] The current implementation does not use or reference the `opts` parameter at all. If you wanted to prioritize custom options over debugger defaults, you would need to modify the function to merge `opts` with the internal settings dictionary before calling `Mformat`, like this:
+<switch:python>
+[python] settings = {**self.debugger.settings, **opts}
+text = Mformat.rst_text(text, 'plain' == settings['highlight'], settings['width'])
+<switch:english>
+[english] That clarifies how the options are handled.

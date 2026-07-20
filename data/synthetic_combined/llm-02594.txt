@@ -1,0 +1,18 @@
+[english] How can I implement a function that generates versatile image field URLs while trying to access request context for advanced logic?
+[english] This approach first attempts to securely extract the current request from `self.context`. It then delegates the core task of URL generation to an external helper, passing along all necessary configuration including the request object.
+<switch:python>
+[python] def to_native(self, value):
+        """For djangorestframework <=2.3.14"""
+        context_request = None
+        if self.context:
+            context_request = self.context.get('request', None)
+        return build_versatileimagefield_url_set(
+            value,
+            self.sizes,
+            request=context_request
+        )
+<switch:english>
+[english] This method successfully orchestrates the data transformation by preparing necessary arguments before finally calling the URL building logic, which relies on an external function.
+[english] What happens if `self.context` exists but doesn't contain the `'request'` key?
+[english] The local variable `context_request` will simply be set to `None`. This ensures that even without a request object, the system can still attempt to build URLs using only the image value and sizes provided.
+[english] That clarifies how context is handled when it's missing.

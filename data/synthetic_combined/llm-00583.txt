@@ -1,0 +1,18 @@
+[english] I need to identify all potential control flow arcs in my analyzed code that were theoretically possible but never executed during testing or dynamic analysis.
+[english] This function first retrieves all possible arcs from the system using `arc_possibilities()` and compares them against a list of actual usage via `arcs_executed()`. It then filters this potential set to isolate only those paths that were truly missed.
+<switch:python>
+[python] def arcs_missing(self):
+        """Returns a sorted list of the arcs in the code not executed."""
+        possible = self.arc_possibilities()
+        executed = self.arcs_executed()
+        missing = [
+            p for p in possible
+                if p not in executed
+                    and p[0] not in self.no_branch
+            ]
+        return sorted(missing)
+<switch:english>
+[english] The code specifically excludes any arcs originating from nodes listed in `self.no_branch`, which suggests these are boundary or restricted paths the analysis is instructed to ignore.
+[english] If an arc's starting point (`p[0]`) is present in both `arc_possibilities()` and `no_branch`, does it still get returned as 'missing'?
+[english] No, because the list comprehension uses a logical AND condition: a path must not be executed AND its start node must not be in `self.no_branch` to be included.
+[english] That makes total sense, thanks for clarifying!

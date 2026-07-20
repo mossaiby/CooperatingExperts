@@ -1,0 +1,28 @@
+[english] How can I retrieve a completed report as a list of CSV strings?
+[english] This method waits until a report reaches the 'complete' status, periodically polling for its updated status. Once complete and available, it downloads and processes the attached file.
+<switch:python>
+[python] def get_report_data(self, report):
+        """
+        Returns a completed report as a list of csv strings.
+        """
+        if report.report_id is None or report.status is None:
+            raise ReportFailureException(report)
+
+        interval = getattr(settings, 'CANVAS_REPORT_POLLING_INTERVAL', 5)
+        while report.status != "complete":
+            if report.status == "error":
+                raise ReportFailureException(report)
+            sleep(interval)
+            report = self.get_report_status(report)
+
+        if report.attachment is None or report.attachment.url is None:
+            return
+
+        data = self._get_report_file(report.attachment.url)
+
+        return data.split("\n")
+<switch:english>
+[english] Note that if the report structure changes and doesn't include an attachment or URL, the function currently returns None implicitly.
+[english] What happens if there is a delay between when the 'complete' status is reached and when the `report.attachment` field is actually populated?
+[english] The current implementation relies on `self.get_report_status(report)`, which must reliably fetch the updated attachment information during each poll.
+[english] That makes sense, thanks!

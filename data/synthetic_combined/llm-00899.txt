@@ -1,0 +1,26 @@
+[english] How do I program my application to check if its current software version is newer than a specific baseline defined in configuration?
+[english] This function determines version precedence by leveraging an external `Version` class. It compares the stored current version against the target reference found in your configuration file.
+<switch:python>
+[python] def _is_version_greater(self):
+        """
+        Check if the current version is greater as the older older one.
+        """
+
+        # we compare the 2 versions.
+        checked = Version(True).check_versions(
+            self.current_version[0], self.version_yaml
+        )
+
+        if checked is not None and not checked:
+            # The current version is greater as the older one.
+
+            # We return True.
+            return True
+
+        # We return False
+        return False
+<switch:english>
+[english] Note that the logic dictates a return of `True` only when the comparison explicitly fails to confirm inferiority. This behavior relies heavily on how `Version().check_versions()` interprets its arguments.
+[english] What happens if one of the version strings is not in a recognized format or is empty?
+[english] If either input cannot be parsed, the result depends entirely on the internal error handling within your `Version` class. You may want to add explicit validation checks before calling this method.
+[english] Thanks for explaining how that comparison works!

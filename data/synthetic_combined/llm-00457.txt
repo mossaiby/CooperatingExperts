@@ -1,0 +1,78 @@
+[english] I need a function that automatically collects various data points from a RecognizerResult and TurnContext to structure telemetry properties.
+[english] This function constructs a dictionary for logging by extracting key information like top intents and sentiment scores. It then integrates environment details, PII if enabled, and custom user-defined telemetry.
+<switch:python>
+[python] def fill_luis_event_properties(
+        self,
+        recognizer_result: RecognizerResult,
+        turn_context: TurnContext,
+        telemetry_properties: Dict[str, str] = None,
+    ) -> Dict[str, str]:
+        """Fills the event properties for LuisResult event for telemetry.
+        These properties are logged when the recognizer is called.
+        
+        :param recognizer_result: Last activity sent from user.
+        :type recognizer_result: RecognizerResult
+        :param turn_context: Context object containing information for a single turn of conversation with a user.
+        :type turn_context: TurnContext
+        :param telemetry_properties: Additional properties to be logged to telemetry with the LuisResult event, defaults to None
+        :param telemetry_properties: Dict[str, str], optional
+        :return: A dictionary that is sent as "Properties" to IBotTelemetryClient.TrackEvent method for the BotMessageSend event.
+        :rtype: Dict[str, str]
+        """
+
+        intents = recognizer_result.intents
+        top_two_intents = (
+            sorted(intents.keys(), key=lambda k: intents[k].score, reverse=True)[:2]
+            if intents
+            else []
+        )
+
+        intent_name, intent_score = LuisRecognizer._get_top_k_intent_score(
+            top_two_intents, intents, index=0
+        )
+        intent2_name, intent2_score = LuisRecognizer._get_top_k_intent_score(
+            top_two_intents, intents, index=1
+        )
+
+        # Add the intent score and conversation id properties
+        properties: Dict[str, str] = {
+            LuisTelemetryConstants.application_id_property: self._application.application_id,
+            LuisTelemetryConstants.intent_property: intent_name,
+            LuisTelemetryConstants.intent_score_property: intent_score,
+            LuisTelemetryConstants.intent2_property: intent2_name,
+            LuisTelemetryConstants.intent_score2_property: intent2_score,
+            LuisTelemetryConstants.from_id_property: turn_context.activity.from_property.id,
+        }
+
+        sentiment = recognizer_result.properties.get("sentiment")
+        if sentiment is not None and isinstance(sentiment, Dict):
+            label = sentiment.get("label")
+            if label is not None:
+                properties[LuisTelemetryConstants.sentiment_label_property] = str(label)
+
+            score = sentiment.get("score")
+            if score is not None:
+                properties[LuisTelemetryConstants.sentiment_score_property] = str(score)
+
+        entities = None
+        if recognizer_result.entities is not None:
+            entities = json.dumps(recognizer_result.entities)
+        properties[LuisTelemetryConstants.entities_property] = entities
+
+        # Use the LogPersonalInformation flag to toggle logging PII data, text is a common example
+        if self.log_personal_information and turn_context.activity.text:
+            properties[
+                LuisTelemetryConstants.question_property
+            ] = turn_context.activity.text
+
+        # Additional Properties can override "stock" properties.
+        if telemetry_properties is not None:
+            for key in telemetry_properties:
+                properties[key] = telemetry_properties[key]
+
+        return properties
+<switch:english>
+[english] The function uses `json.dumps` to serialize entities into the properties but relies on external constants predefined in LuisTelemetryConstants.py for specific keys.
+[english] What happens if sentiment is present but lacks a 'label' or 'score', considering how it handles data extraction?
+[english] If sentiment exists as a dictionary but neither `label` nor `score` are present, the function simply continues execution. The code uses `.get()` and checks for `is not None`, so missing keys do not raise an error.
+[english] Got it, thanks!

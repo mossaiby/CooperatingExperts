@@ -1,0 +1,59 @@
+[english] I need to retrieve a complete list of all objects within a specified cloud storage bucket that match a given naming prefix.
+[english] This function retrieves data by calling `bucket.list_blobs`, taking advantage of the `prefix` argument and handling page-by-page iteration using `pageToken`. This loop continues indefinitely until no more results are available, ensuring comprehensive coverage.
+<switch:python>
+[python] def list(self, bucket_name, versions=None, max_results=None, prefix=None, delimiter=None):
+        """
+        List all objects from the bucket with the give string prefix in name
+
+        :param bucket_name: bucket name
+        :type bucket_name: str
+        :param versions: if true, list all versions of the objects
+        :type versions: bool
+        :param max_results: max count of items to return in a single page of responses
+        :type max_results: int
+        :param prefix: prefix string which filters objects whose name begin with
+            this prefix
+        :type prefix: str
+        :param delimiter: filters objects based on the delimiter (for e.g '.csv')
+        :type delimiter: str
+        :return: a stream of object names matching the filtering criteria
+        """
+        client = self.get_conn()
+        bucket = client.get_bucket(bucket_name=bucket_name)
+
+        ids = []
+        pageToken = None
+        while True:
+            blobs = bucket.list_blobs(
+                max_results=max_results,
+                page_token=pageToken,
+                prefix=prefix,
+                delimiter=delimiter,
+                versions=versions
+            )
+
+            blob_names = []
+            for blob in blobs:
+                blob_names.append(blob.name)
+
+            prefixes = blobs.prefixes
+            if prefixes:
+                ids += list(prefixes)
+            else:
+                ids += blob_names
+
+            pageToken = blobs.next_page_token
+            if pageToken is None:
+                # empty next page token
+                break
+        return ids
+<switch:english>
+[english] The method aggregates both file names found in the main response (`blob_names`) and any folder markers specified in `blobs.prefixes`, returning a unified stream of IDs. Note that this function only returns object names (strings), not the file content itself.
+[english] What will happen if no objects or subdirectories match the provided prefix?
+[english] If no matching objects are found, the initial loop runs once where `blobs` is empty; consequently, it initializes an empty list and returns an empty list at the end.
+<switch:python>
+[python] # If nothing matches: 
+# ids remains [] and blobs.next_page_token will be None after the first iteration.
+# The function correctly returns [].
+<switch:english>
+[english] Thank you for clarifying how pagination is managed in this code!

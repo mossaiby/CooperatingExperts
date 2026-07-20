@@ -1,0 +1,17 @@
+[english] How can I validate that two dimensions correspond to an n-qubit channel in quantum computing?
+[english] This function verifies two key properties of an n-qubit system: first, that the input and output tensor dimensions match exactly. Second, it ensures that the dimension is a perfect power of 2 using logarithms.
+<switch:python>
+[python] def _check_nqubit_dim(input_dim, output_dim):
+    """Return true if dims correspond to an n-qubit channel."""
+    if input_dim != output_dim:
+        raise QiskitError(
+            'Not an n-qubit channel: input_dim' +
+            ' ({}) != output_dim ({})'.format(input_dim, output_dim))
+    num_qubits = int(np.log2(input_dim))
+    if 2**num_qubits != input_dim:
+        raise QiskitError('Not an n-qubit channel: input_dim != 2 ** n')
+<switch:english>
+[english] The function raises a `QiskitError` if either the dimensions mismatch or if the provided dimension isn't achievable with an integer number of qubits.
+[english] If I pass input_dim=1 and output_dim=1, will it correctly identify this as zero qubits?
+[english] Yes, when input_dim is 1, `np.log2(1)` is 0, setting `num_qubits = 0`. The checks pass successfully because $2^0$ equals 1.
+[english] Perfect, that makes sense.

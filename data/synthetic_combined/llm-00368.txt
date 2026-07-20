@@ -1,0 +1,23 @@
+[english] I need to write code that confirms I have successfully processed a message so it gets removed from the queue.
+[english] To finalize processing and remove the message, this function calls `accept()` on the internal message object. It first checks if the operation is authorized before attempting the removal.
+<switch:python>
+[python] def complete(self):
+        """Complete the message.
+
+        This removes the message from the queue.
+
+        :raises: ~azure.servicebus.common.errors.MessageAlreadySettled if the message has been settled.
+        :raises: ~azure.servicebus.common.errors.MessageLockExpired if message lock has already expired.
+        :raises: ~azure.servicebus.common.errors.SessionLockExpired if session lock has already expired.
+        :raises: ~azure.servicebus.common.errors.MessageSettleFailed if message settle operation fails.
+        """
+        self._is_live('complete')
+        try:
+            self.message.accept()
+        except Exception as e:
+            raise MessageSettleFailed("complete", e)
+<switch:english>
+[english] The function wraps the acceptance logic in a try/except block to handle potential issues during settlement and raises a specialized MessageSettleFailed error upon any failure.
+[english] If I call this multiple times, does it matter that there's only one attempt at `self.message.accept()`?
+[english] It is important to rely on the underlying Azure Service Bus exceptions mentioned in the docstring (like MessageAlreadySettled) if you expect settlement attempts to happen more than once.
+[english] Got it, I should always anticipate those service bus errors.

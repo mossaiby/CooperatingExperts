@@ -1,0 +1,24 @@
+[english] I have a raw HTML string fragment and need to convert it into a structured tree object that I can manipulate in Python.
+[english] This method is designed to take an input stream containing HTML content, process it using internal parsing logic, and build a navigable representation of the document fragments.
+<switch:python>
+[python] def parseFragment(self, stream, container="div", encoding=None,
+                      parseMeta=False, useChardet=True):
+        """Parse a HTML fragment into a well-formed tree fragment
+
+        container - name of the element we're setting the innerHTML property
+        if set to None, default to 'div'
+
+        stream - a filelike object or string containing the HTML to be parsed
+
+        The optional encoding parameter must be a string that indicates
+        the encoding.  If specified, that encoding will be used,
+        regardless of any BOM or later declaration (such as in a meta
+        element)
+        """
+        self._parse(stream, True, container=container, encoding=encoding)
+        return self.tree.getFragment()
+<switch:english>
+[english] It first uses the `self._parse` method internally to construct the tree based on your settings, then returns the final structure via `getFragment()` which is likely a customized data object.
+[english] If I don't provide an encoding string, how does the parser decide whether to use UTF-8 or another default?
+[english] By observing the method signature, if no explicit `encoding` is passed, it defaults to 'None'. The underlying implementation of `self._parse` likely handles standard stream detection unless overridden by `useChardet=True`.
+[english] That makes sense. Does this function modify any persistent state on the instance after parsing?

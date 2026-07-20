@@ -1,0 +1,23 @@
+[english] I have an existing quantum circuit DAG, but I need a new version that preserves all its classical metadata and registers while resetting the quantum register to only what a specific device supports.
+[english] This function creates a completely fresh target DAG. It first copies the name and iterates through all of the source's classical registers (cregs) to ensure those definitions are preserved in the new structure.
+<switch:python>
+[python] def _copy_circuit_metadata(source_dag, coupling_map):
+    """Return a copy of source_dag with metadata but empty.
+    Generate only a single qreg in the output DAG, matching the size of the
+    coupling_map."""
+
+    target_dag = DAGCircuit()
+    target_dag.name = source_dag.name
+
+    for creg in source_dag.cregs.values():
+        target_dag.add_creg(creg)
+
+    device_qreg = QuantumRegister(len(coupling_map.physical_qubits), 'q')
+    target_dag.add_qreg(device_qreg)
+
+    return target_dag
+<switch:english>
+[english] Importantly, it defines exactly one quantum register based on the coupling map size, which allows subsequent operations to replace the empty quantum state with device-specific constraints later.
+[english] If the `coupling_map.physical_qubits` length is 0, what does that do for the target DAG?
+[english] If the list of physical qubits is empty, a target DAG will be created with no quantum registers defined. The code handles this by initializing an empty QuantumRegister.
+[english] That clarifies how it manages zero-size constraints.

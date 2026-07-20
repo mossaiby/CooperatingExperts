@@ -1,0 +1,36 @@
+[english] How can I determine if a Python model field implements logic that actively modifies its own value during the pre-save lifecycle?
+[english] To check for modifications, this function captures the current state of the attribute before calling `field.pre_save`. It then compares this original value against the new value after execution to see if a change occurred.
+<switch:python>
+[python] def _is_magical_field(self, model_instance, field, is_insert: bool):
+        """Verifies whether this field is gonna modify something
+        on its own.
+
+        "Magical" means that a field modifies the field value
+        during the pre_save.
+
+        Arguments:
+            model_instance:
+                The model instance the field is defined on.
+
+            field:
+                The field to get of whether the field is
+                magical.
+
+            is_insert:
+                Pretend whether this is an insert?
+
+        Returns:
+            True when this field modifies something.
+        """
+
+        # does this field modify someting upon insert?
+        old_value = getattr(model_instance, field.name, None)
+        field.pre_save(model_instance, is_insert)
+        new_value = getattr(model_instance, field.name, None)
+
+        return old_value != new_value
+<switch:english>
+[english] The comparison `old_value != new_value` directly determines if the `field.pre_save` method successfully changed the data stored in the model instance.
+[english] If the field's pre_save logic depends on other fields, how does this check know whether that dependency was satisfied?
+[english] The function only measures the outcome of the isolated call to `field.pre_save`. It evaluates if the attribute changed based on whatever internal logic that specific method executes.
+[english] This helps me understand the scope of what's being checked, thanks.

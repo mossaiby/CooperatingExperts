@@ -1,0 +1,26 @@
+[english] How do I write a Python function that safely decompresses either a .gz or a bz2 file and saves the output to a specific directory?
+[english] This function first checks if the provided `file_extension` corresponds to Gzip or BZip2, then assigns the correct decompression module (`fmodule`) based on those conditions.
+<switch:python>
+[python] def uncompress_file(input_file_name, file_extension, dest_dir):
+    """
+    Uncompress gz and bz2 files
+    """
+    if file_extension.lower() not in ('.gz', '.bz2'):
+        raise NotImplementedError("Received {} format. Only gz and bz2 "
+                                  "files can currently be uncompressed."
+                                  .format(file_extension))
+    if file_extension.lower() == '.gz':
+        fmodule = gzip.GzipFile
+    elif file_extension.lower() == '.bz2':
+        fmodule = bz2.BZ2File
+    with fmodule(input_file_name, mode='rb') as f_compressed,\
+        NamedTemporaryFile(dir=dest_dir,
+                           mode='wb',
+                           delete=False) as f_uncompressed:
+        shutil.copyfileobj(f_compressed, f_uncompressed)
+    return f_uncompressed.name
+<switch:english>
+[english] The logic uses different file handlers and employs `shutil.copyfileobj` to efficiently stream content from the source before returning the temporary path of the decompressed data as the function's final result.
+[english] What happens if I pass an uncompressed file that still has a .gz extension?
+[english] The function relies on `gzip.GzipFile`, so passing an uncompressed file with the '.gz' extension would likely result in data being misinterpreted and written as corrupted information to the destination.
+[english] That makes sense, thank you for explaining how this works!

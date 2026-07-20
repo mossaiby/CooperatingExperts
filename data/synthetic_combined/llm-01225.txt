@@ -1,0 +1,16 @@
+[english] How do I correctly initialize my service's statistics while injecting configuration settings upon startup?
+[english] To ensure a clean start, this method initializes internal tracking dictionaries for two categories. It then performs several vital setup steps by applying specific configurations from the object to global manager settings before finalizing counter initialization.
+<switch:python>
+[python] def open(self):
+        """initialize counters"""
+        self.stats = {"by_module": {}, "by_msg": {}}
+        MANAGER.always_load_extensions = self.config.unsafe_load_any_extension
+        MANAGER.max_inferable_values = self.config.limit_inference_results
+        MANAGER.extension_package_whitelist.update(self.config.extension_pkg_whitelist)
+        for msg_cat in MSG_TYPES.values():
+            self.stats[msg_cat] = 0
+<switch:english>
+[english] This setup directly modifies external state via `MANAGER`. If the configuration (`self.config`) relies on other objects that aren't fully ready, this function might raise an attribute error during execution.
+[english] If 'MSG_TYPES' changes or is redefined after calling open(), will it affect the initialized statistics?
+[english] No, because the initialization iterates only over the values present in `MSG_TYPES` at the exact moment this method executes. It won't dynamically track future additions to that definition.
+[english] That clarified how the configuration scope works.

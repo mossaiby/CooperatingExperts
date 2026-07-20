@@ -1,0 +1,32 @@
+[english] How do I set up complete interactive auto-completion features for commands and imports?
+[english] This method initializes all the necessary components to handle command completion across different environments like terminal sessions or remote network connections.
+<switch:python>
+[python] def init_completer(self):
+        """Initialize the completion machinery.
+
+        This creates completion machinery that can be used by client code,
+        either interactively in-process (typically triggered by the readline
+        library), programatically (such as in test suites) or out-of-prcess
+        (typically over the network by remote frontends).
+        """
+        from IPython.core.completerlib import (module_completer,
+                                               magic_run_completer, cd_completer)
+        
+        self.Completer = ZMQCompleter(self, self.km)
+        
+
+        self.set_hook('complete_command', module_completer, str_key = 'import')
+        self.set_hook('complete_command', module_completer, str_key = 'from')
+        self.set_hook('complete_command', magic_run_completer, str_key = '%run')
+        self.set_hook('complete_command', cd_completer, str_key = '%cd')
+
+        # Only configure readline if we truly are using readline.  IPython can
+        # do tab-completion over the network, in GUIs, etc, where readline
+        # itself may be absent
+        if self.has_readline:
+            self.set_readline_completer()
+<switch:english>
+[english] The `ZMQCompleter` creates a central point for completers to handle remote vs local interactions.
+[english] Given the function calls `self.set_hook('complete_command', ...)` multiple times, why does it need separate entries for 'import' and 'from'?
+[english] It needs separate entries because the underlying system uses a key (`str_key`) to differentiate which type of completion logic (e.g., searching module names vs package imports) should be triggered when suggesting completions.
+[english] That makes sense, so multiple specific hooks are better than one general hook.

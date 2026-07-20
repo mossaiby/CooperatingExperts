@@ -1,0 +1,29 @@
+[english] I need a reliable way to ensure that time slots are added to an 'IntervalTier' only if they don't conflict with existing entries.
+[english] To implement this, we first validate the type of the tier and then use the `check` flag to scan all existing intervals for any possible scheduling collisions before saving the new interval.
+<switch:python>
+[python] def add_interval(self, begin, end, value, check=True):
+        """Add an interval to the IntervalTier.
+
+        :param float begin: Start time of the interval.
+        :param float end: End time of the interval.
+        :param str value: Text of the interval.
+        :param bool check: Flag to check for overlap.
+        :raises Exception: If overlap, begin > end or wrong tiertype.
+        """
+        if self.tier_type != 'IntervalTier':
+            raise Exception('Tiertype must be IntervalTier')
+        if check:
+            if any(i for i in self.intervals if begin < i[1] and end > i[0]):
+                raise Exception('No overlap is allowed')
+            if begin > end:
+                raise Exception('Begin must be smaller then end')
+        self.intervals.append((begin, end, value))
+<switch:english>
+[english] The overlap check is strictly defined by `begin < i[1]` and `end > i[0]`, which means perfectly touching intervals (e.g., ending at 10 and starting at 10) are not considered overlaps and will be allowed.
+[english] Does the current logic allow two intervals to meet exactly at one boundary, like [0, 10] followed by [10, 20]?
+[english] Yes, this logic allows touching boundaries because the overlap condition strictly requires the start of one interval to be less than the end of another. The check would look like:
+<switch:python>
+[python] if begin < i[1] and end > i[0]: # If B_start < A_end AND B_end > A_start
+    raise Exception('No overlap is allowed')
+<switch:english>
+[english] That makes sense, thanks for clarifying the boundary handling.

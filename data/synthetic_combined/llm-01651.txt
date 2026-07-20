@@ -1,0 +1,65 @@
+[english] I need a Python function that can reliably parse an encoded KMIP Create response payload from a data buffer.
+[english] This method decodes the KMIP Create Response payload by first using the provided input stream to establish context, and then sequentially extracts mandatory fields (Object Type and Unique Identifier) based on defined tags within the payload.
+<switch:python>
+[python] def read(self, input_buffer, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Read the data encoding the Create response payload and decode it into
+        its constituent parts.
+
+        Args:
+            input_buffer (stream): A data buffer containing encoded object
+                data, supporting a read method.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be decoded. Optional,
+                defaults to KMIP 1.0.
+
+        Raises:
+            InvalidKmipEncoding: Raised if the object type or unique
+                identifier is missing from the encoded payload.
+        """
+        super(CreateResponsePayload, self).read(
+            input_buffer,
+            kmip_version=kmip_version
+        )
+        local_buffer = utils.BytearrayStream(input_buffer.read(self.length))
+
+        if self.is_tag_next(enums.Tags.OBJECT_TYPE, local_buffer):
+            self._object_type = primitives.Enumeration(
+                enums.ObjectType,
+                tag=enums.Tags.OBJECT_TYPE
+            )
+            self._object_type.read(local_buffer, kmip_version=kmip_version)
+        else:
+            raise exceptions.InvalidKmipEncoding(
+                "The Create response payload encoding is missing the object "
+                "type."
+            )
+
+        if self.is_tag_next(enums.Tags.UNIQUE_IDENTIFIER, local_buffer):
+            self._unique_identifier = primitives.TextString(
+                tag=enums.Tags.UNIQUE_IDENTIFIER
+            )
+            self._unique_identifier.read(
+                local_buffer,
+                kmip_version=kmip_version
+            )
+        else:
+            raise exceptions.InvalidKmipEncoding(
+                "The Create response payload encoding is missing the unique "
+                "identifier."
+            )
+
+        if kmip_version < enums.KMIPVersion.KMIP_2_0:
+            if self.is_tag_next(enums.Tags.TEMPLATE_ATTRIBUTE, local_buffer):
+                self._template_attribute = objects.TemplateAttribute()
+                self._template_attribute.read(
+                    local_buffer,
+                    kmip_version=kmip_version
+                )
+
+        self.is_oversized(local_buffer)
+<switch:english>
+[english] Note that the function strictly enforces the presence of Object Type and Unique Identifier; otherwise, it raises an InvalidKmipEncoding error after checking the start of the data buffer.
+[english] If the KMIP version is 2.0 or higher, does this method still try to read any legacy fields like TemplateAttribute?
+[english] No, the check `if kmip_version < enums.KMIPVersion.KMIP_2_0:` ensures that logic for handling `TEMPLATE_ATTRIBUTE` only executes for older KMIP versions.
+[english] Got it, thanks for clarifying how the versioning affects parsing.

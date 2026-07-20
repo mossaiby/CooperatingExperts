@@ -1,0 +1,23 @@
+[english] I have an object and need a way to calculate its current nesting level based on surrounding specific container types like Templates or ParserFunctions.
+[english] The function determines how many defined parent structures wrap the given item. It iterates over two key container types, 'Template' and 'ParserFunction', looking for spans that completely encompass the current object's boundaries.
+<switch:python>
+[python] def nesting_level(self) -> int:
+        """Return the nesting level of self.
+
+        The minimum nesting_level is 0. Being part of any Template or
+        ParserFunction increases the level by one.
+        """
+        ss, se = self._span
+        level = 0
+        type_to_spans = self._type_to_spans
+        for type_ in ('Template', 'ParserFunction'):
+            spans = type_to_spans[type_]
+            for s, e in spans[:bisect(spans, [ss + 1])]:
+                if se <= e:
+                    level += 1
+        return level
+<switch:english>
+[english] This calculation relies heavily on correctly defining span ranges in self._span and ensuring the type_to_spans dictionary is accurately populated. The logic assumes a consistent range-based system to determine containment.
+[english] What happens if one container type ends exactly where another starts, but neither truly contains the item?
+[english] The function will not count either as an encompassing level in that specific instance because it requires the outer span's endpoint (e) to be greater than or equal to the current object's end point (se).
+[english] This helps clarify how containment is strictly enforced.

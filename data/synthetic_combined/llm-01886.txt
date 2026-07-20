@@ -1,0 +1,15 @@
+[english] How should I initialize my Slack client using parameters already defined within the class?
+[english] This method is responsible for setting up and returning an instance of the SlackClient. It gathers necessary configuration details like tokens and limits from the enclosing instance.
+<switch:python>
+[python] def _init_client(self, from_archive=False):
+        """Init client"""
+
+        return SlackClient(self.api_token, self.max_items, self.archive, from_archive)
+<switch:english>
+[english] The function uses the optional `from_archive` parameter to control specific client startup behavior during initialization.
+[english] If I'm initializing multiple clients, is there a limit on how many times this method can be safely called?
+[english] Since it simply instantiates an object, you can call it as often as necessary. The resulting objects will handle their own state:
+<switch:python>
+[python] client = self._init_client(from_archive=True)
+<switch:english>
+[english] Got it, that clarifies the usage perfectly.

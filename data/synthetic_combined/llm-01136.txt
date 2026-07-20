@@ -1,0 +1,40 @@
+[english] How can I load a GMT file or dictionary to get gene sets, filtering them based on minimum and maximum required gene counts?
+[english] This function first determines if the input `gmt` is already a dictionary or if it needs parsing into one. It then processes every gene set to check its overlap with the user-provided `gene_list`.
+<switch:python>
+[python] def load_gmt(self, gene_list, gmt):
+        """load gene set dict"""
+
+        if isinstance(gmt, dict):
+            genesets_dict = gmt
+        elif isinstance(gmt, str):
+            genesets_dict = self.parse_gmt(gmt)
+        else:
+            raise Exception("Error parsing gmt parameter for gene sets")
+        
+        subsets = list(genesets_dict.keys())
+        self.n_genesets = len(subsets)
+        for subset in subsets:
+            subset_list = genesets_dict.get(subset)
+            if isinstance(subset_list, set):
+                subset_list = list(subset_list)
+                genesets_dict[subset] = subset_list
+            tag_indicator = np.in1d(gene_list, subset_list, assume_unique=True)
+            tag_len = tag_indicator.sum()
+            if  self.min_size <= tag_len <= self.max_size: continue
+            del genesets_dict[subset]
+
+        filsets_num = len(subsets) - len(genesets_dict)
+        self._logger.info("%04d gene_sets have been filtered out when max_size=%s and min_size=%s"%(filsets_num, self.max_size, self.min_size))
+
+        if filsets_num == len(subsets):
+            self._logger.error("No gene sets passed through filtering condition!!!, try new parameters again!\n" +\
+                               "Note: check gene name, gmt file format, or filtering size." )
+            sys.exit(0)
+
+        self._gmtdct=genesets_dict
+        return genesets_dict
+<switch:english>
+[english] After checking the size constraints defined by `self.min_size` and `self.max_size`, any gene set that falls outside this range is removed from the dictionary.
+[english] If the initial collection of gene sets is completely filtered out, how does the function handle logging or exiting?
+[english] The function logs an error indicating no sets passed filtering and then safely terminates execution using `sys.exit(0)` to prevent further processing with empty data.
+[english] That makes the process seem very robust against invalid parameters.

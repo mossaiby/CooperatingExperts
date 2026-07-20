@@ -1,0 +1,53 @@
+[english] I need a way to reliably download large data files from a given URL and save them locally.
+[english] This function handles file retrieval by first determining the target filename, then iteratively downloads the content using `urlopen`. It features a real-time progress indicator written directly to standard output so you can monitor the transfer speed without cluttering your IDE.
+<switch:python>
+[python] def download(path='.', url=None, unpack=False):
+    """ Download the latest data files.
+    Args:
+        path (str): Location to save the retrieved data files. Defaults to
+            current directory.
+        unpack (bool): If True, unzips the data file post-download.
+    """
+
+    if url is None:
+        url = 'https://github.com/neurosynth/neurosynth-data/blob/master/current_data.tar.gz?raw=true'
+    if os.path.exists(path) and os.path.isdir(path):
+        basename = os.path.basename(url).split('?')[0]
+        filename = os.path.join(path, basename)
+    else:
+        filename = path
+
+    f = open(filename, 'wb')
+
+    u = urlopen(url)
+    file_size = int(u.headers["Content-Length"][0])
+    print("Downloading the latest Neurosynth files: {0} bytes: {1}".format(
+        url, file_size))
+
+    bytes_dl = 0
+    block_size = 8192
+    while True:
+        buffer = u.read(block_size)
+        if not buffer:
+            break
+        bytes_dl += len(buffer)
+        f.write(buffer)
+        p = float(bytes_dl) / file_size
+        status = r"{0}  [{1:.2%}]".format(bytes_dl, p)
+        status = status + chr(8) * (len(status) + 1)
+        sys.stdout.write(status)
+
+    f.close()
+
+    if unpack:
+        import tarfile
+        tarfile.open(filename, 'r:gz').extractall(os.path.dirname(filename))
+<switch:english>
+[english] The function elegantly handles file I/O and uses a `while` loop to read and write data in chunks while tracking the download percentage.
+[english] If the specified target path already exists as a non-directory file, what behavior does the code exhibit?
+[english] When the target exists but is not a directory, it sets the `filename` variable equal to that existing path directly. This will overwrite the file without warning.
+<switch:python>
+[python] # Example: Assuming 'data.tmp' is an existing file,
+download(path='data.tmp') # This will result in 'data.tmp' being overwritten
+<switch:english>
+[english] Thanks, this makes managing large datasets much easier!

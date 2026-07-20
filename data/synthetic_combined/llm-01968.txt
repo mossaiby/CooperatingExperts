@@ -1,0 +1,14 @@
+[english] We need a utility method that efficiently stores and tracks various pieces of data keyed by a specific trajectory name, ensuring messages and complex objects are retained.
+[english] This function organizes the input data into `self.references` using the `trajectory_name` provided in the keyword arguments. It first checks if a list for this trajectory exists; if not, it initializes one before appending a tuple containing all relevant inputs.
+<switch:python>
+[python] def store(self, msg, stuff_to_store, *args, **kwargs):
+        """Simply keeps a reference to the stored data """
+        trajectory_name = kwargs['trajectory_name']
+        if trajectory_name not in self.references:
+            self.references[trajectory_name] = []
+        self.references[trajectory_name].append((msg, cp.copy(stuff_to_store), args, kwargs))
+<switch:english>
+[english] The implementation is robust because it uses `cp.copy()` to save a snapshot of the input data, preventing accidental modification if the original object were changed later.
+[english] If I call this function multiple times using the same trajectory name, will all those calls be stored separately?
+[english] Yes, since the code initializes `self.references[trajectory_name]` as a list and uses `.append()`, each subsequent call with the same name adds a new entry to that existing history.
+[english] That makes sense, thanks for clarifying.

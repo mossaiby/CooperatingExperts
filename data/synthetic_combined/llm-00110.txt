@@ -1,0 +1,40 @@
+[english] I need a method to validate that a custom function call in my quantum circuit correctly corresponds to its definition, checking both qubit count and argument structure.
+[english] This method ensures that a given object (`obj`) is recognized as a valid gate or opaque operation within the system's symbol table. It then proceeds to rigorously compare the actual number of qubits provided against the declared requirements of the registered symbol.
+<switch:python>
+[python] def verify_as_gate(self, obj, bitlist, arglist=None):
+        """Verify a user defined gate call."""
+        if obj.name not in self.global_symtab:
+            raise QasmError("Cannot find gate definition for '" + obj.name
+                            + "', line", str(obj.line), 'file', obj.file)
+        g_sym = self.global_symtab[obj.name]
+        if not (g_sym.type == 'gate' or g_sym.type == 'opaque'):
+            raise QasmError("'" + obj.name + "' is used as a gate "
+                            + "or opaque call but the symbol is neither;"
+                            + " it is a '" + g_sym.type + "' line",
+                            str(obj.line), 'file', obj.file)
+
+        if g_sym.n_bits() != bitlist.size():
+            raise QasmError("Gate or opaque call to '" + obj.name
+                            + "' uses", str(bitlist.size()),
+                            "qubits but is declared for",
+                            str(g_sym.n_bits()), "qubits", "line",
+                            str(obj.line), 'file', obj.file)
+
+        if arglist:
+            if g_sym.n_args() != arglist.size():
+                raise QasmError("Gate or opaque call to '" + obj.name
+                                + "' uses", str(arglist.size()),
+                                "qubits but is declared for",
+                                str(g_sym.n_args()), "qubits", "line",
+                                str(obj.line), 'file', obj.file)
+        else:
+            if g_sym.n_args() > 0:
+                raise QasmError("Gate or opaque call to '" + obj.name
+                                + "' has no arguments but is declared for",
+                                str(g_sym.n_args()), "qubits", "line",
+                                str(obj.line), 'file', obj.file)
+<switch:english>
+[english] The validation relies on raising highly specific `QasmError` exceptions when discrepancies are found, providing precise location and nature of the mismatch.
+[english] If a gate is defined as 'opaque' but has zero declared bits (`n_bits() == 0`), does this method still enforce that it must be called with an empty bitlist?
+[english] Yes. If `g_sym.n_bits()` returns zero for an opaque symbol, the line comparing sizes will ensure that `bitlist.size()` is also zero.
+[english] Perfect, I understand how the size validation handles zero-requirement gates now.

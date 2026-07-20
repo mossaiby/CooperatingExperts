@@ -1,0 +1,44 @@
+[english] I need a way to retrieve existing mining data from a local backup file, provided that the system is currently configured for active mining.
+[english] This approach first verifies that the 'mining' feature is toggled on in the configuration. If enabled, it checks for and loads the external backup file, processing its contents into the internal state.
+<switch:python>
+[python] def _retrieve(self):
+        """
+        Retrieve the mining informations.
+        """
+
+        if PyFunceble.CONFIGURATION["mining"]:
+            # The mining is activated.
+
+            if "mined" not in PyFunceble.INTERN:
+                PyFunceble.INTERN["mined"] = {}
+
+            if PyFunceble.path.isfile(self.file):
+                # Our backup file exist.
+
+                # We return the information from our backup.
+                data = Dict().from_json(File(self.file).read())
+
+                # We clean the empty elements.
+                for file_path in data:
+                    PyFunceble.INTERN["mined"][file_path] = {}
+
+                    for element in data[file_path]:
+                        if data[file_path][element]:
+                            PyFunceble.INTERN["mined"][file_path][element] = data[
+                                file_path
+                            ][element]
+
+                return
+        # * The mining is not activated.
+        # or
+        # * Our backup file does not exist.
+
+        # We return nothing.
+        PyFunceble.INTERN["mined"] = {}
+
+        return
+<switch:english>
+[english] The function carefully maps non-empty elements from the JSON backup to `PyFunceble.INTERN`, effectively restoring only valid and present data points.
+[english] If the backup file exists but contains corrupted or malformed JSON instead of a structure, is there any protection against runtime errors during parsing?
+[english] The current implementation does not handle parsing exceptions; for production code, you should wrap the file reading and `Dict().from_json()` calls in a try...except block to gracefully manage data corruption.
+[english] A comprehensive error handling strategy seems like the necessary next step.

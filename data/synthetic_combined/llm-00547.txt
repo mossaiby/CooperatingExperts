@@ -1,0 +1,33 @@
+[english] How can I safely initialize two related parameters, amplitude and length_scale, ensuring they share a consistent data type and meet positivity constraints?
+[english] This function handles the setup for system parameters by first determining a shared data type between inputs. It converts any provided arguments into consistent TensorFlow Tensors before validating them against specific requirements.
+<switch:python>
+[python] def _init_params(self, amplitude, length_scale, validate_args):
+    """Shared init logic for `amplitude` and `length_scale` params.
+
+    Args:
+      amplitude: `Tensor` (or convertible) or `None` to convert, validate.
+      length_scale: `Tensor` (or convertible) or `None` to convert, validate.
+      validate_args: If `True`, parameters are checked for validity despite
+        possibly degrading runtime performance
+
+    Returns:
+      dtype: The common `DType` of the parameters.
+    """
+    dtype = util.maybe_get_common_dtype(
+        [amplitude, length_scale])
+    if amplitude is not None:
+      amplitude = tf.convert_to_tensor(
+          value=amplitude, name='amplitude', dtype=dtype)
+    self._amplitude = _validate_arg_if_not_none(
+        amplitude, tf.compat.v1.assert_positive, validate_args)
+    if length_scale is not None:
+      length_scale = tf.convert_to_tensor(
+          value=length_scale, name='length_scale', dtype=dtype)
+    self._length_scale = _validate_arg_if_not_none(
+        length_scale, tf.compat.v1.assert_positive, validate_args)
+    return dtype
+<switch:english>
+[english] This approach centralizes parameter conversion and enforces positivity using tf.compat.v1.assert_positive internally. If not running in an eager execution mode, the validation steps might raise errors during graph construction.
+[english] What behavior is expected if I initialize these parameters with zero instead of positive values?
+[english] Because it uses `tf.compat.v1.assert_positive`, passing a value of zero will cause a runtime assertion error during execution, as the logic requires these parameters to be strictly greater than zero.
+[english] This makes sense for ensuring physical constraints are met.

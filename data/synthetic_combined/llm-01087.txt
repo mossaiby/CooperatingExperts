@@ -1,0 +1,50 @@
+[english] I need a function that can precisely identify all anchor tags in a raw HTML string and provide byte offsets for their content.
+[english] This function uses regular expressions to scan a buffered HTML string. It manually calculates precise byte offsets for each found link, yielding tuples containing the href, location indices, and anchor text.
+<switch:python>
+[python] def byte_href_anchors(self, chars=False):
+        '''
+        simple, regex-based extractor of anchor tags, so we can
+        compute BYTE offsets for anchor texts and associate them with
+        their href.
+        
+        Generates tuple(href_string, first_byte, byte_length, anchor_text)
+        '''
+        input_buffer = self.clean_html
+        if chars:
+            input_buffer = input_buffer.decode('utf8')
+        idx = 0
+        ## split doc up into pieces that end on an anchor tag
+        parts = input_buffer.split('</a>')
+        assert len('</a>'.join(parts) ) == len(input_buffer)
+        for part in parts:
+            ## try to get an A tag out:
+            m = anchors_re.match(part)
+
+            if not m:
+                idx += len(part) + 4
+                continue
+
+            before = m.group('before')
+            ahref = m.group('ahref')
+
+            ## increment the index to get line number for the anchor
+            idx += len(before) + len(ahref)
+            first = idx
+
+            length = len(m.group('anchor'))
+
+            ## update the index for the next loop
+            # include anchor plus the </a>
+            idx += length + 4
+
+            if chars:
+                yield m.group('href').encode('utf8'), first, length, m.group('anchor').encode('utf8')
+            else:
+                yield m.group('href'), first, length, m.group('anchor')
+
+        assert idx - 4 == len(input_buffer)
+<switch:english>
+[english] The code iterates through segments of the buffer, calculating `first` and `length` offsets relative to a starting index. Note that this method relies heavily on regex matching and doesn't use an actual HTML parser.
+[english] Does the function handle cases where attributes in the anchor tag span multiple lines?
+[english] The current implementation uses simple regex patterns (`anchors_re`) which typically expect tags to be single-line; multi-line attributes would require adjustments within that regex.
+[english] Perfect, this explains how the offsets are calculated. Thanks!

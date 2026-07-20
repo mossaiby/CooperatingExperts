@@ -1,0 +1,19 @@
+[english] How can I count the number of elements within a structure that belong to a specific type named 'Type'?
+[english] To solve this, we iterate through all values in `self._hsig`. We then check if each item’s class name is exactly 'Type', keeping a running total.
+<switch:python>
+[python] def count_types(self) -> int:
+        """ Count subtypes """
+        n = 0
+        for s in self._hsig.values():
+            if type(s).__name__ == 'Type':
+                n += 1
+        return n
+<switch:english>
+[english] The function strictly counts items based on their string representation of the class name, which is effective but might be brittle if types are dynamically inherited.
+[english] What would happen if I wanted to count only a specific subclass, like 'SubClassA', instead?
+[english] You can easily modify the condition in the loop. For instance:
+<switch:python>
+[python] if type(s).__name__ == 'SubClassA': 
+                n += 1
+<switch:english>
+[english] Got it, that makes much more sense now.

@@ -1,0 +1,19 @@
+[english] How do I ensure a directory structure exists on the filesystem without causing an error if some subdirectory is already present?
+[english] To safely create nested directories, we use os.makedirs() to handle recursion. We wrap this call in a try-except block to specifically catch cases where the operating system reports that the path already exists.
+<switch:python>
+[python] def _mkdir_p(path):
+    """mkdir -p path"""
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+    else:
+        logger.info("New: %s%s", path, os.path.sep)
+<switch:english>
+[english] The function uses logic inside the except block to ensure it only suppresses errors if the existing content is actually a directory. This approach ensures robustness while still alerting you to real filesystem issues.
+[english] What happens if I try to use this function on a path that currently holds an existing file instead of a directory?
+[english] The function will not gracefully handle that case; it will raise an exception because os.makedirs() is expecting a directory or doesn't support creating over a file.
+[english] That makes sense—it really relies on the input being a safe location to create.

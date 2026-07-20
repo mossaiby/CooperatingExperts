@@ -1,0 +1,15 @@
+[english] How do I reset all existing data points, vectors, styles, and annotations within the Bloch sphere visualization class?
+[english] To fully clear the state of this object, we iterate over its internal attributes that hold collections.
+<switch:python>
+[python] def clear(self):
+        """Resets Bloch sphere data sets to empty.
+        """
+        self.points = []
+        self.vectors = []
+        self.point_style = []
+        self.annotations = []
+<switch:english>
+[english] This method ensures that all visualization components are initialized as empty lists, preventing stale data from interfering with new renders.
+[english] What happens if I call clear() when the user hasn't added any points yet?
+[english] The function handles this gracefully because initializing attributes to `[]` (empty list) is a valid state even before adding elements. The lists will simply remain empty until data is introduced.
+[english] That makes sense, thanks for clarifying the object lifecycle!

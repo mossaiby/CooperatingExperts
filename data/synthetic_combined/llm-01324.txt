@@ -1,0 +1,22 @@
+[english] I need a way to efficiently extract and stream individual issues from a raw JSON response returned by the JIRA API.
+[english] The best approach here is using a Python generator function. It parses the incoming raw string into a structure first, then yields each issue one at a time to maintain efficiency.
+<switch:python>
+[python] def parse_issues(raw_page):
+        """Parse a JIRA API raw response.
+
+        The method parses the API response retrieving the
+        issues from the received items
+
+        :param items: items from where to parse the issues
+
+        :returns: a generator of issues
+        """
+        raw_issues = json.loads(raw_page)
+        issues = raw_issues['issues']
+        for issue in issues:
+            yield issue
+<switch:english>
+[english] By yielding issues inside the loop instead of creating a list, this function saves memory because it processes and outputs items as soon as they are retrieved from the data.
+[english] What happens if the raw JSON string does not contain an 'issues' key in the response?
+[english] If the 'issues' key is missing, the current code will raise a KeyError. You can prevent this by using `.get('issues', [])` to default to an empty list.
+[english] That makes sense, thanks for clarifying how to handle API edge cases.

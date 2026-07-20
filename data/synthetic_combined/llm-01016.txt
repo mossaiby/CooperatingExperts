@@ -1,0 +1,21 @@
+[english] How can I find the defensive alignment used by a team for a specific year?
+[english] You need to extract data from an internal query result tied to the given year, then parse that string.
+<switch:python>
+[python] def def_alignment(self, year):
+        """Returns the name of the defensive alignment the team ran in the
+        given year.
+
+        :year: Int representing the season year.
+        :returns: A string representing the defensive alignment.
+        """
+        scheme_text = self._year_info_pq(year, 'Defensive Alignment').text()
+        m = re.search(r'Defensive Alignment[:\s]*(.+)\s*', scheme_text, re.I)
+        if m:
+            return m.group(1)
+        else:
+            return None
+<switch:english>
+[english] This function uses regular expressions to reliably capture the text following 'Defensive Alignment' in the retrieved data. Note that it ignores case due to the `re.I` flag.
+[english] What happens if no matching defensive alignment is found for a year?
+[english] The `re.search` returns None, and consequently, the function explicitely returns `None` rather than raising an error.
+[english] Got it, thanks!

@@ -1,0 +1,20 @@
+[english] How can I create a generator that continuously listens for and yields incoming HTTP requests from a server?
+[english] This code implements an infinite request loop using `yield`. It checks whether to run permanently or while a specific 'player' object is active, providing robust handling via try/except blocks.
+<switch:python>
+[python] def iter_http_requests(server, player):
+    """Repeatedly accept HTTP connections on a server.
+
+    Forever if the serving externally, or while a player is running if it is not
+    empty.
+    """
+
+    while not player or player.running:
+        try:
+            yield server.open(timeout=2.5)
+        except OSError:
+            continue
+<switch:english>
+[english] The loop uses a timeout of 2.5 seconds in `server.open()` to prevent the generator from blocking indefinitely if no connections arrive.
+[english] What happens if the 'player' object is initialized but its .running attribute is False?
+[english] If player.running is false, the while loop condition (`not player or player.running`) evaluates to True, and the function will continue attempting to accept requests until it runs out of resources.
+[english] That makes sense; thanks for explaining this iteration logic.

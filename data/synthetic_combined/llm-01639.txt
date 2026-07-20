@@ -1,0 +1,18 @@
+[english] How can I set up a continuous, blocking asynchronous process that keeps running until an exception is raised or interrupted while ensuring proper resource cleanup?
+[english] This solution uses Python's asyncio library to manage an event loop. We first complete the initial subscription task and then use run_forever() to block indefinitely.
+<switch:python>
+[python] def run(self, initial_channels=[]):
+        '''Run forever and block until exception is rasised.
+        initial_channels is the channels to start with.
+        '''
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(self.subscribe(initial_channels))
+            loop.run_forever()
+        finally:
+            loop.run_until_complete(self.close())
+<switch:english>
+[english] The try-finally structure ensures that self.close() is always called, even if the process terminates unexpectedly or due to an exception.
+[english] If the asynchronous subscription fails immediately upon starting, will the cleanup code in the finally block still execute?
+[english] Yes, because 'self.subscribe' is wrapped inside the try block, any exceptions raised during that startup phase or during subsequent looping will trigger the finally block to run the close method.
+[english] That makes sense, thank you for clarifying.

@@ -1,0 +1,20 @@
+[english] I need to implement a generic asynchronous method that sends requests to a remote storage service for a large list of unique identifiers (UUID), processing them in manageable batches.
+[english] This function handles batch API calls by repeatedly fetching chunks from an iterator provided by `self.uuids()`. It continues this process until no more UUID chunks are available to be processed.
+<switch:python>
+[python] def _base_opration(self, method):
+        """ Base method for storage operations.
+        """
+        uuids = self.uuids()
+
+        while True:
+            chunk = list(islice(uuids, 0, self.chunk_size))
+
+            if not chunk:
+                return
+
+            rest_request(method, self.storage_url, chunk)
+<switch:english>
+[english] The implementation correctly avoids memory issues when dealing with huge datasets by processing records in small, repeatable batches using slices of the UID iterator.
+[english] If `uuid-123` is a valid entry, what happens if one specific UUID causes a request failure and throws an exception inside `rest_request`?
+[english] Currently, any exception raised by `rest_request` will immediately terminate the loop. To handle failures gracefully, you should wrap the call in a try-except block to log or skip failed requests rather than crashing.
+[english] Got it; thanks for pointing out that necessary error handling!

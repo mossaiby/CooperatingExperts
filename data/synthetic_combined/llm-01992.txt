@@ -1,0 +1,19 @@
+[english] I need a function that registers a camera into an internal list, but only after verifying it is of the correct class type.
+[english] This method first checks if the provided camera object is truly an instance of 'Camera'. If validation passes, it adds or updates the camera in the system's internal dictionary using its name as the key.
+<switch:python>
+[python] def addCamera(self,camera):
+        """
+        Add the camera to the internal registry.
+        
+        Each camera name must be unique, or else only the most recent version will be used. This behavior should not be relied on because some objects may cache objects.
+        
+        Additionally, only instances of :py:class:`Camera() <peng3d.camera.Camera>` may be used, everything else raises a :py:exc:`TypeError`\ .
+        """
+        if not isinstance(camera,Camera):
+            raise TypeError("camera is not of type Camera!")
+        self.cameras[camera.name]=camera
+<switch:english>
+[english] The implementation ensures that all cameras are correctly typed before registration and handles name collisions by simply overwriting existing entries.
+[english] If I try to add a camera with a name that is already registered, what happens?
+[english] The system treats the new version as the most recent one for that specific camera name, causing any previous entry to be overwritten.
+[english] Got it, thanks for clarifying how uniqueness works!

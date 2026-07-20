@@ -1,0 +1,20 @@
+[english] I need a helper function that takes a model class and returns a list of dictionaries containing all available data records for that model.
+[english] To achieve this, we first use a query on the provided class to fetch all database results. Then, the code iterates through these results and uses a list comprehension to convert each object into a standard Python dictionary format.
+<switch:python>
+[python] def values(cls):
+        """
+        Resembles the :meth:`dict.values` method.
+        """
+
+        # get all items
+        results = cls.query().fetch()
+        # return list of dictionaries
+        return [result.to_dict() for result in results]
+<switch:english>
+[english] This approach assumes that the fetched objects expose a `to_dict()` method. This is a common pattern in ORMs like SQLAlchemy or Django models for structured data conversion.
+[english] What happens if one of the database records is unexpectedly missing a field that another record has?
+[english] If the underlying `to_dict()` method doesn't handle missing keys gracefully, you might get an error. You can ensure safety by providing default values during conversion:
+<switch:python>
+[python] return [result.__dict__ for result in results]
+<switch:english>
+[english] Got it, a safer approach is better.

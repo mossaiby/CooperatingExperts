@@ -1,0 +1,20 @@
+[english] How can I translate a Lisp configuration constant tree into Python's Abstract Syntax Tree (AST)?
+[english] This helper function acts as an adapter between your source Language's AST and the generated Python AST.
+<switch:python>
+[python] def _const_node_to_py_ast(ctx: GeneratorContext, lisp_ast: Const) -> GeneratedPyAST:
+    """Generate Python AST nodes for a :const Lisp AST node.
+
+    Nested values in collections for :const nodes are not parsed. Consequently,
+    this function cannot be called recursively for those nested values. Instead,
+    call `_const_val_to_py_ast` on nested values."""
+    assert lisp_ast.op == NodeOp.CONST
+    node_type = lisp_ast.type
+    handle_const_node = _CONSTANT_HANDLER.get(node_type)
+    assert handle_const_node is not None, f"No :const AST type handler for {node_type}"
+    node_val = lisp_ast.val
+    return handle_const_node(ctx, node_val)
+<switch:english>
+[english] It looks up a specific handler for each constant type in `lisp_ast.type` to manage value conversion without handling nested structures.
+[english] What happens if the Lisp AST node being processed is not of type :const?
+[english] The function relies on an assertion (`assert lisp_ast.op == NodeOp.CONST`) which will raise an `AssertionError` if the operation does not match `:const`, ensuring only valid configuration constants are passed.
+[english] I see, this helps with input validation.

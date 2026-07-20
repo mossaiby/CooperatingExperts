@@ -1,0 +1,16 @@
+[english] How do I register a new process to an event list using the default system priority?
+[english] This function pushes a process into an internal events collection. It uses the current time for scheduling and applies a standard, non-critical priority.
+<switch:python>
+[python] def add_process(self, proc) -> None:
+        """
+        Add process to events with default priority on current time
+        """
+        self._events.push(self.now, PRIORITY_NORMAL, proc)
+<switch:english>
+[english] It is important that `PRIORITY_NORMAL` and `self.now` are defined in the class context for this operation to execute correctly.
+[english] If I wanted a process to run immediately regardless of priority, what changes would be necessary?
+[english] To ensure immediate execution, you might need to push it with an urgent timestamp or modify the event's handling logic entirely. For example:
+<switch:python>
+[python] self._events.push(None, PRIORITY_URGENT, proc)
+<switch:english>
+[english] Got it, thanks for clarifying how that would work when changing priority.

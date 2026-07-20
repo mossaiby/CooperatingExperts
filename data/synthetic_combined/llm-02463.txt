@@ -1,0 +1,30 @@
+[english] How can I retrieve configuration settings from an instance of this class, ensuring they are decrypted before being presented?
+[english] This method allows you to access all stored configuration data (`self.settings`). It checks if the `decrypt` flag is true; if so, it uses a helper method, `self.decrypt()`, on the internal settings.
+<switch:python>
+[python] def list_value(self, decrypt=False):
+        """
+        Return the contents of the configuration as a :code:`dict`. Depending on
+        the structure of the YAML settings, the return value may contain nested
+        :code:`dict` objects.
+
+        :param bool decrypt: If :code:`True`, decrypt the contents before returning.
+        :return: (potentially) nested :code:`dict` of keys and values, as parsed from
+            the configuration file YAML contents.
+        """
+        if decrypt:
+            settings = self.decrypt(self.settings)
+        else:
+            settings = self.settings
+        return yaml.dump(settings, default_flow_style=False)
+<switch:english>
+[english] Note that the code uses `yaml.dump()` to serialize the settings into a structured YAML string format before returning it.
+[english] Since I retrieve sets in YAML string format, how do I get the raw dictionary object instead of the dumped string?
+[english] You should remove the call to `yaml.dump` so that the function returns the Python data structure (the dict or list) directly:
+
+def list_value(self, decrypt=False):
+        if decrypt: 
+            settings = self.decrypt(self.settings)
+        else:
+            settings = self.settings
+        return settings
+[english] That makes much more sense for direct processing.

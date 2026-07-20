@@ -1,0 +1,39 @@
+[english] Write a script that traverses a given file path, calculating an MD5 hash if it's a file or processing its contents recursively if it's a directory.
+[english] This function begins by normalizing and asserting the existence of the provided path. If the input is a file, it simply returns its md5 hash; otherwise, it utilizes os.walk for recursive traversal to process every item found.
+<switch:python>
+[python] def scan(tree):
+    """Scan the directory and send the obtained tuple to calculate.
+       :param tree: path to file or directory"""
+
+    tree = os.path.normpath(tree)
+    assert os.path.exists(tree), "#Error. The path '{}' is" \
+                                 " invalid or doesn't exist.".format(str(tree))
+
+    if os.path.isfile(tree):
+        return md5(tree)
+    elif os.path.isdir(tree):
+        tree = os.walk(tree)
+        for directory in tree:
+            print('...................')
+            print('Current directory:')
+            print(directory[0])  # Current directory
+            if not directory[2]:  # Empty directory check
+                print('An empty directory.')
+                continue
+            else:
+                print('List of the files in the current directory:')
+                print(directory[2])  # Files in the current directory
+                print()
+            calculate(directory)
+<switch:english>
+[english] Remember that passing the raw tuple from os.walk directly into calculate requires that function to be designed to handle the specific structure of (dirpath, subdirs, filenames).
+[english] If we wanted to skip processing any directories named 'temp', how could we modify the traversal loop?
+[english] You can check if the current directory name is 'temp' before running your logic, like this:
+<switch:python>
+[python] for root, dirs, files in os.walk(tree):
+            if 'temp' in root:
+                dirs[:] = [] # Prevents os.walk from descending into subdirectories of temp
+                continue
+            # Original processing continues here...
+<switch:english>
+[english] That clarifies how the file system is being processed.

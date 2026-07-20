@@ -1,0 +1,34 @@
+[english] How can I update an existing disk's metadata within our image repository?
+[english] To update a disk, this function first validates that the necessary `disk_name` is provided. It then constructs the required data structure and calls an internal method to perform the actual write operation.
+<switch:python>
+[python] def update_disk(self, disk_name, has_operating_system=None, label=None, media_link=None,
+                    name=None, os=None):
+        '''
+        Updates an existing disk in your image repository.
+
+        disk_name:
+            The name of the disk to update.
+        has_operating_system:
+            Deprecated.
+        label:
+            Specifies the description of the disk.
+        media_link:
+            Deprecated.
+        name:
+            Deprecated.
+        os:
+            Deprecated.
+        '''
+        _validate_not_none('disk_name', disk_name)
+        _validate_not_none('label', label)
+        return self._perform_put(self._get_disk_path(disk_name),
+                                 _XmlSerializer.disk_to_xml(
+                                     label,
+                                     None,
+                                     None,
+                                     None))
+<switch:english>
+[english] The code relies heavily on existing helper functions like `_validate_not_none` and serialization methods which handle lower-level details while this function manages the update logic.
+[english] Since some arguments are marked deprecated, should I use them at all?
+[english] No, you should only use this function to provide required parameters that aren't explicitly listed as deprecated in its documentation.
+[english] Got it! Thanks for clarifying how to handle those outdated fields.

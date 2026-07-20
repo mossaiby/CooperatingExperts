@@ -1,0 +1,35 @@
+[english] How can I normalize a profile matrix so every row sums to one, especially if the input is in log-probability space?
+[english] I can help with that by handling both linear and logarithmic inputs separately. If it's log probabilities, we use an exponential trick for numerical stability during normalization.
+<switch:python>
+[python] def normalize_profile(in_profile, log=False, return_offset = True):
+    """return a normalized version of a profile matrix
+
+    Parameters
+    ----------
+    in_profile : np.array
+        shape Lxq, will be normalized to one across each row
+    log : bool, optional
+        treat the input as log probabilities
+    return_offset : bool, optional
+        return the log of the scale factor for each row
+
+    Returns
+    -------
+    tuple
+        normalized profile (fresh np object) and offset (if return_offset==True)
+    """
+    if log:
+        tmp_prefactor = in_profile.max(axis=1)
+        tmp_prof = np.exp(in_profile.T - tmp_prefactor).T
+    else:
+        tmp_prefactor = 0.0
+        tmp_prof = in_profile
+
+    norm_vector = tmp_prof.sum(axis=1)
+    return (np.copy(np.einsum('ai,a->ai',tmp_prof,1.0/norm_vector)),
+            (np.log(norm_vector) + tmp_prefactor) if return_offset else None)
+<switch:english>
+[english] The function uses `einsum` to efficiently apply the normalization factor across the profile matrix.
+[english] If I pass a non-positive value for 'in_profile' (like -100), how does that affect the output when log is True?
+[english] When normalizing with positive values, if you use `log=True`, extremely small or negative inputs will result in numerical underflow towards zero after exponentiation.
+[english] That makes sense. I didn't realize numerical stability was a factor here.

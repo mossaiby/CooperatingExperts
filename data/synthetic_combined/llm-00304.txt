@@ -1,0 +1,34 @@
+[english] How do I initialize all necessary filters and dynamically build multiple image sizer components for a given field object?
+[english] This function first determines a name for the field, falling back to placeholder data if needed. It then sets up a core FilterLibrary instance before iterating through a registry of available image types.
+<switch:python>
+[python] def build_filters_and_sizers(self, ppoi_value, create_on_demand):
+        """Build the filters and sizers for a field."""
+        name = self.name
+        if not name and self.field.placeholder_image_name:
+            name = self.field.placeholder_image_name
+        self.filters = FilterLibrary(
+            name,
+            self.storage,
+            versatileimagefield_registry,
+            ppoi_value,
+            create_on_demand
+        )
+        for (
+            attr_name,
+            sizedimage_cls
+        ) in iteritems(versatileimagefield_registry._sizedimage_registry):
+            setattr(
+                self,
+                attr_name,
+                sizedimage_cls(
+                    path_to_image=name,
+                    storage=self.storage,
+                    create_on_demand=create_on_demand,
+                    ppoi=ppoi_value
+                )
+            )
+<switch:english>
+[english] The code successfully attaches specialized image classes as attributes based on the centralized sizer registry, ensuring multiple visual representations are ready at initialization time.
+[english] If both `self.name` and `self.field.placeholder_image_name` are missing or falsy, what value does 'name' ultimately take?
+[english] If neither name is provided, the variable 'name' remains unset (None). This lack of a consistent identifier could potentially cause errors when passing it to downstream components like the FilterLibrary.
+[english] Got it, I appreciate you pointing out the potential naming issue!

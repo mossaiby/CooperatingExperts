@@ -1,0 +1,27 @@
+[english] Write a Python function to read a Lisp expression represented as a string.
+[english] This function uses `io.StringIO` to treat the input string like a file, allowing it to pass seamlessly into another reader mechanism. It then leverages `yield from` to delegate the actual reading process to an underlying `read` utility.
+<switch:python>
+[python] def read_str(
+    s: str,
+    resolver: Resolver = None,
+    data_readers: DataReaders = None,
+    eof: Any = None,
+    is_eof_error: bool = False,
+) -> Iterable[ReaderForm]:
+    """Read the contents of a string as a Lisp expression.
+
+    Keyword arguments to this function have the same meanings as those of
+    basilisp.lang.reader.read."""
+    with io.StringIO(s) as buf:
+        yield from read(
+            buf,
+            resolver=resolver,
+            data_readers=data_readers,
+            eof=eof,
+            is_eof_error=is_eof_error,
+        )
+<switch:english>
+[english] The function acts as a wrapper around the core reader; by using `io.StringIO`, it supports any method that expects a file-like object as its primary argument.
+[english] What happens if the string input is empty?
+[english] If you pass an empty string `s` to `read_str`, yielding from the internal reader will return an empty generator, resulting in no output.
+[english] I see. Thanks!

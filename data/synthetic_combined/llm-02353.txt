@@ -1,0 +1,16 @@
+[english] How do I temporarily inject extra state or 'context' into a processing block without manually managing the cleanup?
+[english] This function handles temporary context by first pushing the provided `additional` data using internal `push` logic. It then yields the current state (`self.current`) and ensures the added context is removed afterwards.
+<switch:python>
+[python] def additional(self, additional, use_parent=False):
+        """
+        Allows temporarily pushing an additional context, yields the new context
+        into the following block.
+        """
+        self.push(additional, use_parent)
+        yield self.current
+        self.pop()
+<switch:english>
+[english] The code ensures that even if the yielded block encounters an error, `self.pop()` will be executed (assuming standard context manager usage) to revert the state.
+[english] If I wanted to ensure the context is popped even if a runtime exception occurs during the yielding phase, should there be any changes?
+[english] The current structure relies on the calling code using it as a proper context manager (e.g., with `with additional(...)`).
+[english] Got it, thanks for clarifying how the cleanup mechanism works.

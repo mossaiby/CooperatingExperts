@@ -1,0 +1,23 @@
+[english] How can I initialize a project linter setup and create import graph structures before processing modules?
+[english] This function initializes the necessary internal state for a project analyzer, setting up stats trackers while also loading exclusion lists and creating helper mappings from configuration.
+<switch:python>
+[python] def open(self):
+        """called before visiting project (i.e set of modules)"""
+        self.linter.add_stats(dependencies={})
+        self.linter.add_stats(cycles=[])
+        self.stats = self.linter.stats
+        self.import_graph = collections.defaultdict(set)
+        self._module_pkg = {}  # mapping of modules to the pkg they belong in
+        self._excluded_edges = collections.defaultdict(set)
+        self._ignored_modules = get_global_option(self, "ignored-modules", default=[])
+        # Build a mapping {'module': 'preferred-module'}
+        self.preferred_modules = dict(
+            module.split(":")
+            for module in self.config.preferred_modules
+            if ":" in module
+        )
+<switch:english>
+[english] The code efficiently parses strings in `self.config.preferred_modules` to build `self.preferred_modules`, which maps specific module names to alternatives used during analysis.
+[english] What happens if the string format within 'preferred-modules' is invalid or missing a colon?
+[english] Since it uses a dictionary comprehension that explicitly checks `if ':' in module`, malformed entries will be safely skipped and ignored by this initialization.
+[english] Thanks for clarifying how configuration strings are handled.

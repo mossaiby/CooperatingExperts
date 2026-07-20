@@ -1,0 +1,28 @@
+[english] How do I create a method to register a network interface object with a parent interface level object?
+[english] The `_registerInterface` method handles linking an interface object (`intf`) to its parent by setting relevant attributes and ensuring the necessary context is passed.
+<switch:python>
+[python] def _registerInterface(self, iName, intf, isPrivate=False):
+        """
+        Register interface object on interface level object
+        """
+        nameAvailabilityCheck(self, iName, intf)
+        assert intf._parent is None
+        intf._parent = self
+        intf._name = iName
+        intf._ctx = self._ctx
+
+        if isPrivate:
+            self._private_interfaces.append(intf)
+            intf._isExtern = False
+        else:
+            self._interfaces.append(intf)
+            intf._isExtern = True
+<switch:english>
+[english] This function distinguishes between public and private interfaces using two different lists, which dictates whether `intf._isExtern` is set to True or False.
+[english] What happens if a user calls this method multiple times with the same interface? Does it handle re-registration?
+[english] The function currently doesn't explicitly prevent re-registration. If you need to make it safe, you should check for existing registrations before appending:
+<switch:python>
+[python] inInterface.__init__(self):
+    if self._parent is None and self in InterfaceRegistry(Self): pass # Placeholder logic
+<switch:english>
+[english] Thanks! That makes the usage much clearer.

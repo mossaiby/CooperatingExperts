@@ -1,0 +1,53 @@
+[english] I need a function to format numbers with custom decimal points and locale-specific thousands separators.
+[english] This function formats a number into a string, applying thousand separation and specific precision based on user settings or provided arguments.
+<switch:python>
+[python] def format(self, number, **kwargs):
+        """Format a given number.
+
+        Format a number, with comma-separated thousands and
+        custom precision/decimal places
+
+        Localise by overriding the precision and thousand / decimal separators
+        2nd parameter `precision` can be an object matching `settings.number`
+
+        Args:
+            number (TYPE): Description
+            precision (TYPE): Description
+            thousand (TYPE): Description
+            decimal (TYPE): Description
+
+        Returns:
+            name (TYPE): Description
+        """
+        # Resursively format lists
+        if check_type(number, 'list'):
+            return map(lambda val: self.format(val, **kwargs))
+        # Clean up number
+        number = self.parse(number)
+
+        # Build options object from second param (if object) or all params,
+        # extending defaults
+        if check_type(kwargs, 'dict'):
+            options = (self.settings['number'].update(kwargs))
+
+        # Clean up precision
+        precision = self._change_precision(options['precision'])
+        negative = (lambda num: "-" if num < 0 else "")(number)
+        base = str(int(self.to_fixed(abs(number) or 0, precision)), 10)
+        mod = (lambda num: len(num) % 3 if len(num) > 3 else 0)(base)
+
+        # Format the number:
+        num = negative + (lambda num: base[0:num] if num else '')(mod)
+
+        num += re.sub('/(\d{3})(?=\d)/g', '$1' +
+                      options['thousand'], base[mod:])
+        num += (lambda val: options[
+            'decimal'] + self.to_fixed(abs(number), precision)
+            .split('.')[1] if val else '')(precision)
+
+        return num
+<switch:english>
+[english] The logic handles lists recursively and uses lambda functions combined with regular expressions to insert the separators correctly.
+[english] What happens if I pass `None` as the number, what does it return?
+[english] If a number is passed incorrectly or results in None during formatting, the internal helper function `self.to_fixed(abs(number) or 0, precision)` ensures that zero (0) is used instead of raising an error.
+[english] That makes sense, thanks for clearing that up.

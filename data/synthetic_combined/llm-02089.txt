@@ -1,0 +1,21 @@
+[english] How can I use this function to statically check that classes adhere to proper inheritance patterns?
+[english] This visitor method analyzes a class definition node in the AST to enforce structural rules. It checks inherited bases, verifies the presence of necessary methods like `__init__`, and validates overall class consistency.
+<switch:python>
+[python] def visit_classdef(self, node):
+        """init visit variable _accessed
+        """
+        self._check_bases_classes(node)
+        # if not an exception or a metaclass
+        if node.type == "class" and has_known_bases(node):
+            try:
+                node.local_attr("__init__")
+            except astroid.NotFoundError:
+                self.add_message("no-init", args=node, node=node)
+        self._check_slots(node)
+        self._check_proper_bases(node)
+        self._check_consistent_mro(node)
+<switch:english>
+[english] The logic relies on specific helper functions (like _check_proper_bases) for detailed validation. The implementation uses exception handling to ignore classes that are inherently metaclasses or exceptions.
+[english] Does the check for `__init__` apply even if a class inherits from an abstract base class?
+[english] The check is conditional; it only runs if `has_known_bases(node)` returns true, meaning it applies when specific parent classes are defined. If no bases are known, the init requirement isn't enforced.
+[english] Got it, this clarifies how the dependency on base classes works.

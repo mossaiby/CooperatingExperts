@@ -1,0 +1,52 @@
+[english] I need a function to automatically expand common abbreviations found in a string of text based on an internal dictionary.
+[english] This function replaces known abbreviations with their full words using regular expressions. Since large dictionaries can break standard regex limits, it processes the lexicon in manageable chunks for efficiency.
+<switch:python>
+[python] def expand_abbreviations(self, text):
+        """
+        Parse a piece of text and replace any abbreviations with their full
+        word equivalents. Uses the lexicon.abbreviations dictionary to find
+        abbreviations.
+
+        Args:
+            text (str): The text to parse.
+
+        Returns:
+            str: The text with abbreviations replaced.
+        """
+        if not self.abbreviations:
+            raise LexiconError("No abbreviations in lexicon.")
+
+        def chunks(data, SIZE=25):
+            """
+            Regex only supports 100 groups for munging callbacks. So we have to
+            chunk the abbreviation dicitonary.
+            """
+            it = iter(data)
+            for i in range(0, len(data), SIZE):
+                yield {k: data[k] for k in islice(it, SIZE)}
+
+        def cb(g):
+            """Regex callback"""
+            return self.abbreviations.get(g.group(0)) or g.group(0)
+
+        # Special cases.
+
+        # TODO: We should handle these with a special set of
+        # replacements that are made before the others.
+        text = re.sub(r'w/', r'wi', text)
+
+        # Main loop.
+        for subdict in chunks(self.abbreviations):
+            regex = r'(\b' + r'\b)|(\b'.join(subdict.keys()) + r'\b)'
+            text = re.sub(regex, cb, text)
+
+        return text
+<switch:english>
+[english] The process relies heavily on Python's `re.sub` method to find and replace patterns defined by the `abbreviations` dictionary.
+[english] How does this function ensure that abbreviations are only replaced when they appear as complete words, avoiding replacements within longer words like 'Dr.' in 'Drive'?
+[english] It uses word boundaries (``) around keys within the regex pattern. The main loop builds a complex OR-based expression to match these bounded strings.
+<switch:python>
+[python] def expand_abbreviations(self, text):
+        # ... implementation provided above ...
+<switch:english>
+[english] I understand how word boundary checks prevent incorrect replacements.

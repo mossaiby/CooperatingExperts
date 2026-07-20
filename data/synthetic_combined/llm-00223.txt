@@ -1,0 +1,41 @@
+[english] How can I concatenate two existing string columns within a data frame like Vaex?
+[english] This function handles column concatenation by first converting both input expressions into internal string sequences using private helper methods.
+<switch:python>
+[python] def str_cat(x, other):
+    """Concatenate two string columns on a row-by-row basis.
+
+    :param expression other: The expression of the other column to be concatenated.
+    :returns: an expression containing the concatenated columns.
+
+    Example:
+
+    >>> import vaex
+    >>> text = ['Something', 'very pretty', 'is coming', 'our', 'way.']
+    >>> df = vaex.from_arrays(text=text)
+    >>> df
+      #  text
+      0  Something
+      1  very pretty
+      2  is coming
+      3  our
+      4  way.
+
+    >>> df.text.str.cat(df.text)
+    Expression = str_cat(text, text)
+    Length: 5 dtype: str (expression)
+    ---------------------------------
+    0      SomethingSomething
+    1  very prettyvery pretty
+    2      is comingis coming
+    3                  ourour
+    4                way.way.
+    """
+    sl1 = _to_string_sequence(x)
+    sl2 = _to_string_sequence(other)
+    sl = sl1.concat(sl2)
+    return column.ColumnStringArrow.from_string_sequence(sl)
+<switch:english>
+[english] The final step uses `ColumnStringArrow.from_string_sequence` to return the result as a structured expression, allowing it to be used within further data manipulations without immediate computation.
+[english] What happens if one of the input columns is missing some string values (like None or NaN)?
+[english] The internal conversion methods usually handle null values by treating them appropriately during sequence creation, but for guaranteed behavior, you should ensure inputs are consistently cast to strings before calling `str_cat` in your pipeline.
+[english] That makes sense! Thanks for clarifying how it handles missing data.

@@ -1,0 +1,25 @@
+[english] How should I write a method to parse raw HTTP header lines into a structured dictionary format?
+[english] This function determines if an input line is a continuation of a previous header or a new key-value pair based on leading whitespace. It uses internal state to manage multi-line dependencies efficiently until it encounters a new standard header.
+<switch:python>
+[python] def parse_line(self, line):
+        """Updates the dictionary with a single header line.
+
+        >>> h = HTTPHeaders()
+        >>> h.parse_line("Content-Type: text/html")
+        >>> h.get('content-type')
+        'text/html'
+        """
+        if line[0].isspace():
+            # continuation of a multi-line header
+            new_part = ' ' + line.lstrip()
+            self._as_list[self._last_key][-1] += new_part
+            dict.__setitem__(self, self._last_key,
+                             self[self._last_key] + new_part)
+        else:
+            name, value = line.split(":", 1)
+            self.add(name, value.strip())
+<switch:english>
+[english] The method relies heavily on maintaining `self._last_key` and updating the dictionary using both direct assignment and list manipulation, which is efficient for complex headers but requires careful setup of the class.
+[english] What happens if a line that should be a standard header doesn't contain a colon?
+[english] If an input line does not contain a colon (`:`), the function will raise a `ValueError` because it attempts to unpack two variables (`name, value`) from the split result. For robustness, you might add error handling or validation before splitting.
+[english] That clarifies how continuation lines are handled.

@@ -1,0 +1,27 @@
+[english] How can I programmatically authenticate using a username and password to get an authorization token?
+[english] This function handles authentication by making a POST request with your credentials.
+It first attempts to log in, then checks for errors before successfully extracting the session token.
+<switch:python>
+[python] def from_user_creds(cls, username, password, url=URL_BASE):
+        """
+        Obtain a short-lived token using a username and password, and use that
+        token to create an auth object.
+        """
+        session = requests.session()
+        token_resp = session.post(url.rstrip('/') + '/user/login/',
+                                  data={'username': username,
+                                        'password': password})
+        if token_resp.status_code != 200:
+            error = token_resp.text
+            try:
+                error = json.loads(error)['error']
+            except (KeyError, ValueError):
+                pass
+            raise LuminosoLoginError(error)
+
+        return cls(token_resp.json()['result']['token'])
+<switch:english>
+[english] The function is quite robust in handling API errors by attempting to parse structured JSON error responses before raising an exception.
+[english] If the login request fails with a 401 Unauthorized, how does it handle potential JSON parsing issues?
+[english] It uses a `try...except` block around `json.loads()` to catch cases where the server returns an invalid or unexpected response format, preventing the application from crashing.
+[english] That makes sense; I appreciate the detailed error handling.

@@ -1,0 +1,13 @@
+[english] I need a way to add a specific control condition (like target qubit registers) to every instruction in my compiled quantum circuit.
+[english] This method iterates through all instructions and applies those controls using positional arguments for each one's unique `q_if` implementation. In Python, the use of `*qregs` allows us to gather any number of control register identifiers as an arbitrary tuple.
+<switch:python>
+[python] def q_if(self, *qregs):
+        """Add controls to all instructions."""
+        for gate in self.instructions:
+            gate.q_if(*qregs)
+        return self
+<switch:english>
+[english] This is a fluent design pattern because it returns `self`, allowing method chaining for convenience.
+[english] What would happen if the instructions inside could not accept an arbitrary number of positional arguments?
+[english] If the gate's `q_if` signature didn't allow `*args`, you would need to manually call it with a fixed or empty set of parameters, like `gate.q_if()`, rather than using spread arguments.
+[english] Got it, thanks for clarifying how method chaining works here!

@@ -1,0 +1,22 @@
+[english] How can I safely locate the `package.json` file within a specific project directory?
+[english] This function ensures that it can find your project's configuration by first checking if the required environment variable is set correctly.
+<switch:python>
+[python] def locate_package_json():
+    """
+    Find and return the location of package.json.
+    """
+    directory = settings.SYSTEMJS_PACKAGE_JSON_DIR
+    if not directory:
+        raise ImproperlyConfigured(
+            "Could not locate 'package.json'. Set SYSTEMJS_PACKAGE_JSON_DIR "
+            "to the directory that holds 'package.json'."
+        )
+    path = os.path.join(directory, 'package.json')
+    if not os.path.isfile(path):
+        raise ImproperlyConfigured("'package.json' does not exist, tried looking in %s" % path)
+    return path
+<switch:english>
+[english] It guarantees the path exists and points to an actual file before returning it for further use in the system. If you ever need to dynamically search through parent directories, this approach might need adjustment.
+[english] What happens if `SYSTEMJS_PACKAGE_JSON_DIR` is successfully set but the script lacks permission to read the directory?
+[english] The current implementation focuses on checking file existence (`os.path.isfile(path)`). Permission issues would likely manifest as an OS-level exception (e.g., FileNotFoundError or PermissionError) during the path check, which are not explicitly caught here.
+[english] So I should handle permissions separately if this fails.

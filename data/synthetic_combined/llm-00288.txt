@@ -1,0 +1,48 @@
+[english] How can I easily measure how long certain parts of my application take to run and report those timings?
+[english] This function uses Python's context manager pattern (`with` statement) combined with system time functions to accurately measure code execution duration. It determines the appropriate high-resolution timing method based on whether Python 3 is being used.
+<switch:python>
+[python] def timer(self, stat, tags=None):
+        """Contextmanager for easily computing timings.
+
+        :arg string stat: A period delimited alphanumeric key.
+
+        :arg list-of-strings tags: Each string in the tag consists of a key and
+            a value separated by a colon. Tags can make it easier to break down
+            metrics for analysis.
+
+            For example ``['env:stage', 'compressed:yes']``.
+
+        For example:
+
+        >>> mymetrics = get_metrics(__name__)
+
+        >>> def long_function():
+        ...     with mymetrics.timer('long_function'):
+        ...         # perform some thing we want to keep metrics on
+        ...         pass
+
+
+        .. Note::
+
+           All timings generated with this are in milliseconds.
+
+        """
+        if six.PY3:
+            start_time = time.perf_counter()
+        else:
+            start_time = time.time()
+
+        yield
+
+        if six.PY3:
+            end_time = time.perf_counter()
+        else:
+            end_time = time.time()
+
+        delta = end_time - start_time
+        self.timing(stat, value=delta * 1000.0, tags=tags)
+<switch:english>
+[english] The measured duration, which starts and ends in seconds, is multiplied by 1000 at the end to ensure all recorded metrics are consistently reported in milliseconds. This method relies entirely on a pre-existing `self.timing` implementation within the class.
+[english] What if I pass an empty list for the tags argument? Does that cause any errors or change how the metric is stored?
+[english] If you provide an empty list, it simply passes an empty collection to your internal `self.timing` method. Depending on its implementation, the system will either record a tagless metric or treat the empty list as valid metadata.
+[english] That clarifies how the tagging and handling of metrics work; thanks for walking me through this!

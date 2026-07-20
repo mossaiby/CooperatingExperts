@@ -1,0 +1,12 @@
+[english] I need a function that processes a character input and initializes specific attributes on a parameter object.
+[english] This method acts as a parser for parameters when they are defined by characters. It takes the raw character input, passes it through a valuation process, and stores the cleaned result in the parameter's configuration tuple.
+<switch:python>
+[python] def param_char(self, param, c):
+    """Parse a char in parameter list"""
+    param.pair = (self.value(c).strip("'"), str)
+    return True
+<switch:english>
+[english] The function successfully updates the parameter object by stripping any surrounding quotes from the processed value before returning a confirmation of success.
+[english] What happens if the character input 'c' is not just wrapped by single quotes, but has surrounding whitespace as well?
+[english] The `strip()` method would handle both leading and trailing spaces automatically alongside any quotes.
+[english] That makes perfect sense, thank you for clarifying.

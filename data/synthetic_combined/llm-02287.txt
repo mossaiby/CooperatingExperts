@@ -1,0 +1,33 @@
+[english] I need a way to apply text dedentation after the first line of my string, allowing that first line to maintain its original indentation.
+[english] This function manually splits the input string at the first newline character. It preserves the content and leading whitespace of the initial part while using `textwrap.dedent` only on the remaining lines.
+<switch:python>
+[python] def dedent(text):
+    """Equivalent of textwrap.dedent that ignores unindented first line.
+
+    This means it will still dedent strings like:
+    '''foo
+    is a bar
+    '''
+
+    For use in wrap_paragraphs.
+    """
+
+    if text.startswith('\n'):
+        # text starts with blank line, don't ignore the first line
+        return textwrap.dedent(text)
+
+    # split first line
+    splits = text.split('\n',1)
+    if len(splits) == 1:
+        # only one line
+        return textwrap.dedent(text)
+
+    first, rest = splits
+    # dedent everything but the first line
+    rest = textwrap.dedent(rest)
+    return '\n'.join([first, rest])
+<switch:english>
+[english] If the text is empty, or contains no newlines, it simply calls standard dedenting (which does nothing). If the string starts with a newline, it performs a full dedent across all lines as expected by `textwrap.dedent`.
+[english] How does this function behave if the first line actually consists only of whitespace?
+[english] If the first line is purely whitespace, the logic treats it exactly like standard deduplication (since it's an empty content block) and attempts to dedent all subsequent lines relative to that starting point.
+[english] That makes perfect sense! Thanks for clarifying this.

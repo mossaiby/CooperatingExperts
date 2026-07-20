@@ -1,0 +1,12 @@
+[english] How do I implement a simple state rollback mechanism using a stack of context points?
+[english] To restore the previous state, we need to retrieve the last saved position from our internal collection and use it to update the current cursor's location. The `pop()` method handles this by removing and returning the most recent item.
+<switch:python>
+[python] def restore_context(self) -> bool:
+        """Rollback to previous saved position."""
+        self._cursor.position = self._contexts.pop()
+        return False
+<switch:english>
+[english] This function successfully reverts the state but doesn't currently add new context; that logic would need separate implementation elsewhere.
+[english] What happens if there are no contexts saved to restore?
+[english] If `self._contexts` is empty, calling `.pop()` will raise an `IndexError`. You should check `if self._contexts:` before attempting to pop.
+[english] That makes sense, I'll handle that error case.

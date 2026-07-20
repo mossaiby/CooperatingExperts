@@ -1,0 +1,29 @@
+[english] We need a utility to check if an argument exists by name and, if provided, verify that its associated value matches the expected input.
+[english] This function iterates through `self.arguments` using reversed order, allowing it to first locate any matching parameter when checking for existence or value equality.
+<switch:python>
+[python] def has_arg(self, name: str, value: str = None) -> bool:
+        """Return true if the is an arg named `name`.
+
+        Also check equality of values if `value` is provided.
+
+        Note: If you just need to get an argument and you want to LBYL, it's
+            better to get_arg directly and then check if the returned value
+            is None.
+        """
+        for arg in reversed(self.arguments):
+            if arg.name.strip(WS) == name.strip(WS):
+                if value:
+                    if arg.positional:
+                        if arg.value == value:
+                            return True
+                        return False
+                    if arg.value.strip(WS) == value.strip(WS):
+                        return True
+                    return False
+                return True
+        return False
+<switch:english>
+[english] The handler correctly uses `.strip(WS)` for robust whitespace-sensitive name comparison and checks positional vs. keyword arguments if a value is specified.
+[english] If there are two distinct arguments that end up having the same stripped name, which one will `has_arg` return?
+[english] Since it loops using `reversed(self.arguments)`, the argument defined last in the list will be checked first and its status determined.
+[english] Thanks, this makes the codebase much cleaner!

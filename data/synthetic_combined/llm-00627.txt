@@ -1,0 +1,23 @@
+[english] How do I serialize the parameters of various pipeline components into a single JSON structure and print it to standard output?
+[english] This function collects parameter data from each process in a pipeline, mapping the component template name to its parameter configuration. It skips the initial setup process before exporting the collected data.
+<switch:python>
+[python] def export_params(self):
+        """Export pipeline params as a JSON to stdout
+
+        This run mode iterates over the pipeline processes and exports the
+        params dictionary of each component as a JSON to stdout.
+        """
+
+        params_json = {}
+
+        # Skip first init process
+        for p in self.processes[1:]:
+            params_json[p.template] = p.params
+
+        # Flush params json to stdout
+        sys.stdout.write(json.dumps(params_json))
+<switch:english>
+[english] The final step uses `json.dumps` to convert the dictionary into a JSON string and writes it directly to stdout for external consumption. Note that this assumes `sys` and `json` are imported elsewhere in the class or module.
+[english] What happens if one of the process objects is missing the `.params` attribute?
+[english] If a process object lacks a `.params` attribute, accessing it will raise an AttributeError. You might use `p.get('params')` or include error handling like a try-except block during iteration to manage this gracefully.
+[english] Thanks for clarifying how errors are handled.

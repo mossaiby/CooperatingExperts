@@ -1,0 +1,12 @@
+[english] How do I create a specifically typed configuration dictionary that Dagster recognizes as an internal system setting?
+[english] We can define a helper function to standardize the creation of these specific NamedDict objects, ensuring they carry the necessary metadata for Dagster's internal handling.
+<switch:python>
+[python] def SystemNamedDict(name, fields, description=None):
+    '''A SystemNamedDict object is simply a NamedDict intended for internal (dagster) use.
+    '''
+    return NamedDict(name, fields, description, ConfigTypeAttributes(is_system_config=True))
+<switch:english>
+[english] By passing ConfigTypeAttributes with is_system_config=True, you ensure the created object adheres to strict system configuration rules within Dagster.
+[english] What prevents users from arbitrarily mutating a SystemNamedDict after it has been initialized?
+[english] Because of the internal flag, these objects are usually treated as effectively immutable by the framework; attempts to modify them might raise exceptions depending on how downstream components handle system configs.
+[english] That makes sense! Thanks for clarifying the constraints on these system configurations.

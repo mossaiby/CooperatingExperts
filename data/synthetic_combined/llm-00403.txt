@@ -1,0 +1,26 @@
+[english] I need to write a Python method that can execute a specific function on a smart contract and retrieve its return value.
+[english] This function acts as a wrapper for interacting with a blockchain. It first encodes the input parameters so the smart contract understands them, then uses an internal RPC helper to invoke the function using its script hash and operation name.
+<switch:python>
+[python] def invoke_function(self, script_hash, operation, params, **kwargs):
+        """ Invokes a contract's function with given parameters and returns the result.
+
+        :param script_hash: contract script hash
+        :param operation: name of the operation to invoke
+        :param params: list of paramaters to be passed in to the smart contract
+        :type script_hash: str
+        :type operation: str
+        :type params: list
+        :return: result of the invocation
+        :rtype: dictionary
+
+        """
+        contract_params = encode_invocation_params(params)
+        raw_result = self._call(
+            JSONRPCMethods.INVOKE_FUNCTION.value, [script_hash, operation, contract_params, ],
+            **kwargs)
+        return decode_invocation_result(raw_result)
+<switch:english>
+[english] The core functionality relies heavily on `encode_invocation_params` to serialize inputs correctly and `decode_invocation_result` to deserialize the blockchain's output into a standard Python dictionary. This abstract layer simplifies contract interaction significantly.
+[english] If the smart contract function call fails or reverts, how does this function handle those errors?
+[english] Currently, failure handling depends entirely on `self._call`. If it raises an exception for invalid RPC responses, that error will propagate here. You might want to wrap the invocation in a try-except block to catch specific operational failures.
+[english] That makes sense; knowing where the failure boundary lies is very helpful.

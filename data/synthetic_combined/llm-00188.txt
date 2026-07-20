@@ -1,0 +1,17 @@
+[english] How do I atomically map a symbol to a new variable within a namespace structure?
+[english] This helper manages the process of binding an existing symbol (`sym`) to a newly created variable. It checks the current state of the mapping before making any modifications.
+<switch:python>
+[python] def _intern(
+        m: lmap.Map, sym: sym.Symbol, new_var: Var, force: bool = False
+    ) -> lmap.Map:
+        """Swap function used by intern to atomically intern a new variable in
+        the symbol mapping for this Namespace."""
+        var = m.entry(sym, None)
+        if var is None or force:
+            return m.assoc(sym, new_var)
+        return m
+<switch:english>
+[english] The function efficiently returns the map unchanged if the symbol already exists and force is false, ensuring atomic updates.
+[english] If `force` is true but the symbol isn't found in the map, what happens to the old value (if there was one)?
+[english] Because this function only checks for existence (`var is None`), if a key exists and force is true, it overwrites the existing association using m.assoc.
+[english] Thanks for clarifying how the forcing mechanism works.

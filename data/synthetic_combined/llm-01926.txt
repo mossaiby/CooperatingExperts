@@ -1,0 +1,34 @@
+[english] How do I perform dimensionality reduction on large datasets using both an iterative EM approach and Spark's built-in methods?
+[english] This function handles model fitting in a distributed environment, first checking whether the input data needs conversion before executing either the custom 'em' algorithm or relying on Spark's standard TruncatedSVD implementation.
+<switch:python>
+[python] def fit_transform(self, Z):
+        """Fit LSI model to X and perform dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        X_new : array, shape (n_samples, n_components)
+            Reduced version of X. This will always be a dense array.
+        """
+        X = Z[:, 'X'] if isinstance(Z, DictRDD) else Z
+        check_rdd(X, (sp.spmatrix, np.ndarray))
+        if self.algorithm == "em":
+            X = X.persist()  # boosting iterative svm
+            Sigma, V = svd_em(X, k=self.n_components, maxiter=self.n_iter,
+                              tol=self.tol, compute_u=False,
+                              seed=self.random_state)
+            self.components_ = V
+            X.unpersist()
+            return self.transform(Z)
+        else:
+            # TODO: raise warning non distributed
+            return super(SparkTruncatedSVD, self).fit_transform(X.tosparse())
+<switch:english>
+[english] The function manages state mutation by assigning the transformation components to `self.components_` when using the 'em' algorithm and ensures data is handled correctly whether it originates from a distributed RDD or a standard object.
+[english] What happens if I attempt to use this function on a non-distributed dataset while setting self.algorithm="em"?
+[english] The code permits this by first extracting X, but the comment `# TODO: raise warning non distributed` in the `else` block suggests that the 'em' path might not fully handle non-distributed input robustly without modification.
+[english] Thanks for clarifying how data flow is managed here!

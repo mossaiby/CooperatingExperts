@@ -1,0 +1,23 @@
+[english] I need a function that can inverse or transpose key-value pairs of an object, or swap elements in a general iterable.
+[english] This helper tries to delegate the inversion task first by checking for a custom `__inverted__` method. If no specific inversion logic is available, it manually reconstructss the output using a generator that swaps keys and values for all items.
+<switch:python>
+[python] def inverted(arg):
+    """Yield the inverse items of the provided object.
+
+    If *arg* has a :func:`callable` ``__inverted__`` attribute,
+    return the result of calling it.
+
+    Otherwise, return an iterator over the items in `arg`,
+    inverting each item on the fly.
+
+    *See also* :attr:`bidict.BidirectionalMapping.__inverted__`
+    """
+    inv = getattr(arg, '__inverted__', None)
+    if callable(inv):
+        return inv()
+    return ((val, key) for (key, val) in _iteritems_mapping_or_iterable(arg))
+<switch:english>
+[english] The implementation uses a generator expression in the fallback case, which makes it memory-efficient as it produces results one by one rather than building a full list.
+[english] If the input is just a list of tuples instead of a dictionary, will `inverted` still correctly swap those elements?
+[english] Yes, if the objects within your iterable are pairs (like key-value tuples), the generator expression `(val, key)` will successfully transpose those inner pairs regardless of whether they came from a mapping or a generic iterator.
+[english] That's very helpful; understanding how it handles multiple input types cleans up my logic.

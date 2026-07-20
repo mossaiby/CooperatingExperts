@@ -1,0 +1,41 @@
+[english] How can I implement a robust access control check that evaluates user authentication and specific permission requirements for an item?
+[english] This function implements tiered access control by first verifying if the user is authenticated and then evaluating various restrictions defined in the item object. It systematically checks rules for guests, logged-in users, and finally validates permissions through set comparisons.
+<switch:python>
+[python] def check_access(self, item, context):
+        """Checks whether a current user has an access to a certain item.
+
+        :param TreeItemBase item:
+        :param Context context:
+        :rtype: bool
+        """
+        if hasattr(self.current_request.user.is_authenticated, '__call__'):
+            authenticated = self.current_request.user.is_authenticated()
+        else:
+            authenticated = self.current_request.user.is_authenticated
+
+        if item.access_loggedin and not authenticated:
+            return False
+
+        if item.access_guest and authenticated:
+            return False
+
+        if item.access_restricted:
+            user_perms = self._current_user_permissions
+
+            if user_perms is _UNSET:
+                user_perms = set(context['user'].get_all_permissions())
+                self._current_user_permissions = user_perms
+
+            if item.access_perm_type == MODEL_TREE_ITEM_CLASS.PERM_TYPE_ALL:
+                if len(item.perms) != len(item.perms.intersection(user_perms)):
+                    return False
+            else:
+                if not len(item.perms.intersection(user_perms)):
+                    return False
+
+        return True
+<switch:english>
+[english] The logic uses set intersections to validate whether a user possesses every required permission or just any single one listed in `item.perms`. Note that permission checking only runs if the item is explicitly marked as restricted.
+[english] If `access_perm_type` is set to `PERM_TYPE_ALL` but the list of permissions (`item.perms`) is empty, does it always result in denial?
+[english] Yes, an intersection with an empty set will be empty, and its length will not match the expected length (which would be 0). However, if `len(item.perms) == 0`, the condition `if len(item.perms) != len(...)` evaluates to True, correctly resulting in a denial.
+[english] Thanks for clarifying how those permission sets are handled.

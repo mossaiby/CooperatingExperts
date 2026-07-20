@@ -1,0 +1,16 @@
+[english] I need a way to store locale information, including its country and variant, indexed by the language code.
+[english] This approach adds or updates a locale entry within the instance's `self.locales` dictionary. It pairs the provided country and variant codes with the given language code as the key.
+<switch:python>
+[python] def add_locale(self, language_code, country_code=None, variant=None):
+        """Add a locale.
+
+        :param str language_code: The language code of the locale.
+        :param str country_code: The country code of the locale.
+        :param str variant: The variant of the locale.
+        """
+        self.locales[language_code] = (country_code, variant)
+<switch:english>
+[english] The function uses tuples for storage, meaning you can update both the country or variant later by accessing them through the stored tuple indices.
+[english] If I pass a `language_code` that already exists in `self.locales`, what happens to the old entry?
+[english] The new (country_code, variant) tuple will simply overwrite the previous one associated with that language code key inside the dictionary.
+[english] Thanks for clarifying how overwriting works!

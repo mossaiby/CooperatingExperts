@@ -1,0 +1,24 @@
+[english] Given experimental results across multiple seeds, I need to aggregate them into a single array containing the mean and standard deviation for each sequence-qubit combination.
+[english] This function processes your raw data by calculating aggregated statistics. It computes both the average (mean) and variability (standard deviation) specifically across the first dimension (seeds).
+<switch:python>
+[python] def shape_rb_data(raw_rb):
+    """Take the raw rb data and convert it into averages and std dev
+
+    Args:
+        raw_rb (numpy.array): m x n x l list where m is the number of seeds, n
+            is the number of Clifford sequences and l is the number of qubits
+
+    Return:
+        numpy_array: 2 x n x l list where index 0 is the mean over seeds, 1 is
+            the std dev overseeds
+    """
+    rb_data = []
+    rb_data.append(np.mean(raw_rb, 0))
+    rb_data.append(np.std(raw_rb, 0))
+
+    return rb_data
+<switch:english>
+[english] The resulting list contains two numpy arrays: the mean at index 0, and the standard deviation at index 1. Note that `np.mean` and `np.std` automatically handle the aggregation along axis 0 as specified by the input dimensions.
+[english] What happens if the input array is empty or has only one seed?
+[english] If an array contains zero seeds, `np.mean` and `np.std` will raise a RuntimeWarning and return NaN. If there is only one seed, the standard deviation will be 0 for all elements.
+[english] This makes sense; I appreciate the clarity on handling edge cases.

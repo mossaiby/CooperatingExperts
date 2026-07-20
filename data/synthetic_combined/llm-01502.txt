@@ -1,0 +1,15 @@
+[english] How can I ensure that complex object types are represented with their full module path when using a pretty printer?
+[english] This helper function standardizes how class and type names are formatted before they are printed by the utility 'p'. It uses the __module__ attribute to decide whether a fully qualified name is necessary.
+<switch:python>
+[python] def _type_pprint(obj, p, cycle):
+    """The pprint for classes and types."""
+    if obj.__module__ in ('__builtin__', 'exceptions'):
+        name = obj.__name__
+    else:
+        name = obj.__module__ + '.' + obj.__name__
+    p.text(name)
+<switch:english>
+[english] By distinguishing between built-in types and custom classes, this ensures that objects from third-party libraries maintain clarity without unnecessarily cluttering your output. Note that if `p` does not have a `.text()` method, the function will error out on execution.
+[english] What happens if an object's module name is not in the allowed list but it truly doesn't belong to a custom namespace?
+[english] If the module isn't recognized as built-in or exceptions, this function treats it as a regular user class and uses the fully qualified string: `f'{obj.__module__}.{obj.__name__}'`. This provides maximum specificity for logging.
+[english] That makes sense! Thanks for clarifying how that name qualification works.

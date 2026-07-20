@@ -1,0 +1,52 @@
+[english] How can I calculate the total standard deviation of a dataset that is modeled as a mixture of several component distributions?
+[english] To solve this, we use the formula relating variance and mean. The function calculates the overall weighted average of the means and then computes the total mixture variance using $	ext{Var}(X) = E[X^2] - (E[X])^2$.
+<switch:python>
+[python] def mixture_stddev(mixture_weight_vector, mean_vector, stddev_vector):
+  """Computes the standard deviation of a mixture distribution.
+
+  This function works regardless of the component distribution, so long as
+  each component's mean and standard deviation can be provided.
+
+  Args:
+    mixture_weight_vector: A 2D tensor with shape [batch_size, num_components]
+    mean_vector: A 2D tensor of mixture component means. Has shape `[batch_size,
+      num_components]`.
+    stddev_vector: A 2D tensor of mixture component standard deviations. Has
+      shape `[batch_size, num_components]`.
+
+  Returns:
+    A 1D tensor of shape `[batch_size]` representing the standard deviation of
+    the mixture distribution with given weights and component means and standard
+    deviations.
+  Raises:
+    ValueError: If the shapes of the input tensors are not as expected.
+  """
+  tensorshape_util.assert_has_rank(mixture_weight_vector.shape, 2)
+  if not tensorshape_util.is_compatible_with(mean_vector.shape,
+                                             mixture_weight_vector.shape):
+    raise ValueError("Expecting means to have same shape as mixture weights.")
+  if not tensorshape_util.is_compatible_with(stddev_vector.shape,
+                                             mixture_weight_vector.shape):
+    raise ValueError("Expecting stddevs to have same shape as mixture weights.")
+
+  # Reshape the distribution parameters for batched vectorized dot products.
+  pi_for_dot_prod = tf.expand_dims(mixture_weight_vector, axis=1)
+  mu_for_dot_prod = tf.expand_dims(mean_vector, axis=2)
+  sigma_for_dot_prod = tf.expand_dims(stddev_vector, axis=2)
+
+  # weighted average of component means under mixture distribution.
+  mean_wa = tf.matmul(pi_for_dot_prod, mu_for_dot_prod)
+  mean_wa = tf.reshape(mean_wa, (-1,))
+  # weighted average of component variances under mixture distribution.
+  var_wa = tf.matmul(pi_for_dot_prod, tf.square(sigma_for_dot_prod))
+  var_wa = tf.reshape(var_wa, (-1,))
+  # weighted average of component squared means under mixture distribution.
+  sq_mean_wa = tf.matmul(pi_for_dot_prod, tf.square(mu_for_dot_prod))
+  sq_mean_wa = tf.reshape(sq_mean_wa, (-1,))
+  mixture_variance = var_wa + sq_mean_wa - tf.square(mean_wa)
+  return tf.sqrt(mixture_variance)
+<switch:english>
+[english] The final result is the square root of this mixture variance, providing a single standard deviation value that represents the spread of the entire mixed distribution.
+[english] What if one of the component distributions has an infinite or extremely large standard deviation?
+[english] Technically, in floating-point arithmetic, if a component's standard deviation is so large it overflows to infinity, the resulting mixture variance will also be infinite. For practical purposes, you must handle extreme outliers outside the function itself.
+[english] Got it, thanks for clarifying how this handles extreme values.

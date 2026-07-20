@@ -1,0 +1,34 @@
+[english] How can I reliably fetch details for a specific registered device given its unique type ID and instance ID?
+[english] This method constructs the specific API endpoint URL using provided IDs. It then performs an HTTP GET request and examines the status code to determine if data was retrieved successfully.
+<switch:python>
+[python] def getThing(self, thingTypeId, thingId):
+        """
+        Gets thing details.
+        It accepts thingTypeId (string), thingId (string)
+        In case of failure it throws APIException
+        """
+        thingUrl = ApiClient.thingUrl % (self.host, thingTypeId, thingId)
+
+        r = requests.get(thingUrl, auth=self.credentials, verify=self.verify)
+        status = r.status_code
+
+        if status == 200:
+            self.logger.debug("Thing instance was successfully retrieved")
+            return r.json()
+        elif status == 304:
+            raise ibmiotf.APIException(304, "The state of the thing has not been modified (response to a conditional GET).", None)
+        elif status == 401:
+            raise ibmiotf.APIException(401, "The authentication token is empty or invalid", None)
+        elif status == 403:
+            raise ibmiotf.APIException(403, "The authentication method is invalid or the api key used does not exist", None)
+        elif status == 404:
+            raise ibmiotf.APIException(404, "A thing type with the specified id, or a thing with the specified id, does not exist.", None)
+        elif status == 500:
+            raise ibmiotf.APIException(500, "Unexpected error", None)
+        else:
+            raise ibmiotf.APIException(None, "Unexpected error", None)
+<switch:english>
+[english] The function is robustly designed, mapping various expected failure codes (like 401 or 404) into detailed API exceptions for better error handling.
+[english] What specific exception message is thrown if the server returns a status code that isn't explicitly handled by your 'if-elif' structure?
+[english] The function catches any unhandled statuses and raises a generic unexpected error using the catch-all logic:
+[english] That clarifies how unexpected server responses are handled.

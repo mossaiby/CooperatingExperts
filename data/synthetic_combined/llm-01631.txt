@@ -1,0 +1,17 @@
+[english] How do I safely close and clean up all associated resources when a networking connection unexpectedly terminates?
+[english] This function acts as the final cleanup routine for a closed network session.
+<switch:python>
+[python] def _call_connection_lost(self, error):
+        """Finalize closing."""
+        try:
+            self._protocol.connection_lost(error)
+        finally:
+            os.close(self._fileno)
+            self._fileno = None
+            self._protocol = None
+            self._loop = None
+<switch:english>
+[english] The use of the `try...finally` block guarantees that resources like file descriptors are closed even if calling the protocol finishes with an error.
+[english] What prevents other parts of the application from accidentally using this object's attributes after it has been finalized?
+[english] Setting essential references to None, such as `self._protocol = None`, effectively nullifies them and immediately raises an attribute error if accessed later.
+[english] This resource management approach is much clearer than I initially expected. Thanks!

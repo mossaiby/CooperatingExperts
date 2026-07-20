@@ -1,0 +1,45 @@
+[english] How can I execute a set of requirements and handle failures gracefully, either by running an action or raising a specific exception?
+[english] This function evaluates requirements, and if they fail, it executes a predefined callback (`on_fail`). It handles the result of this failure action to decide whether to return a value or proceed with throwing an exception.
+<switch:python>
+[python] def run(
+        self,
+        requirements,
+        identity=None,
+        throws=None,
+        on_fail=None,
+        f_args=(),
+        f_kwargs=ImmutableDict(),  # noqa: B008
+        use_on_fail_return=True,
+    ):
+        """
+        Used to preform a full run of the requirements and the options given,
+        this method will invoke on_fail and/or throw the appropriate exception
+        type. Can be passed arguments to call on_fail with via f_args (which are
+        passed positionally) and f_kwargs (which are passed as keyword).
+
+        :param requirements: The requirements to check
+        :param identity: Optional. A specific identity to use for the check
+        :param throws: Optional. A specific exception to throw for this check
+        :param on_fail: Optional. A callback to invoke after failure,
+            alternatively a value to return when failure happens
+        :param f_args: Positional arguments to pass to the on_fail callback
+        :param f_kwargs: Keyword arguments to pass to the on_fail callback
+        :param use_on_fail_return: Boolean (default True) flag to determine
+            if the return value should be used. If true, the return value
+            will be considered, else failure will always progress to
+            exception raising.
+        """
+
+        throws = throws or self.throws
+        on_fail = _make_callable(on_fail) if on_fail is not None else self.on_fail
+
+        if not self.fulfill(requirements, identity):
+            result = on_fail(*f_args, **f_kwargs)
+            if use_on_fail_return and result is not None:
+                return result
+            raise throws
+<switch:english>
+[english] If `use_on_fail_return` is set to False, the function will always raise the specified exception rather than utilizing a successful return value from `on_fail`.
+[english] What happens if the `throws` parameter is not provided and does the initial fulfillment fails?
+[english] If `throws` is None, it defaults to `self.throws`. If that is also not set, the failure will proceed without raising a specific exception type unless other default behaviors apply.
+[english] ¿Could you give me an example of calling this with custom arguments for the failure handler?

@@ -1,0 +1,25 @@
+[english] I need a way to ensure an input string is safe for use as a key in Azure Cosmos DB by escaping forbidden characters.
+[english] I can use a map function to iterate through the input string character by character. For any forbidden symbol, we replace it with an asterisk combined with its Unicode code point.
+<switch:python>
+[python] def __sanitize_key(self, key) -> str:
+        """Return the sanitized key.
+
+        Replace characters that are not allowed in keys in Cosmos.
+
+        :param key:
+        :return str:
+        """
+        # forbidden characters
+        bad_chars = ['\\', '?', '/', '#', '\t', '\n', '\r']
+        # replace those with with '*' and the
+        # Unicode code point of the character and return the new string
+        return ''.join(
+            map(
+                lambda x: '*'+str(ord(x)) if x in bad_chars else x, key
+                )
+            )
+<switch:english>
+[english] This method successfully encodes forbidden characters using their numerical representation, ensuring compliance while preserving the integrity of the original string structure.
+[english] What happens to the function's behavior if the input key is already perfectly valid and contains no forbidden characters?
+[english] The function will simply pass every character through unchanged, returning the original key intact without modification.
+[english] That clarifies how the mapping works!

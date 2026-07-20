@@ -1,0 +1,41 @@
+[english] I need help creating an OGR Geometry object using various input methods, such as GeoJSON strings or WKB bytes.
+[english] This function provides a unified interface to create robust `ogr.Geometry` instances regardless of whether you provide the data as a Python dictionary (GeoJSON) or serialized byte formats like WKB/GML.
+<switch:python>
+[python] def Geometry(*args, **kwargs):
+    """Returns an ogr.Geometry instance optionally created from a geojson str
+    or dict. The spatial reference may also be provided.
+    """
+    # Look for geojson as a positional or keyword arg.
+    arg = kwargs.pop('geojson', None) or len(args) and args[0]
+    try:
+        srs = kwargs.pop('srs', None) or arg.srs.wkt
+    except AttributeError:
+        srs = SpatialReference(4326)
+    if hasattr(arg, 'keys'):
+        geom = ogr.CreateGeometryFromJson(json.dumps(arg))
+    elif hasattr(arg, 'startswith'):
+        # WKB as hexadecimal string.
+        char = arg[0] if arg else ' '
+        i = char if isinstance(char, int) else ord(char)
+        if i in (0, 1):
+            geom = ogr.CreateGeometryFromWkb(arg)
+        elif arg.startswith('{'):
+            geom = ogr.CreateGeometryFromJson(arg)
+        elif arg.startswith('<gml'):
+            geom = ogr.CreateGeometryFromGML(arg)
+        else:
+            raise ValueError('Invalid geometry value: %s' % arg)
+    elif hasattr(arg, 'wkb'):
+        geom = ogr.CreateGeometryFromWkb(bytes(arg.wkb))
+    else:
+        geom = ogr.Geometry(*args, **kwargs)
+    if geom:
+        if not isinstance(srs, SpatialReference):
+            srs = SpatialReference(srs)
+        geom.AssignSpatialReference(srs)
+    return geom
+<switch:english>
+[english] It is flexible with spatial references, but remember that if no SR information is found in your input, it defaults to creating a geometry without an assigned projection.
+[english] If I pass unformatted coordinate tuples directly into the function instead of using 'geojson', how does it handle the creation?
+[english] When positional arguments are used, the function attempts standard construction; however, complex geometries usually require the explicit GeoJSON or WKB input paths provided by the internal `ogr` module methods.
+[english] That level of detail is exactly what I needed.

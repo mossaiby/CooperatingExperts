@@ -1,0 +1,40 @@
+[english] How can I asynchronously open a network handler connection and monitor its readiness before proceeding?
+[english] This method first checks the `self.running` state to prevent duplicate connections if it's already active. It then calls `open_async` on the internal handler and enters a loop that continuously awaits `client_ready_async`, pausing briefly between checks.
+<switch:python>
+[python] async def open(self):
+        """Open handler connection and authenticate session.
+
+        If the handler is already open, this operation will do nothing.
+        A handler opened with this method must be explicitly closed.
+        It is recommended to open a handler within a context manager as
+        opposed to calling the method directly.
+
+        .. note:: This operation is not thread-safe.
+
+        Example:
+            .. literalinclude:: ../examples/async_examples/test_examples_async.py
+                :start-after: [START open_close_sender_directly]
+                :end-before: [END open_close_sender_directly]
+                :language: python
+                :dedent: 4
+                :caption: Explicitly open and close a Sender.
+
+        """
+        if self.running:
+            return
+        self.running = True
+        try:
+            await self._handler.open_async(connection=self.connection)
+            while not await self._handler.client_ready_async():
+                await asyncio.sleep(0.05)
+        except Exception as e:  # pylint: disable=broad-except
+            try:
+                await self._handle_exception(e)
+            except:
+                self.running = False
+                raise
+<switch:english>
+[english] The function encapsulates error handling, attempting to manage exceptions internally via `self._handle_exception`. However, note that according to the documentation, this specific operation is not thread-safe and may cause issues in multithreaded environments.
+[english] If an exception occurs during the connection process you catch, does this function guarantee cleanup or will it leave resources open?
+[english] The `except` block attempts to call `self._handle_exception()` to manage errors; if that also fails, the method ensures `self.running` is set to false before re-raising the exception.
+[english] Looks like I understand the async flow and error handling now.

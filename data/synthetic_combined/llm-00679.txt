@@ -1,0 +1,15 @@
+[english] I need a function that calculates the mean per-class error by converting existing accuracy metrics.
+[english] We can achieve this by leveraging the internal `self.metric` method, which provides mean per-class accuracy data. The core logic iterates through the results to transform each accuracy score into an error rate.
+<switch:python>
+[python] def mean_per_class_error(self, thresholds=None):
+        """
+        :param thresholds: thresholds parameter must be a list (i.e. [0.01, 0.5, 0.99]). If None, then the
+            thresholds in this set of metrics will be used.
+        :returns: mean per class error.
+        """
+        return [[x[0], 1 - x[1]] for x in self.metric("mean_per_class_accuracy", thresholds=thresholds)]
+<switch:english>
+[english] The function assumes that the second element of each metric tuple is the accuracy score, allowing it to calculate the corresponding error by subtracting the score from 1.
+[english] What happens if `self.metric` returns data where the expected structure [identifier, score] is not met?
+[english] If the returned elements do not have at least two parts, a TypeError will be raised during the list comprehension when accessing index 0 or 1 of 'x'.
+[english] Thanks for clarifying how the input structure affects the output!

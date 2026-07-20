@@ -1,0 +1,23 @@
+[english] How do I retrieve all available release dates and certification information for a specific movie ID?
+[english] This function is designed to act as an API client method that fetches required metadata. It first generates the correct endpoint path tailored to the movie's identifier.
+<switch:python>
+[python] def release_dates(self, **kwargs):
+        """
+        Get the release dates and certification for a specific movie id.
+
+        Args:
+            append_to_response: (optional) Comma separated, any movie method.
+
+        Returns:
+            A dict representation of the JSON returned from the API.
+        """
+        path = self._get_id_path('release_dates')
+
+        response = self._GET(path, kwargs)
+        self._set_attrs_to_values(response)
+        return response
+<switch:english>
+[english] The code then executes a GET request and uses internal helper methods to transform the raw API response into a standardized dictionary format for easy use.
+[english] What happens if the external movie database returns an empty or unsuccessful status code?
+[english] While this snippet doesn't show explicit error handling, it relies on `self._set_attrs_to_values(response)` to process whatever response is received from the server.
+[english] Thanks for clarifying how these helper methods fit into the overall API structure!

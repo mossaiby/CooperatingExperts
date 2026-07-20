@@ -1,0 +1,23 @@
+[english] I need to find any gaps or inconsistencies in my data log, which is stored in this striplog object.
+[english] To identify missing sections efficiently, we leverage an internal function that searches for incongruities based on a specific comparison operator. By setting the 'index' parameter, we can control whether the output provides gap details as indices or full interval information.
+<switch:python>
+[python] def find_gaps(self, index=False):
+        """
+        Finds gaps in a striplog.
+
+        Args:
+            index (bool): If True, returns indices of intervals with
+            gaps after them.
+
+        Returns:
+            Striplog: A striplog of all the gaps. A sort of anti-striplog.
+        """
+        return self.__find_incongruities(op=operator.lt, index=index)
+<switch:english>
+[english] The function delegates the heavy lifting to `self.__find_incongruities`, effectively turning the striplog into an anti-striplog of missing pieces.
+[english] What happens if I call this function with index=True?
+[english] If you pass `index=True`, it returns a list containing only the indices where gaps occur, rather than full interval objects. For example:
+<switch:python>
+[python] find_gaps(index=True) # Returns [3, 7]
+<switch:english>
+[english] That makes perfect sense; thanks for clarifying how to toggle those results.

@@ -1,0 +1,15 @@
+[english] I need to configure a waiting function so that it continues executing even when specific types of errors or exceptions are raised.
+[english] To achieve this, we iterate through all the exception arguments passed into the method. For each one, we update the internal list `self._ignored_exceptions` by adding the new error type to its existing contents.
+<switch:python>
+[python] def with_ignored_exceptions(self, *ignored_exceptions):
+        """
+        Set a list of exceptions that should be ignored inside the wait loop.
+        """
+        for exception in ignored_exceptions:
+            self._ignored_exceptions = self._ignored_exceptions + (exception,)
+        return self
+<switch:english>
+[english] This method effectively builds a whitelist of errors that the calling wait loop will suppress. Note that this modification happens in place on the instance state.
+[english] If I chain multiple calls using `with_ignored_exceptions` several times, does it properly accumulate all unique exceptions?
+[english] Yes, because you are always appending new exceptions to the existing collection via list concatenation (`+`), subsequent calls successfully add more ignored types.
+[english] That makes perfect sense for configuration.

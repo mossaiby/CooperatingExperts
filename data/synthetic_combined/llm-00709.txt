@@ -1,0 +1,17 @@
+[english] How can I implement a keyboard handler that toggles optical mouse exclusivity when the user presses the Escape key?
+[english] This approach creates an event listener that specifically monitors for key input. Upon detecting the ESCAPE symbol, it triggers the method responsible for managing window exclusivity.
+<switch:python>
+[python] def on_key_press(self,symbol,modifiers):
+        """
+        Keyboard event handler handling only the escape key.
+        
+        If an escape key press is detected, mouse exclusivity is toggled via :py:meth:`PengWindow.toggle_exclusivity()`\ .
+        """
+        if symbol == key.ESCAPE:
+            self.world.peng.window.toggle_exclusivity()
+            return pyglet.event.EVENT_HANDLED
+<switch:english>
+[english] Returning `pyglet.event.EVENT_HANDLED` is important because it tells Pyglet to stop processing this specific keyboard event further down the handling chain.
+[english] What happens if I don't return EVENT_HANDLED? Does the functionality break?
+[english] If you omit that final line, other parts of your application code might also react to the ESCAPE key press. To prevent this unintended behavior, you must explicitly consume the event.
+[english] Got it, so the function is self-contained and doesn't cause side effects.

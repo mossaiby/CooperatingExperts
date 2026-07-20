@@ -1,0 +1,23 @@
+[english] How can I programmatically check which version of the Cloud SQL Proxy is currently available on my system?
+[english] This function first ensures the proxy executable is present, constructs a command to fetch its version along with necessary credentials, and then uses regular expressions for precise extraction.
+<switch:python>
+[python] def get_proxy_version(self):
+        """
+        Returns version of the Cloud SQL Proxy.
+        """
+        self._download_sql_proxy_if_needed()
+        command_to_run = [self.sql_proxy_path]
+        command_to_run.extend(['--version'])
+        command_to_run.extend(self._get_credential_parameters())
+        result = subprocess.check_output(command_to_run).decode('utf-8')
+        pattern = re.compile("^.*[V|v]ersion ([^;]*);.*$")
+        m = pattern.match(result)
+        if m:
+            return m.group(1)
+        else:
+            return None
+<switch:english>
+[english] The regex pattern allows this function to reliably extract just the desired version number regardless of surrounding text in the output buffer. If the format changes, however, the parsing may break.
+[english] What specific exceptions or return values should I handle if the proxy command fails entirely or returns an unexpected error message instead of a version string?
+[english] If `subprocess.check_output` encounters a non-zero exit code, it will raise a `CalledProcessError`. Additionally, if the regex doesn't match, the function explicitly returns `None`, as shown here:
+[english] That helps me understand the error handling better.

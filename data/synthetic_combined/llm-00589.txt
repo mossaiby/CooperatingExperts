@@ -1,0 +1,32 @@
+[english] How do I convert an abstract 'Example' node into a concrete Python test method function definition?
+[english] This helper function translates a structured example object into the Abstract Syntax Tree (AST) representation of a standard test method. It constructs a new `FunctionDef` where the test name is derived from the provided group and example names.
+<switch:python>
+[python] def transform_example(self, node, name, context_variable, group_variable):
+        """
+        Transform an example node into a test method.
+
+        Returns the unchanged node if it wasn't an ``Example``.
+
+        ``node`` is the node object.
+        ``name`` is the name of the example being described.
+        ``context_variable`` is the name bound in the context manager (usually
+        "test").
+        ``group_variable`` is the name bound in the surrounding example group's
+        context manager (usually "it").
+
+        """
+
+        test_name = "_".join(["test", group_variable] + name.split())
+        body = self.transform_example_body(node.body, context_variable)
+
+        return ast.FunctionDef(
+            name=test_name,
+            args=self.takes_only_self(),
+            body=list(body),
+            decorator_list=[],
+        )
+<switch:english>
+[english] The function handles the boilerplate by setting up the correct argument list (`self`) and uses another internal helper (`transform_example_body`) to convert the example's logic into executable Python code. Note that it currently returns an incomplete structure (no runtime execution is performed).
+[english] What happens if `name` contains hyphens like 'test-failure'?
+[english] The function uses `name.split()` assuming names are space-delimited, but if they contain hyphens, those won't be treated as delimiters during the list concatenation when building `test_name`. If you want to handle custom separators, you would need to adjust how `name` is split.
+[english] That makes sense; I should probably ensure my example names follow standard naming conventions then.

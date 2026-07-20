@@ -1,0 +1,16 @@
+[english] How can I get a reliable, absolute path to a file, regardless of whether my input is relative or absolute?
+[english] To handle this consistently, we check if the provided `filename` already points to an existing absolute file and returns it immediately if so. Otherwise, we construct a full system-aware path by joining it with the current working directory.
+<switch:python>
+[python] def _get_template_abs_path(filename):
+        """
+        Return a valid absolute path. filename can be relative or absolute.
+        """
+        if os.path.isabs(filename) and os.path.isfile(filename):
+            return filename
+        else:
+            return os.path.join(os.getcwd(), filename)
+<switch:english>
+[english] This ensures that any relative paths resolve correctly against where the script is currently running. Note that this function checks for existence but doesn't guarantee readability or permissions of the file itself.
+[english] What happens if 'filename' points to a directory instead of a file?
+[english] If `os.path.isabs(filename)` is true but the item isn't a file (e.g., it's a folder), the code falls through to the else block and prepends the current working directory, resulting in an incorrect path like 'current_dir/directory'.
+[english] Thanks for clarifying that edge case!

@@ -1,0 +1,18 @@
+[english] I need a way to securely copy an external file into my sandbox's working directory while simultaneously renaming it.
+[english] To accomplish this, we construct the full destination path by joining the base name and the working directory. We then execute the `docker cp` command using subprocess calls to perform the actual file transfer from a source file to our new location.
+<switch:python>
+[python] def add_and_rename_file(self, filename: str, new_filename: str) -> None:
+        """
+        Copies the specified file into the working directory of this
+        sandbox and renames it to new_filename.
+        """
+        dest = os.path.join(
+            self.name + ':' + SANDBOX_WORKING_DIR_NAME,
+            new_filename)
+        subprocess.check_call(['docker', 'cp', filename, dest])
+        self._chown_files([new_filename])
+<switch:english>
+[english] Once the file is copied into the destination using Docker, we call a helper method to ensure the new file has the correct owner and permissions within the sandbox.
+[english] If the `filename` being passed does not exist in the source location, how will this function behave?
+[english] The use of `subprocess.check_call` is crucial here because if the underlying docker command fails (like trying to copy a non-existent file), it automatically raises a CalledProcessError.
+[english] Perfect, I understand the error handling now.

@@ -1,0 +1,18 @@
+[english] How can I retrieve detailed information for a specific version associated with a given merge request via an internal API client?
+[english] The function first constructs the complete, nested GitLab API path by combining various URL components and IDs using `urijoin`. It then uses its established fetch mechanism to retrieve the data.
+<switch:python>
+[python] def merge_version(self, merge_id, version_id):
+        """Get merge version detail"""
+
+        path = urijoin(self.base_url,
+                       GitLabClient.PROJECTS, self.owner + '%2F' + self.repository,
+                       GitLabClient.MERGES, merge_id, GitLabClient.VERSIONS, version_id)
+
+        response = self.fetch(path)
+
+        return response.text
+<switch:english>
+[english] Remember that this code returns the raw content of the HTTP response via `response.text`, meaning you'll need to decode or parse it yourself if it's JSON.
+[english] If the GitLab endpoint rejects the request due to an invalid ID, does the `self.fetch` method automatically raise a meaningful exception?
+[english] It is not clear from this snippet whether `self.fetch` handles errors; you should defensively check the response status code after calling fetch.
+[english] I understand that I need to add an explicit error check before trying to process the returned text.

@@ -1,0 +1,58 @@
+[english] How can I programmatically submit a complete clinical evaluation, including categorization and detailed criteria, for a specific patient case?
+[english] This method begins by extracting core identifiers from diverse input objects like the variant, user, and institute. It then translates these details into an `evaluation_obj` after determining an ACMG classification based on provided evaluation terms.
+<switch:python>
+[python] def submit_evaluation(self, variant_obj, user_obj, institute_obj, case_obj, link, criteria):
+        """Submit an evaluation to the database
+
+        Get all the relevant information, build a evaluation_obj
+
+        Args:
+            variant_obj(dict)
+            user_obj(dict)
+            institute_obj(dict)
+            case_obj(dict)
+            link(str): variant url
+            criteria(list(dict)):
+
+                [
+            {
+            'term': str,
+            'comment': str,
+            'links': list(str)
+            },
+            .
+            .
+        ]
+        """
+        variant_specific = variant_obj['_id']
+        variant_id = variant_obj['variant_id']
+        user_id = user_obj['_id']
+        user_name = user_obj.get('name', user_obj['_id'])
+        institute_id = institute_obj['_id']
+        case_id = case_obj['_id']
+
+        evaluation_terms = [evluation_info['term'] for evluation_info in criteria]
+
+        classification = get_acmg(evaluation_terms)
+
+        evaluation_obj = build_evaluation(
+            variant_specific=variant_specific,
+            variant_id=variant_id,
+            user_id=user_id,
+            user_name=user_name,
+            institute_id=institute_id,
+            case_id=case_id,
+            classification=classification,
+            criteria=criteria
+        )
+
+        self._load_evaluation(evaluation_obj)
+
+        # Update the acmg classification for the variant:
+        self.update_acmg(institute_obj, case_obj, user_obj, link, variant_obj, classification)
+        return classification
+<switch:english>
+[english] The function relies heavily on external helper methods such as `get_acmg` to classify data and `self._load_evaluation` for database persistence.
+[english] If a user object is passed without a 'name' field, how does the code ensure a name attribute still gets set?
+[english] The code safely retrieves the user's name using `.get('name', user_obj['_id'])`, which ensures that if 'name' is missing, it defaults to the user's unique ID.
+[english] That makes sense; thanks for clarifying how data integrity is handled.

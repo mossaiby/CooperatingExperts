@@ -1,0 +1,17 @@
+[english] How can I ensure all my buffered metrics are sent over a network connection once, even if they were added incrementally?
+[english] This `flush` method is designed to empty internal buffers and synchronously send them out.
+<switch:python>
+[python] def flush(self):
+        # type: () -> BatchClient
+        """Send buffered metrics in batch requests"""
+
+        address = self.remote_address
+        while len(self._batches) > 0:
+            self._socket.sendto(self._batches[0], address)
+            self._batches.popleft()
+        return self
+<switch:english>
+[english] The function iteratively pops and sends each batch until the queue is empty, then returns `self` to allow method chaining.
+[english] What happens if a specific item in _batches fails to send during this process?
+[english] Currently, it doesn't handle transmission errors. If an exception occurs inside the while loop, it will stop flushing and potentially lose any remaining unsent batches.
+[english] Ah, I should probably implement error handling around that socket call.

@@ -1,0 +1,13 @@
+[english] I need a way to ensure an input variable is of a specific integer type while also verifying it respects both minimum and maximum boundaries.
+[english] This code implements validation by first confirming that the input matches the defined internal integer type. If the type is correct, it then systematically checks if the value satisfies any set lower or upper constraints.
+<switch:python>
+[python] def check(self, var):
+        """Return True if the variable matches the specified type."""
+        return (isinstance(var, _int_type) and
+                (self._lower_bound is None or var >= self._lower_bound) and
+                (self._upper_bound is None or var <= self._upper_bound))
+<switch:english>
+[english] The logic uses `None` to signify an unbounded limit, giving you flexible control over whether a specific range check is required.
+[english] What happens immediately if the input variable provided is not an integer?
+[english] If the input variable is not of the expected type, the function will immediately return False because it fails the initial `isinstance` check.
+[english] That approach makes sense for handling range validation.

@@ -1,0 +1,16 @@
+[english] How do I properly register a new event within a system so that all relevant subscribers are notified?
+[english] To handle this, we first need to persist the event in an internal storage list and then immediately trigger the notification mechanism.
+<switch:python>
+[python] def add_event(self, event):
+        """
+        Add a new event and notify subscribers.
+
+        event -- the event that occurred
+        """
+        self.events.append(event)
+        self.event_notify(event)
+<switch:english>
+[english] This approach ensures an immutable record of the occurrence while broadcasting its details to all registered listeners.
+[english] What happens if the event object has no relevant data or is invalid?
+[english] The function will still append and notify because it assumes valid input; you should add validation checks like `if not event: return` at the beginning of this method.
+[english] That makes sense, thanks for the clarification!

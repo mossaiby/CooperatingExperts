@@ -1,0 +1,19 @@
+[english] I need a way to remove an existing cloud service from the system using its unique identification ID.
+[english] This function starts by validating that the provided `cloud_service_id` is not null, then resolves the required API path before triggering the deletion.
+<switch:python>
+[python] def delete_cloud_service(self, cloud_service_id):
+        '''
+        The Get Cloud Service operation gets all the resources (job collections)
+        in the cloud service.
+
+        cloud_service_id:
+            The cloud service id
+        '''
+        _validate_not_none('cloud_service_id', cloud_service_id)
+        path = self._get_cloud_services_path(cloud_service_id)
+        return self._perform_delete(path, as_async=True)
+<switch:english>
+[english] By setting `as_async=True`, this operation initiates the resource removal without blocking the caller, returning control immediately.
+[english] Is there a mechanism in place to handle cases where the provided cloud service ID might already have been deleted?
+[english] The function relies on `self._perform_delete` which should return a specific status or a 'Not Found' indication if the resource is absent rather than raising an error.
+[english] Got it, so I don't need to wait for the deletion to finish in my logic.

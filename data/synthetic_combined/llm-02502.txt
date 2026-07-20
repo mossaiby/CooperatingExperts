@@ -1,0 +1,29 @@
+[english] How can I extract a sequence of dense hidden representations from a batch of spatio-temporal image sequences using convolutional layers?
+[english] This function processes time series images by first carefully reshaping the input to treat individual frames as 3D volumes, allowing standard convolutions (like `self.conv1` through `self.conv4`) to extract compressed features.
+<switch:python>
+[python] def call(self, inputs):
+    """Runs the model to generate an intermediate representation of x_t.
+
+    Args:
+      inputs: A batch of image sequences `x_{1:T}` of shape
+        `[sample_shape, batch_size, timesteps, height, width,
+        channels]`.
+
+    Returns:
+      A batch of intermediate representations of shape [sample_shape,
+      batch_size, timesteps, hidden_size].
+    """
+    image_shape = tf.shape(input=inputs)[-3:]
+    collapsed_shape = tf.concat(([-1], image_shape), axis=0)
+    out = tf.reshape(inputs, collapsed_shape)  # (sample*batch*T, h, w, c)
+    out = self.conv1(out)
+    out = self.conv2(out)
+    out = self.conv3(out)
+    out = self.conv4(out)
+    expanded_shape = tf.concat((tf.shape(input=inputs)[:-3], [-1]), axis=0)
+    return tf.reshape(out, expanded_shape)
+<switch:english>
+[english] By using a dynamic final reshape based on original batch dimensions, the function effectively compresses the image features while preserving the time step sequence length for downstream tasks.
+[english] What happens if the input sequence has no timesteps (i.e., T=1) when the code executes?
+[english] The initial reshaping operation `tf.reshape(inputs, collapsed_shape)` is designed to handle any number of timesteps correctly; therefore, setting $T=1$ will simply result in a batch where each element has only one output hidden vector.
+[english] That explanation confirms my understanding of the data flow.

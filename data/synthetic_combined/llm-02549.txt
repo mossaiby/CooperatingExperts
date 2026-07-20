@@ -1,0 +1,43 @@
+[english] How can I ensure that a data array's primary iteration keys always appear at the beginning of its dimensions for functional processing?
+[english] This function reorders and reshapes the input to guarantee that specified 'key' axes come first, making it suitable for subsequent operator applications.
+<switch:python>
+[python] def _align(self, axes, key_shape=None):
+        """
+        Align local bolt array so that axes for iteration are in the keys.
+
+        This operation is applied before most functional operators.
+        It ensures that the specified axes are valid, and might transpose/reshape
+        the underlying array so that the functional operators can be applied
+        over the correct records.
+
+        Parameters
+        ----------
+        axes: tuple[int]
+            One or more axes that will be iterated over by a functional operator
+
+        Returns
+        -------
+        BoltArrayLocal
+        """
+
+        # ensure that the key axes are valid for an ndarray of this shape
+        inshape(self.shape, axes)
+
+        # compute the set of dimensions/axes that will be used to reshape
+        remaining = [dim for dim in range(len(self.shape)) if dim not in axes]
+        key_shape = key_shape if key_shape else [self.shape[axis] for axis in axes]
+        remaining_shape = [self.shape[axis] for axis in remaining]
+        linearized_shape = [prod(key_shape)] + remaining_shape
+
+        # compute the transpose permutation
+        transpose_order = axes + remaining
+
+        # transpose the array so that the keys being mapped over come first, then linearize keys
+        reshaped = self.transpose(*transpose_order).reshape(*linearized_shape)
+
+        return reshaped
+<switch:english>
+[english] By transposing and reshaping, the function effectively converts key dimensions into a single leading size while keeping remaining data dimensions preserved at the end.
+[english] If I pass an empty tuple for 'axes', what happens to my array?
+[english] If 'axes' is empty, it simply calculates `remaining` as all dimensions and returns the original shape after a no-op transpose, effectively doing nothing if `key_shape` isn't provided.
+[english] That makes sense; thanks for clarifying.

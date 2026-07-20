@@ -1,0 +1,13 @@
+[english] I need a way to asynchronously push a status update or value across my system, making sure it is logged for debugging first.
+[english] This setup uses an internal helper method that first records a debug message about the action before calling the main publishing logic in the core component. It ensures traceability while delegation the actual work.
+<switch:python>
+[python] def publish(self, key, value):
+        """publish value to status"""
+        self.log.debug(
+            "Publishing status: %s/%s: %s", self.__class__.__name__, key, value)
+        self.core.publish(self.__class__.__name__, key, value)
+<switch:english>
+[english] Note how the function utilizes `self.__class__.__name__` to dynamically identify which class is initiating the publication for robust logging.
+[english] If this method were called in a context where `self.log` was never initialized, what kind of error would we expect?
+[english] Calling this method without `self.log` being defined would result in an AttributeError when Python tries to access the `.debug` attribute on it.
+[english] That makes sense for maintaining system integrity.

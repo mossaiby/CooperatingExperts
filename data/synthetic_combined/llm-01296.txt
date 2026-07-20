@@ -1,0 +1,45 @@
+[english] How can I retrieve detailed network statistics like upstream, serial number, and signal strength from my connected modem using Python?
+[english] This function establishes an asynchronous connection to the specified modem host using a customized `aiohttp` session. It logs in with provided credentials and then requests general network information before printing all available status fields.
+<switch:python>
+[python] async def get_information():
+    """Example of printing the current upstream."""
+    jar = aiohttp.CookieJar(unsafe=True)
+    websession = aiohttp.ClientSession(cookie_jar=jar)
+
+    try:
+        modem = eternalegypt.Modem(hostname=sys.argv[1], websession=websession)
+        await modem.login(password=sys.argv[2])
+
+        result = await modem.information()
+        print("upstream: {}".format(result.upstream))
+        print("serial_number: {}".format(result.serial_number))
+        print("wire_connected: {}".format(result.wire_connected))
+        print("mobile_connected: {}".format(result.mobile_connected))
+        print("connection_text: {}".format(result.connection_text))
+        print("connection_type: {}".format(result.connection_type))
+        print("current_nw_service_type: {}".format(result.current_nw_service_type))
+        print("current_ps_service_type: {}".format(result.current_ps_service_type))
+        print("register_network_display: {}".format(result.register_network_display))
+        print("roaming: {}".format(result.roaming))
+        print("radio_quality: {}".format(result.radio_quality))
+        print("rx_level: {}".format(result.rx_level))
+        print("tx_level: {}".format(result.tx_level))
+        print("current_band: {}".format(result.current_band))
+        print("cell_id: {}".format(result.cell_id))
+
+        await modem.logout()
+    except eternalegypt.Error:
+        print("Could not login")
+
+    await websession.close()
+<switch:english>
+[english] The use of `try...except eternalegypt.Error` ensures graceful failure if the initial login fails unexpectedly. Since this function uses `await`, it must be executed within an asynchronous context like an event loop.
+[english] What happens if the modem is not reachable or times out specifically during the information retrieval step?
+[english] The current code primarily handles authentication errors; however, network failure should be handled with a generic timeout mechanism when setting up the session:
+<switch:python>
+[python] async def get_information():
+    timeout = aiohttp.ClientTimeout(total=30) 
+    websession = aiohttp.ClientSession(cookie_jar=jar, timeout=timeout)
+    # ... rest of function
+<switch:english>
+[english] That makes perfect sense for making the code more robust!

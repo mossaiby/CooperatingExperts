@@ -1,0 +1,14 @@
+[english] How do I display a specific workspace or all workspaces using command line arguments?
+[english] This `execute` method directs the application's behavior based on which argument was provided by the user. It checks for the explicit resource name first, then falls back to an 'all' request.
+<switch:python>
+[python] def execute(self, args):
+        """Execute show subcommand."""
+        if args.name is not None:
+            self.show_workspace(slashes2dash(args.name))
+        elif args.all is not None:
+            self.show_all()
+<switch:english>
+[english] The logic prioritizes showing a single workspace when `args.name` is present, otherwise it defaults to listing all workspaces.
+[english] If both name and all are provided simultaneously, which action gets executed?
+[english] Because of the 'if-elif' structure, if `args.name` is truthy, that branch executes (`self.show_workspace(...)`) and the rest of the function is skipped.
+[english] That makes sense for handling mutual exclusivity.

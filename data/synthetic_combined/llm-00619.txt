@@ -1,0 +1,48 @@
+[english] How can I programmatically execute a specific SQL query against Teradata using the Giraffe class?
+[english] This function processes your input string to ensure it's valid and standardized before attempting connection setup.
+<switch:python>
+[python] def query(self, query):
+        """
+        Set the query to be run and initiate the connection with Teradata.
+        Only necessary if the query/table name was not specified as an argument
+        to the constructor of the instance.
+
+        :param str query: Valid SQL query to be executed
+        """
+        if query is None:
+            return
+        if log.level >= VERBOSE:
+            self.options("query", query, 6)
+        else:
+            self.options("query", truncate(query), 6)
+        statements = parse_statement(remove_curly_quotes(query))
+        if not statements:
+            raise GiraffeError("Unable to parse SQL statement")
+        if len(statements) > 1:
+            show_warning(("MORE THAN ONE STATEMENT RECEIVED, EXPORT OPERATIONS ALLOW ONE "
+                "STATEMENT - ONLY THE FIRST STATEMENT WILL BE USED."), RuntimeWarning)
+        statement = statements[0]
+        log.debug("Debug[2]", "Statement (sanitized): {!r}".format(statement))
+        if not (statement.startswith("select ") or statement.startswith("sel ")):
+            statement = "select * from {}".format(statement)
+        if statement == self.query:
+            return
+        else:
+            self._query = statement
+        self.initiated = False
+        # Since CLIv2 is used in set_query (instead of relying on the
+        # colums from the TPT Export driver) and set_query will always
+        # happen before calls to initiate, set_query will always fail
+        # with InvalidCredentialsError before initiate despite initiate
+        # presumably failing after this point as well.
+        try:
+            self.export.set_query(statement)
+        except InvalidCredentialsError as error:
+            if self.protect:
+                Config.lock_connection(self.config, self.dsn, self.key_file)
+            raise error
+<switch:english>
+[english] The function standardizes the input by adding `select * from` if it's not already a SELECT statement and handles credential errors during setup.
+[english] What happens to my query if I pass something that isn't SQL, like 'hello world'?
+[english] Since the code relies on `parse_statement`, passing non-SQL text will result in an empty list of statements, causing a `GiraffeError` because it cannot be parsed.
+[english] That makes sense; security and validation are quite important.

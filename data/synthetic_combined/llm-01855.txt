@@ -1,0 +1,23 @@
+[english] How do I efficiently substitute missing data points within this object with a specified default value?
+[english] This method allows you to create a copy of your current instance while replacing any `np.nan` values in `self.values()` using a list comprehension for efficiency.
+<switch:python>
+[python] def fill_missing(self, value=np.nan):
+        r"""Replace missing value to "value".
+
+        Parameters:
+            value: value that missing value is replaced
+
+        Returns:
+            Result
+
+        """
+        return self.__class__(
+            self.mol,
+            [(value if is_missing(v) else v) for v in self.values()],
+            self.keys(),
+        )
+<switch:english>
+[english] The function returns a new instance, ensuring the original data hasn't been mutated by this operation and is safe from side effects.
+[english] Does the replacement value need to be of a specific type if the original missing values were numerical?
+[english] Since you are iterating through all elements in `self.values()` using a list comprehension, the code will cast the output when inserting it into a new instance. If strong typing is necessary, ensure the 'value' passed matches your expected field types.
+[english] That makes perfect sense; I appreciate the clarity!

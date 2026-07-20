@@ -1,0 +1,46 @@
+[english] How can I programmatically convert specific structured data within an XML document into a usable Python dictionary?
+[english] This function is designed to parse repeatable key-value pairs embedded within a complex XML structure. It systematically iterates through the specified 'parent' and 'pair' tags, extracting content from dedicated 'key' and 'value' sub-elements.
+<switch:python>
+[python] def _fill_dict_of(xmldoc, parent_xml_element_name, pair_xml_element_name,
+                      key_xml_element_name, value_xml_element_name):
+        '''Converts an xml fragment into a dictionary. The parent xml element
+        contains a list of xml elements where each element has a child element for
+        the key, and another for the value.
+        Example:
+        xmldoc=
+    <ExtendedProperties>
+        <ExtendedProperty>
+            <Name>Ext1</Name>
+            <Value>Val1</Value>
+        </ExtendedProperty>
+        <ExtendedProperty>
+            <Name>Ext2</Name>
+            <Value>Val2</Value>
+        </ExtendedProperty>
+    </ExtendedProperties>
+        element_type=str
+        parent_xml_element_name='ExtendedProperties'
+        pair_xml_element_name='ExtendedProperty'
+        key_xml_element_name='Name'
+        value_xml_element_name='Value'
+        '''
+        return_obj = {}
+
+        xmlelements = _MinidomXmlToObject.get_child_nodes(xmldoc, parent_xml_element_name)
+        if xmlelements:
+            xmlelements = _MinidomXmlToObject.get_child_nodes(xmlelements[0], pair_xml_element_name)
+            for pair in xmlelements:
+                keys = _MinidomXmlToObject.get_child_nodes(pair, key_xml_element_name)
+                values = _MinidomXmlToObject.get_child_nodes(pair, value_xml_element_name)
+                if keys and values:
+                    key = keys[0].firstChild.nodeValue
+                    valueContentNode = values[0].firstChild
+                    value = valueContentNode.nodeValue if valueContentNode else None
+                    return_obj[key] = value
+
+        return return_obj
+<switch:english>
+[english] The code relies heavily on an external helper method (`_MinidomXmlToObject`). Note that the function assumes a single entry for keys and values within each pair; it only uses index 0 of the retrieved lists.
+[english] What happens if one of the <Value> elements is empty or contains nested XML instead of simple text?
+[english] If a value element like `<Value></Value>` is present, `valueContentNode.nodeValue` will be an empty string (`''`). If it contains nested XML, the use of `.firstChild.nodeValue` might return only the content of that inner tag rather than the full sibling's text content.
+[english] This looks perfect for processing configuration files!

@@ -1,0 +1,34 @@
+[english] How can I calculate the central frequency for several coarse channels when given a continuous array of frequency bins?
+[english] We first determine how many coarse channels there are, then reorganize the flat frequency array into groups. Finally, we compute the mean across each group to find the center frequency.
+<switch:python>
+[python] def get_centerfreqs(freqs,chan_per_coarse):
+    '''
+    Returns central frequency of each coarse channel
+
+    Parameters
+    ----------
+    freqs : 1D Array (float)
+        Frequency values for each bin of the spectrum
+    chan_per_coarse: int
+        Number of frequency bins per coarse channel
+    '''
+
+    num_coarse = freqs.size/chan_per_coarse
+    freqs = np.reshape(freqs,(num_coarse,chan_per_coarse))
+    return np.mean(freqs,axis=1)
+<switch:english>
+[english] This implementation assumes the input frequency list is perfectly divisible by `chan_per_coarse`. If there are leftover bins, they will cause an error during reshaping.
+[english] What happens if the total number of frequencies (`freq_list.size`) isn't perfectly divisible by `chan_per_coarse`?
+[english] The current function assumes perfect divisibility. To handle incomplete data robustly without losing bins, you might need padding or truncation:
+<switch:python>
+[python] def get_centerfreqfs_robust(freq_list, chan_per_coarse):
+    num_bins = freq_list.size
+    # Calculate how many full channels we can make and the remainder
+    last_chan_count = num_bins % chan_per_coarse 
+    if last_chan_count == 0:
+        return np.mean(freq_list.reshape(-1, chan_per_coarse), axis=1)
+    
+    # Handle the partial channel by padding or specific slicing logic here.
+    pass # Implementation depends on desired behavior for remainder
+<switch:english>
+[english] That makes sense; I appreciate the clarification.

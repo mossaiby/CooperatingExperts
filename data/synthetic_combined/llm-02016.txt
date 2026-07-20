@@ -1,0 +1,19 @@
+[english] How do I format a custom metric into a standardized string compatible with StatsD ingestion tools?
+[english] This function standardizes metrics for compatibility by building a template and then conditionally prepending any defined service prefix to the metric name.
+<switch:python>
+[python] def format_metric_string(self, name, value, m_type):
+        """Compose a statsd compatible string for a metric's measurement."""
+
+        # NOTE(romcheg): This serialized metric template is based on
+        #                statsd's documentation.
+        template = '{name}:{value}|{m_type}\n'
+
+        if self.prefix:
+            name = "{prefix}.{m_name}".format(prefix=self.prefix, m_name=name)
+
+        return template.format(name=name, value=value, m_type=m_type)
+<switch:english>
+[english] The function guarantees the output aligns with StatsD serialization but relies on external logic to handle special character escaping within the metric values.
+[english] What happens if I forget to pass a `value` argument when calling this function?
+[english] Since the code uses `.format(..., value=value, ...)` and does not validate inputs, omitting the 'value' will result in a KeyError because the key is required for the template substitution.
+[english] Got it, that makes sense.

@@ -1,0 +1,27 @@
+[english] I want to measure the execution time and track call statistics for a specific Python module before integrating it into my larger project.
+[english] This function works by reading the target file, compiling its contents into bytecode, and executing that code within a profiler context. This ensures all operations are recorded without needing manual instrumentation.
+<switch:python>
+[python] def _profile_module(self):
+        """Runs statistical profiler on a module."""
+        with open(self._run_object, 'rb') as srcfile, _StatProfiler() as prof:
+            code = compile(srcfile.read(), self._run_object, 'exec')
+            prof.base_frame = inspect.currentframe()
+            try:
+                exec(code, self._globs, None)
+            except SystemExit:
+                pass
+
+        call_tree = prof.call_tree
+        return {
+            'objectName': self._object_name,
+            'sampleInterval': _SAMPLE_INTERVAL,
+            'runTime': prof.run_time,
+            'callStats': call_tree,
+            'totalSamples': call_tree.get('sampleCount', 0),
+            'timestamp': int(time.time())
+        }
+<switch:english>
+[english] The function successfully captures performance metrics like runtime and sample counts, while also returning metadata about when and where it was run.
+[english] Does this profiling method catch exceptions raised inside the executed module?
+[english] Currently, uncaught exceptions will halt execution. If you need to capture errors, wrap the `exec` call in a try block:
+[english] That makes total sense for dependency analysis.

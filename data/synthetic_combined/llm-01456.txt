@@ -1,0 +1,20 @@
+[english] Create a helper that cleans input strings by stripping specific IPython prompt prefixes like 'In [X]: '.
+[english] This function checks if an input string starts with a pattern defined in `_ipy_prompt_re` and removes it using regex matching. If no match is found, the original line is returned unmodified to ensure all inputs are handled gracefully.
+<switch:python>
+[python] def transform_ipy_prompt(line):
+    """Handle inputs that start classic IPython prompt syntax."""
+
+    if not line or line.isspace():
+        return line
+    #print 'LINE:  %r' % line # dbg
+    m = _ipy_prompt_re.match(line)
+    if m:
+        #print 'MATCH! %r -> %r' % (line, line[len(m.group(0)):]) # dbg
+        return line[len(m.group(0)):]
+    else:
+        return line
+<switch:english>
+[english] The core logic relies on slicing the string starting from the index immediately following the matched prompt group (`m.group(0)`). This is an efficient way to strip known prefixes without needing dedicated string replacement methods.
+[english] What happens if a line contains both an IPython prefix and random text afterwards, like 'In [1]: some code'?
+[english] The function handles this correctly by stripping the entire matched prompt and returning only the remaining content. For example, 'In [1]: print(x)' would return 'print(x)'.
+[english] ¿What other types of shell prompts might I need to handle?

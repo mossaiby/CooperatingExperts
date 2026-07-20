@@ -1,0 +1,36 @@
+[english] I need a utility function that can generate a standardized, descriptive new filename after an image has been resized and optimized.
+[english] This function works by first separating the original file name from its extension. It then dynamically constructs a formatting template based on required width, height, and quality settings before using string interpolation to create the final output.
+<switch:python>
+[python] def get_resized_filename(filename, width, height, filename_key):
+    """
+    Return the 'resized filename' (according to `width`, `height` and
+    `filename_key`) in the following format:
+    `filename`-`filename_key`-`width`x`height`.ext
+    """
+    try:
+        image_name, ext = filename.rsplit('.', 1)
+    except ValueError:
+        image_name = filename
+        ext = 'jpg'
+
+    resized_template = "%(filename_key)s-%(width)dx%(height)d"
+    if ext.lower() in ['jpg', 'jpeg']:
+        resized_template = resized_template + "-%(quality)d"
+
+    resized_key = resized_template % ({
+        'filename_key': filename_key,
+        'width': width,
+        'height': height,
+        'quality': QUAL
+    })
+
+    return "%(image_name)s-%(image_key)s.%(ext)s" % ({
+        'image_name': image_name,
+        'image_key': post_process_image_key(resized_key),
+        'ext': ext
+    })
+<switch:english>
+[english] The resulting filename format is highly dependent on external variables like `QUAL` and the helper function `post_process_image_key`, which should be defined in scope.
+[english] If an input filename contains multiple dots (e.g., 'my.photo.jpg'), how does the code handle separating the file name from its extension?
+[english] By using `filename.rsplit('.', 1)`, the function ensures that it only splits on the final dot, correctly treating all preceding dots as part of the image name.
+[english] Thanks for clarifying those edge cases!

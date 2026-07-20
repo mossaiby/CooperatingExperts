@@ -1,0 +1,40 @@
+[english] How can I programmatically get an asynchronous client for a specific named subscription within a topic?
+[english] This function first attempts to retrieve the necessary metadata using `self.mgmt_client`. It incorporates robust exception handling to manage connection failures or cases where the resource does not exist.
+<switch:python>
+[python] def get_subscription(self, topic_name, subscription_name):
+        """Get an async client for a subscription entity.
+
+        :param topic_name: The name of the topic.
+        :type topic_name: str
+        :param subscription_name: The name of the subscription.
+        :type subscription_name: str
+        :rtype: ~azure.servicebus.aio.async_client.SubscriptionClient
+        :raises: ~azure.servicebus.common.errors.ServiceBusConnectionError if the namespace is not found.
+        :raises: ~azure.servicebus.common.errors.ServiceBusResourceNotFound if the subscription is not found.
+
+        Example:
+            .. literalinclude:: ../examples/async_examples/test_examples_async.py
+                :start-after: [START get_async_subscription_client]
+                :end-before: [END get_async_subscription_client]
+                :language: python
+                :dedent: 4
+                :caption: Get a TopicClient for the specified topic.
+
+        """
+        try:
+            subscription = self.mgmt_client.get_subscription(topic_name, subscription_name)
+        except requests.exceptions.ConnectionError as e:
+            raise ServiceBusConnectionError("Namespace: {} not found".format(self.service_namespace), e)
+        except AzureServiceBusResourceNotFound:
+            raise ServiceBusResourceNotFound("Specificed subscription does not exist.")
+        return SubscriptionClient.from_entity(
+            self._get_host(), topic_name, subscription,
+            shared_access_key_name=self.shared_access_key_name,
+            shared_access_key_value=self.shared_access_key_value,
+            loop=self.loop,
+            debug=self.debug)
+<switch:english>
+[english] It finally constructs and returns the required async client, passing several internal configuration settings like host and loop into `SubscriptionClient.from_entity` while catching specific Service Bus exceptions.
+[english] If `self.mgmt_client.get_subscription` raises a different type of error than those documented (e.g., AuthorizationError), will this function handle it?
+[english] Currently, the logic only explicitly catches `ConnectionError` and `AzureServiceBusResourceNotFound`. If other errors occur, they will propagate through the method unhandled.
+[english] Thanks for clarifying the error handling scope.

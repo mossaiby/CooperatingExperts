@@ -1,0 +1,24 @@
+[english] How can I write a function that checks if a given filename matches any of the provided exclusion patterns?
+[english] To handle exclusions, we first extract the base filename and check for hidden files (those starting with '.'). Then, we loop through your list of exclude patterns using `fnmatch` to see if either the full path or just the basename matches any pattern.
+<switch:python>
+[python] def is_exclude_file(filename, exclude):
+    """Return True if file matches exclude pattern."""
+    base_name = os.path.basename(filename)
+
+    if base_name.startswith('.'):
+        return True
+
+    for pattern in exclude:
+        if fnmatch.fnmatch(base_name, pattern):
+            return True
+        if fnmatch.fnmatch(filename, pattern):
+            return True
+    return False
+<switch:english>
+[english] The function prioritizes filename matching using `fnmatch` to provide flexible exclusion rules for both full paths and just the base name.
+[english] What if I want to exclude all files ending in '.tmp' regardless of where they are located?
+[english] Since it iterates through every pattern, you can simply add a wildcard like `'*.tmp'` to your `exclude` list; this will match any file ending that way.
+<switch:python>
+[python] excludes = ['**/*.tmp', '*.log'] # Depends on folder structure and desired scope
+<switch:english>
+[english] That clarifies the behavior perfectly!

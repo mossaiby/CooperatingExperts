@@ -1,0 +1,40 @@
+[english] I want to resize an existing image so that it fits completely within a specific destination rectangle without cropping or distortion.
+[english] This function calculates the necessary scaling factor by comparing the original image's aspect ratio to the target dimensions. It then determines whether the image needs more width or height relative to the frame.
+<switch:python>
+[python] def resize_image_to_fit(image, dest_w, dest_h):
+    """
+    Resize the image to fit inside dest rectangle.  Resultant image may be smaller than target
+    :param image: PIL.Image
+    :param dest_w: Target width
+    :param dest_h: Target height
+    :return: Scaled image
+    """
+    dest_w = float(dest_w)
+    dest_h = float(dest_h)
+    dest_ratio = dest_w / dest_h
+
+    # Calculate the apect ratio of the image
+    src_w = float(image.size[0])
+    src_h = float(image.size[1])
+    src_ratio = src_w / src_h
+
+    if src_ratio < dest_ratio:
+        # Image is tall and thin - we need to scale to the right height and then pad
+        scale = dest_h / src_h
+        scaled_h = dest_h
+        scaled_w = src_w * scale
+
+    else:
+        # Image is short and wide - we need to scale to the right height and then crop
+        scale = dest_w / src_w
+        scaled_w = dest_w
+        scaled_h = src_h * scale
+
+    scaled_image = image.resize((int(scaled_w), int(scaled_h)), PIL.Image.ANTIALIAS)
+
+    return scaled_image
+<switch:english>
+[english] The resulting scaled image is returned using anti-aliasing for better quality during the resize operation. Note that this function scales down large images but does not handle padding if the aspect ratios don't match perfectly within `dest_w` and `dest_h`.
+[english] What happens to the edges of an image after it is scaled using ANTIALIAS?
+[english] The use of PIL.Image.ANTIALIAS ensures that when scaling, the method uses interpolation algorithms designed to produce less jagged results compared to simpler methods like NEAREST.
+[english] That makes perfect sense, thank you for clarifying how it handles image quality during scaling!

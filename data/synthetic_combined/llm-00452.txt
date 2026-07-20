@@ -1,0 +1,34 @@
+[english] I need a function that promotes an existing transaction by adding network 'spam' to increase its priority.
+[english] This function handles the process of promoting a given transaction using defined parameters. It first checks if `min_weight_magnitude` is specified, defaulting to a predefined value in `self` if it wasn't supplied by the caller.
+<switch:python>
+[python] def promote_transaction(
+            self,
+            transaction,
+            depth=3,
+            min_weight_magnitude=None,
+    ):
+        # type: (TransactionHash, int, Optional[int]) -> dict
+        """
+        Promotes a transaction by adding spam on top of it.
+
+        :return:
+            Dict with the following structure::
+
+                {
+                    'bundle': Bundle,
+                        The newly-published bundle.
+                }
+        """
+        if min_weight_magnitude is None:
+            min_weight_magnitude = self.default_min_weight_magnitude
+
+        return extended.PromoteTransactionCommand(self.adapter)(
+            transaction=transaction,
+            depth=depth,
+            minWeightMagnitude=min_weight_magnitude,
+        )
+<switch:english>
+[english] The core logic executes an external command (`extended.PromoteTransactionCommand`) configured with all necessary inputs. This ensures the transaction promotion follows a structured API call pattern.
+[english] If no default magnitude is set on the instance, and `min_weight_magnitude` is also not provided, what happens during execution?
+[english] The function will raise an AttributeError when attempting to access 'self.default_min_weight_magnitude' because it must be defined for the initial check to succeed.
+[english] That clarifies how internal dependencies are handled.

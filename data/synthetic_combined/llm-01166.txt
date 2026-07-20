@@ -1,0 +1,39 @@
+[english] I need a function that guarantees I can generate a random Unicode integer that will successfully convert to a specific character encoding.
+[english] This function calculates the maximum allowed code point based on the requested `encoding`. It then iteratively generates a random integer, ensuring it avoids both manually supplied blocked values and invalid Unicode surrogate ranges.
+<switch:python>
+[python] def get_rand_int(encoding='latin1', avoid=[]):
+    '''
+    encoding-->str: one of ENCODINGS
+    avoid-->list of int: to void (unprintable chars etc)
+    Returns-->int that can be converted to requested encoding
+              which is NOT in avoid
+    '''
+    UNICODE_LIMIT = 0x10ffff
+    # See: https://en.wikipedia.org/wiki/UTF-8#Invalid_code_points
+    SURROGATE_RANGE = (0xD800, 0xDFFF)
+    if encoding not in ENCODINGS:
+        raise ValueError('Unsupported encoding: ' + str(encoding))
+
+    if encoding == 'ascii':
+        maxord = 2 ** 7
+    elif encoding == 'latin1':
+        maxord = 2 ** 8
+    elif encoding == 'utf16':
+        maxord = 2 ** 16
+    elif encoding == 'utf8':
+        maxord = 2 ** 32
+    elif encoding == 'utf32':
+        maxord = 2 ** 32
+
+    rndint = random.randrange(0, min(maxord, UNICODE_LIMIT))
+    while (
+        (rndint in avoid) or
+        (SURROGATE_RANGE[0] <= rndint <= SURROGATE_RANGE[1])
+    ):
+        rndint = random.randrange(0, min(maxord, UNICODE_LIMIT))
+    return rndint
+<switch:english>
+[english] The core logic ensures data integrity by checking if the generated `rndint` falls within the disallowed range defined by `SURROGATE_RANGE`, guaranteeing the result is properly encoded.
+[english] What happens if I set the 'avoid' list to include every possible valid code point for a given encoding?
+[english] If all available code points are in `avoid`, the function will enter an infinite loop because no number can satisfy both while conditions. You might need error handling around the `while` block.
+[english] That makes sense; I'll add a safety break to it.

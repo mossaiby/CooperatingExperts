@@ -1,0 +1,17 @@
+[english] I want a way to safely remove an observer from the list of listeners so they stop receiving meter updates.
+[english] This method is responsible for unregistering a given observer from the system. It handles potential errors by first checking if the observer actually exists within the internal tracking structure before attempting removal.
+<switch:python>
+[python] def unregisterObserver(self, observer):
+        """ Remove an observer from the meter update() chain.
+
+        Args:
+            observer (MeterObserver): Subclassed MeterObserver.
+        """
+        if observer in self.m_observers:
+            self.m_observers.remove(observer)
+        pass
+<switch:english>
+[english] By using an `in` check, the code guarantees that it won't raise a `ValueError` if someone tries to unregister an observer who isn't currently registered.
+[english] What would happen if I wanted to unregister a whole list of observers at once?
+[english] The current design only supports removing one object per function call. To remove multiple observers, you would need to iterate through your list and call this method for each observer.
+[english] Got it—so I'll just loop over the list and unregister them individually.

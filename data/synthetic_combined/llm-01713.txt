@@ -1,0 +1,51 @@
+[english] Define how an Azure storage account's description and replication type can be modified programmatically via this method.
+[english] This function updates critical metadata for a given storage service name, ensuring essential fields like the label and description are set correctly. It manages the logic to translate configuration parameters into the necessary input format before performing the resource update.
+<switch:python>
+[python] def update_storage_account(self, service_name, description=None,
+                               label=None, geo_replication_enabled=None,
+                               extended_properties=None,
+                               account_type='Standard_GRS'):
+        '''
+        Updates the label, the description, and enables or disables the
+        geo-replication status for a storage account in Windows Azure.
+
+        service_name:
+            Name of the storage service account.
+        description:
+            A description for the storage account. The description may be up
+            to 1024 characters in length.
+        label:
+            A name for the storage account. The name may be up to 100
+            characters in length. The name can be used to identify the storage
+            account for your tracking purposes.
+        geo_replication_enabled:
+            Deprecated. Replaced by the account_type parameter.
+        extended_properties:
+            Dictionary containing name/value pairs of storage account
+            properties. You can have a maximum of 50 extended property
+            name/value pairs. The maximum length of the Name element is 64
+            characters, only alphanumeric characters and underscores are valid
+            in the Name, and the name must start with a letter. The value has
+            a maximum length of 255 characters.
+        account_type:
+            Specifies whether the account supports locally-redundant storage,
+            geo-redundant storage, zone-redundant storage, or read access
+            geo-redundant storage.
+            Possible values are:
+                Standard_LRS, Standard_ZRS, Standard_GRS, Standard_RAGRS
+        '''
+        _validate_not_none('service_name', service_name)
+        if geo_replication_enabled == False:
+            account_type = 'Standard_LRS'
+        return self._perform_put(
+            self._get_storage_service_path(service_name),
+            _XmlSerializer.update_storage_service_input_to_xml(
+                description,
+                label,
+                account_type,
+                extended_properties))
+<switch:english>
+[english] Keep in mind that geo-replication status is exclusively managed through the `account_type` parameter rather than an explicit boolean flag. The extended properties field also has strict naming and length constraints enforced by internal validation methods.
+[english] What happens if I pass a dictionary to 'extended_properties' that contains more than 50 key-value pairs?
+[english] The function relies on underlying serialization and API calls, which typically enforce the documented limit of 50 properties. If you exceed this threshold, an error will likely be thrown by the internal validation logic.
+[english] This makes handling account configurations much simpler.

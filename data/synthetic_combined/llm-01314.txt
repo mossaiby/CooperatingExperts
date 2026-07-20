@@ -1,0 +1,21 @@
+[english] I need a utility that takes an AnimationCard object and packages it into a standard Attachment format, making sure the card type is correct.
+[english] To ensure data integrity before creating the attachment, we first perform a strict type check on the input. If the provided 'card' isn't an instance of AnimationCard, a TypeError will be raised immediately to prevent faulty processing.
+<switch:python>
+[python] def animation_card(card: AnimationCard) -> Attachment:
+        """
+        Returns an attachment for an animation card. Will raise a TypeError if the 'card' argument is not an
+        AnimationCard.
+        :param card:
+        :return:
+        """
+        if not isinstance(card, AnimationCard):
+            raise TypeError('CardFactory.animation_card(): `card` argument is not an instance of an AnimationCard, '
+                            'unable to prepare attachment.')
+
+        return Attachment(content_type=CardFactory.content_types.animation_card,
+                          content=card)
+<switch:english>
+[english] By using constants from CardFactory, this function reliably maps complex card data into the required Attachment structure for serialization later. Note that it is highly dependent on strict subtype matching for its validation logic.
+[english] What would happen if I passed an object that has all the required attributes of AnimationCard but is not explicitly an instance of that class?
+[english] The function relies solely on 'isinstance', so it requires a direct subclass match. To accept any object with the right structure (duck typing), you would simply remove the initial type check.
+[english] Understood; I'll just make sure to pass the correct class instance then.

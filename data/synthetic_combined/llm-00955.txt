@@ -1,0 +1,26 @@
+[english] How can I efficiently check if a specific numeric message ID exists and register its details as a managed message?
+[english] This function attempts to find any defined messages corresponding to a given `msgid`. If found, it iterates through definitions and registers the relevant metadata for tracking.
+<switch:python>
+[python] def _register_by_id_managed_msg(self, msgid, line, is_disabled=True):
+        """If the msgid is a numeric one, then register it to inform the user
+        it could furnish instead a symbolic msgid."""
+        try:
+            message_definitions = self.msgs_store.get_message_definitions(msgid)
+            for message_definition in message_definitions:
+                if msgid == message_definition.msgid:
+                    MessagesHandlerMixIn.__by_id_managed_msgs.append(
+                        (
+                            self.current_name,
+                            message_definition.msgid,
+                            message_definition.symbol,
+                            line,
+                            is_disabled,
+                        )
+                    )
+        except UnknownMessageError:
+            pass
+<switch:english>
+[english] The process is wrapped in a try-except block to handle cases where no such message ID is known or stored.
+[english] What happens if this function receives an empty line argument?
+[english] If `line` is None (or equivalent), the register tuples will simply include that null value for better compatibility with downstream processing functions.
+[english] That makes sense, thanks for clearing that up!

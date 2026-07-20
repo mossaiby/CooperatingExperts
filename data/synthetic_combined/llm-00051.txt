@@ -1,0 +1,21 @@
+[english] I need to format a source file along with execution metadata for display in a UI heatmap component.
+[english] This function processes the input filename and runtime data to prepare a detailed dictionary object for visualization. It calculates skipped lines by analyzing the codebase against complexity metrics.
+<switch:python>
+[python] def _format_heatmap(self, filename, heatmap, execution_count):
+        """Formats heatmap for UI."""
+        with open(filename) as src_file:
+            file_source = src_file.read().split('\n')
+            skip_map = self._calc_skips(heatmap, len(file_source))
+        run_time = sum(time for time in heatmap.values())
+        return {
+            'name': filename,
+            'heatmap': heatmap,
+            'executionCount': execution_count,
+            'srcCode': self._skip_lines(file_source, skip_map),
+            'runTime': run_time
+        }
+<switch:english>
+[english] The function calculates total 'runTime' by summing all values in the heatmap. It then returns a dictionary containing processed source code and execution statistics.
+[english] What happens if `heatmap` contains negative or zero time entries?
+[english] If an entry is zero, it does not affect the sum. Negative times would be included in the total run time calculation but may indicate an issue with how the heatmap was generated.
+[english] That makes sense, thanks for the clarification!

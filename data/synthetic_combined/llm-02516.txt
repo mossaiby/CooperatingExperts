@@ -1,0 +1,28 @@
+[english] I need a function that can automatically download and load pre-trained GloVe word embedding vectors from a specific directory into a Python dictionary.
+[english] This function first ensures the necessary Glove weights are available, either by downloading them or locating existing files. It then reads the file line by line and parses each token into its corresponding vector representation.
+<switch:python>
+[python] def get_glove_w2v(source_dir="./data/news20/", dim=100):
+    """
+    Parse or download the pre-trained glove word2vec if source_dir is empty.
+
+    :param source_dir: The directory storing the pre-trained word2vec
+    :param dim: The dimension of a vector
+    :return: A dict mapping from word to vector
+    """
+    w2v_dir = download_glove_w2v(source_dir)
+    w2v_path = os.path.join(w2v_dir, "glove.6B.%sd.txt" % dim)
+    if sys.version_info < (3,):
+        w2v_f = open(w2v_path)
+    else:
+        w2v_f = open(w2v_path, encoding='latin-1')
+    pre_w2v = {}
+    for line in w2v_f.readlines():
+        items = line.split(" ")
+        pre_w2v[items[0]] = [float(i) for i in items[1:]]
+    w2v_f.close()
+    return pre_w2v
+<switch:english>
+[english] The function successfully converts large text files into a dictionary where keys are words (strings) and values are their respective vectors (lists of floats). Note that it includes logic to handle Python 2 and 3 differences when opening the file.
+[english] If I'm working with very large GloVe files, the process of loading everything into memory at once might be too slow or crash. Is there a more memory-efficient way to handle this?
+[english] To improve memory efficiency for massive files, you could modify the parsing logic to use generators instead of reading all lines using readlines() and storing them in `pre_w2v`, allowing words to be processed one at a time.
+[english] I understand. Thanks for this detailed breakdown!

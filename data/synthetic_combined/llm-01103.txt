@@ -1,0 +1,18 @@
+[english] How do I retrieve all defined attribute elements within a specific complex type within an XML schema structure?
+[english] This function performs two targeted searches on the input XML structure. It first locates the definition of the target complex type and then extracts all nested child element definitions from that located node.
+<switch:python>
+[python] def _get_elements(complex_type, root):
+    """Get attribute elements
+    """
+
+    found_elements = []
+    element = findall(root, '{%s}complexType' % XS_NAMESPACE,
+                       attribute_name='name', attribute_value=complex_type)[0]
+    found_elements = findall(element, '{%s}element' % XS_NAMESPACE)
+
+    return found_elements
+<switch:english>
+[english] The function returns a list of found XML elements; however, it assumes only one complex type matching `complex_type` exists in the root as it uses index [0].
+[english] What would happen if the provided complex_type name did not match any definition in the root?
+[english] If no matches are found for the complex type, accessing the element at index 0 will raise an IndexError. You should add a check to ensure `element` is populated before proceeding.
+[english] That explains the potential runtime error if the XML structure changes.

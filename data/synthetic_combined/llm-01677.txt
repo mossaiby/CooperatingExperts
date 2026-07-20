@@ -1,0 +1,32 @@
+[english] How can I transpose the axes of an array-like Spark data structure without physically reordering all its elements?
+[english] This method sets up transposition by calculating the required axis permutations. Instead of rewriting the entire dataset, it maps a transformation function across the existing RDD's values to apply the new layout.
+<switch:python>
+[python] def transpose(self, *axes):
+        """
+        Transpose just the values of a BoltArraySpark, returning a
+        new BoltArraySpark.
+
+        Parameters
+        ----------
+        axes : tuple
+             New proposed axes.
+        """
+        new = argpack(axes)
+        old = range(self.ndim)
+        istransposeable(new, old)
+
+        if new == old:
+            return self._barray
+
+        def f(v):
+            return v.transpose(new)
+
+        newrdd = self._barray._rdd.mapValues(f)
+        newshape = self._barray.keys.shape + tuple(self.shape[i] for i in new)
+
+        return BoltArraySpark(newrdd, shape=newshape).__finalize__(self._barray)
+<switch:english>
+[english] By using `mapValues`, the actual data permutation is performed lazily and only executed when the Spark operation is triggered.
+[english] If I call transpose multiple times with different axis orders, will it recompute every time or cache the result?
+[english] The current implementation of your `transpose` method does not include memoization; each successive call would likely perform a new transformation based on the intermediate state of the underlying RDD.
+[english] I'll need to add caching logic if I frequently transform this array.

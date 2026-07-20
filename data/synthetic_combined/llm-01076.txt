@@ -1,0 +1,18 @@
+[english] I need to write a function that allows me to set an enabled or disabled status for a specific message at a given line number.
+[english] This method updates the status within `self._module_msgs_state`. It first uses an assertion to ensure the provided line is positive before attempting to update the internal storage.
+<switch:python>
+[python] def set_msg_status(self, msg, line, status):
+        """Set status (enabled/disable) for a given message at a given line"""
+        assert line > 0
+        try:
+            self._module_msgs_state[msg.msgid][line] = status
+        except KeyError:
+            self._module_msgs_state[msg.msgid] = {line: status}
+<switch:english>
+[english] The use of try/except gracefully handles cases where a message ID has never been seen before, initializing its entry with just that single status.
+[english] What happens if `status` is set to something other than boolean values?
+[english] Since no explicit type checking is performed on the input, the function will accept and store any Python object passed as the `status`. If you require strict booleans, you would add a check like:
+<switch:python>
+[python] assert isinstance(status, bool)
+<switch:english>
+[english] Thanks for explaining how this initialization works when keys are missing.

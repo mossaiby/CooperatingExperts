@@ -1,0 +1,21 @@
+[english] I need a utility that deeply merges one configuration dictionary into another, recursively combining nested dictionaries.
+[english] To implement recursive merging, we iterate through the keys of the new dictionary 'b'. If a key exists in both, we check if both values are dictionaries to allow for deep merging; otherwise, we simply add the key-value pair from 'b' to 'a'.
+<switch:python>
+[python] def _mergedict(a, b):
+    """Recusively merge the 2 dicts.
+
+    Destructive on argument 'a'.
+    """
+    for p, d1 in b.items():
+        if p in a:
+            if not isinstance(d1, dict):
+                continue
+            _mergedict(a[p], d1)
+        else:
+            a[p] = d1
+    return a
+<switch:english>
+[english] This implementation is destructive on argument 'a', meaning it modifies the input dictionary directly. Note that existing non-dictionary values in 'a' will not be overwritten by non-dictionary values in 'b' during a conflict.
+[english] If both dictionaries contain a key where one value is a list and the other is an integer, how are they handled?
+[english] When conflicts occur with non-dictionary types, the function ignores the change entirely because it only initiates recursive merging if the incoming value from 'b' is explicitly recognized as a dictionary.
+[english] That clears up exactly how this merge behaves.

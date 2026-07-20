@@ -1,0 +1,26 @@
+[english] How do I implement custom input handling for UI navigation using character keys in a Python CLI application?
+[english] This function processes raw user input by reading a single character. It then identifies whether the key pressed corresponds to directional movement or a direct jump to an index.
+<switch:python>
+[python] def process_user_input(self):
+        """
+        Gets the next single character and decides what to do with it
+        """
+        user_input = self.get_input()
+
+        go_to_max = ord("9") if len(self.items) >= 9 else ord(str(len(self.items)))
+
+        if ord('1') <= user_input <= go_to_max:
+            self.go_to(user_input - ord('0') - 1)
+        elif user_input == curses.KEY_DOWN:
+            self.go_down()
+        elif user_input == curses.KEY_UP:
+            self.go_up()
+        elif user_input == ord("\n"):
+            self.select()
+
+        return user_input
+<switch:english>
+[english] The logic carefully translates numeric inputs into zero-based indices for navigation. Note that this implementation relies heavily on specific constants defined within the curses library.
+[english] If `self.items` only contains three elements, and the user presses '9', what happens?
+[english] The program will ignore the input because the calculated `go_to_max` (which would be based on length 3) prevents '9' from falling within the valid range of characters processed by this function.
+[english] Thanks, that clarifies how jumps are currently constrained.

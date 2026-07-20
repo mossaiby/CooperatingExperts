@@ -1,0 +1,26 @@
+[english] How can I retrieve a list of all organizations this member is attached to via an API?
+[english] The function first fetches raw organization data using query parameters. It then iterates over the resulting JSON list, converting each entry into a fully instantiated Organization object.
+<switch:python>
+[python] def get_organisations(self, **query_params):
+        '''
+        Get all organisations this member is attached to. Return a list of
+        Organisation objects.
+
+        Returns:
+            list(Organisation): Return all organisations this member is
+            attached to
+        '''
+        organisations = self.get_organisations_json(self.base_uri,
+                                                    query_params=query_params)
+
+        organisations_list = []
+        for organisation_json in organisations:
+            organisations_list.append(
+                self.create_organisation(organisation_json))
+
+        return organisations_list
+<switch:english>
+[english] This process wraps the raw API response into usable Python objects for further processing within the class.
+[english] What happens if the `get_organisations_json` method encounters an authentication error or returns invalid data?
+[english] The current implementation assumes successful execution. For robustness, you should wrap the API call in a try-except block to handle potential network or parsing exceptions.
+[english] This makes sense! Thanks for walking me through it.

@@ -1,0 +1,30 @@
+[english] How can I retrieve all currently queued results from a task system, including whether they succeeded or failed?
+[english] This method iterates over an internal result queue (`self._queue`) to collect all currently available task outcomes before returning them as a dictionary. It efficiently drains the queue without blocking execution if no results are ready at that moment.
+<switch:python>
+[python] def get_results(self):
+        """
+        Returns a dict of the results currently available. The keys
+        are the ident values given with the calls to spawn. The
+        values are tuples of (exc_type, exc_value, exc_tb, result)
+        where:
+
+        =========  ============================================
+        exc_type   The type of any exception raised.
+        exc_value  The actual exception if any was raised.
+        exc_tb     The traceback if any exception was raised.
+        result     If no exception was raised, this will be the
+                   return value of the called function.
+        =========  ============================================
+        """
+        try:
+            while True:
+                ident, value = self._queue.get(block=False)
+                self._results[ident] = value
+        except queue.Empty:
+            pass
+        return self._results
+<switch:english>
+[english] Since the loop uses a non-blocking call, this function will only gather results that have already been completed and placed in the queue prior to its execution.
+[english] What structure do I get for a task that failed? How can I tell if it was an exception or a successful value?
+[english] When a task raises an exception, the value stored will be a tuple where `exc_type`, `exc_value`, and `exc_tb` are populated, while the standard `result` field remains unchanged.
+[english] Thanks; I need to adjust how my client processes these returned tuples.

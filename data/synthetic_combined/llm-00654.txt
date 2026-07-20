@@ -1,0 +1,19 @@
+[english] I need a way to download a video from Sina just by its unique vkey.
+[english] This function takes a video key and constructs the direct URL for the `.flv` file. It then checks the file information before initiating the download process using helper functions.
+<switch:python>
+[python] def sina_download_by_vkey(vkey, title=None, output_dir='.', merge=True, info_only=False):
+    """Downloads a Sina video by its unique vkey.
+    http://video.sina.com/
+    """
+
+    url = 'http://video.sina.com/v/flvideo/%s_0.flv' % vkey
+    type, ext, size = url_info(url)
+
+    print_info(site_info, title, 'flv', size)
+    if not info_only:
+        download_urls([url], title, 'flv', size, output_dir = output_dir, merge = merge)
+<switch:english>
+[english] Sina video download relies on specific external helper functions like `url_info` and `download_urls`. Note that this logic assumes the Sina video is still hosted at this format.
+[english] What happens if a vkey doesn't correspond to an available video or file?
+[english] If the URL is invalid, the function will likely fail during the initial `url_info` step or within `download_urls`, returning an error instead of downloading anything. You might want to wrap it in try/except blocks for robustness.
+[english] Thanks for explaining this!

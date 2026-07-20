@@ -1,0 +1,32 @@
+[english] How can I implement a function to blank Document Control (DC) bins in coarse data channels by setting them based on adjacent channel medians?
+[english] This function first validates the number of specified coarse channels before calculating sub-channel dimensions. It then iterates through each group, identifying a central bin and replacing its value with the median of a small window following it.
+<switch:python>
+[python] def blank_dc(self, n_coarse_chan):
+        """ Blank DC bins in coarse channels.
+
+        Note: currently only works if entire file is read
+        """
+
+        if n_coarse_chan < 1:
+            logger.warning('Coarse channel number < 1, unable to blank DC bin.')
+            return None
+
+        if not n_coarse_chan % int(n_coarse_chan) == 0:
+            logger.warning('Selection does not contain an interger number of coarse channels, unable to blank DC bin.')
+            return None
+
+        n_coarse_chan = int(n_coarse_chan)
+
+        n_chan = self.data.shape[-1]
+        n_chan_per_coarse = int(n_chan / n_coarse_chan)
+
+        mid_chan = int(n_chan_per_coarse / 2)
+
+        for ii in range(n_coarse_chan):
+            ss = ii*n_chan_per_coarse
+            self.data[..., ss+mid_chan] = np.median(self.data[..., ss+mid_chan+5:ss+mid_chan+10])
+<switch:english>
+[english] The code works in place on `self.data` by directly assigning computed values to specific channel positions within each coarse block. Note that this relies on the input data having a uniform shape compatible with these slicing operations.
+[english] If `n_coarse_chan` does not perfectly divide the total number of channels, should I expect any warning or error handling?
+[english] The function explicitly checks if `n_coarse_chan % int(n_coarse_chan) == 0`; otherwise, it logs a warning and returns None to prevent errors.
+[english] That makes sense; what happens if the input data dimensions are incompatible with channel grouping?

@@ -1,0 +1,19 @@
+[english] I have two configurations (A and B) and I need to merge them into a single dictionary structure, ensuring that reserved system fields are excluded.
+[english] This function merges data from two dictionaries, `self.m_blk_a` and `self.m_blk_b`, into `self.m_req`. It iterates through each source block, selectively copying only unique fields that do not contain 'RESERVED' or 'CRC' in their names.
+<switch:python>
+[python] def makeAB(self):
+        """ Munge A and B reads into single serial block with only unique fields."""
+        for fld in self.m_blk_a:
+            compare_fld = fld.upper()
+            if not "RESERVED" in compare_fld and not "CRC" in compare_fld:
+                self.m_req[fld] = self.m_blk_a[fld]
+        for fld in self.m_blk_b:
+            compare_fld = fld.upper()
+            if not "RESERVED" in compare_fld and not "CRC" in compare_fld:
+                self.m_req[fld] = self.m_blk_b[fld]
+        pass
+<switch:english>
+[english] The logic ensures `self.m_req` holds the filtered data, but be aware that any fields present in both A and B will prioritize values from block B since it is processed last.
+[english] What happens if a field exists in both self.m_blk_a and self.m_blk_b?
+[english] If a field name appears in both blocks, the value from `self.m_blk_b` will overwrite the value copied from `self.m_blk_a`, as the second loop iterates over B after A finishes.
+[english] Thanks, that makes sense how it handles conflicts.

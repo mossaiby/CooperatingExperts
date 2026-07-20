@@ -1,0 +1,33 @@
+[english] How can I update my local database of public suffixes based on an upstream source file?
+[english] This function handles updating a dictionary structure that holds public suffix data, ensuring the process is logged appropriately unless quiet mode is enabled.
+<switch:python>
+[python] def update(self):
+        """
+        Update of the content of the :code:`public-suffix.json`.
+        """
+
+        if not PyFunceble.CONFIGURATION["quiet"]:
+            # The quiet mode is not activated.
+
+            # We print a message for the user on screen.
+            print(
+                "Update of %s" % PyFunceble.OUTPUTS["default_files"]["public_suffix"],
+                end=" ",
+            )
+
+        # We loop through the line of the upstream file.
+        list(map(self._extensions, self._data().split("\n")))
+
+        # We save the content of our database in the final testination.
+        Dict(self.public_suffix_db).to_json(self.destination)
+
+        if not PyFunceble.CONFIGURATION["quiet"]:
+            # The quiet mode is not activated.
+
+            # We inform the user that everything goes right.
+            print(PyFunceble.INTERN["done"])
+<switch:english>
+[english] The core logic processes lines using `map(self._extensions, self._data().split("\n"))` and then serializes the resulting database to the specified destination.
+[english] If the upstream data source (`self._data()`) is empty or contains invalid lines, what happens to the final JSON output?
+[english] The function will process zero elements in the map if `self._data()` is empty. If it proceeds with an empty database structure, the resulting `public_suffix_db` dictionary would likely be saved as an empty object.
+[english] Got it, thanks for clarifying how error handling works here.

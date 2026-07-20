@@ -1,0 +1,33 @@
+[english] How do I retrieve all meter readings for a specific device that occurred after a given epoch time, formatted as JSON?
+[english] This function sets up an SQLite connection and executes a SQL query to filter records by the provided timestamp and meter address before converting them into a JSON string.
+<switch:python>
+[python] def renderJsonReadsSince(self, timestamp, meter):
+        """ Simple since Time_Stamp query returned as JSON records.
+
+        Args:
+            timestamp (int): Epoch time in seconds.
+            meter (str): 12 character meter address to query
+
+        Returns:
+            str: JSON rendered read records.
+
+        """
+        result = ""
+        try:
+            connection = sqlite3.connect(self.m_connection_string)
+            connection.row_factory = self.dict_factory
+            select_cursor = connection.cursor()
+            select_cursor.execute("select * from Meter_Reads where " + Field.Time_Stamp +
+                                  " > " + str(timestamp) + " and " + Field.Meter_Address +
+                                  "= '" + meter + "';")
+            reads = select_cursor.fetchall()
+            result = json.dumps(reads, indent=4)
+
+        except:
+            ekm_log(traceback.format_exc(sys.exc_info()))
+        return result
+<switch:english>
+[english] The function handles the database connection and error logging separately from the main path; however, using string concatenation in the query introduces a SQL injection risk.
+[english] If no meter reads are found after running this function, what exactly will be returned?
+[english] Because `fetchall()` returns an empty list of dictionaries when no matches are found and an empty list is passed to `json.dumps()`, the function will return "[]" (an empty JSON array).
+[english] That makes sense; so what's the best practice for handling those specific security risks in my SQL query?

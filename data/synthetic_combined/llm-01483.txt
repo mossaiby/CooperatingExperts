@@ -1,0 +1,19 @@
+[english] I need to configure a callback mechanism within a simulator instance so that specific functions are executed when internal registers are written.
+[english] This method is designed for initialization, specifically setting up signal handlers for writes on 'inside' bus signals. It first ensures any existing callbacks are handled and then registers its primary callback function with both the internal input (t) and output (o) interfaces.
+<switch:python>
+[python] def onTWriteCallback__init(self, sim):
+        """
+        Process for injecting of this callback loop into simulator
+        """
+        yield from self.onTWriteCallback(sim)
+        self.intf.t._sigInside.registerWriteCallback(
+            self.onTWriteCallback,
+            self.getEnable)
+        self.intf.o._sigInside.registerWriteCallback(
+            self.onTWriteCallback,
+            self.getEnable)
+<switch:english>
+[english] The function creates duplicate registrations for the write callbacks on both input and output internal signals, relying on an enabling mechanism that is likely managed by `self.getEnable`.
+[english] What happens to these registered callbacks when the simulation or the object's state changes?
+[english] There is no explicit cleanup logic shown in this initializer; it only handles setting up the listeners. You would typically need a corresponding teardown method to unregister them to prevent memory leaks or erroneous calls after use.
+[english] Okay, thanks for clarifying how these callbacks are managed.

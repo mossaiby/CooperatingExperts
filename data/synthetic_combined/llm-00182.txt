@@ -1,0 +1,23 @@
+[english] How can we take a complex pulse instruction object and convert it into a format suitable for driving a sequence?
+[english] This function prepares parameters by extracting information from the incoming `PulseInstruction` and applying an external time offset (`shift`). It aggregates these values (name, adjusted start time 't0', and first channel name) into a command dictionary.
+<switch:python>
+[python] def convert_drive(self, shift, instruction):
+        """Return converted `PulseInstruction`.
+
+        Args:
+            shift(int): Offset time.
+            instruction (PulseInstruction): drive instruction.
+        Returns:
+            dict: Dictionary of required parameters.
+        """
+        command_dict = {
+            'name': instruction.command.name,
+            't0': shift+instruction.start_time,
+            'ch': instruction.channels[0].name
+        }
+        return self._qobj_model(**command_dict)
+<switch:english>
+[english] The constructed parameters are then unpacked into the model constructor, `self._qobj_model`, which returns the final structured driving instruction.
+[english] What error handling is present if the pulse instruction object has no channels defined?
+[english] If there are no channels, attempting to access `instruction.channels[0]` will result in an IndexError. You might wrap this access or check for empty lists before using indexing.
+[english] Thanks, that clarifies the parameter extraction process.

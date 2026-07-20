@@ -1,0 +1,16 @@
+[english] How can I automatically pass configuration settings into an object while ensuring it is ready for use?
+[english] This method dynamically assigns any provided keyword arguments as instance attributes, cleans up setup by calling initialization if needed, and activates necessary proxy features.
+<switch:python>
+[python] def prepare(self, **kwargs):
+        """ Prepare for rendering """
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        if not self.is_initialized:
+            self.initialize()
+        if not self.proxy_is_active:
+            self.activate_proxy()
+<switch:english>
+[english] It uses `setattr` to map arbitrary data directly to the object's internal state and executes prerequisite setup steps automatically.
+[english] What happens if one of those kwargs passed in is a callable method instead of just a static value?
+[english] The `setattr` call will successfully assign that function as an attribute on the instance, meaning you can later trigger it like any other property (e.g., self.my_method()).
+[english] That makes perfect sense for dependency injection.

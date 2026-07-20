@@ -1,0 +1,40 @@
+[english] How can I programmatically generate a customizable bash execution script based on host configuration?
+[english] This function ensures a unique executable path by checking if an existing config file is present for the specified host. If not, it generates one via `tempfile` before dynamically building and writing the shell script.
+<switch:python>
+[python] def create_custom_exec_script(self):
+        """ bash script w/ custom commands inside
+        inspired by half a night trying to avoid escaping bash special characters
+
+        """
+        cfg_path = "agent_customs_{}.cfg".format(self.host)
+        if os.path.isfile(cfg_path):
+            logger.info(
+                'Found agent custom execs config file in working directory with the same name as created for host %s.\n'
+                'Creating new one via tempfile. This will affect predictable filenames for agent artefacts',
+                self.host)
+            handle, cfg_path = tempfile.mkstemp('.sh', 'agent_customs_')
+            os.close(handle)
+
+        cmds = ""
+        for idx, cmd in enumerate(self.custom):
+            cmds += "-{idx}) {cmd};;\n".format(idx=idx, cmd=cmd['cmd'])
+        customs_script = """
+        #!/bin/sh
+        while :
+        do
+            case "$1" in
+            {cmds}
+            *) break;;
+            esac
+            shift
+        done
+        """.format(cmds=cmds)
+
+        with open(cfg_path, 'w') as fds:
+            fds.write(customs_script)
+        return cfg_path
+<switch:english>
+[english] By embedding the commands into a dynamic case statement within an infinite loop, this script executes any argument against your custom list until all predefined actions have been triggered.
+[english] If multiple commands in self.custom share overlapping command names, how does the script determine which one should run?
+[english] The script uses a sequential case structure; it runs through the commands provided in `self.custom` and exits only when an argument fails to match any of the defined patterns.
+[english] That makes sense, thank you for the clarification!

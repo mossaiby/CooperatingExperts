@@ -1,0 +1,32 @@
+[english] I need to programmatically instruct a service deployment to walk through a specific software upgrade domain for manual configuration updates.
+[english] The function first validates all necessary parameters like service name, deployment name, and the target domain ID before initiating the process. It constructs a URL pointing to the designated component endpoint followed by an asynchronous HTTP POST request.
+<switch:python>
+[python] def walk_upgrade_domain(self, service_name, deployment_name,
+                            upgrade_domain):
+        '''
+        Specifies the next upgrade domain to be walked during manual in-place
+        upgrade or configuration change.
+
+        service_name:
+            Name of the hosted service.
+        deployment_name:
+            The name of the deployment.
+        upgrade_domain:
+            An integer value that identifies the upgrade domain to walk.
+            Upgrade domains are identified with a zero-based index: the first
+            upgrade domain has an ID of 0, the second has an ID of 1, and so on.
+        '''
+        _validate_not_none('service_name', service_name)
+        _validate_not_none('deployment_name', deployment_name)
+        _validate_not_none('upgrade_domain', upgrade_domain)
+        return self._perform_post(
+            self._get_deployment_path_using_name(
+                service_name, deployment_name) + '/?comp=walkupgradedomain',
+            _XmlSerializer.walk_upgrade_domain_to_xml(
+                upgrade_domain),
+            as_async=True)
+<switch:english>
+[english] Because `as_async=True` is passed, this method returns an awaitable object rather than completing immediately; you must handle the resulting coroutine to track or wait for the walk operation to finish.
+[english] What happens if I pass a negative integer for the upgrade domain?
+[english] Since error handling within `_validate_not_none` is not shown, the outcome depends on that internal helper's implementation; however, typically zero-based indexing means any negative input would likely be rejected or treated as an invalid state.
+[english] That makes perfect sense; I appreciate the detailed breakdown.

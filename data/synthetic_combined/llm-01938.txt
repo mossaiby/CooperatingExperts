@@ -1,0 +1,26 @@
+[english] How can I programmatically drive the next turn of an open dialog based on the current state of an active conversation?
+[english] This function determines if there is an ongoing, active dialog. If one exists, it retrieves the full dialog instance and calls its continuation method to advance the conversational flow.
+<switch:python>
+[python] async def continue_dialog(self):
+        """
+        Continues execution of the active dialog, if there is one, by passing the context object to
+        its `Dialog.continue_dialog()` method. You can check `turn_context.responded` after the call completes
+        to determine if a dialog was run and a reply was sent to the user.
+        :return:
+        """
+        # Check for a dialog on the stack
+        if self.active_dialog != None:
+            # Look up dialog
+            dialog = await self.find_dialog(self.active_dialog.id)
+            if not dialog:
+                raise Exception("DialogContext.continue_dialog(): Can't continue dialog. A dialog with an id of '%s' wasn't found." % active_dialog.id)
+
+            # Continue execution of dialog
+            return await dialog.continue_dialog(self)
+        else:
+            return DialogTurnResult(DialogTurnStatus.Empty)
+<switch:english>
+[english] The logic ensures that execution only proceeds if a valid dialog object can be found; otherwise, it handles the state by returning an empty turn result.
+[english] What happens specifically if the active dialog's ID points to a dialog instance that has already been deleted or is unavailable?
+[english] If `find_dialog` fails to locate the dialog using the stored ID, the function explicitly raises an Exception. This prevents execution from continuing based on stale metadata.
+[english] Thanks for clarifying how those failure states are handled.

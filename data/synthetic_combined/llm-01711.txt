@@ -1,0 +1,22 @@
+[english] How can I programmatically instantiate a specific operations class based on the allowed API version for Azure provider metadata?
+[english] This function dynamically imports and instantiates the correct `ProviderOperationsMetadataOperations` class by checking the current API version before calling it.
+<switch:python>
+[python] def provider_operations_metadata(self):
+        """Instance depends on the API version:
+
+           * 2015-07-01: :class:`ProviderOperationsMetadataOperations<azure.mgmt.authorization.v2015_07_01.operations.ProviderOperationsMetadataOperations>`
+           * 2018-01-01-preview: :class:`ProviderOperationsMetadataOperations<azure.mgmt.authorization.v2018_01_01_preview.operations.ProviderOperationsMetadataOperations>`
+        """
+        api_version = self._get_api_version('provider_operations_metadata')
+        if api_version == '2015-07-01':
+            from .v2015_07_01.operations import ProviderOperationsMetadataOperations as OperationClass
+        elif api_version == '2018-01-01-preview':
+            from .v2018_01_01_preview.operations import ProviderOperationsMetadataOperations as OperationClass
+        else:
+            raise NotImplementedError("APIVersion {} is not available".format(api_version))
+        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+<switch:english>
+[english] The function ensures the correct implementation is used by mapping API version strings to specific module locations and then creating an instance of `OperationClass`.
+[english] What happens if a user provides an API version that has been deprecated and removed from the source code?
+[english] If an unsupported version is requested, the code immediately raises a `NotImplementedError`, preventing execution with unknown dependency classes. This ensures backward compatibility checks happen early.
+[english] That makes sense; it's a good fail-fast approach.

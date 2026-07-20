@@ -1,0 +1,37 @@
+[english] I need a function that securely sends a specific amount of Ethereum to a specified address on the blockchain.
+[english] This function constructs an ETH transaction dictionary with necessary details like recipient, value (in Wei), gas limit, and gas price. It also checks for valid contract addresses and enforces optional maximum sending limits before execution.
+<switch:python>
+[python] def send_eth_to(self, private_key: str, to: str, gas_price: int, value: int, gas: int=22000,
+                    retry: bool = False, block_identifier=None, max_eth_to_send: int = 0) -> bytes:
+        """
+        Send ether using configured account
+        :param to: to
+        :param gas_price: gas_price
+        :param value: value(wei)
+        :param gas: gas, defaults to 22000
+        :param retry: Retry if a problem is found
+        :param block_identifier: None default, 'pending' not confirmed txs
+        :return: tx_hash
+        """
+
+        assert check_checksum(to)
+        if max_eth_to_send and value > self.w3.toWei(max_eth_to_send, 'ether'):
+            raise EtherLimitExceeded('%d is bigger than %f' % (value, max_eth_to_send))
+
+        tx = {
+            'to': to,
+            'value': value,
+            'gas': gas,
+            'gasPrice': gas_price,
+        }
+
+        return self.send_unsigned_transaction(tx, private_key=private_key, retry=retry,
+                                              block_identifier=block_identifier)
+<switch:english>
+[english] It relies on `self.send_unsigned_transaction` to handle the actual signing and broadcasting of the transaction using the provided private key.
+[english] What happens if I pass a negative value for the amount?
+[english] The current code doesn't explicitly prevent negative values, but since `value` represents Wei (a positive quantity), sending it in would likely fail during broadcast. If strict validation is needed, you should add an assertion like:
+<switch:python>
+[python] assert value >= 0
+<switch:english>
+[english] Thanks for the help!

@@ -1,0 +1,23 @@
+[english] I have a pandas DataFrame where one column contains dates as strings, and I need to convert that specific column into actual datetime objects.
+[english] To handle this conversion, we utilize the `pd.to_datetime` function from the pandas library. The function is designed to efficiently parse string data based on a specified format string you provide.
+<switch:python>
+[python] def convert_str_to_datetime(df, *, column: str, format: str):
+    """
+    Convert string column into datetime column
+
+    ---
+
+    ### Parameters
+
+    *mandatory :*
+    - `column` (*str*): name of the column to format
+    - `format` (*str*): current format of the values (see [available formats](
+    https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior))
+    """
+    df[column] = pd.to_datetime(df[column], format=format)
+    return df
+<switch:english>
+[english] Using the `format` argument significantly accelerates parsing, but be aware that you must provide the exact string representation of your current date column.
+[english] What should I do if my column contains some valid dates and some mixed or completely invalid text entries?
+[english] For inconsistent data, pass `errors='coerce'` to tell pandas to automatically turn unparseable values into NaT (Not a Time). This is useful for cleaning the data without crashing.
+[english] That makes much more sense; thanks for clarifying how to handle bad data!

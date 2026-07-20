@@ -1,0 +1,27 @@
+[english] How can I combine multiple dictionaries or keyword arguments into one dictionary while making sure any entry with a value of None is excluded?
+[english] We will first collect all provided dictionaries and merge them into a single list of iterable inputs. Then, we loop through every key-value pair in these combined sources.
+<switch:python>
+[python] def dict_from_items_with_values(*dictionaries, **items):
+    """Creates a dict with the inputted items; pruning any that are `None`.
+
+    Args:
+        *dictionaries(dict): Dictionaries of items to be pruned and included.
+        **items: Items to be pruned and included.
+
+    Returns:
+        dict: A dictionary containing all of the items with a 'non-None' value.
+
+    """
+    dict_list = list(dictionaries)
+    dict_list.append(items)
+    result = {}
+    for d in dict_list:
+        for key, value in d.items():
+            if value is not None:
+                result[key] = value
+    return result
+<switch:english>
+[english] The logic effectively merges all inputs into `dict_list` and builds the final dictionary only if the associated value passes the explicit non-None check.
+[english] What happens if two different input dictionaries provide a key with the same name?
+[english] If duplicate keys exist, the one processed later in the loop will overwrite previous entries. Since `dict_list` iterates through positional arguments first and then keyword arguments, later inputs override earlier ones.
+[english] This implementation handles combined data sources very cleanly!

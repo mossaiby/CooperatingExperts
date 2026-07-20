@@ -1,0 +1,21 @@
+[english] Can you write a function that reads a monitoring setup defined in an XML file and extracts all individual host configurations?
+[english] To achieve this, the function attempts to load and parse an XML configuration file provided by 'filename'. It then locates all host entries within that parsed tree.
+<switch:python>
+[python] def getconfig(self, filename, target_hint):
+        """Prepare config data."""
+        try:
+            tree = self.parse_xml(filename)
+        except IOError as exc:
+            logger.error("Error loading config: %s", exc)
+            raise RuntimeError("Can't read monitoring config %s" % filename)
+        hosts = tree.findall('Host')
+        config = []
+        for host in hosts:
+            host_config = self.get_host_config(host, target_hint)
+            config.append(host_config)
+        return config
+<switch:english>
+[english] The function handles potential file reading errors gracefully by logging the issue and raising a specific RuntimeError.
+[english] What does the function return if it successfully parses the XML but doesn't find any <Host> elements within the document?
+[english] It will return an empty list. The initialization of `config = []` ensures that if no hosts are found, an empty configuration set is returned successfully.
+[english] Perfect, that makes sense. Thanks for clarifying how it handles edge cases!

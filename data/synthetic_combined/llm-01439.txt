@@ -1,0 +1,58 @@
+[english] I need a way to renumber all variants within a specific case based on their associated rank scores.
+[english] This function retrieves all relevant variants for a given case and sorts them descending by their `rank_score`. It then iterates through this sorted list, sequentially assigning a unique numerical rank to each variant.
+<switch:python>
+[python] def update_variant_rank(self, case_obj, variant_type='clinical', category='snv'):
+        """Updates the manual rank for all variants in a case
+
+        Add a variant rank based on the rank score
+        Whenever variants are added or removed from a case we need to update the variant rank
+
+        Args:
+            case_obj(Case)
+            variant_type(str)
+        """
+        # Get all variants sorted by rank score
+        variants = self.variant_collection.find({
+            'case_id': case_obj['_id'],
+            'category': category,
+            'variant_type': variant_type,
+        }).sort('rank_score', pymongo.DESCENDING)
+
+        LOG.info("Updating variant_rank for all variants")
+
+        requests = []
+
+        for index, var_obj in enumerate(variants):
+            if len(requests) > 5000:
+                try:
+                    self.variant_collection.bulk_write(requests, ordered=False)
+                    requests = []
+                except BulkWriteError as err:
+                    LOG.warning("Updating variant rank failed")
+                    raise err
+
+            operation = pymongo.UpdateOne(
+                {'_id': var_obj['_id']},
+                {
+                    '$set': {
+                        'variant_rank': index + 1,
+                    }
+                })
+            requests.append(operation)
+
+        #Update the final bulk
+        try:
+            self.variant_collection.bulk_write(requests, ordered=False)
+        except BulkWriteError as err:
+            LOG.warning("Updating variant rank failed")
+            raise err
+
+        LOG.info("Updating variant_rank done")
+<switch:english>
+[english] The implementation efficiently handles large data volumes by batching the required updates using MongoDB's bulk write operations. This design prevents memory overload when dealing with extensive case records.
+[english] What happens if multiple variants share the exact same `rank_score`?
+[english] When scores are equal, the assigned rank is determined by the underlying database iteration order rather than a guaranteed fixed rule. If you need stable ranking ties, use a secondary sorting field in your query:
+<switch:python>
+[python] '.sort('rank_score', pymongo.DESCENDING).sort('_id')
+<switch:english>
+[english] That makes sense; thanks for clarifying the ordering behavior.

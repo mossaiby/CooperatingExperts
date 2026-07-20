@@ -1,0 +1,26 @@
+[english] How can I manually and reliably close an active connection or session that this class manages?
+[english] This method handles the explicit disconnection of a session by issuing a DELETE request to the server. It first verifies the existence of a valid `_session_id` before proceeding with the termination logic.
+<switch:python>
+[python] def close(self):
+        """
+        Close an existing connection; once closed it cannot be used again.
+
+        Strictly speaking it is not necessary to close all connection that you opened -- we have several mechanisms
+        in place that will do so automatically (__del__(), __exit__() and atexit() handlers), however there is also
+        no good reason to make this method private.
+        """
+        if self._session_id:
+            try:
+                # If the server gone bad, we don't want to wait forever...
+                if self._timeout is None: self._timeout = 1
+                self.request("DELETE /4/sessions/%s" % self._session_id)
+                self._print("H2O session %s closed." % self._session_id)
+            except Exception:
+                pass
+            self._session_id = None
+        self._stage = -1
+<switch:english>
+[english] The function updates internal state and cleans up after itself, but note that exceptions during the deletion request are silently swallowed using a broad `try/except` block.
+[english] What happens if the server is unreachable when this method is called? Does it actually log or report critical failure?
+[english] Currently, any exception occurring during the request—like a network timeout—is caught and ignored by the function. If you need proper visibility into closure failures, you should replace `pass` with error logging.
+[english] Got it, I will add clearer error reporting for production use.

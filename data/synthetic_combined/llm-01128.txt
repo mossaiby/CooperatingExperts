@@ -1,0 +1,22 @@
+[english] I need a way to globally shift all detected objects within my label structure by specified delta values.
+[english] To implement this movement, we iterate through all keys in the provided label dictionary and check if they represent detection lists.
+<switch:python>
+[python] def move_detections(label, dy, dx):
+    """
+    Move detections in direction dx, dy.
+
+    :param label: The label dict containing all detection lists.
+    :param dy: The delta in y direction as a number.
+    :param dx: The delta in x direction as a number.
+    :return:
+    """
+    for k in label.keys():
+        if k.startswith("detection"):
+            detections = label[k]
+            for detection in detections:
+                detection.move_image(-dx, -dy)
+<switch:english>
+[english] This function efficiently targets only relevant data structures while applying the necessary transformation to each individual image object within those detections.
+[english] Does this function handle other metadata keys that might also contain objects, or is it strictly limited to keys starting with 'detection'?
+[english] It is designed specifically for detection lists. If a key does not begin with the string "detection", it will be skipped entirely.
+[english] Got it! This makes sense.

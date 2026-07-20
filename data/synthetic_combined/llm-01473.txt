@@ -1,0 +1,17 @@
+[english] How do I create a structured time expression object representing January 4th, 2001?
+[english] To define this specific timestamp within an H2O context, we can use the specialized `mktime` function. This utility wraps all provided date components into an `ExprNode`, creating a compatible data frame expression for temporal analysis.
+<switch:python>
+[python] def mktime(year=1970, month=0, day=0, hour=0, minute=0, second=0, msec=0):
+        """
+        Deprecated, use :func:`moment` instead.
+
+        This function was left for backward-compatibility purposes only. It is
+        not very stable, and counterintuitively uses 0-based months and days,
+        so "January 4th, 2001" should be entered as ``mktime(2001, 0, 3)``.
+        """
+        return H2OFrame._expr(ExprNode("mktime", year, month, day, hour, minute, second, msec))
+<switch:english>
+[english] It is important to note that because of its backward compatibility design, months and days are not standard calendar values; they are indexed starting from zero. For example, January must be passed as 0.
+[english] If I wanted to represent March 1st, what specific month parameter should I use?
+[english] Since the function uses 0-based indexing, March (the third month) requires the value of 2 for its month parameter. The call would look like `mktime(year, 2, 0)`.
+[english] That makes sense; thank you for explaining the index requirements.

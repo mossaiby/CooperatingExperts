@@ -1,0 +1,11 @@
+[english] I need a way to implement the Fredkin gate operation (CSWAP) within my quantum circuit simulator.
+[english] This method encapsulates the complexity by defining a new FredkinGate object, specifying the control qubit and two target qubits, and then appending it to the simulation's sequence.
+<switch:python>
+[python] def cswap(self, ctl, tgt1, tgt2):
+    """Apply Fredkin to circuit."""
+    return self.append(FredkinGate(), [ctl, tgt1, tgt2], [])
+<switch:english>
+[english] The function delegates the actual circuit modification logic to self.append(), making this method a simple interface for Fredkin gate instantiation.
+[english] What happens if I pass `None` as the control qubit?
+[english] If you pass `None`, the current implementation will likely raise an error because it attempts to treat the passed object as a valid qubit index within self.append().
+[english] Thanks for clarifying how this method works!

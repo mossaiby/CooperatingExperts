@@ -1,0 +1,16 @@
+[english] How can I dynamically generate a configuration file from a template by pulling variables defined in my current Python script?
+[english] To handle this, we gather every available variable from both the global and local scopes into one master dictionary. This allows us to use string formatting to substitute these variables directly into your config template.
+<switch:python>
+[python] def parameterized_config(template):
+    """
+    Generates a configuration from the provided template + variables defined in
+    current scope
+    :param template: a config content templated with {{variables}}
+    """
+    all_vars = {k: v for d in [globals(), locals()] for k, v in d.items()}
+    return template.format(**all_vars)
+<switch:english>
+[english] The function efficiently merges scopes but note that curly braces must be escaped (e.g., {{key}}) to prevent them from being treated as format placeholders.
+[english] What happens if the config template tries to reference a variable name that hasn't been defined anywhere in my code?
+[english] If the template references an undefined key, `template.format(**all_vars)` will raise a KeyError because it requires all referenced keys to be present as arguments.
+[english] That helps clarify how scope resolution works here.

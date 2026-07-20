@@ -1,0 +1,29 @@
+[english] I need a way to automatically collect all Flask blueprint definitions for every provider that supports them.
+[english] This function iterates through all known providers while safely attempting to fetch their associated blueprints. If a provider doesn't implement receiver support, the exception is caught allowing the loop to continue without errors.
+<switch:python>
+[python] def receiver_blueprints(self):
+        """ Get Flask blueprints for every provider that supports it
+
+            Note: this requires Flask microframework.
+
+            :rtype: dict
+            :returns: A dict { provider-name: Blueprint }
+        """
+        blueprints = {}
+        for name in self._providers:
+            try:
+                blueprints[name] = self.receiver_blueprint_for(name)
+            except NotImplementedError:
+                pass  # Ignore providers that does not support receivers
+        return blueprints
+<switch:english>
+[english] It successfully builds a dictionary mapping providers to their respective blueprints, ensuring that non-supporting providers are silently skipped via targeted error handling.
+[english] What happens if a specific provider raises an unexpected critical error instead of just the expected NotImplementedError?
+[english] Currently, the function would crash because it only catches `NotImplementedError`. To handle all potential failures gracefully, you should broaden the catch block to include general exceptions.
+<switch:python>
+[python] try:
+    blueprints[name] = self.receiver_blueprint_for(name)
+except (NotImplementedError, Exception):
+    pass  # Ignore providers that do not support receivers or fail critically
+<switch:english>
+[english] That makes sense, thanks for clarifying how robust the error handling is.

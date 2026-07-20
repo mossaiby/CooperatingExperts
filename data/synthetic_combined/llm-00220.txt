@@ -1,0 +1,28 @@
+[english] I need a way to combine multiple lines of text into one string, but only after trimming external whitespace from each line.
+[english] This function breaks the input string down into individual lines using `splitlines()`. It then conditionally applies strip methods based on whether `Strip.LEFT` or `Strip.RIGHT` is enabled in the arguments before reassembling everything.
+<switch:python>
+[python] def join_lines(string, strip=Strip.BOTH):
+    '''
+    Join strings together and strip whitespace in between if needed
+    '''
+    lines = []
+
+    for line in string.splitlines():
+        if strip & Strip.RIGHT:
+            line = line.rstrip()
+
+        if strip & Strip.LEFT:
+            line = line.lstrip()
+
+        lines.append(line)
+
+    return ''.join(lines)
+<switch:english>
+[english] The function relies on a constant structure (like `Strip`) to determine how aggressively whitespace is removed from the boundaries of each line.
+[english] What happens if I only want to strip spaces from the left, not the right?
+[english] You can pass a value where 'strip' includes `Strip.LEFT` but lacks `Strip.RIGHT`. For example:
+<switch:python>
+[python] ja_line = join_lines(' hello world ', strip=Strip.LEFT)
+# 'hello world' will be returned, preserving trailing space.
+<switch:english>
+[english] That makes perfect sense!

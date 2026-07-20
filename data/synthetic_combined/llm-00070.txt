@@ -1,0 +1,35 @@
+[english] How can I enforce a set of prerequisite commands to run before a specific command executes?
+[english] This function works using class decoration and inheritance, allowing you to wrap any existing command class. It creates a new subclass that first runs all necessary dependency commands before executing the original logic.
+<switch:python>
+[python] def _wrap_command(cmds, cls, strict=True):
+    """Wrap a setup command
+
+    Parameters
+    ----------
+    cmds: list(str)
+        The names of the other commands to run prior to the command.
+    strict: boolean, optional
+        Whether to raise errors when a pre-command fails.
+    """
+    class WrappedCommand(cls):
+
+        def run(self):
+            if not getattr(self, 'uninstall', None):
+                try:
+                    [self.run_command(cmd) for cmd in cmds]
+                except Exception:
+                    if strict:
+                        raise
+                    else:
+                        pass
+            # update package data
+            update_package_data(self.distribution)
+
+            result = cls.run(self)
+            return result
+    return WrappedCommand
+<switch:english>
+[english] The core mechanism relies on returning a subclass that overrides the `run` method to safely execute pre-commands before calling the parent's implementation.
+[english] If the base class already implemented a complex setup in its `run` method, would wrapping it always bypass those initial steps?
+[english] Yes, since the wrapped command explicitly calls `cls.run(self)` only at the end of its execution block, any logic defined *before* that call is effectively being prepended to your existing setup.
+[english] That clarification helps me understand how dependency injection works here.

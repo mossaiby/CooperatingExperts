@@ -1,0 +1,19 @@
+[english] I need a method that can accept either a single descriptor object or a collection of them, converting any JSON format into registered objects.
+[english] This function first checks if the input is already a list; otherwise, it wraps the object in a list to standardize the processing. It then yields converted descriptors for registration.
+<switch:python>
+[python] def register_json(self, obj):
+        """Register Descriptors from json descriptor objects.
+
+        Parameters:
+            obj(list or dict): descriptors to register
+
+        """
+        if not isinstance(obj, list):
+            obj = [obj]
+
+        self.register(Descriptor.from_json(j) for j in obj)
+<switch:english>
+[english] The implementation leverages generator expressions inside `self.register()` to efficiently process and register all items without creating an unnecessary intermediate list of objects.
+[english] If one of the descriptor objects is invalid JSON, what happens during the conversion process?
+[english] If `Descriptor.from_json(j)` fails due to malformed input, it will raise an exception (like a ValueError or KeyError), halting the registration immediately unless you wrap that call in try-except blocks.
+[english] That makes sense!

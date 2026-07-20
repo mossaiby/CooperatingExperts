@@ -1,0 +1,36 @@
+[english] How do I register a function to be executed automatically whenever a specific event, like 'terra.data.loaded', is triggered by this system?
+[english] To handle subscriptions, the function first validates that the provided `callback` is indeed callable. It ensures an entry exists for the given `event` in `self._subscribers`, then checks if the subscription already exists to prevent duplicates before adding it.
+<switch:python>
+[python] def subscribe(self, event, callback):
+        """Subscribes to an event, so when it's emitted all the callbacks subscribed,
+        will be executed. We are not allowing double registration.
+
+        Args
+            event (string): The event to subscribed in the form of:
+                            "terra.<component>.<method>.<action>"
+            callback (callable): The callback that will be executed when an event is
+                                  emitted.
+        """
+        if not callable(callback):
+            raise QiskitError("Callback is not a callable!")
+
+        if event not in self._subscribers:
+            self._subscribers[event] = []
+
+        new_subscription = self._Subscription(event, callback)
+        if new_subscription in self._subscribers[event]:
+            # We are not allowing double subscription
+            return False
+
+        self._subscribers[event].append(new_subscription)
+        return True
+<switch:english>
+[english] The method successfully adds a unique subscription and returns True upon success, or False if the event was already subscribed to, enforcing non-duplication.
+[english] If multiple callbacks are registered for the same event, in what order are they guaranteed to be called when the event is emitted?
+[english] When an event is emitted, all subscribed callbacks added via this method will typically be executed sequentially in the order they were appended to the list within `self._subscribers[event]`.
+<switch:python>
+[python] # Conceptual Example of calling them:
+for subscription in self._subscribers[event]: 
+    subscription.callback(data)
+<switch:english>
+[english] Thanks, that clarifies how the dispatch mechanism works.

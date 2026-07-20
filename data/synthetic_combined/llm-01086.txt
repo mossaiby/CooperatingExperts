@@ -1,0 +1,20 @@
+[english] How can I correctly merge a set of user-provided parameters with the default parameters defined within my request builder?
+[english] This method manages parameter merging by first creating a safe copy of your input data, then injecting any predefined defaults held internally.
+<switch:python>
+[python] def with_params(self, params):
+        '''Adds parameters to the request params
+
+        Args:
+            params (dict): The parameters to add to the request params
+
+        Returns:
+            The request builder instance in order to chain calls
+        '''
+        copy = params.copy()
+        copy.update(self._params)
+        return self.__copy_and_set('params', copy)
+<switch:english>
+[english] Note that since `self._params` is updated onto the copied dictionary, internal default settings will overwrite user inputs if both dictionaries contain the same keys.
+[english] If I pass an empty dictionary for params, does it ensure all of my service defaults are still applied?
+[english] Yes. If you call `with_params({})`, there is no external data to conflict with; thus, all parameters from your instance's internal list (`self._params`) will be added directly.
+[english] I feel much better about the merging logic now!

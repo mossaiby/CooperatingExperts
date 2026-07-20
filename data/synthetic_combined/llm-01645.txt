@@ -1,0 +1,23 @@
+[english] How can I retrieve a specific token record using either its access token or refresh token?
+[english] I designed this function to look up a Token object by checking for tokens sequentially. It first attempts to filter the database query using the provided `access_token` before falling back to check the `refresh_token`.
+<switch:python>
+[python] def get(self, access_token=None, refresh_token=None):
+        """returns a Token object with the given access token or refresh token
+
+        :param access_token: User's access token
+        :param refresh_token: User's refresh token
+        """
+        if access_token:
+            return self.query.filter_by(access_token=access_token).first()
+        elif refresh_token:
+            return self.query.filter_by(refresh_token=refresh_token).first()
+        return None
+<switch:english>
+[english] The function returns the first matching record found or None if neither token matches, but it assumes a successful database operation.
+[english] What happens if both an access token and a refresh token are passed simultaneously?
+[english] Because the code uses `if` followed by `elif`, it prioritizes using the `access_token`. Therefore, only one filtering path will ever execute in this function.
+<switch:python>
+[python] def get(self, access_token=None, refresh_token=None):
+        # ... (function body)
+<switch:english>
+[english] That makes sense; I prefer querying by the access token whenever possible.

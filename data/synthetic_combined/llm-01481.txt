@@ -1,0 +1,24 @@
+[english] I need a function to gracefully close an SSL connection by sending the necessary shutdown alerts.
+[english] This method handles the negotiation of a secure socket's closure using the underlying library call. It checks the return value from `SSL_shutdown` to determine if the handshake was successful or if more I/O is required.
+<switch:python>
+[python] def shutdown(self):
+        """
+        Send the shutdown message to the Connection.
+
+        :return: True if the shutdown completed successfully (i.e. both sides
+                 have sent closure alerts), False otherwise (in which case you
+                 call :meth:`recv` or :meth:`send` when the connection becomes
+                 readable/writeable).
+        """
+        result = _lib.SSL_shutdown(self._ssl)
+        if result < 0:
+            self._raise_ssl_error(self._ssl, result)
+        elif result > 0:
+            return True
+        else:
+            return False
+<switch:english>
+[english] The function specifically distinguishes between a full success and partial completion, which helps prevent premature attempts to read or write data on a half-closed connection.
+[english] When `result` is exactly zero in this function, what does that mean for the connection state?
+[english] A return value of zero indicates that the shutdown message was sent but the process has not yet completed. You should wait for further network activity before concluding the closure.
+[english] Got it, I will handle the partial completion appropriately.

@@ -1,0 +1,16 @@
+[english] I want to extract a specific team statistics table from a webpage using a CSS selector into a structured DataFrame.
+[english] This helper function retrieves a main document, navigates the page to find the desired HTML table via the provided selector, and uses utility functions to parse that data into a usable pandas DataFrame.
+<switch:python>
+[python] def _get_team_stats_table(self, selector):
+        """Helper function for stats tables on season pages. Returns a
+        DataFrame."""
+        doc = self.get_main_doc()
+        table = doc(selector)
+        df = sportsref.utils.parse_table(table)
+        df.set_index('team_id', inplace=True)
+        return df
+<switch:english>
+[english] The function ensures easy lookup by setting 'team_id' as the index of the resulting DataFrame. Note that this relies heavily on external utilities like sportsref.
+[english] What happens if the provided selector doesn't match any table in the document or returns an empty result?
+[english] If no match is found, `doc(selector)` will typically return an empty list of tags. The subsequent call to `parse_table` would then likely try to process an invalid structure, leading to a parsing error or an empty DataFrame depending on how `sportsref.utils.parse_table` handles bad input.
+[english] That makes sense; I should probably add robust error checking around the selector.

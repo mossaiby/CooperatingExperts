@@ -1,0 +1,74 @@
+[english] How do I run SKEsa bioinformatics tool on a pair of fastq files while ensuring dynamic output naming and handling temporary file cleanup?
+[english] This function automates running the external skesa command via subprocess. It first dynamically determines the intended output filename based on the sample ID and current software version before executing the pipeline.
+<switch:python>
+[python] def main(sample_id, fastq_pair, clear):
+    """Main executor of the skesa template.
+
+    Parameters
+    ----------
+    sample_id : str
+        Sample Identification string.
+    fastq_pair : list
+        Two element list containing the paired FastQ files.
+    clear : str
+        Can be either 'true' or 'false'. If 'true', the input fastq files will
+        be removed at the end of the run, IF they are in the working directory
+    """
+
+    logger.info("Starting skesa")
+
+    # Determine output file
+    if "_trim." in fastq_pair[0]:
+        sample_id += "_trim"
+    version = __get_version_skesa()["version"]
+    output_file = "{}_skesa{}.fasta".format(sample_id, version.replace(".", ""))
+
+    cli = [
+        "skesa",
+        "--fastq",
+        "{},{}".format(fastq_pair[0], fastq_pair[1]),
+        "--gz",
+        "--use_paired_ends",
+        "--cores",
+        "${task.cpus}"
+    ]
+
+    logger.debug("Running Skesa subprocess with command: {}".format(cli))
+
+    with open(output_file, "w") as fh:
+        p = subprocess.Popen(cli, stdout=fh, stderr=PIPE)
+    stdout, stderr = p.communicate()
+
+    # Attempt to decode STDERR output from bytes. If unsuccessful, coerce to
+    # string
+    try:
+        stderr = stderr.decode("utf8")
+        stdout = stdout.decode("utf8")
+    except (UnicodeDecodeError, AttributeError):
+        stderr = str(stderr)
+        stdout = str(stdout)
+
+    logger.info("Finished Skesa subprocess with STDOUT:\\n"
+                "======================================\\n{}".format(stdout))
+    logger.info("Fished Skesa subprocess with STDERR:\\n"
+                "======================================\\n{}".format(stderr))
+    logger.info("Finished Skesa with return code: {}".format(
+        p.returncode))
+
+    # Remove input fastq files when clear option is specified.
+    # Only remove temporary input when the expected output exists.
+    if clear == "true" and os.path.exists(output_file):
+        clean_up(fastq_pair)
+
+    with open(".status", "w") as fh:
+        if p.returncode != 0:
+            fh.write("error")
+            raise SystemExit(p.returncode)
+        else:
+            fh.write("pass")
+<switch:english>
+[english] The process is robust, managing byte decoding for standard error logs to provide clear feedback. Note that successful cleanup is contingent upon the processing finishing successfully by creating the expected output file.
+[english] What happens regarding input fastq files if SKEsa fails midway through execution?
+[english] The current logic only calls clean_up() after a return code of 0 and confirmation that the output exists. If failure occurs, the input FASTQ files remain untouched, as shown by this dependency:
+	if clear == "true" and os.path.exists(output_file):
+[english] That makes sense; I should modify the logic to handle cleanup during failures.

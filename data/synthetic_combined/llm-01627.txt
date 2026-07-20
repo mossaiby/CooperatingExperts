@@ -1,0 +1,31 @@
+[english] How can I programmatically generate standardized IDs (like simple or variant IDs) from core genomic information?
+[english] This function acts as an ID factory, taking various genomic inputs like chromosome (`chrom`) and position (`pos`), and calling specialized helper functions to build a comprehensive set of identifiers.
+<switch:python>
+[python] def parse_ids(chrom, pos, ref, alt, case_id, variant_type):
+    """Construct the necessary ids for a variant
+
+    Args:
+        chrom(str): Variant chromosome
+        pos(int): Variant position
+        ref(str): Variant reference
+        alt(str): Variant alternative
+        case_id(str): Unique case id
+        variant_type(str): 'clinical' or 'research'
+
+    Returns:
+        ids(dict): Dictionary with the relevant ids
+    """
+    ids = {}
+    pos = str(pos)
+
+    ids['simple_id'] = parse_simple_id(chrom, pos, ref, alt)
+    ids['variant_id'] = parse_variant_id(chrom, pos, ref, alt, variant_type)
+    ids['display_name'] = parse_display_name(chrom, pos, ref, alt, variant_type)
+    ids['document_id'] = parse_document_id(chrom, pos, ref, alt, variant_type, case_id)
+
+    return ids
+<switch:english>
+[english] The code systematically calls specific parsing routines for each field (e.g., `ids['simple_id'] = parse_simple_id(...)`) to ensure all necessary metadata is captured in the resulting dictionary.
+[english] If I pass a value for `pos` that isn't an integer, will the code still function correctly?
+[english] Yes, the first thing the function does after initializing `ids = {}` is convert the position using `pos = str(pos)`, ensuring it always handles string inputs before passing them to parsers.
+[english] Thanks for clarifying how the type conversion works!

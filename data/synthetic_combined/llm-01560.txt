@@ -1,0 +1,19 @@
+[english] I need to generate random time values suitable for use in testing database fields like TimeField.
+[english] This function creates a randomized time object by independently choosing values for hours, minutes, and seconds using utility functions from xunit.
+<switch:python>
+[python] def any_time_field(field, **kwargs):
+    """
+    Return random value for TimeField
+    >>> result = any_field(models.TimeField())
+    >>> type(result)
+    <type 'datetime.time'>
+    """
+    return time(
+        xunit.any_int(min_value=0, max_value=23),
+        xunit.any_int(min_value=0, max_value=59),
+        xunit.any_int(min_value=0, max_value=59))
+<switch:english>
+[english] It relies on the `xunit.any_int` helper to randomly select integer components within their specified constraints (0-23 for hours, 0-59 otherwise).
+[english] Is it possible to restrict the time generation so that only certain days or months are used?
+[english] This function is designed purely for generating raw `datetime.time` objects and doesn't manage date context; you would need a separate helper to enforce month or day constraints.
+[english] That clarifies the scope of this utility for me, thanks!

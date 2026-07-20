@@ -1,0 +1,24 @@
+[english] How can I retrieve all contents from provided buffers as CData objects while returning them in a convenient format depending on how many inputs are given?
+[english] This function processes all incoming arguments by mapping them through `self.from_buffer` to convert standard Python types into CData objects and stores them initially in a tuple.
+<switch:python>
+[python] def get_cdata(self, *args):
+        '''
+        all args-->_cffi_backend.buffer
+        Returns-->cdata (if a SINGLE argument was provided)
+                  LIST of cdata (if a args was a tuple or list)
+        '''
+        res = tuple([
+            self.from_buffer(x) for x in args
+        ])
+
+        if len(res) == 0:
+            return None
+        elif len(res) == 1:
+            return res[0]
+        else:
+            return res
+<switch:english>
+[english] The logic checks the resulting tuple length. If there is only one item, it returns that object directly; otherwise (if multiple items or zero), it returns a list of results.
+[english] If I call this function with no arguments, what specific value will be returned and why?
+[english] When called without any arguments, the length check identifies `len(res) == 0`, causing the function to immediately return None. This handles empty input cases gracefully.
+[english] Okay, that makes perfect sense.

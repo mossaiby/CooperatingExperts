@@ -1,0 +1,16 @@
+[english] How can I safely add a new info widget while ensuring that its assigned index does not conflict with existing widgets?
+[english] This function first retrieves the intended index for the widget. It then enters a loop to search through all current keys in storage until it finds an index that is not already occupied.
+<switch:python>
+[python] def add_info_widget(self, widget):
+        '''
+        Add widget string to right panel of the screen
+        '''
+        index = widget.get_index()
+        while index in self.info_widgets.keys():
+            index += 1
+        self.info_widgets[widget.get_index()] = widget
+<switch:english>
+[english] The loop continues incrementing the index until a unique, unused key (index) is found and assigned to the widget within the internal dictionary.
+[english] If multiple widgets are added rapidly, could this sequential searching create performance issues?
+[english] For small numbers of widgets, it's fine. However, for massive dictionaries where indices might be large, a set lookup would be faster than repeated key checks in the loop structure.
+[english] That makes sense; I should probably consider using a data structure optimized for fast membership tests.

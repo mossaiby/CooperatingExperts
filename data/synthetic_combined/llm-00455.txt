@@ -1,0 +1,39 @@
+[english] How can we parse lines from an HP0/HPO ontology (.obo format) to extract structured term data like IDs, aliases, and parent relationships?
+[english] This function iterates through each line of the input file, identifying section breaks using '[Term]' or standard fields like 'id'. It builds a dictionary for the current record until it encounters a new term.
+<switch:python>
+[python] def parse_hpo_obo(hpo_lines):
+    """Parse a .obo formated hpo line"""
+    term = {}
+    for line in hpo_lines:
+        if len(line) == 0:
+            continue
+        line = line.rstrip()
+        # New term starts with [Term]
+        if line == '[Term]':
+            if term:
+                yield term
+            term = {}
+        
+        elif line.startswith('id'):
+            term['hpo_id'] = line[4:]
+
+        elif line.startswith('name'):
+            term['description'] = line[6:]
+
+        elif line.startswith('alt_id'):
+            if 'aliases' not in term:
+                term['aliases'] = []
+            term['aliases'].append(line[8:])
+        
+        elif line.startswith('is_a'):
+            if 'ancestors' not in term:
+                term['ancestors'] = []
+            term['ancestors'].append(line[6:16])
+
+    if term:
+        yield term
+<switch:english>
+[english] The logic handles multi-line input but relies on unique prefixes (e.g., 'id', 'name') to populate the `term` dictionary before yielding it.
+[english] What happens if two '[Term]' headers appear consecutively in the input file?
+[english] If two headers are consecutive, the function first yields any partially completed data from the previous term and then starts a new empty dictionary for the second term.
+[english] That makes sense; thank you for clarifying how it handles transitions.

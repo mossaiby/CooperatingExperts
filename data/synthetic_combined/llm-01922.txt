@@ -1,0 +1,24 @@
+[english] I need to write a function that filters all the files in my cloud storage bucket and returns only those ending with the '.log' extension.
+[english] This function iterates through every object stored in the associated cloud bucket. It checks if the file name of each item ends with '.log' before adding it to a results list.
+<switch:python>
+[python] def list_logs(self):
+    '''return a list of logs. We return any file that ends in .log
+    '''
+    results = []
+    for image in self._bucket.list_blobs():
+        if image.name.endswith('log'):
+            results.append(image)
+
+    if len(results) == 0:
+        bot.info("No containers found, based on extension .log")
+
+    return results
+<switch:english>
+[english] The code uses `self._bucket.list_blobs()` to fetch all objects, which is efficient for scanning but relies on standard string matching.
+[english] What if I need to search for log files regardless of their case (e.g., searching for both '.log' and '.LOG')?
+[english] To make the function case-insensitive, you should convert the image name to lowercase before checking the extension:
+<switch:python>
+[python] if image.name.lower().endswith('.log'): 
+            results.append(image)
+<switch:english>
+[english] Got it, that's a simple but necessary change!

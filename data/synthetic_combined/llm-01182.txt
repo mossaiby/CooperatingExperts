@@ -1,0 +1,23 @@
+[english] How can I implement a reliable heartbeat mechanism to ping an API and ensure it responds within a specific time limit?
+[english] This function logs that it is starting a health check and immediately sends a structured JSON 'ping' message over the network socket. It then schedules an asynchronous task using a timer, which will handle the expected response.
+<switch:python>
+[python] def send_ping(self):
+        """Sends a ping message to the API and starts pong timers.
+
+        :return:
+        """
+        self.log.debug("send_ping(): Sending ping to API..")
+        self.socket.send(json.dumps({'event': 'ping'}))
+        self.pong_timer = Timer(self.pong_timeout, self._check_pong)
+        self.pong_timer.start()
+<switch:english>
+[english] The use of `Timer` effectively implements a timeout mechanism; if the corresponding pong response isn't received in time, the failure logic is triggered by `self._check_pong`. This pattern requires that the calling environment handles recurring calls to maintain connectivity.
+[english] What happens internally within the class instance after the timer successfully expires and triggers `self._check_pong`?
+[english] This method likely implements failure logic, such as marking the service as failed or attempting a reconnection. It usually contains error handling like this:
+<switch:python>
+[python] def _check_pong(self):
+    if not self._received_response:
+        self.status = 'failure'
+        # Trigger reconnection logic here
+<switch:english>
+[english] That's clear on the failure path, thanks for breaking it down!

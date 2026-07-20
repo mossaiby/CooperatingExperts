@@ -1,0 +1,28 @@
+[english] How do I safely retrieve or initialize a specific namespace object in my application cache, ensuring proper linking to core components?
+[english] This function manages the creation and insertion of custom namespaces into a centralized cache. It first attempts an atomic lookup; if the namespace doesn't exist, it initializes one, establishes necessary dependencies on the system's core namespace, and caches the result.
+<switch:python>
+[python] def __get_or_create(
+        ns_cache: NamespaceMap,
+        name: sym.Symbol,
+        module: types.ModuleType = None,
+        core_ns_name=CORE_NS,
+    ) -> lmap.Map:
+        """Private swap function used by `get_or_create` to atomically swap
+        the new namespace map into the global cache."""
+        ns = ns_cache.entry(name, None)
+        if ns is not None:
+            return ns_cache
+        new_ns = Namespace(name, module=module)
+        if name.name != core_ns_name:
+            core_ns = ns_cache.entry(sym.symbol(core_ns_name), None)
+            assert core_ns is not None, "Core namespace not loaded yet!"
+            new_ns.refer_all(core_ns)
+        return ns_cache.assoc(name, new_ns)
+<switch:english>
+[english] The mechanism handles dependency resolution by automatically referencing the global core namespace when creating new names. Note that this function relies heavily on external objects like `NamespaceMap` and assumes a strict loading order for dependencies.
+[english] What specifically happens if we try to create a derived namespace before the necessary core namespace has been initialized?
+[english] The code explicitly validates this dependency by asserting that `core_ns` is available. If it isn't loaded, the function will raise an `AssertionError` during execution:
+<switch:python>
+[python] assert core_ns is not None, "Core namespace not loaded yet!"
+<switch:english>
+[english] Got it, so proper loading order is critical for this module.

@@ -1,0 +1,16 @@
+[english] How can I easily retrieve an error message from the current interface context without dealing with potential connection or state issues?
+[english] This function provides a quick shortcut to access the `errmsg` method of the last registered debugger interface. It wraps this call in a try-except block to handle cases where that specific interface might not be available.
+<switch:python>
+[python] def errmsg(self, msg, opts={}):
+        """ Convenience short-hand for self.debugger.intf[-1].errmsg """
+        try:
+            return(self.debugger.intf[-1].errmsg(msg))
+        except EOFError:
+            # FIXME: what do we do here?
+            pass
+        return None
+<switch:english>
+[english] The code attempts to execute the message retrieval via the debugger interface. If an EOFError occurs, it silently fails and returns None as specified in the placeholder comment.
+[english] If `self.debugger.intf[-1]` is accessible but its `errmsg` method isn't, should I handle that exception specifically?
+[english] You could add an AttributeError catch to handle missing methods, although often a general Exception catch might be safer depending on the expected state of the interface object.
+[english] That makes sense; catching broader errors seems appropriate for this helper.

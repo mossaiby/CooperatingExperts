@@ -1,0 +1,15 @@
+[english] I need a method that handles incoming API requests while optionally setting a specific random seed for deterministic behavior.
+[english] This approach first checks if a `randomSeed` is supplied to configure internal random generators and then proceeds to dispatch the request through the main API call.
+<switch:python>
+[python] def recv_method(self, method, params, id_, randomSeed=None):
+        """DDP method handler."""
+        if randomSeed is not None:
+            this.random_streams.random_seed = randomSeed
+            this.alea_random = alea.Alea(randomSeed)
+        self.api.method(method, params, id_)
+        self.reply('updated', methods=[id_])
+<switch:english>
+[english] The function reliably processes the method and then ensures the client knows the operation has completed successfully by sending an 'updated' reply.
+[english] What happens to the state if `randomSeed` is passed but the internal systems referenced by `this` haven't been initialized yet?
+[english] If `this` or its attributes (`random_streams`, `alea`) are not defined, accessing them will raise an AttributeError before the request processing even begins.
+[english] Got it. I should handle initialization defensively.

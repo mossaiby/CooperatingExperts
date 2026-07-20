@@ -1,0 +1,14 @@
+[english] I need a method that can dynamically look up or find a parent node within an object structure using specialized search criteria.
+[english] This function uses `operator.methodcaller` to create a callable object (`op`) that delegates a call to another 'find_parent' implementation, passing along all supplied arguments. This resulting operation is then passed into the class’s internal wrapping logic for final execution and return.
+<switch:python>
+[python] def find_parent(self, *args, **kwargs):
+        """
+        Like :meth:`find`, but searches through :attr:`parents`
+        """
+        op = operator.methodcaller('find_parent', *args, **kwargs)
+        return self._wrap_node(op)
+<switch:english>
+[english] The method relies on `self._wrap_node` to handle the operational context. Note that the success of this call depends entirely on how Python resolves 'find_parent' when called via `methodcaller` within your specific object structure.
+[english] What would happen if the node being searched for does not have a parent defined?
+[english] If no parent is found, the underlying method called by `operator.methodcaller` will raise an AttributeError or return None depending on its definition. You can handle this gracefully using a try/except block around the call.
+[english] That clarifies how errors are handled, thank you!

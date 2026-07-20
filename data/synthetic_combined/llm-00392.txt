@@ -1,0 +1,26 @@
+[english] I need a function that can increase or decrease the brightness of an image using Python.
+[english] To achieve this, we leverage the Pillow library's `ImageEnhance` module. The approach involves creating an enhancer object and then calling its enhance method with your desired factor.
+<switch:python>
+[python] def adjust_brightness(img, brightness_factor):
+    """Adjust brightness of an Image.
+
+    Args:
+        img (PIL Image): PIL Image to be adjusted.
+        brightness_factor (float):  How much to adjust the brightness. Can be
+            any non negative number. 0 gives a black image, 1 gives the
+            original image while 2 increases the brightness by a factor of 2.
+
+    Returns:
+        PIL Image: Brightness adjusted image.
+    """
+    if not _is_pil_image(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    enhancer = ImageEnhance.Brightness(img)
+    img = enhancer.enhance(brightness_factor)
+    return img
+<switch:english>
+[english] The function returns a new image object rather than modifying the original one in place. Remember that factors greater than 2 might lead to color saturation or clipping depending on the original image.
+[english] What behavior should I expect if I pass a negative brightness_factor?
+[english] While the docstring implies non-negative numbers, a negative factor would generally decrease the brightness. However, this function currently does not validate for negative inputs and relies solely on `ImageEnhance` to handle it.
+[english] That makes sense; I'll test those edge cases in my next script.

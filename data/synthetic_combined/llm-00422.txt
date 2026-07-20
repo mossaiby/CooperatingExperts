@@ -1,0 +1,22 @@
+[english] How can I retrieve structured data about a user when I only have their public URL link?
+[english] The function begins by extracting a unique username from the provided external link to identify the target user. If a valid name cannot be found, it returns an empty dictionary immediately.
+<switch:python>
+[python] def __fetch_user_data(self, tag_type, user_link):
+        """Get data associated to an user"""
+
+        user_name = self.client.user_name(user_link)
+
+        user = {}
+
+        if not user_name:
+            return user
+
+        user_raw = self.client.user(user_name)
+        user = json.loads(user_raw)
+
+        return user
+<switch:english>
+[english] The code successfully transforms the raw data string into a usable Python dictionary using json.loads. Note that robust error handling around the API calls might be beneficial.
+[english] What happens if `self.client.user` returns malformed data or is not valid JSON?
+[english] If the raw response cannot be parsed, you should wrap the `json.loads(user_raw)` call in a try/except block to handle potential parsing errors gracefully.
+[english] That makes sense, thanks for the detailed review!

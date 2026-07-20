@@ -1,0 +1,14 @@
+[english] I need a way to load a specific polynomial series data set identified by `name` and ensure it is only loaded from disk once.
+[english] This function acts as a cache wrapper for loading external polynomial data. It checks if the requested series name already exists in internal storage (`self.sets`); otherwise, it constructs the appropriate filename and loads the necessary numpy array.
+<switch:python>
+[python] def load(self, name):
+        """[DEPRECATED] Load the polynomial series for `name` and return it."""
+        s = self.sets.get(name)
+        if s is None:
+            self.sets[name] = s = np.load(self.path('jpl-%s.npy' % name))
+        return s
+<switch:english>
+[english] The implementation uses memoization to prevent repeated disk I/O calls. Note that this function is officially marked as deprecated in its documentation.
+[english] What error might occur if the expected `.npy` file corresponding to `name` does not exist?
+[english] If the file cannot be found at the calculated path, calling `np.load()` will raise a FileNotFoundError or similar OS-level exception.
+[english] That makes sense for handling missing files.

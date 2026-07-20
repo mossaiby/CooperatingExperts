@@ -1,0 +1,55 @@
+[english] How do I properly set up an SQLite connection that correctly handles complex Python types like dictionaries and lists?
+[english] This function begins by registering custom adapters and converters with sqlite3, allowing it to serialize Python dict objects into text fields. It then attempts to connect to the database, dynamically searching for a suitable table name until an available slot is found.
+<switch:python>
+[python] def _init_db(self):
+        """Connect to the database and get new session number."""
+        # register adapters
+        sqlite3.register_adapter(dict, _adapt_dict)
+        sqlite3.register_converter('dict', _convert_dict)
+        sqlite3.register_adapter(list, _adapt_bufs)
+        sqlite3.register_converter('bufs', _convert_bufs)
+        # connect to the db
+        dbfile = os.path.join(self.location, self.filename)
+        self._db = sqlite3.connect(dbfile, detect_types=sqlite3.PARSE_DECLTYPES,
+            # isolation_level = None)#,
+             cached_statements=64)
+        # print dir(self._db)
+        first_table = previous_table = self.table
+        i=0
+        while not self._check_table():
+            i+=1
+            self.table = first_table+'_%i'%i
+            self.log.warn(
+                "Table %s exists and doesn't match db format, trying %s"%
+                (previous_table, self.table)
+            )
+            previous_table = self.table
+
+        self._db.execute("""CREATE TABLE IF NOT EXISTS %s
+                (msg_id text PRIMARY KEY,
+                header dict text,
+                content dict text,
+                buffers bufs blob,
+                submitted timestamp,
+                client_uuid text,
+                engine_uuid text,
+                started timestamp,
+                completed timestamp,
+                resubmitted text,
+                received timestamp,
+                result_header dict text,
+                result_content dict text,
+                result_buffers bufs blob,
+                queue text,
+                pyin text,
+                pyout text,
+                pyerr text,
+                stdout text,
+                stderr text)
+                """%self.table)
+        self._db.commit()
+<switch:english>
+[english] Custom type registration ensures that complex Python data structures are correctly mapped during persistence and retrieval. Be aware that this method relies on external functions like `_check_table` being robust.
+[english] Is there any risk of the `while` loop running forever if no valid table name can ever be found?
+[english] Yes, since there is no iteration limit specified, an infinite loop could theoretically occur. To prevent this, you should add a maximum attempt counter to the `while not self._check_table():` condition.
+[english] That clearly explains how to handle connection stability.

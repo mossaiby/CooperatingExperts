@@ -1,0 +1,33 @@
+[english] I need to create a new statistical distribution object, specifically an IndependentBernoulli, from a given parameter vector and shape.
+[english] This function constructs an independent Bernoulli distribution using TensorFlow operations. It first ensures that the input parameters and event shapes are correctly converted into usable tensors within a defined scope.
+<switch:python>
+[python] def new(params, event_shape=(), dtype=None, validate_args=False, name=None):
+    """Create the distribution instance from a `params` vector."""
+    with tf.compat.v1.name_scope(name, 'IndependentBernoulli',
+                                 [params, event_shape]):
+      params = tf.convert_to_tensor(value=params, name='params')
+      event_shape = dist_util.expand_to_vector(
+          tf.convert_to_tensor(
+              value=event_shape, name='event_shape', dtype_hint=tf.int32),
+          tensor_name='event_shape')
+      new_shape = tf.concat([
+          tf.shape(input=params)[:-1],
+          event_shape,
+      ], axis=0)
+      dist = tfd.Independent(
+          tfd.Bernoulli(
+              logits=tf.reshape(params, new_shape),
+              dtype=dtype or params.dtype.base_dtype,
+              validate_args=validate_args),
+          reinterpreted_batch_ndims=tf.size(input=event_shape),
+          validate_args=validate_args)
+      dist._logits = dist.distribution._logits  # pylint: disable=protected-access
+      dist._probs = dist.distribution._probs  # pylint: disable=protected-access
+      dist.logits = tfd.Bernoulli.logits
+      dist.probs = tfd.Bernoulli.probs
+      return dist
+<switch:english>
+[english] The code then uses `tfd.Independent` to treat a set of Bernoulli distributions as one, finalizing the instance by manually setting the `.logits` and `.probs` attributes.
+[english] What happens if the `params` tensor is not fully defined during graph creation?
+[english] If the `params` tensor isn't fully defined, the distribution relies on TensorFlow's operational definition. The use of `tf.convert_to_tensor(value=params)` allows TensorFlow to defer computation until execution time.
+[english] That makes sense for graph mode.

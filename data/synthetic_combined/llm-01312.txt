@@ -1,0 +1,29 @@
+[english] I need a way to retrieve all submission records for various assignments within a specific course or section, potentially filtered by student ID.
+[english] This function first determines whether to use the courses or sections API based on the `is_section` flag. It then builds the necessary parameters, ensuring that either `student_ids` or `assignment_ids` are included in the request before fetching the paginated resource.
+<switch:python>
+[python] def get_submissions_multiple_assignments(
+            self, is_section, course_id, students=None, assignments=None,
+            **params):
+        """
+        List submissions for multiple assignments by course/section id and
+        optionally student
+
+        https://canvas.instructure.com/doc/api/submissions.html#method.submissions_api.for_students
+        """
+        api = SECTIONS_API if is_section else COURSES_API
+        if students is not None:
+            params['student_ids'] = students
+        if assignments is not None:
+            params['assignment_ids'] = assignments
+
+        url = api.format(course_id) + "/students/submissions"
+        data = self._get_paged_resource(url, params=params)
+        submissions = []
+        for submission in data:
+            submissions.append(Submission(data=submission))
+        return submissions
+<switch:english>
+[english] After fetching the raw API response data, this method translates each dictionary into a structured `Submission` object for consistent handling.
+[english] What happens if I call this function without specifying any students or assignments?
+[english] If neither students nor assignments are provided, the internal parameters will not be modified. The request will likely return all submissions associated with that course/section based on the default API configuration used by `self._get_paged_resource`.
+[english] Thanks for clarifying how the filtering works.

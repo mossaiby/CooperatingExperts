@@ -1,0 +1,21 @@
+[english] I need to write a class method that reliably loads feature information from a list of image files, ensuring any provided labels match the file count.
+[english] This function first validates input consistency by checking if the optional `names` array matches the length of the `images` list. If they match or names are not provided, it sets internal attributes before calling an external utility to load the actual imagery.
+<switch:python>
+[python] def _load_features_from_images(self, images, names=None):
+        """ Load feature image data from image files.
+
+        Args:
+          images: A list of image filenames.
+          names: An optional list of strings to use as the feature names. Must
+            be in the same order as the images.
+        """
+        if names is not None and len(names) != len(images):
+            raise Exception(
+                "Lists of feature names and images must be of same length!")
+        self.feature_names = names if names is not None else images
+        self.feature_images = imageutils.load_imgs(images, self.masker)
+<switch:english>
+[english] The core logic relies on the helper `imageutils.load_imgs` to handle image processing; if this function fails or changes signature, you might need adjustments here.
+[english] What happens internally if I don't provide any names at all?
+[english] If `names=None`, it defaults to setting `self.feature_names = images`. This means the filenames themselves are used as the identifiers for the features.
+[english] Got it, so the filename acts as a fallback key.

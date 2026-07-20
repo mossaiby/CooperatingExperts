@@ -1,0 +1,11 @@
+[english] I need a reliable way to inspect the current status and internal variables of my object for logging or testing.
+[english] To fulfill this request, we will create a method that explicitly gathers all relevant instance attributes into a single dictionary. This structured return makes it very easy for external tools to interpret the object's condition.
+<switch:python>
+[python] def state(self):
+        """Return internal state, useful for testing."""
+        return {'c': self.c, 's0': self.s0, 's1': self.s1, 's2': self.s2}
+<switch:english>
+[english] By packaging these attributes into a dictionary, you provide a quick snapshot of the object's current state for debugging purposes.
+[english] What happens if one of those listed internal variables hasn't been initialized yet?
+[english] If any attribute is not set when `state()` is called, accessing it will immediately raise an AttributeError. You might need to implement checks or use a safer getter pattern in case initialization order isn't controlled.
+[english] Thanks for clarifying how this function works.

@@ -1,0 +1,19 @@
+[english] I need to add functionality to delete a specific storage account from Windows Azure via this class method.
+[english] This function safely manages the deletion of a specified storage service. It first validates that the `service_name` is present, then calculates the full path for the resource before initiating an asynchronous delete operation via `_perform_delete`.
+<switch:python>
+[python] def delete_storage_account(self, service_name):
+        '''
+        Deletes the specified storage account from Windows Azure.
+
+        service_name:
+            Name of the storage service account.
+        '''
+        _validate_not_none('service_name', service_name)
+        return self._perform_delete(
+            self._get_storage_service_path(service_name),
+            as_async=True)
+<switch:english>
+[english] By passing `as_async=True`, the method starts the cleanup process without blocking execution. You will need to handle the result of this asynchronous call externally.
+[english] If the specified service name is not found, how does the function behave?
+[english] The underlying Azure API calls within `_perform_delete` typically return a specific HTTP error status (like 404). The method relies on the internal logic to propagate that failure.
+[english] That makes sense; I'll ensure my calling code handles potential async errors.

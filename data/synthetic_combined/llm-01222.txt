@@ -1,0 +1,30 @@
+[english] I need a way to search for files using a wildcard pattern inside a specific directory.
+[english] This utility first validates that the input path exists as a directory. It then uses the `fnmatch` library alongside either `os.walk` or basic `os.listdir` depending on whether recursive searching is requested.
+<switch:python>
+[python] def find_files(directory, pattern, recursive=True):
+    """
+    Find files by pattern in directory
+    """
+    if not os.path.isdir(directory):
+        if os.path.exists(directory):
+            raise IOError(directory + ' is not directory')
+        else:
+            raise IOError(directory + " does not exists")
+    if recursive:
+        for root, _, files in os.walk(directory):
+            for basename in files:
+                if fnmatch.fnmatch(basename, pattern):
+                    filename = os.path.join(root, basename)
+                    yield filename
+    else:
+        root = directory
+        for basename in os.listdir(root):
+            if fnmatch.fnmatch(basename, pattern):
+                filename = os.path.join(root, basename)
+                if os.path.isfile(filename):
+                    yield filename
+<switch:english>
+[english] The function successfully returns full paths for any matching items. Remember that when not recursing, it explicitly verifies each found item is indeed a file before yielding its path.
+[english] If I want to find files regardless of their extension (i.e., `*`), does the logic still work correctly?
+[english] Yes, because `fnmatch` handles standard wildcard characters like `*`, so patterns like `*` or `*.log` will function normally for matching filenames.
+[english] That's perfectly clear; I can now implement this file search into my script.

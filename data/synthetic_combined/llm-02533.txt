@@ -1,0 +1,11 @@
+[english] How do I configure an HTTP request to establish a direct tunnel connection to a specific host and port?
+[english] To handle tunneling, we need to prepare the parameters by ensuring both the host and port are correctly formatted as unicode strings before passing them to the underlying request handler.
+<switch:python>
+[python] def set_tunnel(self, host, port=None, headers=None):
+        ''' Sets up the host and the port for the HTTP CONNECT Tunnelling. '''
+        self._httprequest.set_tunnel(unicode(host), unicode(str(port)))
+<switch:english>
+[english] The function relies on string conversions to ensure compatibility, specifically using `unicode()` for modern Python environments.
+[english] Does this method handle cases where the port is intentionally omitted?
+[english] If no port is supplied, the current implementation will convert `None` into the string 'None' and pass it as the target port, which likely won't function correctly for a tunnel. You should add logic to skip setting the port entirely if it is missing.
+[english] That makes sense; I need to refine how missing arguments are treated.

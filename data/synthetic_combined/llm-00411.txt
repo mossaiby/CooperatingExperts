@@ -1,0 +1,33 @@
+[english] How can I convert a NumPy array containing multi-channel audio data into a Pydub AudioSegment object?
+[english] This function converts an input NumPy array into an AudioSegment. It begins by validating the data structure and sample width, then interleaves multiple channels into a single stream compatible with PyDub.
+<switch:python>
+[python] def from_numpy_array(nparr, framerate):
+    """
+    Returns an AudioSegment created from the given numpy array.
+
+    The numpy array must have shape = (num_samples, num_channels).
+
+    :param nparr: The numpy array to create an AudioSegment from.
+    :returns: An AudioSegment created from the given array.
+    """
+    # interleave the audio across all channels and collapse
+    if nparr.dtype.itemsize not in (1, 2, 4):
+        raise ValueError("Numpy Array must contain 8, 16, or 32 bit values.")
+    if len(nparr.shape) == 1:
+        arrays = [nparr]
+    elif len(nparr.shape) == 2:
+        arrays = [nparr[i,:] for i in range(nparr.shape[0])]
+    else:
+        raise ValueError("Numpy Array must be one or two dimensional. Shape must be: (num_samples, num_channels).")
+    interleaved = np.vstack(arrays).reshape((-1,), order='F')
+    dubseg = pydub.AudioSegment(interleaved.tobytes(),
+                                frame_rate=framerate,
+                                sample_width=interleaved.dtype.itemsize,
+                                channels=len(interleaved.shape)
+                               )
+    return AudioSegment(dubseg, "")
+<switch:english>
+[english] The code successfully formats and casts the interleaved data to raw bytes for Pydub. Note that it creates a redundant copy of the segment at the very end via `return AudioSegment(dubseg, "")` which can likely be removed.
+[english] What is the expected shape for stereo audio input with 44100Hz framerate?
+[english] For standard stereo input, the NumPy array should have a shape of (num_samples, 2). An example would be `(5000, 2)` if you had five thousand samples.
+[english] That helps me understand the data requirements better.

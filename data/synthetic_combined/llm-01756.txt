@@ -1,0 +1,13 @@
+[english] How do we determine if an instantiated object or its type is compatible with the current data structure?
+[english] This method first delegates support checking to the parent class implementation, providing standard polymorphic checks.
+<switch:python>
+[python] def _supports(self, item):
+        """Checks if outer data structure is supported."""
+        result = super(SharedResult, self)._supports(item)
+        result = result or type(item) in SharedResult.SUPPORTED_DATA
+        return result
+<switch:english>
+[english] If no explicit instance check passes, it falls back to verifying if the item's specific type belongs to the predefined list of supported classes.
+[english] Should I assume 'SharedResult.SUPPORTED_DATA' is a set or something else?
+[english] It must be iterable (like a tuple or list), but using a `set` for lookups like this provides O(1) average time complexity, which would be optimal for large data types.
+[english] That makes sense; performance could definitely matter here.

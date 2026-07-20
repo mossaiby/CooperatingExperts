@@ -1,0 +1,22 @@
+[english] I need a function to automatically transform data within specific 'blocks' based on their type using predefined serializers.
+[english] This function sanitizes a block by first identifying its embed type and checking if a matching serializer exists in self.serializers. If one is found, it applies the transformation logic via the `to_internal_value` method to update the block's data.
+<switch:python>
+[python] def sanitize_block(self, block):
+        """Santizes the data for the given block.
+        If block has a matching embed serializer, use the `to_internal_value` method."""
+
+        embed_type = block.get('type', None)
+        data = block.get('data', {})
+        serializer = self.serializers.get(embed_type, None)
+
+        if serializer is None:
+            return block
+
+        block['data'] = serializer.to_internal_value(data)
+
+        return block
+<switch:english>
+[english] The function efficiently handles data types by delegating complex serialization tasks to dedicated methods while ensuring blocks without matching serializers are returned untouched.
+[english] What happens if the required 'type' key is missing from the input block?
+[english] If `block.get('type', None)` returns None, the serializer lookup will fail and it will return the original block unchanged because `serializer` remains None.
+[english] Thanks for explaining how that logic flows!

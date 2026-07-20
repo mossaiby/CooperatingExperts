@@ -1,0 +1,39 @@
+[english] I need to write a function that allows users to edit or add specific gene details associated with a larger diagnostic panel.
+[english] This function manages the lifecycle of editing a single gene entry linked to a genetic panel. It first loads necessary objects from the store, dynamically populates submission forms with choices derived from HGNCh data, and prepares for validation.
+<switch:python>
+[python] def gene_edit(panel_id, hgnc_id):
+    """Edit additional information about a panel gene."""
+    panel_obj = store.panel(panel_id)
+    hgnc_gene = store.hgnc_gene(hgnc_id)
+    panel_gene = controllers.existing_gene(store, panel_obj, hgnc_id)
+
+    form = PanelGeneForm()
+    transcript_choices = []
+    for transcript in hgnc_gene['transcripts']:
+        if transcript.get('refseq_id'):
+            refseq_id = transcript.get('refseq_id')
+            transcript_choices.append((refseq_id, refseq_id))
+    form.disease_associated_transcripts.choices = transcript_choices
+
+    if form.validate_on_submit():
+        action = 'edit' if panel_gene else 'add'
+        info_data = form.data.copy()
+        if 'csrf_token' in info_data:
+            del info_data['csrf_token']
+        store.add_pending(panel_obj, hgnc_gene, action=action, info=info_data)
+        return redirect(url_for('.panel', panel_id=panel_id))
+
+    if panel_gene:
+        for field_key in ['disease_associated_transcripts', 'reduced_penetrance',
+                          'mosaicism', 'inheritance_models', 'database_entry_version', 'comment']:
+            form_field = getattr(form, field_key)
+            if not form_field.data:
+                panel_value = panel_gene.get(field_key)
+                if panel_value is not None:
+                    form_field.process_data(panel_value)
+    return dict(panel=panel_obj, form=form, gene=hgnc_gene, panel_gene=panel_gene)
+<switch:english>
+[english] The code effectively handles both creation ('add') and modification ('edit') actions by checking if a previous record exists. If no form is submitted, it ensures any existing panel gene values are properly loaded into the editable form fields.
+[english] In the pre-population logic at the bottom of the function, what happens if one of the targeted fields, like 'mosaicism', has a null value in the database?
+[english] If `panel_gene.get(field_key)` returns `None`, the check `if panel_value is not None:` prevents that specific field from being processed by the form and remains empty.
+[english] This clarified how data integrity is maintained during pre-population.

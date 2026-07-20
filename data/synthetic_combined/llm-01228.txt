@@ -1,0 +1,20 @@
+[english] I want a robust function that can retrieve associated label elements using an ID found within the current object.
+[english] This function first verifies if an 'id' attribute exists on the element. If it does, it uses a helper method to search for matching labels before returning the result.
+<switch:python>
+[python] def _label__get(self):
+        """
+        Get or set any <label> element associated with this element.
+        """
+        id = self.get('id')
+        if not id:
+            return None
+        result = _label_xpath(self, id=id)
+        if not result:
+            return None
+        else:
+            return result[0]
+<switch:english>
+[english] The logic is sound, but be aware that the code only returns the very first label found by the XPath query, even if multiple matches exist.
+[english] What happens inside this function if `self` doesn't provide a usable ID?
+[english] If no 'id' can be retrieved using self.get('id'), the function immediately returns `None`, preventing any unnecessary processing or errors during the search.
+[english] I understand, thanks for walking me through that.

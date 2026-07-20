@@ -1,0 +1,37 @@
+[english] I need to generate a list of C-style constant declarations where their values are sourced dynamically from command line arguments.
+[english] This method dynamically generates structured constant declarations using an Abstract Syntax Tree (AST) approach. It iterates through your defined constants and constructs the necessary declaration tree, initializing them with environment data if enabled.
+<switch:python>
+[python] def _build_const_declartions(self, with_init=True):
+        """
+        Generate constants declarations
+
+        :return: list of declarations
+        """
+        decls = []
+
+        # Use type as provided by user in loop indices
+        index_type = self.get_index_type()
+
+        i = 2  # subscript for cli input, 1 is reserved for repeat
+        for k in self.constants:
+            # const long long N = strtoul(argv[2])
+            # with increasing N and 1
+            # TODO change subscript of argv depending on constant count
+            type_decl = c_ast.TypeDecl(k.name, ['const'], c_ast.IdentifierType(index_type))
+            init = None
+            if with_init:
+                init = c_ast.FuncCall(
+                    c_ast.ID('atoi'),
+                    c_ast.ExprList([c_ast.ArrayRef(c_ast.ID('argv'),
+                                                   c_ast.Constant('int', str(i)))]))
+            i += 1
+            decls.append(c_ast.Decl(
+                k.name, ['const'], [], [],
+                type_decl, init, None))
+
+        return decls
+<switch:english>
+[english] The function builds declarations by iterating over `self.constants` and uses a growing index (`i`) to pull values from command line arguments via `argv`. Be aware that it assumes enough CLI arguments are provided for all constants in the list.
+[english] If we have more constants than available positions in the command-line arguments, what happens?
+[english] The current implementation does not include bounds checking. It relies on a hardcoded index `i` that increments indefinitely, so accessing `argv[i]` when `i` exceeds the actual length of `argv` will raise an `IndexError`. You would need to add a check like `if i < len(self.cli_args): ...`
+[english] Okay, I'll make sure to implement that safety mechanism.

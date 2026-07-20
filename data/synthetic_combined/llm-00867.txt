@@ -1,0 +1,20 @@
+[english] How can I customize how a custom data structure appears when pretty-printed in a Jupyter notebook or IPython?
+[english] This function, often used as a special method for pretty printing, dictates how an object looks in interactive environments. It uses a printer provided by IPython, ensuring that nested attributes are displayed cleanly while gracefully handling infinite recursion caused by circular references.
+<switch:python>
+[python] def _repr_pretty_(self, p, cycle):
+        """method that defines ``Struct``'s pretty printing rules for iPython
+
+        Args:
+            p (IPython.lib.pretty.RepresentationPrinter): pretty printer object
+            cycle (bool): is ``True`` if pretty detected a cycle
+        """
+        if cycle:
+            p.text('Struct(...)')
+        else:
+            with p.group(7, 'Struct(', ')'):
+                p.pretty(self._asdict())
+<switch:english>
+[english] The function uses `p.group` to wrap the structure in parentheses and then calls `p.pretty` on the object's dictionary representation (`_asdict()`) for a clean output.
+[english] What happens if I haven't defined an `_asdict()` method on my struct?
+[english] If `self._asdict()` is not defined, `p.pretty` will attempt to recursively print the object without transforming it into a dictionary, which might result in unformatted nested printing or errors.
+[english] So this implementation ensures pretty output by acting as an intermediary?

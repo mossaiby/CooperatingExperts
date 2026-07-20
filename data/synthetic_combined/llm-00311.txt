@@ -1,0 +1,17 @@
+[english] I need a robust way in TensorFlow to select one of two values (`cond_true` or `cond_false`) based on a boolean condition, optimizing for cases where that condition is static.
+[english] This function intelligently determines if your predicate is statically known. If it is, we use standard Python conditional logic for maximum speed; otherwise, we rely on TensorFlow's dynamic branching mechanism.
+<switch:python>
+[python] def _pick_scalar_condition(pred, cond_true, cond_false):
+  """Convenience function which chooses the condition based on the predicate."""
+  # Note: This function is only valid if all of pred, cond_true, and cond_false
+  # are scalars. This means its semantics are arguably more like tf.cond than
+  # tf.where even though we use tf.where to implement it.
+  pred_ = tf.get_static_value(tf.convert_to_tensor(value=pred))
+  if pred_ is None:
+    return tf.where(pred, cond_true, cond_false)
+  return cond_true if pred_ else cond_false
+<switch:english>
+[english] The implementation handles both eager and graph execution efficiently by checking `tf.get_static_value` first to bypass unnecessary graph operations when possible. Please note that this function expects the predicate to be a scalar or a tensor handleable by tf.where.
+[english] What happens if I pass a boolean array (a non-scalar) as the `pred` argument?
+[english] If `pred` is not a scalar, `tf.get_static_value` will return None. The function then correctly defaults to using `tf.where(pred, cond_true, cond_false)`, which performs element-wise conditional selection.
+[english] That makes sense; it's good to know how the dynamic path handles non-scalar inputs.

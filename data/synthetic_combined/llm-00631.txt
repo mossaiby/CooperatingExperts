@@ -1,0 +1,17 @@
+[english] How do I bookmark my current cursor position so I can return to it later?
+[english] This function is designed to manage your state by recording location information. It achieves this by appending the current absolute coordinates of a specific object into an internal list of contexts.
+<switch:python>
+[python] def save_context(self) -> bool:
+        """Save current position."""
+        self._contexts.append(self._cursor.position)
+        return True
+<switch:english>
+[english] The boolean return value confirms successful execution, though it's always hardcoded to True in this implementation.
+[english] What would happen if `self._contexts` was already full or had a maximum size limit?
+[english] Currently, the function unconditionally appends new positions without checking for limits. If we wanted to handle a capacity issue, we could add a check like:
+<switch:python>
+[python] if len(self._contexts) < self.MAX_CONTEXT_SIZE:
+    self._contexts.append(self._cursor.position)
+return True
+<switch:english>
+[english] That makes sense; thanks for clearing that up!

@@ -1,0 +1,28 @@
+[english] How can I calculate the log-likelihood of observing a specific sequence under equilibrium frequency constraints?
+[english] This function uses probabilistic calculations to determine how likely a given sequence is based on predefined state frequencies and observed pattern multiplicities.
+<switch:python>
+[python] def sequence_logLH(self,seq, pattern_multiplicity=None):
+        """
+        Returns the log-likelihood of sampling a sequence from equilibrium frequency.
+        Expects a sequence as numpy array
+
+        Parameters
+        ----------
+
+         seq : numpy array
+            Compressed sequence as an array of chars
+
+         pattern_multiplicity : numpy_array
+            The number of times each position in sequence is observed in the
+            initial alignment. If None, sequence is assumed to be not compressed
+
+        """
+        if pattern_multiplicity is None:
+            pattern_multiplicity = np.ones_like(seq, dtype=float)
+        return np.sum([np.sum((seq==state)*pattern_multiplicity*np.log(self.Pi[si]))
+                      for si,state in enumerate(self.alphabet)])
+<switch:english>
+[english] The calculation iterates over the alphabet and sums weighted terms based on matching sequence elements and their corresponding probability distribution stored in `self.Pi`.
+[english] Does this function handle cases where a character in the sequence is not present in its defined alphabet?
+[english] No, if a character appears in `seq` that does not correspond to an index in `self.alphabet`, it will likely cause an `IndexError` or incorrect likelihood calculation based on how numpy handles boolean indexing over mismatched states.
+[english] Thanks for the clear breakdown!

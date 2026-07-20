@@ -1,0 +1,19 @@
+[english] How do I execute a predefined SQL query against an MSSQL database using Python?
+[english] To interface with Microsoft SQL Server, we use `MsSqlHook` to manage the connection lifecycle. The function then retrieves a cursor from this established connection and runs your specific SQL statement.
+<switch:python>
+[python] def _query_mssql(self):
+        """
+        Queries MSSQL and returns a cursor of results.
+
+        :return: mssql cursor
+        """
+        mssql = MsSqlHook(mssql_conn_id=self.mssql_conn_id)
+        conn = mssql.get_conn()
+        cursor = conn.cursor()
+        cursor.execute(self.sql)
+        return cursor
+<switch:english>
+[english] This pattern effectively executes the query and returns the resulting cursor for iteration. Just ensure that you properly close both the cursor and the connection after finishing your data retrieval loop.
+[english] What happens if the stored self.sql variable is an empty string when executed?
+[english] If `self.sql` is an empty string, the database will likely raise a syntax error since MSSQL requires valid T-SQL commands. You should add input validation to ensure the query string is populated before calling execute.
+[english] That makes perfect sense.

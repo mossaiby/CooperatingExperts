@@ -1,0 +1,61 @@
+[english] I need to retrieve comprehensive details about a smart card or cryptographic token using its slot number.
+[english] This function acts as an adapter between low-level C KCS11 calls and a Python object structure by first retrieving raw data from the hardware layer. Then, it meticulously maps and formats this into a usable `CK_TOKEN_INFO` subclass.
+<switch:python>
+[python] def getTokenInfo(self, slot):
+        """
+        C_GetTokenInfo
+
+        :param slot: slot number returned by :func:`getSlotList`
+        :type slot: integer
+        :return: a :class:`CK_TOKEN_INFO` object
+        """
+        tokeninfo = PyKCS11.LowLevel.CK_TOKEN_INFO()
+        rv = self.lib.C_GetTokenInfo(slot, tokeninfo)
+        if rv != CKR_OK:
+            raise PyKCS11Error(rv)
+
+        t = CK_TOKEN_INFO()
+        t.label = tokeninfo.GetLabel()
+        t.manufacturerID = tokeninfo.GetManufacturerID()
+        t.model = tokeninfo.GetModel()
+        t.serialNumber = tokeninfo.GetSerialNumber()
+        t.flags = tokeninfo.flags
+        t.ulMaxSessionCount = tokeninfo.ulMaxSessionCount
+        if t.ulMaxSessionCount == CK_UNAVAILABLE_INFORMATION:
+            t.ulMaxSessionCount = -1
+        t.ulSessionCount = tokeninfo.ulSessionCount
+        if t.ulSessionCount == CK_UNAVAILABLE_INFORMATION:
+            t.ulSessionCount = -1
+        t.ulMaxRwSessionCount = tokeninfo.ulMaxRwSessionCount
+        if t.ulMaxRwSessionCount == CK_UNAVAILABLE_INFORMATION:
+            t.ulMaxRwSessionCount = -1
+        t.ulRwSessionCount = tokeninfo.ulRwSessionCount
+        if t.ulRwSessionCount == CK_UNAVAILABLE_INFORMATION:
+            t.ulRwSessionCount = -1
+        t.ulMaxPinLen = tokeninfo.ulMaxPinLen
+        t.ulMinPinLen = tokeninfo.ulMinPinLen
+        t.ulTotalPublicMemory = tokeninfo.ulTotalPublicMemory
+
+        if t.ulTotalPublicMemory == CK_UNAVAILABLE_INFORMATION:
+            t.ulTotalPublicMemory = -1
+        t.ulFreePublicMemory = tokeninfo.ulFreePublicMemory
+        if t.ulFreePublicMemory == CK_UNAVAILABLE_INFORMATION:
+            t.ulFreePublicMemory = -1
+        t.ulTotalPrivateMemory = tokeninfo.ulTotalPrivateMemory
+        if t.ulTotalPrivateMemory == CK_UNAVAILABLE_INFORMATION:
+            t.ulTotalPrivateMemory = -1
+        t.ulFreePrivateMemory = tokeninfo.ulFreePrivateMemory
+        if t.ulFreePrivateMemory == CK_UNAVAILABLE_INFORMATION:
+            t.ulFreePrivateMemory = -1
+        t.hardwareVersion = (tokeninfo.hardwareVersion.major,
+                             tokeninfo.hardwareVersion.minor)
+        t.firmwareVersion = (tokeninfo.firmwareVersion.major,
+                             tokeninfo.firmwareVersion.minor)
+        t.utcTime = tokeninfo.GetUtcTime().replace('\000', ' ')
+
+        return t
+<switch:english>
+[english] The code handles several status codes specifically, replacing 'Unavailable Information' flags with standard integer values like -1 to ensure consistency across all retrieved token attributes.
+[english] What happens if the raw C API returns an error other than CKR_OK during the initial call?
+[english] If `rv` (the return value from `self.lib.C_GetTokenInfo`) is not equal to `CKR_OK`, the function will immediately raise a `PyKCS11Error(rv)` which terminates execution.
+[english] That explains how error handling works for this data retrieval process.

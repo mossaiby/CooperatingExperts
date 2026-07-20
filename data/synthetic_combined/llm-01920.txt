@@ -1,0 +1,24 @@
+[english] How can I write a function to check if two AST nodes are identical based on a specific attribute name, like checking variable names?
+[english] To compare attributes without hardcoding the keys, we use `getattr()`. This allows us to extract and compare the specified property from both input nodes in one line.
+<switch:python>
+[python] def _check_arg_equality(node_a, node_b, attr_name):
+    """
+    Check equality of nodes based on the comparison of their attributes named attr_name.
+
+    Args:
+        node_a (astroid.node): first node to compare.
+        node_b (astroid.node): second node to compare.
+        attr_name (str): name of the nodes attribute to use for comparison.
+
+    Returns:
+        bool: True if node_a.attr_name == node_b.attr_name, False otherwise.
+    """
+    return getattr(node_a, attr_name) == getattr(node_b, attr_name)
+<switch:english>
+[english] This implementation relies entirely on `attr_name` existing for both nodes; if the attribute is missing, `getattr()` will raise an AttributeError.
+[english] What happens if one node has the attribute but the other doesn't?
+[english] If you use a default value like this:
+<switch:python>
+[python] return getattr(node_a, attr_name, None) == getattr(node_b, attr_name, None)
+<switch:english>
+[english] This makes sense! Thanks for clarifying that.

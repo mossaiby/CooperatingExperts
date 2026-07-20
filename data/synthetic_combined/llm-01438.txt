@@ -1,0 +1,26 @@
+[english] How can I automate sending data into an external command and capture its output using Python?
+[english] This function is designed to execute a process while providing it standard input, ensuring compatibility between different Python versions.
+<switch:python>
+[python] def get_output(self, stdin_content, stdin):
+        """
+        Try to get output in a separate thread
+        """
+        try:
+            if stdin:
+                if sys.version_info >= (3, 0):
+                    self.process.stdin.write(bytes(stdin_content, "utf-8"))
+                else:
+                    self.process.stdin.write(stdin_content)
+            self._out = self.process.communicate()[0]
+        except (error, IOError):
+            self._out = self._in
+            pass
+<switch:english>
+[english] After the process finishes, it captures everything written to standard output into `self._out`, falling back to a default value if an input or IO error occurs.
+[english] If the subprocess itself crashes with a non-IO related exception, how does this function handle that?
+[english] Currently, only specified errors are caught. To capture general process failures (like non-zero exit codes), you might need to catch specific subprocess exceptions. For example:
+
+```python
+except Exception as e:
+    print(f"Process failed: {e}")
+[english] Thanks for the detailed breakdown!

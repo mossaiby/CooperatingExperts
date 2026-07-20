@@ -1,0 +1,23 @@
+[english] How can I retrieve detailed information for several artists using their Spotify IDs?
+[english] This method is designed to fetch multiple artists by combining all input IDs into a single request parameter that the underlying API supports. After receiving the data, it converts the raw dictionary entries into structured Python Artist objects.
+<switch:python>
+[python] async def get_artists(self, *ids: List[str]) -> List[Artist]:
+        """Retrive multiple artists with a list of spotify IDs.
+
+        Parameters
+        ----------
+        ids : List[str]
+            the IDs to look for
+
+        Returns
+        -------
+        artists : List[Artist]
+            The artists from the IDs
+        """
+        data = await self.http.artists(','.join(to_id(_id) for _id in ids))
+        return list(Artist(self, artist) for artist in data['artists'])
+<switch:english>
+[english] The code leverages a list comprehension with an internal generator for efficient object instantiation from the fetched data. Note that successful execution relies on the `to_id` helper function formatting IDs correctly for the HTTP request.
+[english] What happens if one of the provided Spotify IDs is invalid or not found by the API?
+[english] Since the method directly processes `data['artists']`, if the external API handles failures by omitting invalid entries, only existing artists will be returned. For robust handling of partial failures, you might add a try-except block within the list comprehension.
+[english] That makes perfect sense, thanks!

@@ -1,0 +1,24 @@
+[english] I need a function that retrieves the current state, exit code, and details for a specific container group identified by its resource group name and instance name.
+[english] This function starts by calling `self._get_instance_view` to locate a representation of the target container. Once retrieved, it extracts and returns three attributes—state, exitCode, and detailStatus—packed into a tuple summarizing its status.
+<switch:python>
+[python] def get_state_exitcode_details(self, resource_group, name):
+        """
+        Get the state and exitcode of a container group
+
+        :param resource_group: the name of the resource group
+        :type resource_group: str
+        :param name: the name of the container group
+        :type name: str
+        :return: A tuple with the state, exitcode, and details.
+            If the exitcode is unknown 0 is returned.
+        :rtype: tuple(state,exitcode,details)
+        """
+        current_state = self._get_instance_view(resource_group, name).current_state
+        return (current_state.state,
+                current_state.exit_code,
+                current_state.detail_status)
+<switch:english>
+[english] The logic is straightforward data retrieval from the instance properties. Note that if one attribute like `exit_code` happens to be unknown, the function adheres to the docstring by returning 0 for that specific value.
+[english] What would happen if the 'resource_group' or container name provided doesn't match any existing instances?
+[english] This implementation assumes a successful lookup from `self._get_instance_view`. If that call fails because the resource is missing, it will raise an exception (like KeyError or AttributeError), and you would need to wrap this function in error handling.
+[english] That makes sense; I'll add a try/except block around the lookup part.

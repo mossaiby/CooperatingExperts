@@ -1,0 +1,14 @@
+[english] I need a reliable way to check if an object is fundamentally a class structure, since Python's built-in `isclass()` function sometimes gives false positives.
+[english] To achieve a more rigorous check, we leverage type inspection by examining the input object’s type. The logic verifies two conditions: whether the object's specific type falls into a predefined set of accepted class types, or if its own type is recognized as inheriting from the base `type` itself.
+<switch:python>
+[python] def isclass(obj):
+    """Is obj a class? Inspect's isclass is too liberal and returns True
+    for objects that can't be subclasses of anything.
+    """
+    obj_type = type(obj)
+    return obj_type in class_types or issubclass(obj_type, type)
+<switch:english>
+[english] This implementation offers a stricter validation than standard library calls by explicitly checking structural inheritance. Remember that for this function to work fully, the external list `class_types` needs comprehensive population based on your environment's requirements.
+[english] If I pass a completely new subclass not included in my local `class_types`, will it still be correctly identified as a class?
+[english] Yes. Since the function includes an explicit check using `issubclass(obj_type, type)`, any valid custom class, regardless of whether it is listed in `class_types`, will return True.
+[english] Perfect! This clarifies how the logic handles inheritance.

@@ -1,0 +1,20 @@
+[english] How can I programmatically set a new X509 certificate within my PKCS#12 object?
+[english] This method is responsible for updating the stored certificate by first ensuring that the provided input `cert` is indeed an instance of the expected type, verifying data integrity before proceeding.
+<switch:python>
+[python] def set_certificate(self, cert):
+        """
+        Set the certificate in the PKCS #12 structure.
+
+        :param cert: The new certificate, or :py:const:`None` to unset it.
+        :type cert: :py:class:`X509` or :py:const:`None`
+
+        :return: ``None``
+        """
+        if not isinstance(cert, X509):
+            raise TypeError("cert must be an X509 instance")
+        self._cert = cert
+<switch:english>
+[english] If the input is valid, it assigns the certificate to the private attribute but does not currently handle scenarios where unsetting a value might be necessary.
+[english] What happens if I pass None as the `cert` argument?
+[english] The current implementation will raise a TypeError because it checks for an X509 instance and doesn't explicitly check for the None case mentioned in the docstring. To allow unsetting, you would need to modify the conditional logic.
+[english] Thanks for clarifying the type constraints.

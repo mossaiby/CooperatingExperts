@@ -1,0 +1,33 @@
+[english] How can I batch extract all necessary DataFrames from various serialized files stored inside a specific ZIP archive?
+[english] This function systematically opens the provided zip file and iterates over every name within it. It extracts each file's contents into a temporary secure location before attempting to load the object using joblib.
+<switch:python>
+[python] def extract_zip(zip_file_path):
+    """
+    Returns:
+        dict: Dict[str, DataFrame]
+    """
+    dfs = {}
+    with zipfile.ZipFile(zip_file_path, mode='r') as z_file:
+        names = z_file.namelist()
+        for name in names:
+            content = z_file.read(name)
+            _, tmp_file_path = tempfile.mkstemp()
+            try:
+                with open(tmp_file_path, 'wb') as tmp_file:
+                    tmp_file.write(content)
+
+                dfs[name] = joblib.load(tmp_file_path)
+            finally:
+                shutil.rmtree(tmp_file_path, ignore_errors=True)
+    return dfs
+<switch:english>
+[english] The function successfully maps every entry name to the object contained within it as a DataFrame. Note that this approach assumes all files inside are serialized using joblib.
+[english] What happens if one of the files in the zip is not actually a joblib-serialized object?
+[english] If joblib.load() receives data that does not match its expected serialization format, it will raise an error because it cannot deserialize the content back into a Python object structure.
+<switch:python>
+[python] try:
+    dfs[name] = joblib.load(tmp_file_path)
+except Exception as e:
+    print(f"Skipping {name} due to deserialization error: {e}")
+<switch:english>
+[english] That clears up my concerns about handling mixed file types!

@@ -1,0 +1,20 @@
+[english] How can I programmatically initialize and track rate limit information for a given API endpoint?
+[english] To set up the initial state for rate limiting, this function constructs a specific URL pointing to project details and fetches that data from the API.
+<switch:python>
+[python] def _init_rate_limit(self):
+        """Initialize rate limit information"""
+
+        url = urijoin(self.base_url, 'projects', self.owner + '%2F' + self.repository)
+        try:
+            response = super().fetch(url)
+            self.update_rate_limit(response)
+        except requests.exceptions.HTTPError as error:
+            if error.response.status_code == 401:
+                raise error
+            else:
+                logger.warning("Rate limit not initialized: %s", error)
+<switch:english>
+[english] The code attempts to fetch metadata via `super().fetch(url)`. If it encounters an HTTP error other than unauthorized (401), it logs a warning indicating the setup failed.
+[english] If the initial fetch fails due to a non-HTTPError that causes the block to be skipped, will `self.update_rate_limit` ever be called?
+[english] No. The call to `self.update_rate_limit(response)` is nested within the successful execution of `super().fetch(url)`, so it only runs if there are no exceptions.
+[english] That makes sense, thank you for the clarification.

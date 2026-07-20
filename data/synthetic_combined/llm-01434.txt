@@ -1,0 +1,22 @@
+[english] How do I programmatically create an Abstract Syntax Tree (AST) node that generates `from basilisp.lang.runtime import Var as _VAR_ALIAS`?
+[english] This function constructs a specific type of module import AST node using Python's `ast` library.
+<switch:python>
+[python] def _from_module_import() -> ast.ImportFrom:
+    """Generate the Python From ... Import AST node for importing
+    language support modules."""
+    return ast.ImportFrom(
+        module="basilisp.lang.runtime",
+        names=[ast.alias(name="Var", asname=_VAR_ALIAS)],
+        level=0,
+    )
+<switch:english>
+[english] The function specifies that the module is `basilisp.lang.runtime` and explicitly aliases the imported name 'Var' using the predefined _VAR_ALIAS.
+[english] What would happen if I wanted to import another variable, say 'Symbol', from the same module?
+[english] You would simply add another entry to the `names` list for the `ast.ImportFrom` constructor:
+<switch:python>
+[python] names=[ast.alias(name="Var", asname=_VAR_ALIAS),
+               ast.alias(name="Symbol", asname=_SYMBOL_ALIAS)], 
+        level=0,
+    )
+<switch:english>
+[english] That clears up how to modify the imports.

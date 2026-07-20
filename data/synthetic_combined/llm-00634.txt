@@ -1,0 +1,30 @@
+[english] I need a reliable way to configure an HTTP session that automatically retries requests when network issues or transient status errors occur.
+[english] This function establishes a connection pool using `requests.Session` and then initializes a sophisticated retry object from `urllib3`. This retry logic is what dictates how the session should behave under failure.
+<switch:python>
+[python] def _create_http_session(self):
+        """Create a http session and initialize the retry object."""
+
+        self.session = requests.Session()
+
+        if self.headers:
+            self.session.headers.update(self.headers)
+
+        retries = urllib3.util.Retry(total=self.max_retries,
+                                     connect=self.max_retries_on_connect,
+                                     read=self.max_retries_on_read,
+                                     redirect=self.max_retries_on_redirect,
+                                     status=self.max_retries_on_status,
+                                     method_whitelist=self.method_whitelist,
+                                     status_forcelist=self.status_forcelist,
+                                     backoff_factor=self.sleep_time,
+                                     raise_on_redirect=self.raise_on_redirect,
+                                     raise_on_status=self.raise_on_status,
+                                     respect_retry_after_header=self.respect_retry_after_header)
+
+        self.session.mount('http://', requests.adapters.HTTPAdapter(max_retries=retries))
+        self.session.mount('https://', requests.adapters.HTTPAdapter(max_retries=retries))
+<switch:english>
+[english] By mounting the configured adapter to both HTTP and HTTPS protocols, this function ensures that all subsequent requests within the session benefit from the defined retry strategy.
+[english] Since it mounts adapters for both http:// and https://, what is the overhead if we are absolutely sure we will only ever communicate using HTTPS?
+[english] The overhead is minimal. However, if you are certain of your protocol, you can remove the unnecessary mounting logic to slightly streamline initialization.
+[english] That makes perfect sense! Thanks for helping me refine this.

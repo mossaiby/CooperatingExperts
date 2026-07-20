@@ -1,0 +1,29 @@
+[english] How can I write a Python script to retrieve specific fields from a particular object within my Salesforce instance?
+[english] This function constructs a standard Salesforce SOQL query dynamically. It takes an object name and list of desired fields as input, formatting them into the SQL-like SELECT statement required by the API.
+<switch:python>
+[python] def get_object_from_salesforce(self, obj, fields):
+        """
+        Get all instances of the `object` from Salesforce.
+        For each model, only get the fields specified in fields.
+
+        All we really do underneath the hood is run:
+            SELECT <fields> FROM <obj>;
+
+        :param obj: The object name to get from Salesforce.
+        :type obj: str
+        :param fields: The fields to get from the object.
+        :type fields: iterable
+        :return: all instances of the object from Salesforce.
+        :rtype: dict
+        """
+        query = "SELECT {} FROM {}".format(",".join(fields), obj)
+
+        self.log.info("Making query to Salesforce: %s",
+                      query if len(query) < 30 else " ... ".join([query[:15], query[-15:]]))
+
+        return self.make_query(query)
+<switch:english>
+[english] After logging the generated query for debugging, the function passes it to `self.make_query` to fetch all matching records from Salesforce.
+[english] What happens if someone calls this with an empty list or string of fields?
+[english] If the 'fields' iterable is empty, the result will likely be invalid SOQL causing a query error when `self.make_query` attempts to execute it because the SELECT clause cannot exist without field names.
+[english] Thanks for explaining how this handles dynamic queries.

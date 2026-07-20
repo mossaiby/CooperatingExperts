@@ -1,0 +1,70 @@
+[english] I need a structured way to define all required fields for configuring an Apache Spark application.
+[english] This function defines a comprehensive schema using Pydantic's Field structure. It bundles all necessary configurations—from the master URL to output paths—into one cohesive definition.
+<switch:python>
+[python] def define_spark_config():
+    '''Spark configuration.
+
+    See the Spark documentation for reference:
+        https://spark.apache.org/docs/latest/submitting-applications.html
+    '''
+
+    master_url = Field(
+        String,
+        description='The master URL for the cluster (e.g. spark://23.195.26.187:7077)',
+        is_optional=False,
+    )
+
+    deploy_mode = Field(
+        SparkDeployMode,
+        description='''Whether to deploy your driver on the worker nodes (cluster) or locally as an
+        external client (client) (default: client). A common deployment strategy is to submit your
+        application from a gateway machine that is physically co-located with your worker machines
+        (e.g. Master node in a standalone EC2 cluster). In this setup, client mode is appropriate. 
+        In client mode, the driver is launched directly within the spark-submit process which acts 
+        as a client to the cluster. The input and output of the application is attached to the 
+        console. Thus, this mode is especially suitable for applications that involve the REPL (e.g.
+        Spark shell).''',
+        is_optional=True,
+    )
+
+    application_jar = Field(
+        Path,
+        description='''Path to a bundled jar including your application and all
+                        dependencies. The URL must be globally visible inside of your cluster, for
+                        instance, an hdfs:// path or a file:// path that is present on all nodes.
+                        ''',
+        is_optional=False,
+    )
+
+    application_arguments = Field(
+        String,
+        description='Arguments passed to the main method of your main class, if any',
+        is_optional=True,
+    )
+
+    spark_home = Field(
+        String,
+        description='The path to your spark installation. Defaults to $SPARK_HOME at runtime if not provided.',
+        is_optional=True,
+    )
+
+    spark_outputs = Field(List(String), description='The outputs that this Spark job will produce')
+
+    return Field(
+        Dict(
+            fields={
+                'master_url': master_url,
+                'deploy_mode': deploy_mode,
+                'application_jar': application_jar,
+                'spark_conf': spark_config(),
+                'spark_home': spark_home,
+                'application_arguments': application_arguments,
+                'spark_outputs': spark_outputs,
+            }
+        )
+    )
+<switch:english>
+[english] The function returns a highly organized dictionary containing all fields needed for Spark configuration, although it relies on imported custom types like `Field` and `SparkDeployMode` to be fully functional.
+[english] You mentioned this defines the structure; what happens if I try to run this without providing an application JAR?
+[english] The function enforces that 'application_jar' is required (is_optional=False). If it is missing, validation will likely raise an error based on how these fields are used.
+[english] That makes sense for validating input.

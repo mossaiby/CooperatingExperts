@@ -1,0 +1,38 @@
+[english] How do I determine the maximum expected error when measuring stellar proper motions using G and V-I magnitude data?
+[english] This function estimates maximum astrometric uncertainties for celestial objects based on their brightness (G) and color (vmini). It calculates a base parallax error, scales it according to the mission duration, and then applies specific factors for alpha star and delta measurements.
+<switch:python>
+[python] def properMotionMaxError(G, vmini, extension=0.0):
+  """
+  Calculate the maximum proper motion errors from G and (V-I). These correspond to the sky regions with
+  the largest astrometric errors.
+
+  NOTE! THE ERRORS ARE FOR PROPER MOTIONS IN THE ICRS (I.E., RIGHT ASCENSION, DECLINATION). MAKE SURE
+  YOUR SIMULATED ASTROMETRY IS ALSO ON THE ICRS.
+
+  Parameters
+  ----------
+
+  G     - Value(s) of G-band magnitude.
+  vmini - Value(s) of (V-I) colour.
+
+  Keywords
+  --------
+
+  extension - Add this amount of years to the mission lifetime and scale the errors accordingly.
+
+  Returns
+  -------
+
+  The maximum error in mu_alpha* and the error in mu_delta, in that order, in micro-arcsecond/year.
+  """
+  factor = errorScalingMissionLength(extension, -1.5)
+  parallaxError = parallaxErrorSkyAvg(G, vmini)*factor
+  indices = (parallaxError<_parallaxErrorMaxBright)
+  parallaxError[indices] = _parallaxErrorMaxBright
+  return _astrometricErrorFactors['muAlphaStar'].max()*parallaxError, \
+         _astrometricErrorFactors['muDelta'].max()*parallaxError
+<switch:english>
+[english] Note that these calculated errors are specifically defined for proper motions as they appear in the ICRS coordinate system.
+[english] What happens if `extension` is not provided or set to 0.0?
+[english] If no extension is provided, the function uses default mission length parameters derived from errorScalingMissionLength. The scaling factor applies based on these defaults, typically resulting in a baseline error calculation without time-based scaling.
+[english] Thanks for clarifying how time scales the precision!

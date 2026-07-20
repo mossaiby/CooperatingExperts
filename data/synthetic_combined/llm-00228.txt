@@ -1,0 +1,13 @@
+[english] I have class attributes defined as constants (e.g., STATUS_COMPLETE=1), and I want a helper function to convert an ID like 1 back into its readable string name 'STATUS COMPLETE'.
+[english] Since Python classes store these constants, the best approach is to iterate through all members of the provided class and compare their values against your input ID. Once a match is found, we format the constant's key for display.
+<switch:python>
+[python] def str(cls, value):
+        '''Convert status (id) to its string name.'''
+        for k, v in cls.__dict__.items():
+            if k[0] in string.ascii_uppercase and v == value:
+                return k.lower().replace('_', ' ')
+<switch:english>
+[english] This method successfully converts UPPER_SNAKE_CASE keys into human-readable strings like 'STATUS COMPLETE'. Note that it assumes `string` has been imported for the uppercase check.
+[english] What happens if my class attributes use mixed case, like STATUSComplete?
+[english] The current logic relies on checking if the first character is in `string.ascii_uppercase`. If you used inconsistent casing (e.g., `statusComplete`), the function would fail to find it correctly because the check is too restrictive.
+[english] That makes sense; I'll make sure all my constants follow a uniform naming convention.

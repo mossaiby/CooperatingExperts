@@ -1,0 +1,48 @@
+[english] How do I calculate the unnormalized log density of an LKJ distribution given a set of correlation matrices?
+[english] This function computes the log density by leveraging the property that the density depends on the determinant of the input matrix $x$. It uses `tf.linalg.slogdet` for robustness against non-Positive Semi-Definite (PSD) inputs.
+<switch:python>
+[python] def _log_unnorm_prob(self, x, name=None):
+    """Returns the unnormalized log density of an LKJ distribution.
+
+    Args:
+      x: `float` or `double` `Tensor` of correlation matrices.  The shape of `x`
+        must be `B + [D, D]`, where `B` broadcasts with the shape of
+        `concentration`.
+      name: Python `str` name prefixed to Ops created by this function.
+
+    Returns:
+      log_p: A Tensor of the unnormalized log density of each matrix element of
+        `x`, with respect to an LKJ distribution with parameter the
+        corresponding element of `concentration`.
+    """
+    with tf.name_scope(name or 'log_unnorm_prob_lkj'):
+      x = tf.convert_to_tensor(value=x, name='x')
+      # The density is det(matrix) ** (concentration - 1).
+      # Computing the determinant with `logdet` is usually fine, since
+      # correlation matrices are Hermitian and PSD. But in some cases, for a
+      # PSD matrix whose eigenvalues are close to zero, `logdet` raises an error
+      # complaining that it is not PSD. The root cause is the computation of the
+      # cholesky decomposition in `logdet`. Hence, we use the less efficient but
+      # more robust `slogdet` which does not use `cholesky`.
+      #
+      # An alternative would have been to check allow_nan_stats and use
+      #   eigenvalues = tf.linalg.self_adjoint_eigvals(x)
+      #   psd_mask = tf.cast(
+      #     tf.reduce_min(eigenvalues, axis=-1) >= 0, dtype=x.dtype)
+      #   tf.where(psd_mask, answer, float('-inf'))
+      # to emit probability 0 for inputs that are not PSD, without ever raising
+      # an error. More care must be taken, as due to numerical stability issues,
+      # self_adjoint_eigvals can return slightly negative eigenvalues even for
+      # a PSD matrix.
+      if self.input_output_cholesky:
+        logdet = 2.0 * tf.reduce_sum(
+            input_tensor=tf.math.log(tf.linalg.diag_part(x)), axis=[-1])
+      else:
+        _, logdet = tf.linalg.slogdet(x)
+      answer = (self.concentration - 1.) * logdet
+      return answer
+<switch:english>
+[english] The result is then scaled by $(	ext{concentration} - 1)$, yielding the required unnormalized log probability.
+[english] What happens in the rare case where `input_output_cholesky` is True, and what are its implications?
+[english] If `self.input_output_cholesky` is true, it uses a specialized calculation: 2.0 * tf.reduce_sum(tf.math.log(tf.linalg.diag_part(x))). This path assumes the matrix $x$ has already been decomposed and ensures the input remains structured for this specific optimization.
+[english] Thanks for clarifying those details!

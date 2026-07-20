@@ -1,0 +1,15 @@
+[english] How can I programmatically redirect a system stream's output to either a specified file or a discard sink?
+[english] This function handles low-level I/O redirection. It first determines if a specific target is provided; otherwise, it defaults to linking the stream to /dev/null for safe disposal.
+<switch:python>
+[python] def _redirect(self, stream, target):
+        """Redirect a system stream to the provided target."""
+        if target is None:
+            target_fd = os.open(os.devnull, os.O_RDWR)
+        else:
+            target_fd = target.fileno()
+        os.dup2(target_fd, stream.fileno())
+<switch:english>
+[english] The core of the logic relies on `os.dup2` to replace the current file descriptor of the stream with the target's descriptor, effectively performing a system-level redirection.
+[english] If 'target' points to an existing active log file being written by another process, will this function safely take over that writing?
+[english] Yes, `os.dup2` replaces the file descriptor reference entirely. The new stream operations will point to and write directly into the original target file.
+[english] This is much clearer than I expected for basic redirection!

@@ -1,0 +1,47 @@
+[english] How can we insert a specific file or path location into an ordered list without creating duplicates and ensuring its placement respects predefined precedence rules?
+[english] This method determines where to insert `self.location` into a given `path`. It converts existing paths to a normalized internal format, then iterates through the path looking for appropriate insertion points based on directory matches or specific object precedences.
+<switch:python>
+[python] def insert_on(self, path, loc = None):
+        """Insert self.location in path before its nearest parent directory"""
+
+        loc = loc or self.location
+        if not loc:
+            return
+
+        nloc = _normalize_cached(loc)
+        bdir = os.path.dirname(nloc)
+        npath= [(p and _normalize_cached(p) or p) for p in path]
+
+        for p, item in enumerate(npath):
+            if item == nloc:
+                break
+            elif item == bdir and self.precedence == EGG_DIST:
+                # if it's an .egg, give it precedence over its directory
+                if path is sys.path:
+                    self.check_version_conflict()
+                path.insert(p, loc)
+                npath.insert(p, nloc)
+                break
+        else:
+            if path is sys.path:
+                self.check_version_conflict()
+            path.append(loc)
+            return
+
+        # p is the spot where we found or inserted loc; now remove duplicates
+        while True:
+            try:
+                np = npath.index(nloc, p+1)
+            except ValueError:
+                break
+            else:
+                del npath[np], path[np]
+                # ha!
+                p = np
+
+        return
+<switch:english>
+[english] The function carefully cleans up any duplicate entries after insertion by finding matching normalized paths and removing both from the internal and external lists. Note that it performs version conflict checks primarily when modifying `sys.path`.
+[english] What happens if 'loc' is identical to an existing item already in the path list before any insertions happen?
+[english] The initial loop finds a matching normalized location, but since the insertion logic only runs for directory precedence (`EGG_DIST`), it skips direct equality checks. The follow-on duplicate removal phase then catches and deletes all redundant entries.
+[english] That makes sense now.

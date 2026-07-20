@@ -1,0 +1,17 @@
+[english] I need a way to automatically trigger custom logic whenever a specific Django model instance is either newly created or updated.
+[english] This function acts as a signal receiver, checking if an operation was a creation or update so it can dispatch appropriate signals to other parts of your application.
+<switch:python>
+[python] def _on_model_save(sender, **kwargs):
+        """When a model gets created or updated."""
+
+        created, instance = kwargs['created'], kwargs['instance']
+
+        if created:
+            signals.create.send(sender, pk=instance.pk)
+        else:
+            signals.update.send(sender, pk=instance.pk)
+<switch:english>
+[english] The function relies on custom signals (`signals.create` and `signals.update`) being defined elsewhere to handle the dispatched primary keys.
+[english] What happens if the model instance is deleted instead of updated or created?
+[english] This specific handler does not address deletions; you would need a separate signal receiver (like one tied to Django's `post_delete` signal) to capture that event.
+[english] Thanks, this makes things much clearer for integration.

@@ -1,0 +1,25 @@
+[english] How do I convert a collection of raw text documents into a numerical document-term matrix using this vectorizer?
+[english] This function leverages a specialized transformation method from its parent class to handle the hashing and feature extraction process.
+<switch:python>
+[python] def transform(self, Z):
+        """Transform an ArrayRDD (or DictRDD with column 'X') containing
+        sequence of documents to a document-term matrix.
+
+        Parameters
+        ----------
+        Z : ArrayRDD or DictRDD with raw text documents
+            Samples. Each sample must be a text document (either bytes or
+            unicode strings) which will be tokenized and hashed.
+
+        Returns
+        -------
+        Z : SparseRDD/DictRDD containg scipy.sparse matrix
+            Document-term matrix.
+        """
+        mapper = super(SparkHashingVectorizer, self).transform
+        return Z.transform(mapper, column='X', dtype=sp.spmatrix)
+<switch:english>
+[english] The resulting sparse matrix efficiently represents how often each term appears across all input documents without explicitly storing every word in memory.
+[english] If one of my input samples is already a pre-hashed numerical representation instead of raw text, will this function still generate the correct document-term matrix?
+[english] No, the hashing vectorizer expects raw string or byte data to perform tokenization and subsequent hashing. If your input is already encoded, you would need to ensure it matches what `SparkHashingVectorizer` expects.
+[english] Got it, so I need clean text inputs before passing them through this transformation.

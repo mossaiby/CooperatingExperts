@@ -1,0 +1,33 @@
+[english] How can I reliably get a unique temporary directory path for my script, defaulting to system variables if no specific location is provided?
+[english] This function helps you manage temporary data by prioritizing user requests over default locations. It ensures a new folder structure exists within the designated temporary space when needed.
+<switch:python>
+[python] def get_tmpdir(requested_tmpdir=None, prefix="", create=True):
+    '''get a temporary directory for an operation. If SREGISTRY_TMPDIR
+       is set, return that. Otherwise, return the output of tempfile.mkdtemp
+
+       Parameters
+       ==========
+       requested_tmpdir: an optional requested temporary directory, first
+       priority as is coming from calling function.
+       prefix: Given a need for a sandbox (or similar), we will need to 
+       create a subfolder *within* the SREGISTRY_TMPDIR.
+       create: boolean to determine if we should create folder (True)
+    '''
+    from sregistry.defaults import SREGISTRY_TMPDIR
+
+    # First priority for the base goes to the user requested.
+    tmpdir = requested_tmpdir or SREGISTRY_TMPDIR
+
+    prefix = prefix or "sregistry-tmp"
+    prefix = "%s.%s" %(prefix, next(tempfile._get_candidate_names()))
+    tmpdir = os.path.join(tmpdir, prefix)
+
+    if not os.path.exists(tmpdir) and create is True:
+        os.mkdir(tmpdir)
+
+    return tmpdir
+<switch:english>
+[english] The logic prioritizes user-provided paths or `SREGISTRY_TMPDIR`, and uses system identifiers to ensure created subfolders are unique, thus preventing collisions.
+[english] What happens if I pass a directory to `requested_tmpdir` that already exists but isn't empty?
+[english] The function will use the existing path as the base. However, it only attempts to create an *additional* subdirectory structure using os.mkdir; it does not check for or handle pre-existing files inside the provided directory.
+[english] That makes sense. I need paths that are guaranteed to be clean.

@@ -1,0 +1,40 @@
+[english] How can I create a function to load model parameters from serialized files like .gz or .npz formats?
+[english] This method first verifies if the file exists and then chooses which sets of parameters to load. Depending on whether you exclude free parameters, it determines the source list for loading.
+<switch:python>
+[python] def load_params(self, path, exclude_free_params=False):
+        """
+        Load parameters from file.
+        """
+        if not os.path.exists(path): return;
+        logging.info("loading parameters from %s" % path)
+        # Decide which parameters to load
+        if exclude_free_params:
+            params_to_load = self.parameters
+        else:
+            params_to_load = self.all_parameters
+        # Load parameters
+        if path.endswith(".gz"):
+            opener = gzip.open if path.lower().endswith('.gz') else open
+            handle = opener(path, 'rb')
+            saved_params = pickle.load(handle)
+            handle.close()
+            # Write parameters
+            for target, source in zip(params_to_load, saved_params):
+                logging.info('%s: setting value %s', target.name, source.shape)
+                target.set_value(source)
+        elif path.endswith(".npz"):
+            arrs = np.load(path)
+            # Write parameters
+            for target, idx in zip(params_to_load, range(len(arrs.keys()))):
+                source = arrs['arr_%d' % idx]
+                logging.info('%s: setting value %s', target.name, source.shape)
+                target.set_value(source)
+        else:
+            raise Exception("File format of %s is not supported, use '.gz' or '.npz' or '.uncompressed.gz'" % path)
+
+        self.train_logger.load(path)
+<switch:english>
+[english] The function handles file loading dynamically for either pickle (.gz) or numpy arrays (.npz). It also ensures necessary logging is performed after each successful load.
+[english] If the input file format isn't recognized, what specific error handling occurs?
+[english] If the path does not end in '.gz' or '.npz', it raises an Exception explaining that the file format is unsupported by the system.
+[english] That makes sense, I will be careful with my filenames.

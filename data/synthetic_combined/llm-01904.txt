@@ -1,0 +1,22 @@
+[english] I need a function that can dynamically fetch and return a specific attribute from a nested Python module using only its full dot-separated path string.
+[english] This helper splits the input string at the last dot to isolate the target module and property. It uses `__import__` to load the necessary package structure before accessing the desired member dynamically.
+<switch:python>
+[python] def get_object_from_name(name):
+    ''' Returns the named object.
+
+    Arguments:
+        name (str): A string of form `package.subpackage.etc.module.property`.
+            This function will import `package.subpackage.etc.module` and
+            return `property` from that module.
+
+    '''
+
+    dot = name.rindex(".")
+    mod_name, property_name = name[:dot], name[dot + 1:]
+    __import__(mod_name)
+    return getattr(sys.modules[mod_name], property_name)
+<switch:english>
+[english] The function relies on `sys.modules` to retrieve the already imported module and then uses `getattr` for safe attribute retrieval.
+[english] What happens if one of the modules in the path doesn't actually exist?
+[english] If a module is not found, `__import__(mod_name)` will raise an `ImportError`. You could wrap it in a try-except block to handle invalid paths gracefully.
+[english] That makes sense; thanks for clarifying the error handling.

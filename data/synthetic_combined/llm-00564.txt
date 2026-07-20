@@ -1,0 +1,47 @@
+[english] I need a robust function that centralizes all logging configuration within my Python application.
+[english] This function acts as a master controller for your application's logging infrastructure. It evaluates various parameters, like file names, log levels, and custom formats, before delegated the actual setup to several internal helper functions based on your input.
+<switch:python>
+[python] def setup_logging(log_filename=None, log_level="DEBUG", str_format=None,
+                  date_format=None, log_file_level="DEBUG",
+                  log_stdout_level=None, log_restart=False, log_history=False,
+                  formatter=None, silence_modules=None, log_filter=None):
+    """
+    This will setup logging for a single file but can be called more than once
+    LOG LEVELS are "CRITICAL", "ERROR", "INFO", "DEBUG"
+    :param log_filename:    str of the file location
+    :param log_level:       str of the overall logging level for setLevel
+    :param str_format:      str of the logging format
+    :param date_format:     str of the date format
+    :param log_file_level   str of the log level to use on this file
+    :param log_stdout_level str of the log level to use on this file
+                            (None means no stdout logging)
+    :param log_restart:     bool if True the log file will be deleted first
+    :param log_history:     bool if True will save another log file in a
+                            folder called history with the datetime
+    :param formatter:       logging.Format instance to use
+    :param silence_modules  list of str of modules to silence
+    :param log_filter:      logging.filter instance to add to handler
+    :return:                None
+    """
+    setup_log_level(log_level)
+
+    if log_filename:
+        setup_file_logging(log_filename=log_filename, str_format=str_format,
+                           log_history=log_history, formatter=formatter,
+                           log_file_level=log_file_level,
+                           log_restart=log_restart, date_format=date_format,
+                           log_filter=log_filter)
+    if log_stdout_level is not None:
+        setup_stdout_logging(log_level=log_level,
+                             log_stdout_level=log_stdout_level,
+                             str_format=str_format,
+                             date_format=date_format,
+                             formatter=formatter,
+                             log_filter=log_filter)
+
+    silence_module_logging(silence_modules)
+<switch:english>
+[english] Note that this setup relies heavily on external helper functions (like `setup_file_logging`) being present in the scope for the configuration to execute properly. It offers very fine-grained control over both file and standard output streams independently.
+[english] If I set a specific `log_level` overall, does that automatically override or influence the individual `log_file_level`?
+[english] The function calls `setup_log_level(log_level)` first, which sets the root logger level. However, handlers (like file and stdout) often have their own assigned levels. The code passes your arguments to those specific setup functions so they can enforce granular control over where messages go.
+[english] This really clarifies how the settings interact!

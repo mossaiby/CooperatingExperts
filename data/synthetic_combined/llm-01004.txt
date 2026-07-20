@@ -1,0 +1,25 @@
+[english] I need a way to determine if a specific class definition inherits from another class using an AST representation.
+[english] To check for inheritance, the function iterates through all known ancestors of the `child` class. It then uses a helper method (`is_subtype`) provided by astroid to see if any ancestor is considered a subtype of the given `parent` node.
+<switch:python>
+[python] def is_subclass_of(child: astroid.ClassDef, parent: astroid.ClassDef) -> bool:
+    """
+    Check if first node is a subclass of second node.
+    :param child: Node to check for subclass.
+    :param parent: Node to check for superclass.
+    :returns: True if child is derived from parent. False otherwise.
+    """
+    if not all(isinstance(node, astroid.ClassDef) for node in (child, parent)):
+        return False
+
+    for ancestor in child.ancestors():
+        try:
+            if astroid.helpers.is_subtype(ancestor, parent):
+                return True
+        except _NonDeducibleTypeHierarchy:
+            continue
+    return False
+<switch:english>
+[english] Note that some type hierarchies may not be immediately deducible and could raise an exception, which safely skips non-deducible relationships.
+[english] What happens if there are cycles in the class inheritance structure?
+[english] The current implementation does not explicitly handle cycles (like A inherits from B and B inherits from A). While `astroid` often resolves these during analysis, a cyclical dependency could lead to unexpected behavior or infinite loops outside of this specific function.
+[english] Thanks for clarifying how that logic works.

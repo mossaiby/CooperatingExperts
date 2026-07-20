@@ -1,0 +1,13 @@
+[english] I need a way to construct a specialized list from a variable number of input elements and an optional metadata object.
+[english] This function acts as a factory for creating structured lists. It gathers any miscellaneous inputs into the `*members` argument while keeping `meta` available for configuration.
+<switch:python>
+[python] def l(*members, meta=None) -> List:
+    """Creates a new list from members."""
+    return List(  # pylint: disable=abstract-class-instantiated
+        plist(iterable=members), meta=meta
+    )
+<switch:english>
+[english] Be aware that this code assumes both `plist` and `List` are defined elsewhere in your scope, handling the internal transformation of data.
+[english] If I pass an empty tuple as one of the members, will it cause an error when initializing the List?
+[english] No, providing an empty tuple is generally safe for initialization. The list constructor will simply contain zero elements derived from that input.
+[english] That answers my main concern about the function's behavior.

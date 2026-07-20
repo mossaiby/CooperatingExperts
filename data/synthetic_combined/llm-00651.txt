@@ -1,0 +1,33 @@
+[english] I need a way to dynamically fetch the correct music segmentation label module given its identifier string.
+[english] This function retrieves a specific labeling algorithm by dynamically constructing an attribute access path inside the global `algorithms` object using `eval`. It first handles null input, then verifies that the retrieved module is classified as a valid labeling type before returning it.
+<switch:python>
+[python] def get_labels_module(labels_id):
+    """Obtains the label module given a label algorithm identificator.
+
+    Parameters
+    ----------
+    labels_id: str
+        Label algorithm identificator (e.g., fmc2d, cnmf).
+
+    Returns
+    -------
+    module: object
+        Object containing the selected label module.
+        None for not computing the labeling part of music segmentation.
+    """
+    if labels_id is None:
+        return None
+    try:
+        module = eval(algorithms.__name__ + "." + labels_id)
+    except AttributeError:
+        raise RuntimeError("Algorithm %s can not be found in msaf!" %
+                           labels_id)
+    if not module.is_label_type:
+        raise RuntimeError("Algorithm %s can not label segments!" %
+                           labels_id)
+    return module
+<switch:english>
+[english] The logic relies on mapping strings to attributes within the algorithms namespace. Keep in mind that 'eval' requires precise control over `labels_id`, as external or malicious input could lead to unexpected behavior.
+[english] What specific error is raised if the identified algorithm exists but doesn't implement the required labeling methods?
+[english] If an algorithm fails these checks, a runtime error will be raised. For example, if it fails `module.is_label_type`, the function raises: "Algorithm %s can not label segments!" % labels_id.
+[english] That detailed breakdown helps me understand its behavior better.

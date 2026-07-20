@@ -1,0 +1,23 @@
+[english] How do I reliably delete a specific file, identified by its name, from a designated cloud storage bucket in Python?
+[english] To remove an object, the approach involves getting a client connection, identifying the target bucket, obtaining a reference to the specific blob within that bucket, and then calling the deletion method.
+<switch:python>
+[python] def delete(self, bucket_name, object_name):
+        """
+        Deletes an object from the bucket.
+
+        :param bucket_name: name of the bucket, where the object resides
+        :type bucket_name: str
+        :param object_name: name of the object to delete
+        :type object_name: str
+        """
+        client = self.get_conn()
+        bucket = client.get_bucket(bucket_name=bucket_name)
+        blob = bucket.blob(blob_name=object_name)
+        blob.delete()
+
+        self.log.info('Blob %s deleted.', object_name)
+<switch:english>
+[english] The successful execution of `blob.delete()` removes the object from storage, followed by logging the action. Remember that this function relies on robust error handling upstream for connection stability.
+[english] What happens if I pass a bucket name or an object name that does not exist?
+[english] If the resource is missing, `blob.delete()` will likely raise an exception (like NotFound) depending on configuration; you should wrap the call in try/except blocks for production robustness.
+[english] That's great advice; I will ensure robust error handling around deletions.

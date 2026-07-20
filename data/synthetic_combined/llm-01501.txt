@@ -1,0 +1,45 @@
+[english] How can I customize how argparse displays default values in help messages to correctly handle types like empty strings or complex objects?
+[english] This method is designed to prepare action parameters before generating a help message string. It modifies an arguments dictionary by replacing special values (like `argparse.SUPPRESS`) and ensuring that the 'default' value is represented as its string literal form.
+<switch:python>
+[python] def _expand_help(self, action):
+        """
+        This method is copied verbatim from ArgumentDefaultsHelpFormatter with
+        a couple of lines added just before the end.  Reason: we need to
+        `repr()` default values instead of simply inserting them as is.
+        This helps notice, for example, an empty string as the default value;
+        moreover, it prevents breaking argparse due to logical quirks inside
+        of its formatters.
+
+        Ideally this could be achieved by simply defining
+        :attr:`DEFAULT_ARGUMENT_TEMPLATE` as ``{default!r}`` but unfortunately
+        argparse only supports the old printf syntax.
+        """
+        params = dict(vars(action), prog=self._prog)
+        for name in list(params):
+            if params[name] is argparse.SUPPRESS:
+                del params[name]
+        for name in list(params):
+            if hasattr(params[name], '__name__'):
+                params[name] = params[name].__name__
+        if params.get('choices') is not None:
+            choices_str = ', '.join([str(c) for c in params['choices']])
+            params['choices'] = choices_str
+
+        # XXX this is added in Argh vs. argparse.ArgumentDefaultsHelpFormatter
+        #     (avoiding empty strings, otherwise Argparse would die with
+        #     an IndexError in _format_action)
+        #
+        if 'default' in params:
+            if params['default'] is None:
+                params['default'] = '-'
+            else:
+                params['default'] = repr(params['default'])
+        #
+        # /
+
+        return self._get_help_string(action) % params
+<switch:english>
+[english] The logic explicitly uses `repr()` for defaults, which correctly formats types like empty strings or lists within the generated `--help` output. This ensures consistency even when argument handling differs slightly from standard argparse behavior.
+[english] What happens if an argument has a default value of 'None' before this function runs?
+[english] If `default` is `None`, the method explicitly converts it to '-', preventing the help message from showing 'None'. This check can be seen in the explicit 'if params['default'] is None:' block.
+[english] That makes sense, I'll add this logic to our formatter class.

@@ -1,0 +1,34 @@
+[english] I have various types of input and need them to be processed as an iterator without worrying about whether they are already sequences.
+[english] To solve this, we use external utilities like `more_itertools` which handles complex iterable logic. The function ensures that any input, even a single item or None, is converted into a uniform iterator.
+<switch:python>
+[python] def always_iterable(item):
+	"""
+	Given an object, always return an iterable. If the item is not
+	already iterable, return a tuple containing only the item. If item is
+	None, an empty iterable is returned.
+
+	>>> always_iterable([1,2,3])
+	<list_iterator...>
+	>>> always_iterable('foo')
+	<tuple_iterator...>
+	>>> always_iterable(None)
+	<tuple_iterator...>
+	>>> always_iterable(range(10))
+	<range_iterator...>
+	>>> def _test_func(): yield "I'm iterable"
+	>>> print(next(always_iterable(_test_func())))
+	I'm iterable
+
+	Although mappings are iterable, treat each like a singleton, as
+	it's more like an object than a sequence.
+
+	>>> next(always_iterable(dict(a=1)))
+	{'a': 1}
+	"""
+	base_types = six.text_type, bytes, collections.abc.Mapping
+	return more_itertools.always_iterable(item, base_type=base_types)
+<switch:english>
+[english] It's worth noting the use of `base_types` which prevents common sequence types like mappings from being expanded into their individual components.
+[english] What happens if the input is a dictionary, and I actually want its keys to be iterated through instead of treating it as one element?
+[english] To allow dictionaries to be iterated over their keys, you would need to modify the `base_types` definition by removing `collections.abc.Mapping` from that exclusion list.
+[english] Perfect, that makes the difference I needed!

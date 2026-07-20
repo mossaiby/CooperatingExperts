@@ -1,0 +1,33 @@
+[english] I have a raw data blob representing a structured table, and I need to parse it into a Python dictionary using specified fields.
+[english] This function iterates through a list of desired field names, reading two bytes for each one to extract metadata before parsing the actual value. It uses an internal helper function to handle the specific byte reading logic.
+<switch:python>
+[python] def read_table(data, fields):
+    """Read a table structure.
+
+    These are used by Blizzard to collect pieces of data together. Each
+    value is prefixed by two bytes, first denoting (doubled) index and the
+    second denoting some sort of key -- so far it has always been '09'. The
+    actual value follows as a Variable-Length Quantity, also known as uintvar.
+    The actual value is also doubled.
+
+    In some tables the keys might jump from 0A 09 to 04 09 for example.
+    I have no idea why this happens, as the next logical key is 0C. Perhaps
+    it's a table in a table? Some sort of headers might exist for these
+    tables, I'd imagine at least denoting length. Further research required.
+    """
+    def read_field(field_name):
+        data.read(2)
+        table[field_name] = vlq2int(data) / 2
+        # Discard unknown fields.
+        if field_name == 'unknown':
+            del table[field_name]
+
+    table = {}
+    for field in fields:
+        read_field(field)
+    return table
+<switch:english>
+[english] The code relies on an external `vlq2int` function to decode the actual data value. Be aware that this structure implicitly assumes the input data stream is correctly aligned.
+[english] What would happen if one of the fields listed in `fields` was not present and the underlying data ended prematurely?
+[english] If the data ends before all required fields are read, `data.read(2)` or subsequent calls to `vlq2int(data)` will likely raise an EOF error, indicating incomplete input.
+[english] Thanks for clarifying how this parsing mechanism works.

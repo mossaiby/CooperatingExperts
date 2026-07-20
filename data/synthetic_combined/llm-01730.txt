@@ -1,0 +1,17 @@
+[english] How do I instantiate the SimpleCache class while ensuring it uses my custom threshold setting?
+[english] This method provides a streamlined way to create a SimpleCache instance. It first ensures the cache is configured with a default or specified threshold before passing all keyword arguments to the constructor.
+<switch:python>
+[python] def _simple(self, **kwargs):
+        """Returns a :class:`SimpleCache` instance
+
+        .. warning::
+
+            This cache system might not be thread safe. Use with caution.
+        """
+        kwargs.update(dict(threshold=self._config('threshold', 500)))
+        return SimpleCache(**kwargs)
+<switch:english>
+[english] The function returns an initialized SimpleCache object, but please note that the docstring warns about potential thread safety issues when using this implementation outside of controlled environments.
+[english] If I call _simple() without passing any keyword arguments at all, will it always use 500 as the threshold?
+[english] Yes, if no `threshold` is provided in `**kwargs`, the function retrieves and applies the default value of 500 from its internal configuration using `self._config('threshold', 500)`.
+[english] Got it, thanks for clarifying how the defaults work.

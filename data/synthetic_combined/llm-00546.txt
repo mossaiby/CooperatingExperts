@@ -1,0 +1,90 @@
+[english] I need a way to fetch all necessary legal agreements and policies for a specific TLD before I can purchase or transfer it.
+[english] This function is designed to interact with an external API to retrieve domain agreements. It defines an internal generator, `internal_paging`, which manages the request lifecycle and handles pagination automatically.
+<switch:python>
+[python] def list_agreements(
+            self, name, include_privacy=None, for_transfer=None, custom_headers=None, raw=False, **operation_config):
+        """Gets all legal agreements that user needs to accept before purchasing a
+        domain.
+
+        Gets all legal agreements that user needs to accept before purchasing a
+        domain.
+
+        :param name: Name of the top-level domain.
+        :type name: str
+        :param include_privacy: If <code>true</code>, then the list of
+         agreements will include agreements for domain privacy as well;
+         otherwise, <code>false</code>.
+        :type include_privacy: bool
+        :param for_transfer: If <code>true</code>, then the list of agreements
+         will include agreements for domain transfer as well; otherwise,
+         <code>false</code>.
+        :type for_transfer: bool
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: returns the direct response alongside the
+         deserialized response
+        :param operation_config: :ref:`Operation configuration
+         overrides<msrest:optionsforoperations>`.
+        :return: An iterator like instance of TldLegalAgreement
+        :rtype:
+         ~azure.mgmt.web.models.TldLegalAgreementPaged[~azure.mgmt.web.models.TldLegalAgreement]
+        :raises:
+         :class:`DefaultErrorResponseException<azure.mgmt.web.models.DefaultErrorResponseException>`
+        """
+        agreement_option = models.TopLevelDomainAgreementOption(include_privacy=include_privacy, for_transfer=for_transfer)
+
+        def internal_paging(next_link=None, raw=False):
+
+            if not next_link:
+                # Construct URL
+                url = self.list_agreements.metadata['url']
+                path_format_arguments = {
+                    'name': self._serialize.url("name", name, 'str'),
+                    'subscriptionId': self._serialize.url("self.config.subscription_id", self.config.subscription_id, 'str')
+                }
+                url = self._client.format_url(url, **path_format_arguments)
+
+                # Construct parameters
+                query_parameters = {}
+                query_parameters['api-version'] = self._serialize.query("self.api_version", self.api_version, 'str')
+
+            else:
+                url = next_link
+                query_parameters = {}
+
+            # Construct headers
+            header_parameters = {}
+            header_parameters['Accept'] = 'application/json'
+            header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+            if self.config.generate_client_request_id:
+                header_parameters['x-ms-client-request-id'] = str(uuid.uuid1())
+            if custom_headers:
+                header_parameters.update(custom_headers)
+            if self.config.accept_language is not None:
+                header_parameters['accept-language'] = self._serialize.header("self.config.accept_language", self.config.accept_language, 'str')
+
+            # Construct body
+            body_content = self._serialize.body(agreement_option, 'TopLevelDomainAgreementOption')
+
+            # Construct and send request
+            request = self._client.post(url, query_parameters, header_parameters, body_content)
+            response = self._client.send(request, stream=False, **operation_config)
+
+            if response.status_code not in [200]:
+                raise models.DefaultErrorResponseException(self._deserialize, response)
+
+            return response
+
+        # Deserialize response
+        deserialized = models.TldLegalAgreementPaged(internal_paging, self._deserialize.dependencies)
+
+        if raw:
+            header_dict = {}
+            client_raw_response = models.TldLegalAgreementPaged(internal_paging, self._deserialize.dependencies, header_dict)
+            return client_raw_response
+
+        return deserialized
+<switch:english>
+[english] The code leverages a closure (`internal_paging`) combined with a deserializer to ensure that all results from paginated responses are returned as a complete iterator.
+[english] If I set `raw=True`, what form will the response data take, and how does it differ from the standard behavior?
+[english] When `raw` is true, instead of deserializing the JSON content, the function returns an instance of `TldLegalAgreementPaged` that wraps the raw HTTP responses for each page retrieved.
+[english] That explains the difference between structured and raw data retrieval nicely.

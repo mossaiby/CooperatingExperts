@@ -1,0 +1,32 @@
+[english] How can I configure content negotiation middleware for my web application using external settings?
+[english] To enable request handling based on client media types, this function retrieves necessary configuration from the app and instantiates a dedicated negotiation middleware.
+<switch:python>
+[python] def setup(
+    app: web.Application, *, negotiator: callable=DEFAULTS['NEGOTIATOR'],
+    renderers: OrderedDict=DEFAULTS['RENDERERS'],
+    force_negotiation: bool=DEFAULTS['FORCE_NEGOTIATION']
+):
+    """Set up the negotiation middleware. Reads configuration from
+    ``app['AIOHTTP_UTILS']``.
+
+    :param app: Application to set up.
+    :param negotiator: Function that selects a renderer given a
+        request, a dict of renderers, and a ``force`` parameter (whether to return
+        a renderer even if the client passes an unsupported media type).
+    :param renderers: Mapping of mediatypes to callable renderers.
+    :param force_negotiation: Whether to return a rennderer even if the
+        client passes an unsupported media type).
+    """
+    config = app.get(CONFIG_KEY, {})
+    middleware = negotiation_middleware(
+        renderers=config.get('RENDERERS', renderers),
+        negotiator=config.get('NEGOTIATOR', negotiator),
+        force_negotiation=config.get('FORCE_NEGOTIATION', force_negotiation)
+    )
+    app.middlewares.append(middleware)
+    return app
+<switch:english>
+[english] By appending the configured `middleware` to `app.middlewares`, it ensures that all incoming requests pass through the content negotiation logic before being handled by application routes.
+[english] If certain keys are missing from `CONFIG_KEY`, which values (the function parameters or defaults) will take precedence?
+[english] The function uses `.get()` extensively, so if config items are absent, it safely falls back to the `negotiator`, `renderers`, and `force_negotiation` arguments passed during setup.
+[english] That makes sense; I appreciate the detailed explanation.

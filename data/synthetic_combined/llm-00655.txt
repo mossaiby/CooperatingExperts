@@ -1,0 +1,16 @@
+[english] How can I find the type of a specific attribute, ignoring case?
+[english] This method handles the retrieval by first standardizing the input to uppercase to ensure case-insensitivity during the search.
+<switch:python>
+[python] def attribute_type(self, attribute_name):
+        '''
+        Obtain the type of an attribute.
+        '''
+        attribute_name = attribute_name.upper()
+        for name, ty in self.attributes:
+            if name.upper() == attribute_name:
+                return ty
+<switch:english>
+[english] The function successfully retrieves the corresponding type from stored attributes. Note that it relies on the internal structure of self.attributes being Name/Type pairs.
+[english] What happens if the attribute isn't found in `self.attributes`?
+[english] If the attribute name is not found, the loop completes and the function implicitly returns None because there is no explicit return statement outside the loop. You could add a default value upon finding nothing.
+[english] Thanks for explaining this!

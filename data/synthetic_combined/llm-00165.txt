@@ -1,0 +1,42 @@
+[english] How can I visualize variance explained across different principal components using a scree plot?
+[english] This function generates a graphical representation of variances (eigenvalues) extracted from a statistical model, which is useful for selecting the optimal number of components.
+<switch:python>
+[python] def screeplot(self, type="barplot", **kwargs):
+        """
+        Produce the scree plot.
+
+        Library ``matplotlib`` is required for this function.
+
+        :param str type: either ``"barplot"`` or ``"lines"``.
+        """
+        # check for matplotlib. exit if absent.
+        is_server = kwargs.pop("server")
+        if kwargs:
+            raise ValueError("Unknown arguments %s to screeplot()" % ", ".join(kwargs.keys()))
+        try:
+            import matplotlib
+            if is_server: matplotlib.use('Agg', warn=False)
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print("matplotlib is required for this function!")
+            return
+
+        variances = [s ** 2 for s in self._model_json['output']['importance'].cell_values[0][1:]]
+        plt.xlabel('Components')
+        plt.ylabel('Variances')
+        plt.title('Scree Plot')
+        plt.xticks(list(range(1, len(variances) + 1)))
+        if type == "barplot":
+            plt.bar(list(range(1, len(variances) + 1)), variances)
+        elif type == "lines":
+            plt.plot(list(range(1, len(variances) + 1)), variances, 'b--')
+        if not is_server: plt.show()
+<switch:english>
+[english] The function checks if `matplotlib` is available and handles server environments to ensure it runs correctly without needing an interactive display. If provided with unknown arguments, the function raises a ValueError to prevent unexpected behavior.
+[english] If I intend to plot only the top 3 components, how can I modify this function's parameters?
+[english] You would need to preprocess or slice the `variances` list before plotting. For example:
+<switch:python>
+[python] pilotted_variances = variances[:3]
+plt.bar(list(range(1, len(pilocated_variances) + 1)), pilotted_variances)
+<switch:english>
+[english] Thanks, that clarification helped me understand the visualization better!

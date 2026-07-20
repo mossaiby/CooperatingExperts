@@ -1,0 +1,23 @@
+[english] I need a way to automatically find all videos associated with a given Vimeo channel ID and download them.
+[english] This function first retrieves all video metadata from the specified Vimeo channel API endpoint. It then iterates through the response data to extract unique video IDs from their respective URIs before initiating individual downloads.
+<switch:python>
+[python] def vimeo_download_by_channel_id(channel_id, output_dir='.', merge=False, info_only=False, **kwargs):
+    """str/int->None"""
+    html = get_content('https://api.vimeo.com/channels/{channel_id}/videos?access_token={access_token}'.format(channel_id=channel_id, access_token=access_token))
+    data = loads(html)
+    id_list = []
+
+    #print(data)
+    for i in data['data']:
+        id_list.append(match1(i['uri'], r'/videos/(\w+)'))
+
+    for id in id_list:
+        try:
+            vimeo_download_by_id(id, None, output_dir, merge, info_only, **kwargs)
+        except urllib.error.URLError as e:
+            log.w('{} failed with {}'.format(id, e))
+<switch:english>
+[english] The function sequentially calls `vimeo_download_by_id` for every extracted video ID. This approach ensures reliable downloading but may be slow for very large channels.
+[english] Since it calls the download function in a loop, is there a way to make this process faster using threading?
+[english] To speed up downloads, you could implement concurrency by replacing the final `for` loop with a thread pool executor or asyncio:
+[english] That makes sense. I'll try adding some parallel processing.

@@ -1,0 +1,19 @@
+[english] I need a Python method that calculates the true anomaly for an orbiting object across a series of timestamps.
+[english] This function, get_true_anomaly, computes the current true anomaly by passing various orbital properties and time data to a backend helper. It uses astronomical constants like eccentricity and inclination provided in the instance.
+<switch:python>
+[python] def get_true_anomaly(self):
+		"""
+		Return the true anomaly at each time
+		"""
+		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
+							  self.inc*pi/180., self.ecc, self.w*pi/180.,
+							  self.transittype, self.nthreads)
+		return self.f
+<switch:english>
+[english] The calculated values are stored internally as `self.f` before being returned, which is then used for plotting or further analysis of the orbit.
+[english] If 't_supersample' contains negative time values (before t0), will the calculation remain valid?
+[english] Based on standard Keplerian mechanics, most astrodynamics libraries can handle negative times to project backward, but you should confirm that _rsky._getf handles time going below zero without error.
+<switch:python>
+[python] something = self.transittype # Example check
+<switch:english>
+[english] Thanks for the detailed explanation of how this orbital calculation works.

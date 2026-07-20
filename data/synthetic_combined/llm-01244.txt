@@ -1,0 +1,27 @@
+[english] I need a function that counts exactly how many times a given substring appears within every cell of an existing H2OFrame.
+[english] This method leverages internal H2O expression functionality to efficiently calculate the occurrences of pattern substrings across all string columns in the frame simultaneously, ensuring vectorized processing.
+<switch:python>
+[python] def countmatches(self, pattern):
+        """
+        For each string in the frame, count the occurrences of the provided pattern.  If countmathces is applied to
+        a frame, all columns of the frame must be type string, otherwise, the returned frame will contain errors.
+
+        The pattern here is a plain string, not a regular expression. We will search for the occurrences of the
+        pattern as a substring in element of the frame. This function is applicable to frames containing only
+        string or categorical columns.
+
+        :param str pattern: The pattern to count matches on in each string. This can also be a list of strings,
+            in which case all of them will be searched for.
+        :returns: numeric H2OFrame with the same shape as the original, containing counts of matches of the
+            pattern for each cell in the original frame.
+        """
+        assert_is_type(pattern, str, [str])
+        fr = H2OFrame._expr(expr=ExprNode("countmatches", self, pattern))
+        fr._ex._cache.nrows = self.nrow
+        fr._ex._cache.ncols = self.ncol
+        return fr
+<switch:english>
+[english] It's crucial that the input frame contains only string or categorical columns, as applying this operation to numeric data will result in errors.
+[english] If I pass a list of different patterns to `countmatches`, how are those multiple matches aggregated into the final count?
+[english] When provided with a list of strings, the function searches for occurrences of every pattern listed and generates counts reflecting these multi-pattern match results within the output frame.
+[english] That clarifies how to handle complex matching scenarios.

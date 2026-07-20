@@ -1,0 +1,20 @@
+[english] I need a method that properly resets my terminal display using curses before starting the main application loop.
+[english] To set up your interactive environment, we first pause any existing menu state. Then, we configure the program mode and clear the screen to ensure a clean start for the user interface.
+<switch:python>
+[python] def set_up(self):
+        """
+        This class overrides this method
+        """
+        self.menu.pause()
+        curses.def_prog_mode()
+        self.menu.clear_screen()
+<switch:english>
+[english] The `curses.def_prog_mode()` call is important as it configures the standard termios settings for your program.
+[english] Since this handles startup, what should I do to properly restore my terminal state when the application closes?
+[english] You typically need a corresponding shutdown method that calls `atexit` or invokes `curses.nocurses()` and resets the terminal's original modes upon exit.
+<switch:python>
+[python] def close_down(self):
+        # Restores terminal settings to normal
+        curses.endwin()
+<switch:english>
+[english] That makes sense, thank you for clarifying how cleanup works.

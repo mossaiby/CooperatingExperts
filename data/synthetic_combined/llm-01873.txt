@@ -1,0 +1,25 @@
+[english] How can I reliably retrieve the associated clock signal for this component, even if it’s defined by an ancestor?
+[english] This method prioritizes finding a local clock first to avoid unnecessary lookups. If the clock isn't found locally, it attempts a recursive search up the unit hierarchy.
+<switch:python>
+[python] def _getAssociatedClk(self):
+        """
+        If interface has associated clk return it otherwise
+        try to find clk on parent recursively
+        """
+        a = self._associatedClk
+
+        if a is not None:
+            return a
+
+        p = self._parent
+        assert p is not None
+
+        if isinstance(p, UnitBase):
+            return getClk(p)
+        else:
+            return p._getAssociatedClk()
+<switch:english>
+[english] The function handles clock retrieval by first checking a local association and then delegating the search to its parent until one is found.
+[english] What happens if I reach the top of the hierarchy (the root) and no clock has been assigned anywhere?
+[english] If the recursion reaches the root without finding an associated clock, it will eventually raise an AssertionError because the initial `p = self._parent` requires a non-None parent to begin the traversal.
+[english] That makes sense, thanks for explaining how the recursion handles that edge case!

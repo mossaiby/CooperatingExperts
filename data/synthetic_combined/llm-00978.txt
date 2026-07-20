@@ -1,0 +1,81 @@
+[english] I need a way to remove an existing Service Fabric application type from my cluster.
+[english] This method initiates the unprovisioning process by formatting the request URL and parameters, setting up headers, and constructing the necessary message body using `UnprovisionApplicationTypeDescriptionInfo` before sending the POST request.
+<switch:python>
+[python] def unprovision_application_type(
+            self, application_type_name, application_type_version, timeout=60, async_parameter=None, custom_headers=None, raw=False, **operation_config):
+        """Removes or unregisters a Service Fabric application type from the
+        cluster.
+
+        This operation can only be performed if all application instances of
+        the application type have been deleted. Once the application type is
+        unregistered, no new application instances can be created for this
+        particular application type.
+
+        :param application_type_name: The name of the application type.
+        :type application_type_name: str
+        :param application_type_version: The version of the application type
+         as defined in the application manifest.
+        :type application_type_version: str
+        :param timeout: The server timeout for performing the operation in
+         seconds. This timeout specifies the time duration that the client is
+         willing to wait for the requested operation to complete. The default
+         value for this parameter is 60 seconds.
+        :type timeout: long
+        :param async_parameter: The flag indicating whether or not unprovision
+         should occur asynchronously. When set to true, the unprovision
+         operation returns when the request is accepted by the system, and the
+         unprovision operation continues without any timeout limit. The default
+         value is false. However, we recommend setting it to true for large
+         application packages that were provisioned.
+        :type async_parameter: bool
+        :param dict custom_headers: headers that will be added to the request
+        :param bool raw: returns the direct response alongside the
+         deserialized response
+        :param operation_config: :ref:`Operation configuration
+         overrides<msrest:optionsforoperations>`.
+        :return: None or ClientRawResponse if raw=true
+        :rtype: None or ~msrest.pipeline.ClientRawResponse
+        :raises:
+         :class:`FabricErrorException<azure.servicefabric.models.FabricErrorException>`
+        """
+        unprovision_application_type_description_info = models.UnprovisionApplicationTypeDescriptionInfo(application_type_version=application_type_version, async_property=async_parameter)
+
+        api_version = "6.0"
+
+        # Construct URL
+        url = self.unprovision_application_type.metadata['url']
+        path_format_arguments = {
+            'applicationTypeName': self._serialize.url("application_type_name", application_type_name, 'str')
+        }
+        url = self._client.format_url(url, **path_format_arguments)
+
+        # Construct parameters
+        query_parameters = {}
+        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        if timeout is not None:
+            query_parameters['timeout'] = self._serialize.query("timeout", timeout, 'long', maximum=4294967295, minimum=1)
+
+        # Construct headers
+        header_parameters = {}
+        header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        if custom_headers:
+            header_parameters.update(custom_headers)
+
+        # Construct body
+        body_content = self._serialize.body(unprovision_application_type_description_info, 'UnprovisionApplicationTypeDescriptionInfo')
+
+        # Construct and send request
+        request = self._client.post(url, query_parameters, header_parameters, body_content)
+        response = self._client.send(request, stream=False, **operation_config)
+
+        if response.status_code not in [200, 202]:
+            raise models.FabricErrorException(self._deserialize, response)
+
+        if raw:
+            client_raw_response = ClientRawResponse(None, response)
+            return client_raw_response
+<switch:english>
+[english] The function mandates that all instances of the application type must be deleted before this operation will succeed. It handles errors by raising a specific FabricErrorException if the response status is not 200 or 202.
+[english] What are the practical differences between using the `timeout` parameter versus setting `async_parameter=True`?
+[english] The `timeout` sets a fixed wait duration for synchronous completion. Setting `async_parameter=True` allows the request to complete immediately without waiting, deferring the unprovisioning process entirely.
+[english] This makes sense; I will use async for large packages.

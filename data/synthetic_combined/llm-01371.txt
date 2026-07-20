@@ -1,0 +1,60 @@
+[english] I need a way to compute harmonic and sub-harmonic content from a multi-dimensional time-frequency representation.
+[english] This function iterates over specific slices of your input array, effectively treating each slice as a separate 1D signal. It then iteratively calls `harmonics_1d` on these segments to populate the corresponding output tensor.
+<switch:python>
+[python] def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
+                 axis=0):
+    '''Populate a harmonic tensor from a time-frequency representation with
+    time-varying frequencies.
+
+    Parameters
+    ----------
+    harmonic_out : np.ndarray
+        The output array to store harmonics
+
+    x : np.ndarray
+        The input energy
+
+    freqs : np.ndarray, shape=x.shape
+        The frequency values corresponding to each element of `x`
+
+    h_range : list-like, non-negative
+        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        itself.  Values less than one (e.g., 1/2) correspond to
+        sub-harmonics.
+
+    kind : str
+        Interpolation type.  See `scipy.interpolate.interp1d`.
+
+    fill_value : float
+        The value to fill when extrapolating beyond the observed
+        frequency range.
+
+    axis : int
+        The axis along which to compute harmonics
+
+    See Also
+    --------
+    harmonics
+    harmonics_1d
+    '''
+    idx_in = [slice(None)] * x.ndim
+    idx_freq = [slice(None)] * x.ndim
+    idx_out = [slice(None)] * harmonic_out.ndim
+
+    # This is the non-interpolation axis
+    ni_axis = (1 + axis) % x.ndim
+
+    # For each value in the non-interpolated axis, compute its harmonics
+    for i in range(x.shape[ni_axis]):
+        idx_in[ni_axis] = slice(i, i + 1)
+        idx_freq[ni_axis] = i
+        idx_out[1 + ni_axis] = idx_in[ni_axis]
+
+        harmonics_1d(harmonic_out[tuple(idx_out)], x[tuple(idx_in)], freqs[tuple(idx_freq)],
+                     h_range, kind=kind, fill_value=fill_value,
+                     axis=axis)
+<switch:english>
+[english] The implementation relies heavily on indexing and repeatedly calling a dedicated 1D helper function (`harmonics_1d`), making it suitable for parallel or segmented processing.
+[english] If I set 'axis=0', how are the indices handled inside the loop to ensure all data is processed correctly?
+[english] When `axis=0`, the non-interpolation axis `ni_axis` becomes 1. The code then iterates over x's second dimension (x.shape[1]) while keeping the first dimension fixed, passing those slices into `harmonics_1d` for computation.
+[english] That makes sense, thanks for clarifying how the slicing works!

@@ -1,0 +1,21 @@
+[english] I need a way to globally replace all tab characters within the string elements of my data set with a specific replacement value.
+[english] This approach iterates through each row and applies conditional logic to every element. It checks if the element is text before attempting the replacement, using nested generator expressions for efficiency.
+<switch:python>
+[python] def override_tab_value(data, headers, new_value='    ', **_):
+    """Override tab values in the *data* with *new_value*.
+
+    :param iterable data: An :term:`iterable` (e.g. list) of rows.
+    :param iterable headers: The column headers.
+    :param new_value: The new value to use for tab.
+    :return: The processed data and headers.
+    :rtype: tuple
+
+    """
+    return (([v.replace('\t', new_value) if isinstance(v, text_type) else v
+              for v in row] for row in data),
+            headers)
+<switch:english>
+[english] The function returns the processed rows as a generator; remember that you must iterate over this output immediately since it is not materialized into a list.
+[english] If a cell in the input data contains another structure, like a dictionary or a number, what happens during processing?
+[english] If an element is not recognized as `text_type`, the function simply returns that value unchanged, preventing errors. This ensures only strings are modified.
+[english] That clarifies how mixed data types are handled.

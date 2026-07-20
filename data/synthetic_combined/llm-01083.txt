@@ -1,0 +1,53 @@
+[english] How do I set up and maintain a persistent websocket connection that automatically attempts to reconnect upon failure?
+[english] This method establishes the WebSocket client by configuring all necessary callbacks and initial SSL paths. It uses a robust loop structure to manage continuous connection attempts if the link drops or closes, providing resilience.
+<switch:python>
+[python] def _connect(self):
+        """Creates a websocket connection.
+
+        :return:
+        """
+        self.log.debug("_connect(): Initializing Connection..")
+        self.socket = websocket.WebSocketApp(
+            self.url,
+            on_open=self._on_open,
+            on_message=self._on_message,
+            on_error=self._on_error,
+            on_close=self._on_close
+        )
+
+        if 'ca_certs' not in self.sslopt.keys():
+            ssl_defaults = ssl.get_default_verify_paths()
+            self.sslopt['ca_certs'] = ssl_defaults.cafile
+
+        self.log.debug("_connect(): Starting Connection..")
+        self.socket.run_forever(sslopt=self.sslopt,
+                        http_proxy_host=self.http_proxy_host,
+                        http_proxy_port=self.http_proxy_port,
+                        http_proxy_auth=self.http_proxy_auth,
+                        http_no_proxy=self.http_no_proxy)
+
+        # stop outstanding ping/pong timers
+        self._stop_timers()
+        while self.reconnect_required.is_set():
+            if not self.disconnect_called.is_set():
+                self.log.info("Attempting to connect again in %s seconds."
+                              % self.reconnect_interval)
+                self.state = "unavailable"
+                time.sleep(self.reconnect_interval)
+
+                # We need to set this flag since closing the socket will
+                # set it to False
+                self.socket.keep_running = True
+                self.socket.sock = None
+                self.socket.run_forever(sslopt=self.sslopt,
+                                http_proxy_host=self.http_proxy_host,
+                                http_proxy_port=self.http_proxy_port,
+                                http_proxy_auth=self.http_proxy_auth,
+                                http_no_proxy=self.http_no_proxy)
+            else:
+                break
+<switch:english>
+[english] Since this function utilizes `run_forever()`, it acts as a blocking operation, meaning it should be executed in its own thread within a larger application environment.
+[english] The reconnection logic uses `time.sleep(self.reconnect_interval)`. Does this approach handle backoff strategies or is the retry interval fixed?
+[english] In its current state, the function uses a fixed delay for retries. If you wanted exponential backoff, you would need to implement logic that increases `self.reconnect_interval` with each failed attempt.
+[english] Thanks, that clarifies how the persistence is handled.

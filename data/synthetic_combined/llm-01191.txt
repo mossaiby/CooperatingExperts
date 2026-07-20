@@ -1,0 +1,36 @@
+[english] How do I check if a class or method name is being redefined within its current scope in Python?
+[english] This function analyzes names to detect redefinitions by comparing the current node against definitions found in its parent frame. It handles naming exceptions, such as predefined methods that are intentionally overridden.
+<switch:python>
+[python] def _check_redefinition(self, redeftype, node):
+        """check for redefinition of a function / method / class name"""
+        parent_frame = node.parent.frame()
+        defined_self = parent_frame[node.name]
+        if defined_self is not node and not astroid.are_exclusive(node, defined_self):
+
+            # Additional checks for methods which are not considered
+            # redefined, since they are already part of the base API.
+            if (
+                isinstance(parent_frame, astroid.ClassDef)
+                and node.name in REDEFINABLE_METHODS
+            ):
+                return
+
+            dummy_variables_rgx = lint_utils.get_global_option(
+                self, "dummy-variables-rgx", default=None
+            )
+            if dummy_variables_rgx and dummy_variables_rgx.match(node.name):
+                return
+            self.add_message(
+                "function-redefined",
+                node=node,
+                args=(redeftype, defined_self.fromlineno),
+            )
+<switch:english>
+[english] If multiple checks pass, it logs a 'function-redefined' message, making sure developers don't accidentally overwrite important names.
+[english] If I redefine a method listed in REDEFINABLE_METHODS while working inside a class definition, will the function still report an error?
+[english] No, it won't. The logic includes an early exit if both conditions are met:
+<switch:python>
+[python] if (isinstance(parent_frame, astroid.ClassDef) and node.name in REDEFINABLE_METHODS):
+    return
+<switch:english>
+[english] This makes sense; the function intelligently ignores standard API methods.

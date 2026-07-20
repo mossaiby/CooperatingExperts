@@ -1,0 +1,19 @@
+[english] How do I safely retrieve the module's blueprint name, even if the system is using deprecated old module routing?
+[english] This function provides backward compatibility for older versions of the framework that relied on modules instead of blueprints. It first issues a warning because the functionality is obsolete and then checks an internal flag to return the appropriate attribute.
+<switch:python>
+[python] def module(self):
+        """The name of the current module if the request was dispatched
+        to an actual module.  This is deprecated functionality, use blueprints
+        instead.
+        """
+        from warnings import warn
+        warn(DeprecationWarning('modules were deprecated in favor of '
+                                'blueprints.  Use request.blueprint '
+                                'instead.'), stacklevel=2)
+        if self._is_old_module:
+            return self.blueprint
+<switch:english>
+[english] It's crucial to note that this method is deprecated; migrating to `request.blueprint` is strongly recommended based on the warning issued here.
+[english] What happens if `self._is_old_module` is False and there is no blueprint defined?
+[english] If `self._is_old_module` is false, the function does not explicitly return anything (it implicitly returns None). You should ensure your routing mechanism correctly defines a blueprint for new setups.
+[english] Should I remove this dependency entirely?

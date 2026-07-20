@@ -1,0 +1,38 @@
+[english] How do I estimate the mode or most frequent value for a continuous expression when considering several binning parameters?
+[english] This function estimates the mode by creating a histogram of the given `expression` across multiple specified bins. It processes the data using an underlying structure (`subspace`) to count frequencies and then determines the peak location.
+<switch:python>
+[python] def mode(self, expression, binby=[], limits=None, shape=256, mode_shape=64, mode_limits=None, progressbar=False, selection=None):
+        """Calculate/estimate the mode."""
+        if len(binby) == 0:
+            raise ValueError("only supported with binby argument given")
+        else:
+            # todo, fix progressbar into two...
+            try:
+                len(shape)
+                shape = tuple(shape)
+            except:
+                shape = len(binby) * (shape,)
+            shape = (mode_shape,) + shape
+            subspace = self(*(list(binby) + [expression]))
+            if selection:
+                subspace = subspace.selected()
+
+            limits = self.limits(list(binby), limits)
+            mode_limits = self.limits([expression], mode_limits)
+            limits = list(limits) + list(mode_limits)
+            counts = subspace.histogram(limits=limits, size=shape, progressbar=progressbar)
+
+            indices = np.argmax(counts, axis=0)
+            pmin, pmax = limits[-1]
+            centers = np.linspace(pmin, pmax, mode_shape + 1)[:-1]  # ignore last bin
+            centers += (centers[1] - centers[0]) / 2  # and move half a bin to the right
+
+            modes = centers[indices]
+            ok = counts.sum(axis=0) > 0
+            modes[~ok] = np.nan
+            return modes
+<switch:english>
+[english] The function returns an array of estimated mode centers; if no data exists in a specific bin, the corresponding output is set to NaN.
+[english] What happens if there are multiple bins that all share the highest count?
+[english] Ifmultiple indices have the same maximum value in `counts`, `np.argmax` will return only the first one it encounters along `axis=0`. To capture all modes, you would need to modify the logic to find all locations where counts equal `np.max(counts)`.
+[english] Thanks for clearing that up!

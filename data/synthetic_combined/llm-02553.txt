@@ -1,0 +1,29 @@
+[english] How can I automatically add calculated and formatted date information to my sensor data dictionaries?
+[english] This function takes a dictionary of raw field measurements and enriches it by calculating derived meteorological values, like heat index, while also adding precise timestamp fields for both local and UTC time.
+<switch:python>
+[python] def _calc_derived_fields(self, fields):
+        '''
+        calculates the derived fields (those fields that are calculated)
+        '''
+        # convenience variables for the calculations below
+        temp = fields['TempOut']
+        hum = fields['HumOut']
+        wind = fields['WindSpeed']
+        wind10min = fields['WindSpeed10Min']
+        fields['HeatIndex'] = calc_heat_index(temp, hum)
+        fields['WindChill'] = calc_wind_chill(temp, wind, wind10min)
+        fields['DewPoint'] = calc_dewpoint(temp, hum)
+        # store current data string
+        now = time.localtime()
+        fields['DateStamp'] = time.strftime("%Y-%m-%d %H:%M:%S", now)
+        fields['Year'] = now[0]
+        fields['Month'] = str(now[1]).zfill(2)
+        now = time.gmtime()
+        fields['DateStampUtc'] = time.strftime("%Y-%m-%d %H:%M:%S", now)
+        fields['YearUtc'] = now[0]
+        fields['MonthUtc'] = str(now[1]).zfill(2)
+<switch:english>
+[english] It relies on external functions (`calc_heat_index`, etc.) which makes its overall functionality dependent on those implementations being available in the scope of this method. The use of `time.gmtime()` ensures accurate UTC data extraction.
+[english] What would happen if 'TempOut' or 'HumOut' are missing from the input dictionary during calculation?
+[english] If these keys are missing, Python will raise a KeyError because the function accesses them directly via `fields['TempOut']`. You should add checks like `'TempOut': fields.get('TempOut')` to handle potential missing input data.
+[english] Should I refactor this into a class method or keep it standalone?

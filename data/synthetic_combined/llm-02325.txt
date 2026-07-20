@@ -1,0 +1,27 @@
+[english] I need a way to generate a unique variant ID for a specific genetic mutation by combining its structural details with an associated family identifier.
+[english] This function constructs a new ID by gathering all necessary data points from the input dictionary—such as chromosome, position, and reference allele—and passing them along with the provided family ID into a separate parsing utility.
+<switch:python>
+[python] def get_variantid(variant_obj, family_id):
+    """Create a new variant id.
+
+    Args:
+        variant_obj(dict)
+        family_id(str)
+
+    Returns:
+        new_id(str): The new variant id
+    """
+    new_id = parse_document_id(
+        chrom=variant_obj['chromosome'],
+        pos=str(variant_obj['position']),
+        ref=variant_obj['reference'],
+        alt=variant_obj['alternative'],
+        variant_type=variant_obj['variant_type'],
+        case_id=family_id,
+    )
+    return new_id
+<switch:english>
+[english] The final unique variant ID is generated through `parse_document_id`, so proper error checking should be done on that external dependency's behavior if you encounter formatting issues.
+[english] What happens if the 'position' key is missing from my input dictionary?
+[english] If a required key, like 'position', is absent in `variant_obj`, Python will raise a KeyError when trying to access it directly inside the function body.
+[english] Got it. I'll make sure my data structure includes all those keys.

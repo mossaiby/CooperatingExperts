@@ -1,0 +1,21 @@
+[english] I need a concise way to update or set a specific key-value pair within a named entry stored in a cache.
+[english] This method handles data replacement by targeting a nested dictionary within the main cache structure, using direct indexing to update the entry's content. It accesses `entry_name` first and then assigns the `value` to its specific `key` inside that sub-dictionary.
+<switch:python>
+[python] def set_entry(self, entry_name, key, value):
+        """Replaces entire cache entry parameter data by its name with new data.
+
+        :param str|unicode entry_name:
+        :param key:
+        :param value:
+        """
+        self.cache[entry_name][key] = value
+<switch:english>
+[english] The function successfully updates the nested dictionary, assuming that `entry_name` has already been initialized within `self.cache`. If it hasn't, a KeyError will occur.
+[english] What happens if I try to call this function with an `entry_name` that doesn't exist in the cache yet?
+[english] If `entry_name` is missing from `self.cache`, Python raises a KeyError when trying to access `self.cache[entry_name]`. You can prevent this by checking for existence or using `.setdefault()`:
+<switch:python>
+[python] if entry_name not in self.cache: 
+    self.cache[entry_name] = {}
+self.cache[entry_name][key] = value
+<switch:english>
+[english] That makes perfect sense, thanks for that guidance!

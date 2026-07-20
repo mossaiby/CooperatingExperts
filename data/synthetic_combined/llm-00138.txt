@@ -1,0 +1,21 @@
+[english] I need a utility function to reliably split an API route path into its directory prefix and the final resource name.
+[english] This approach uses string splitting from the right side of the URL using '/' as the delimiter. This ensures that even complex deep paths are handled correctly by isolating the last component for 'name'.
+<switch:python>
+[python] def split_api_filepath(path):
+    """
+    Split an API file path into directory and name.
+    """
+    parts = path.rsplit('/', 1)
+    if len(parts) == 1:
+        name = parts[0]
+        dirname = '/'
+    else:
+        name = parts[1]
+        dirname = parts[0] + '/'
+
+    return from_api_dirname(dirname), name
+<switch:english>
+[english] If the path starts with a leading `/`, the function correctly identifies this as part of the directory structure. Note that it relies on an external function `from_api_dirname` to format the resulting directory string.
+[english] What happens if I pass in just '/' or '/my-resource'?
+[english] If you pass '/', both dirname and name become derived from '//'. For '/my-resource', parts will be ['', 'my-resource'], correctly assigning the dir as '/' and the name as 'my-resource'.
+[english] That makes perfect sense, thanks for clarifying how it handles those paths!

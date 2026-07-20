@@ -1,0 +1,23 @@
+[english] I need a way to calculate the total sum of elements across specific rows or columns in an array while controlling whether dimensions are maintained.
+[english] This function calculates the aggregated sum of the underlying data. It utilizes an internal method, `self._stat`, to determine if the summation should be performed globally or along a specified dimension (axis).
+<switch:python>
+[python] def sum(self, axis=None, keepdims=False):
+        """
+        Return the sum of the array over the given axis.
+
+        Parameters
+        ----------
+        axis : tuple or int, optional, default=None
+            Axis to compute statistic over, if None
+            will compute over all axes
+
+        keepdims : boolean, optional, default=False
+            Keep axis remaining after operation with size 1.
+        """
+        from operator import add
+        return self._stat(axis, func=add, keepdims=keepdims)
+<switch:english>
+[english] Setting `keepdims=True` is very useful because it retains the reduced axis in the resulting array with size one, allowing for consistent broadcasting later.
+[english] If I call this function without specifying an axis (`axis=None`), what exactly will be returned?
+[english] When `axis=None`, the function computes the sum over all axes within the data structure. This results in a single scalar value representing the grand total of every element.
+[english] That makes sense! Thank you for clarifying how global summation works.

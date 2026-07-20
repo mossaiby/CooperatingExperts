@@ -1,0 +1,17 @@
+[english] How can I use a driver to create a new raster with specific options while ensuring the directory is writable?
+[english] This function first checks if the driver supports creation by verifying `self.writable`. If it's allowed, it prepares the necessary options.
+<switch:python>
+[python] def Create(self, *args, **kwargs):
+        """Calls Driver.Create() with optionally provided creation options as
+        dict, or falls back to driver specific defaults.
+        """
+        if not self.writable:
+            raise IOError('Driver does not support raster creation')
+        options = kwargs.pop('options', {})
+        kwargs['options'] = driverdict_tolist(options or self.settings)
+        return self._driver.Create(*args, **kwargs)
+<switch:english>
+[english] It safely passes custom or default settings to the underlying driver method using the logic inside the function.
+[english] What happens if an 'options' key with a specific value is passed to both kwargs and self.settings?
+[english] The `kwargs` definition takes precedence, as it uses `.pop()` on the dictionary before merging.
+[english] Thanks for clarify

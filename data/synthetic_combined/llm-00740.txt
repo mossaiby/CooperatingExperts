@@ -1,0 +1,24 @@
+[english] How do I find out exactly which cipher version is being used by a secure connection?
+[english] This approach checks for an active SSL connection first, then calls low-level library functions to retrieve and format the specific protocol version of that cipher.
+<switch:python>
+[python] def get_cipher_version(self):
+        """
+        Obtain the protocol version of the currently used cipher.
+
+        :returns: The protocol name of the currently used cipher
+            or :obj:`None` if no connection has been established.
+        :rtype: :class:`unicode` or :class:`NoneType`
+
+        .. versionadded:: 0.15
+        """
+        cipher = _lib.SSL_get_current_cipher(self._ssl)
+        if cipher == _ffi.NULL:
+            return None
+        else:
+            version = _ffi.string(_lib.SSL_CIPHER_get_version(cipher))
+            return version.decode("utf-8")
+<switch:english>
+[english] The method converts the raw C string from the underlying library into a standard Python UTF-8 string before returning it.
+[english] What happens if multiple ciphers could theoretically be active at once?
+[english] If `SSL_get_current_cipher` returns NULL, the function immediately returns None. Otherwise, it captures the specific version of the current cipher object used for that connection.
+[english] That makes sense; thanks for clarifying how the SSL state is handled.

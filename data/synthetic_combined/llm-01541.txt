@@ -1,0 +1,23 @@
+[english] How can I retrieve the specific leaf node assignment or decision path used by a tree-based model when making predictions on new data?
+[english] This function leverages the H2O API to query prediction metadata. It sends a request specifying 'leaf_node_assignment' as true, allowing the backend to return not just the score, but also how the model arrived at its classification.
+<switch:python>
+[python] def predict_leaf_node_assignment(self, test_data, type="Path"):
+        """
+        Predict on a dataset and return the leaf node assignment (only for tree-based models).
+
+        :param H2OFrame test_data: Data on which to make predictions.
+        :param Enum type: How to identify the leaf node. Nodes can be either identified by a path from to the root node
+        of the tree to the node or by H2O's internal node id. One of: ``"Path"``, ``"Node_ID"`` (default: ``"Path"``).
+
+        :returns: A new H2OFrame of predictions.
+        """
+        if not isinstance(test_data, h2o.H2OFrame): raise ValueError("test_data must be an instance of H2OFrame")
+        assert_is_type(type, None, Enum("Path", "Node_ID"))
+        j = h2o.api("POST /3/Predictions/models/%s/frames/%s" % (self.model_id, test_data.frame_id),
+                    data={"leaf_node_assignment": True, "leaf_node_assignment_type": type})
+        return h2o.get_frame(j["predictions_frame"]["name"])
+<switch:english>
+[english] Since this function relies on direct communication with the H2O cluster API, it is specifically designed for models deployed within that ecosystem and requires a valid `self.model_id` to operate correctly.
+[english] If I pass an empty H2OFrame as input data, will the API call fail or return an empty result frame?
+[english] The function should handle an empty DataFrame gracefully by returning an empty prediction frame if no data rows are present for processing. You can test this behavior locally by running:
+[english] Thanks, that makes sense now.

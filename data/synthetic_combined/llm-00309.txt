@@ -1,0 +1,37 @@
+[english] How do I programmatically save all new nodes and links generated during a single run instance into persistent disk storage?
+[english] This function processes a trajectory object to identify all recently created elements. It then iterates through both newly added nodes and links, delegating the actual persistence logic to a dedicated tree-storage helper method.
+<switch:python>
+[python] def _srn_store_single_run(self, traj,
+                              recursive=True,
+                              store_data=pypetconstants.STORE_DATA,
+                              max_depth=None):
+        """ Stores a single run instance to disk (only meta data)"""
+
+        if store_data != pypetconstants.STORE_NOTHING:
+            self._logger.debug('Storing Data of single run `%s`.' % traj.v_crun)
+            if max_depth is None:
+                max_depth = float('inf')
+            for name_pair in traj._new_nodes:
+                _, name = name_pair
+                parent_group, child_node = traj._new_nodes[name_pair]
+                if not child_node._stored:
+                    self._tree_store_sub_branch(parent_group, name,
+                                          store_data=store_data,
+                                          with_links=True,
+                                          recursive=recursive,
+                                          max_depth=max_depth - child_node.v_depth,
+                                          hdf5_group=None)
+            for name_pair in traj._new_links:
+                _, link = name_pair
+                parent_group, _ = traj._new_links[name_pair]
+                self._tree_store_sub_branch(parent_group, link,
+                                            store_data=store_data,
+                                            with_links=True,
+                                            recursive=recursive,
+                                            max_depth=max_depth - parent_group.v_depth - 1,
+                                            hdf5_group=None)
+<switch:english>
+[english] The process depends on the internal structures of the `traj` object (like name pairs) and relies heavily on the implementation details of `self._tree_store_sub_branch`. Remember that this function is designed for storing metadata only.
+[english] What will happen to a node if I pass a maximum depth limit of 1?
+[english] If the calculated depth limit becomes zero or negative during traversal, the recursive storage call (`self._tree_store_sub_branch`) should prevent further descendants from being saved on that path.
+[english] That makes sense; thanks for the clarification!

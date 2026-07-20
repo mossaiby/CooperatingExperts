@@ -1,0 +1,30 @@
+[english] I need help figuring out how this method determines the final output shape based on input constraints and provided configuration.
+[english] This function first validates that all input shapes are consistent with each other across the layer inputs. It then uses specified 'size' or 'shape' arguments to calculate the final output tuple.
+<switch:python>
+[python] def resolve_outputs(self):
+        '''Resolve the names of outputs for this layer into shape tuples.'''
+        input_shape = None
+        for i, shape in enumerate(self._input_shapes.values()):
+            if i == 0:
+                input_shape = shape
+            if len(input_shape) != len(shape) or any(
+                    a is not None and b is not None and a != b
+                    for a, b in zip(input_shape[:-1], shape[:-1])):
+                raise util.ConfigurationError(
+                    'layer "{}" incompatible input shapes {}'
+                    .format(self.name, self._input_shapes))
+        size = self.kwargs.get('size')
+        shape = self.kwargs.get('shape')
+        if shape is not None:
+            pass
+        elif size is not None:
+            shape = tuple(input_shape[:-1]) + (size, )
+        else:
+            raise util.ConfigurationError(
+                'layer "{}" does not specify a size'.format(self.name))
+        self._output_shapes['out'] = shape
+<switch:english>
+[english] The code ensures dimensional compatibility between inputs before using the 'size' or pre-defined 'shape' to finalize the layer's output definition.
+[english] What happens if `input_shape` remains None because there are no input shapes defined?
+[english] If no input shapes exist, `input_shape` will be `None`, and an attempt is made to calculate a shape using methods that assume it contains data, likely resulting in an error during the process.
+[english] That makes sense for configuration validation.

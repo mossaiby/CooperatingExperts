@@ -1,0 +1,20 @@
+[english] How do I get all stored data and related metadata combined into a single, easy-to-use JSON representation?
+[english] This method serializes the object's internal state into a dictionary format suitable for JSON encoding. It gathers key information from specialized tables while ensuring specific metadata fields are included at predictable locations.
+<switch:python>
+[python] def to_json_data(self):
+        """
+        Returns
+        -------
+        A dictionary of serialized data.
+        """
+        # create data
+        d = collections.OrderedDict((t.get_ref(), t.to_json_data()) for t in self._tables.values())
+        d["_comment"] = self._comment
+        d.move_to_end("_comment", last=False)
+        d["_external_files"] = self._dev_external_files_manager
+        return d
+<switch:english>
+[english] The use of `collections.OrderedDict` ensures that related data structures maintain a defined sequence, which is helpful when consuming the resulting payload.
+[english] If `self._tables` contains an object with no reference (`get_ref()` returns None), what happens?
+[english] Accessing such an item directly would likely cause an issue when constructing the OrderedDict. It's generally safer to implement a check within the generator to skip None references.
+[english] That makes sense, thanks for help!

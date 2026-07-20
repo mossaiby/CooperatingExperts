@@ -1,0 +1,13 @@
+[english] How can I programmatically retrieve all instance attributes from an object while ensuring internal system variables and a predefined list of global parameters are excluded?
+[english] To achieve this, we use the built-in function vars(self) to access a dictionary containing all instance attributes. We then employ a list comprehension to filter these names based on naming conventions.
+<switch:python>
+[python] def get_param_names(self):
+        """Returns the parameter names for these features, avoiding
+        the global parameters."""
+        return [name for name in vars(self) if not name.startswith('_') and
+                name not in self._global_param_names]
+<switch:english>
+[english] This method is efficient for introspection; however, maintaining the accuracy of `self._global_param_names` is crucial to prevent accidentally omitting required parameters.
+[english] What happens if a parameter name is defined in vars(self) but also manually listed inside self._global_param_names?
+[english] Because the list comprehension uses an 'and' condition (`name not in...`), any item present in `self._global_param_names` will be excluded from the final return list, regardless of where it is defined.
+[english] That clarifies the exclusion logic perfectly, thank you.

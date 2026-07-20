@@ -1,0 +1,20 @@
+[english] How can I safely manage the teardown process for an object that utilizes both a network socket and an execution context?
+[english] To ensure proper resource cleanup, this function checks if any managed resources exist. If a context is present, it first handles closing the associated socket before terminating the overall context.
+<switch:python>
+[python] def finalize(self):
+        """Closes socket and terminates context
+
+        NO-OP if already closed.
+
+        """
+        if self._context is not None:
+            if self._socket is not None:
+                self._close_socket(confused=False)
+            self._context.term()
+            self._context = None
+            self._poll = None
+<switch:english>
+[english] This method is designed to be idempotent; checking for existing attributes prevents errors even if `finalize()` is called more than once.
+[english] If `self._context` exists but was never successfully initialized with a socket, does the function still safely run without error?
+[english] Yes. The code checks for `self._socket is not None` before calling `self._close_socket()`. If it's missing, that step is skipped entirely, allowing context termination to proceed smoothly.
+[english] That makes a lot of sense for robust cleanup.

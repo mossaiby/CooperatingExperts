@@ -1,0 +1,46 @@
+[english] I need to write a handler for an HTTP GET request that manages OAuth callback states and presents necessary links.
+[english] This function acts as the endpoint logic, parsing the incoming URL path and query string to determine if the authorization process was successful or requires further steps.
+<switch:python>
+[python] def do_GET(self):
+		"""
+		Handle the retrieval of the code
+		"""
+		parsed_url = urlparse(self.path)
+
+		if parsed_url[2] == "/" + SERVER_REDIRECT_PATH:  # 2 = Path
+			parsed_query = parse_qs(parsed_url[4])  # 4 = Query
+
+			if "code" not in parsed_query:
+				self.send_response(200)
+				self.send_header("Content-Type", "text/plain")
+				self.end_headers()
+
+				self.wfile.write("No code found, try again!".encode("utf-8"))
+				return
+
+			self.server.response_code = parsed_query["code"][0]
+
+			self.send_response(200)
+			self.send_header("Content-Type", "text/plain")
+			self.end_headers()
+
+			self.wfile.write(
+				"Thank you for using OAuth2Util. The authorization was successful, "
+				"you can now close this window.".encode("utf-8"))
+		elif parsed_url[2] == "/" + SERVER_LINK_PATH: # 2 = Path
+			self.send_response(200)
+			self.send_header("Content-Type", "text/html")
+			self.end_headers()
+
+			self.wfile.write("<html><body>Hey there!<br/>Click <a href=\"{0}\">here</a> to claim your prize.</body></html>"
+				.format(self.server.authorize_url).encode("utf-8"))
+		else:
+			self.send_response(404)
+			self.send_header("Content-Type", "text/plain")
+			self.end_headers()
+			self.wfile.write("404 not found".encode("utf-8"))
+<switch:english>
+[english] The implementation effectively uses `self.server.response_code` to store success status internally while sending basic HTML or plain text responses back to the client.
+[english] If multiple values were provided for the 'code' query parameter, how would they be handled?
+[english] It accesses the codes using index 0 (`parsed_query['code'][0]`), meaning it only processes and uses the first value found in the URL parameters.
+[english] Thanks for explaining that logic.

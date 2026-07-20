@@ -1,0 +1,39 @@
+[english] I need a function that generates the standard rotation matrix for rotating objects around the X, Y, or Z axes in radians.
+[english] To handle rotations around principal axes, we check which axis was provided. Then, we return the specific 3x3 sine and cosine matrix associated with that direction.
+<switch:python>
+[python] def elementaryRotationMatrix(axis, rotationAngle):
+  """
+  Construct an elementary rotation matrix describing a rotation around the x, y, or z-axis.
+
+  Parameters
+  ----------
+
+  axis          - Axis around which to rotate ("x", "y", or "z")
+  rotationAngle - the rotation angle in radians
+
+  Returns
+  -------
+
+  The rotation matrix
+
+  Example usage
+  -------------
+
+  rotmat = elementaryRotationMatrix("y", pi/6.0)
+  """
+  if (axis=="x" or axis=="X"):
+    return array([[1.0, 0.0, 0.0], [0.0, cos(rotationAngle), sin(rotationAngle)], [0.0,
+      -sin(rotationAngle), cos(rotationAngle)]])
+  elif (axis=="y" or axis=="Y"):
+    return array([[cos(rotationAngle), 0.0, -sin(rotationAngle)], [0.0, 1.0, 0.0], [sin(rotationAngle),
+      0.0, cos(rotationAngle)]])
+  elif (axis=="z" or axis=="Z"):
+    return array([[cos(rotationAngle), sin(rotationAngle), 0.0], [-sin(rotationAngle),
+      cos(rotationAngle), 0.0], [0.0, 0.0, 1.0]])
+  else:
+    raise Exception("Unknown rotation axis "+axis+"!")
+<switch:english>
+[english] This function relies on trigonometric functions (cos/sin) to correctly define the rotation. Ensure you have imported necessary libraries like NumPy for `array` or math functions.
+[english] What happens if I pass a non-standard axis label, like 'xZ'?
+[english] The code handles unexpected input by raising an exception. If called with "xZ", it will trigger the final `else` block and raise: Exception("Unknown rotation axis xZ!")
+[english] Got it, thanks for clarifying how error handling works.

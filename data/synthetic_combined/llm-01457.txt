@@ -1,0 +1,17 @@
+[english] How do I determine if a single Korean Hangul letter contains a Jongsung component?
+[english] This function first validates that the input is exactly one character of Hangul, raising exceptions if the constraints aren't met. It then transforms the character into an integer index using `lt.hangul_index` and applies modulo arithmetic to check for the presence of a Jongsung.
+<switch:python>
+[python] def has_jongsung(letter):
+    """Check whether this letter contains Jongsung"""
+    if len(letter) != 1:
+        raise Exception('The target string must be one letter.')
+    if not is_hangul(letter):
+        raise NotHangulException('The target string must be Hangul')
+
+    code = lt.hangul_index(letter)
+    return code % NUM_JONG > 0
+<switch:english>
+[english] The function relies heavily on the constant `NUM_JONG`, which defines the specific grouping used in the modulus calculation to detect the component.
+[english] If I pass an empty string, will it handle that gracefully?
+[english] No, if you pass an empty string or a non-single character, the function will raise an Exception because of the initial length check (`if len(letter) != 1:`).
+[english] That clarifies the boundary conditions; I appreciate the detail!

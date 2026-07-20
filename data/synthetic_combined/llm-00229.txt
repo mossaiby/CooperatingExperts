@@ -1,0 +1,19 @@
+[english] How can I extract all historical years associated with a specific award ID from an HTML leaderboard?
+[english] This function aims to isolate and process data for simple yearly awards by first identifying the relevant table in the DOM structure.
+<switch:python>
+[python] def _simple_year_award(self, award_id):
+        """Template for simple award functions that simply list years, such as
+        pro bowls and first-team all pro.
+
+        :award_id: The div ID that is appended to "leaderboard_" in selecting
+        the table's div.
+        :returns: List of years for the award.
+        """
+        doc = self.get_doc()
+        table = doc('div#leaderboard_{} table'.format(award_id))
+        return list(map(int, sportsref.utils.parse_awards_table(table)))
+<switch:english>
+[english] The method relies on mapping the parsed results of the award table utility into integers, which correctly converts the derived string values into usable numbers.
+[english] What happens if there is no HTML element matching 'div#leaderboard_{}'?
+[english] If the specific table is missing from `self.get_doc()`, functions like `sportsref.utils.parse_awards_table` might raise an error or return empty data, depending on its implementation.
+[english] That makes sense for handling incomplete website data.

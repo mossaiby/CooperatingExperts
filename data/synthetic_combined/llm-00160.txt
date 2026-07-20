@@ -1,0 +1,51 @@
+[english] I need to calculate the inverse Fast Fourier Transform of an input waveform and retrieve only its real component.
+[english] To achieve this, we call the core `ifft` function with the provided waveform and parameters, and then use the `real()` function on the result. This process isolates the purely real portion of the complex transform output.
+<switch:python>
+[python] def ifftr(wave, npoints=None, indep_min=None, indep_max=None):
+    r"""
+    Return the real part of the inverse Fast Fourier Transform of a waveform.
+
+    :param wave: Waveform
+    :type  wave: :py:class:`peng.eng.Waveform`
+
+    :param npoints: Number of points to use in the transform. If **npoints**
+                    is less than the size of the independent variable vector
+                    the waveform is truncated; if **npoints** is greater than
+                    the size of the independent variable vector, the waveform
+                    is zero-padded
+    :type  npoints: positive integer
+
+    :param indep_min: Independent vector start point of computation
+    :type  indep_min: integer or float
+
+    :param indep_max: Independent vector stop point of computation
+    :type  indep_max: integer or float
+
+    :rtype: :py:class:`peng.eng.Waveform`
+
+    .. [[[cog cog.out(exobj_eng.get_sphinx_autodoc(raised=True)) ]]]
+    .. Auto-generated exceptions documentation for
+    .. peng.wave_functions.ifftr
+
+    :raises:
+     * RuntimeError (Argument \`indep_max\` is not valid)
+
+     * RuntimeError (Argument \`indep_min\` is not valid)
+
+     * RuntimeError (Argument \`npoints\` is not valid)
+
+     * RuntimeError (Argument \`wave\` is not valid)
+
+     * RuntimeError (Incongruent \`indep_min\` and \`indep_max\`
+       arguments)
+
+     * RuntimeError (Non-uniform frequency spacing)
+
+    .. [[[end]]]
+    """
+    return real(ifft(wave, npoints, indep_min, indep_max))
+<switch:english>
+[english] The function manages both truncation and zero-padding via `npoints`, while also providing precise control over the frequency range using `indep_min` and `indep_max`.
+[english] What happens to the transformation if I don't specify values for `npoints`?
+[english] If no value is provided, the function uses default parameters based on the underlying library's internal settings. This typically means it processes all available data without forced truncation or padding.
+[english] Thanks for clarifying that.

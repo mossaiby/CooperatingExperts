@@ -1,0 +1,19 @@
+[english] How do I retrieve all assignment data for a particular SIS user within a specified Canvas course?
+[english] To fetch student assignments, we must first construct the specific API endpoint URL that targets the assigned user and their course ID.
+<switch:python>
+[python] def get_student_assignments_for_sis_course_id_and_sis_user_id(
+            self, sis_user_id, sis_course_id):
+        """
+        Returns student assignment data for the given user_id and course_id.
+
+        https://canvas.instructure.com/doc/api/analytics.html#method.analytics_api.student_in_course_assignments
+        """
+        url = ("/api/v1/courses/%s/analytics/"
+               "users/sis_user_id:%s/assignments.json") % (
+            self._sis_id(sis_course_id, sis_field="course"), sis_user_id)
+        return self._get_resource(url)
+<switch:english>
+[english] This function assembles the necessary REST path using internal methods like `self._sis_id` before fetching the data via an internal helper.
+[english] What happens if no assignments are found for a given SIS user within that specific course?
+[english] If an API call returns no matching data, it typically resolves to an empty JSON array or object depending on the Canvas implementation of this endpoint.
+[english] Thanks! That clears up how the resource retrieval works.

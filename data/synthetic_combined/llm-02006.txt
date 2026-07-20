@@ -1,0 +1,23 @@
+[english] I’m looking for a utility to load configuration data from either YAML or JSON files based on the file extension provided.
+[english] This function dynamically determines whether it should parse a configuration file as YAML or JSON by checking its file extension. It imports the appropriate loader, like `ruamel.yaml` or `json`, before reading and returning the contents as a dictionary.
+<switch:python>
+[python] def _load_config(path: str) -> dict:
+    """
+    Given a file path, parse it based on its extension (YAML or JSON)
+    and return the values as a Python dictionary. JSON is the default if an
+    extension can't be determined.
+    """
+    __, ext = os.path.splitext(path)
+    if ext in ['.yaml', '.yml']:
+        import ruamel.yaml
+        loader = ruamel.yaml.safe_load
+    else:
+        loader = json.load
+    with open(path) as f:
+        config = loader(f)
+    return config
+<switch:english>
+[english] The logic relies on both the 'os' module for path manipulation and two external libraries (YAML/JSON) being available in the environment successfully.
+[english] What happens if I pass a file that has no recognized extension, like just 'config.txt'? Is it going to crash?
+[english] If the extension is not '.yaml' or '.yml', the code defaults to using `json.load`. For an unextended file name (e.g., 'file'), it will attempt to parse that content as JSON, which may throw a SyntaxError if it isn't valid JSON.
+[english] Thanks for clarifying how the default behavior works!

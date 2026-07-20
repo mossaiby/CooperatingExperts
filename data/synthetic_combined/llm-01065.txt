@@ -1,0 +1,25 @@
+[english] How can I retrieve an associated resource setting (`rst`) for this unit, starting with its local value and propagating up through its parent hierarchy?
+[english] This method first caches any locally defined result in `self._associatedRst`. If not found, it traverses the parent tree recursively until a suitable definition is encountered.
+<switch:python>
+[python] def _getAssociatedRst(self):
+        """
+        If interface has associated rst(_n) return it otherwise
+        try to find rst(_n) on parent recursively
+        """
+        a = self._associatedRst
+
+        if a is not None:
+            return a
+
+        p = self._parent
+        assert p is not None
+
+        if isinstance(p, UnitBase):
+            return getRst(p)
+        else:
+            return p._getAssociatedRst()
+<switch:english>
+[english] The function prioritizes the local cache but relies on recursive calls if no association is found higher up in the tree.
+[english] What happens if the parent chain eventually reaches a root that does not implement `UnitBase` and has no further parents?
+[english] If the recursion hits an object that doesn't match the expected types, it will keep calling itself on its parent until it potentially fails or meets the assertion check failure.
+[english] This explains how resource association flows up the hierarchy.

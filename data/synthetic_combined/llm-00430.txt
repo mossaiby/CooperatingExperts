@@ -1,0 +1,19 @@
+[english] How can I efficiently upload multiple data file splits and an associated schema to Google Cloud Storage using a structured method?
+[english] This function automates the batch uploading process by first initializing a specific hook for GCS. It then loops through all provided files, sending each one to the specified bucket.
+<switch:python>
+[python] def _upload_to_gcs(self, files_to_upload):
+        """
+        Upload all of the file splits (and optionally the schema .json file) to
+        Google cloud storage.
+        """
+        hook = GoogleCloudStorageHook(
+            google_cloud_storage_conn_id=self.google_cloud_storage_conn_id,
+            delegate_to=self.delegate_to)
+        for object_name, tmp_file_handle in files_to_upload.items():
+            hook.upload(self.bucket, object_name, tmp_file_handle.name, 'application/json',
+                        (self.gzip if object_name != self.schema_filename else False))
+<switch:english>
+[english] The function handles compression intelligently; it applies GZIP encoding to all file splits but explicitly disables it for the schema file.
+[english] What happens if one of the items in `files_to_upload` is not a file handle object, perhaps just its path?
+[english] If an item isn't a file handle with a `.name` attribute (like a standard Python `str`), using it directly will raise an AttributeError. You can add type validation to ensure robustness.
+[english] Thanks for the clarification!

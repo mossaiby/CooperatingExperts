@@ -1,0 +1,38 @@
+[english] How can I refresh multiple entities at once, handling both already tracked models and new entities that need to be added back into the session?
+[english] This method provides an alternate API for refreshing many entities by accepting variable arguments, allowing it to handle individual objects or entire collections.
+<switch:python>
+[python] def refresh(self, *objects, **kwargs):
+        '''
+        This method is an alternate API for refreshing many entities (possibly
+        not tracked by the session). You can call::
+
+            session.refresh(obj)
+            session.refresh(obj1, obj2, ...)
+            session.refresh([obj1, obj2, ...])
+
+        And all provided entities will be reloaded from Redis.
+
+        To force reloading for modified entities, you can pass ``force=True``.
+        '''
+        self._init()
+        from rom import Model
+        force = kwargs.get('force')
+        for o in objects:
+            if isinstance(o, (list, tuple)):
+                self.refresh(*o, force=force)
+            elif isinstance(o, Model):
+                if not o._new:
+                    o.refresh(force=force)
+                else:
+                    # all objects are re-added to the session after refresh,
+                    # except for deleted entities...
+                    self.add(o)
+            else:
+                raise ORMError(
+                    "Cannot refresh an object that is not an instance of a Model (you provided %r)"%(
+                        o,))
+<switch:english>
+[english] The function differentiates between existing models (which refresh in place) and objects considered new, ensuring that newly refreshed entities are correctly re-added to the session via `self.add(o)` if necessary.
+[english] In my scenario, I pass a list containing both Model instances and plain Python dictionaries; how does this method handle those non-Model types?
+[english] The function will raise an ORMError because it only specifically checks for `isinstance(o, Model)`. It requires all items in the input to be compatible with Models or collections of Models.
+[english] Got it. So I must ensure every entity passed is a valid instance of Model.

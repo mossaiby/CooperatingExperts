@@ -1,0 +1,26 @@
+[english] Write a function that can load data from either a local file path or a remote URL.
+[english] This method handles external data loading by first determining whether the input is a web link or a local disk path. It then fetches the raw content using the appropriate mechanism before handling potential compressed ZIP formats.
+<switch:python>
+[python] def load_file(self, currency_file):
+        """To be subclassed if alternate methods of loading data.
+        """
+        if currency_file.startswith(('http://', 'https://')):
+            content = urlopen(currency_file).read()
+        else:
+            with open(currency_file, 'rb') as f:
+                content = f.read()
+
+        if currency_file.endswith('.zip'):
+            self.load_lines(get_lines_from_zip(content))
+        else:
+            self.load_lines(content.decode('utf-8').splitlines())
+<switch:english>
+[english] The function manages file type variations by checking for ZIP extensions or direct network protocols.
+It relies on external methods like `urlopen` and `get_lines_from_zip` which must be defined elsewhere.
+[english] What happens if the local file is opened in a non-UTF-8 encoding?
+[english] If it's not UTF-8, calling `.decode('utf-8')` will raise a UnicodeDecodeError. To handle various encodings robustly, you could use:
+<switch:python>
+[python] content = f.read().decode(enc='cp1252').splitlines()
+# or attempt to 'replace' errors during decoding
+<switch:english>
+[english] Got it, so I need to ensure my file operations handle encoding gracefully.

@@ -1,0 +1,15 @@
+[english] I need a way to validate that AST nodes only include specific, predefined allowed types during parsing.
+[english] This method is designed as an internal visitor for traversing an Abstract Syntax Tree. It enforces structural rules by checking if the current node type matches the list of permitted classes defined in `self.ALLOWED`.
+<switch:python>
+[python] def visit(self, node):
+        """Ensure statement only contains allowed nodes."""
+        if not isinstance(node, self.ALLOWED):
+            raise SyntaxError('Not allowed in environment markers.\n%s\n%s' %
+                               (self.statement,
+                               (' ' * node.col_offset) + '^'))
+        return ast.NodeTransformer.visit(self, node)
+<switch:english>
+[english] By raising a detailed `SyntaxError`, this function helps developers pinpoint exactly where irregular nodes were introduced during tree transformation, ensuring strict adherence to grammar constraints.
+[english] What specific error will be raised if the provided node is found outside of the allowed types?
+[english] A `SyntaxError` is raised. The traceback includes context about which statement was processed and the exact column offset where the disallowed node appeared in the source code, helping pinpoint parsing issues.
+[english] That really helps with finding structural problems.

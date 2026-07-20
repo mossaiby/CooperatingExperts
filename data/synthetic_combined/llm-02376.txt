@@ -1,0 +1,67 @@
+[english] How do I implement an interface where users can view their current application preferences and save new settings?
+[english] This function acts as a controller for the preferences page by managing both request types. It first checks if a form was submitted to handle saving valid user data via POST, or if it should render the UI based on existing stored values during a GET request.
+<switch:python>
+[python] def preferences():
+    """Render preferences page && save user preferences"""
+
+    # save preferences
+    if request.method == 'POST':
+        resp = make_response(redirect(urljoin(settings['server']['base_url'], url_for('index'))))
+        try:
+            request.preferences.parse_form(request.form)
+        except ValidationException:
+            request.errors.append(gettext('Invalid settings, please edit your preferences'))
+            return resp
+        return request.preferences.save(resp)
+
+    # render preferences
+    image_proxy = request.preferences.get_value('image_proxy')
+    lang = request.preferences.get_value('language')
+    disabled_engines = request.preferences.engines.get_disabled()
+    allowed_plugins = request.preferences.plugins.get_enabled()
+
+    # stats for preferences page
+    stats = {}
+
+    for c in categories:
+        for e in categories[c]:
+            stats[e.name] = {'time': None,
+                             'warn_timeout': False,
+                             'warn_time': False}
+            if e.timeout > settings['outgoing']['request_timeout']:
+                stats[e.name]['warn_timeout'] = True
+            stats[e.name]['supports_selected_language'] = _is_selected_language_supported(e, request.preferences)
+
+    # get first element [0], the engine time,
+    # and then the second element [1] : the time (the first one is the label)
+    for engine_stat in get_engines_stats()[0][1]:
+        stats[engine_stat.get('name')]['time'] = round(engine_stat.get('avg'), 3)
+        if engine_stat.get('avg') > settings['outgoing']['request_timeout']:
+            stats[engine_stat.get('name')]['warn_time'] = True
+    # end of stats
+
+    return render('preferences.html',
+                  locales=settings['locales'],
+                  current_locale=get_locale(),
+                  image_proxy=image_proxy,
+                  engines_by_category=categories,
+                  stats=stats,
+                  answerers=[{'info': a.self_info(), 'keywords': a.keywords} for a in answerers],
+                  disabled_engines=disabled_engines,
+                  autocomplete_backends=autocomplete_backends,
+                  shortcuts={y: x for x, y in engine_shortcuts.items()},
+                  themes=themes,
+                  plugins=plugins,
+                  doi_resolvers=settings['doi_resolvers'],
+                  current_doi_resolver=get_doi_resolver(request.args, request.preferences.get_value('doi_resolver')),
+                  allowed_plugins=allowed_plugins,
+                  theme=get_current_theme_name(),
+                  preferences_url_params=request.preferences.get_as_url_params(),
+                  base_url=get_base_url(),
+                  preferences=True)
+<switch:english>
+[english] The code gathers all necessary state and configuration details from the application environment before passing them as context variables to the `preferences.html` template for presentation.
+[english] What happens if the function fails to retrieve engine statistics using get_engines_stats()?
+[english] If that function call returns unexpected data or an error, it might lead to a runtime exception during stats calculation since the subsequent loops depend on its structure. You could add a try
+eexcept block around the stats section for robust failure handling.
+[english] Good to know about the potential dependency risk.

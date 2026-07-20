@@ -1,0 +1,35 @@
+[english] How can I extract just the month from a given array or list containing datetime objects in Python?
+[english] Since this task involves handling time series data, we utilize Pandas for clean and powerful manipulation. The function converts your input into a Series and then applies the built-in date accessor functionality to pull out the desired attribute.
+<switch:python>
+[python] def dt_month(x):
+    """Extracts the month out of a datetime sample.
+
+    :returns: an expression containing the month extracted from a datetime column.
+
+    Example:
+
+    >>> import vaex
+    >>> import numpy as np
+    >>> date = np.array(['2009-10-12T03:31:00', '2016-02-11T10:17:34', '2015-11-12T11:34:22'], dtype=np.datetime64)
+    >>> df = vaex.from_arrays(date=date)
+    >>> df
+      #  date
+      0  2009-10-12 03:31:00
+      1  2016-02-11 10:17:34
+      2  2015-11-12 11:34:22
+
+    >>> df.date.dt.month
+    Expression = dt_month(date)
+    Length: 3 dtype: int64 (expression)
+    -----------------------------------
+    0  10
+    1   2
+    2  11
+    """
+    import pandas as pd
+    return pd.Series(x).dt.month.values
+<switch:english>
+[english] This approach is efficient because it leverages vectorized operations within Pandas. It returns the results as a NumPy array of integers.
+[english] If I pass a simple list of standard Python datetime objects, will this function still work correctly?
+[english] Yes, the function handles standard Python datetime objects fine since Pandas is capable of automatically converting them when creating the Series. The output remains an integer array representing months.
+[english] Perfect, that simplifies my data cleaning workflow!

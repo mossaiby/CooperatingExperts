@@ -1,0 +1,27 @@
+[english] I need a way to implement dynamic transition noise in my state space model that specifically increases variance when a seasonal cycle ends.
+[english] This function initializes a factory for generating time-dependent Multivariate Normal distributions. It carefully constructs the diagonal scale vector, ensuring the increased drift is only applied to the specific seasonal effect right after its conclusion.
+<switch:python>
+[python] def build_seasonal_transition_noise(
+    drift_scale, num_seasons, is_last_day_of_season):
+  """Build the transition noise model for a SeasonalStateSpaceModel."""
+
+  # If the current season has just ended, increase the variance of its effect
+  # following drift_scale. (the just-ended seasonal effect will always be the
+  # bottom element of the vector). Otherwise, do nothing.
+  drift_scale_diag = tf.stack(
+      [tf.zeros_like(drift_scale)] * (num_seasons - 1) + [drift_scale],
+      axis=-1)
+  def seasonal_transition_noise(t):
+    noise_scale_diag = dist_util.pick_scalar_condition(
+        is_last_day_of_season(t),
+        drift_scale_diag,
+        tf.zeros_like(drift_scale_diag))
+    return tfd.MultivariateNormalDiag(
+        loc=tf.zeros(num_seasons, dtype=drift_scale.dtype),
+        scale_diag=noise_scale_diag)
+  return seasonal_transition_noise
+<switch:english>
+[english] The dynamic noise model relies on `dist_util.pick_scalar_condition` to conditionally set the variance based on whether the current time step matches the end of a season.
+[english] If `num_seasons` is provided as 1, how does the initial drift scale vector handle that case?
+[english] When `num_seasons` is 1, the operation `[tf.zeros_like(drift_scale)] * (num_seasons - 1)` results in an empty list, and the diagonal will correctly be initialized only with the single `drift_scale` element.
+[english] That helps me understand how edge cases are handled here.

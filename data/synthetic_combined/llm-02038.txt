@@ -1,0 +1,18 @@
+[english] I need a way to send the same informational message to every user within a given group that I provide.
+[english] This function processes a collection of users by looping through them one at a time. For each user, it internally calls `message_user` with the provided content and specified logging level.
+<switch:python>
+[python] def message_users(users, message, level=constants.INFO):
+    """
+    Send a message to a group of users.
+
+    :param users: Users queryset
+    :param message: Message to show
+    :param level: Message level
+    """
+    for user in users:
+        message_user(user, message, level)
+<switch:english>
+[english] The main function's responsibility is distribution; its actual messaging logic depends entirely on the external `message_user` function you are using. This loop also iterates over any users that might be in a queryset, which is typically efficient but could become slow if processing millions of records at once.
+[english] If the list of users passed to this function is empty, will it execute any code?
+[english] No, because the `for user in users:` loop will simply not run. The function executes zero messages when the input collection contains no elements.
+[english] That makes sense; I'll try using it now.

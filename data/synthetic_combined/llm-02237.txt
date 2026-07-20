@@ -1,0 +1,18 @@
+[english] How can I translate or transform a specific structured string into another format using this function?
+[english] This function takes a nested structure, likely representing translation parameters like substitutes and attributes, and applies transformations recursively.
+<switch:python>
+[python] def translate_tisse_intl_col(s):
+    """O:M:.-O:M:.-we.h.-' => O:M:.-'O:M:.-'s.o.-k.o.-',"""
+    subst, attr, mode = s
+    return m(m(subst), m(attr), script("s.o.-k.o.-'"))
+<switch:english>
+[english] The function unpacksthe input string into three components (subst, attr, and mode) to execute a multi-step transformation using functions m and script.
+[english] What happens if the required sub-components like subst or attr are missing from the tuple?
+[english] If 's' does not contain exactly three elements, Python will raise a ValueError during unpacking because of the line `subst, attr, mode = s`.
+<switch:python>
+[python] try:
+translate_tisse_intl_col((1, 2))
+except ValueError as e:
+    print(e) # Output: not enough values to unpack (expected 3, got 2)
+<switch:english>
+[english] That covers how the function handles invalid input structures!

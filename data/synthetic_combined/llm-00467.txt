@@ -1,0 +1,13 @@
+[english] How do I save processed image data into an efficient Parquet format?
+[english] This function acts as a wrapper to handle formatting and executing the actual write operation.
+<switch:python>
+[python] def write_parquet(cls, path, output, sc, partition_num = 1, bigdl_type="float"):
+        """
+        write ImageFrame as parquet file
+        """
+        return callBigDlFunc(bigdl_type, "writeParquet", path, output, sc, partition_num)
+<switch:english>
+[english] It cleanly delegates the complex writing logic while allowing for parameters like partition numbers and data types.
+[english] What happens if the 'bigdl_type' isn't one of the expected compression modes?
+[english] If `bigdl_type` is unknown, it will likely cause a configuration error within `callBigDlFunc`, as that function expects valid input to proceed.
+[english] That makes sense for handling those internal library calls.

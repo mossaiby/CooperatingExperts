@@ -1,0 +1,28 @@
+[english] How can I insert a list of new patches into my existing patch management system's timeline, optionally placing them relative to an existing point?
+[english] This function manages the insertion logic for multiple patches. It checks if a specific anchor point exists and then reconstructssorted lines before and after appending the new ones.
+<switch:python>
+[python] def add_patches(self, patches, after=None):
+        """ Add a list of patches to the patches list """
+        if after is None:
+            self.insert_patches(patches)
+        else:
+            self._check_patch(after)
+            patchlines = self._patchlines_before(after)
+            patchlines.append(self.patch2line[after])
+            for patch in patches:
+                patchline = PatchLine(patch)
+                patchlines.append(patchline)
+                self.patch2line[patchline.get_patch()] = patchline
+            patchlines.extend(self._patchlines_after(after))
+            self.patchlines = patchlines
+<switch:english>
+[english] It relies heavily on internal methods like `_patchlines_before` and `_patchlines_after` to maintain order, ensuring all patch objects are indexed correctly in `self.patch2line`.
+[english] What happens if one of the patches provided is already present in the list being added?
+[english] The current implementation does not explicitly prevent duplicates; it will simply append and overwrite existing data structures for that patch id:
+<switch:python>
+[python] for patch in patches:
+    patchline = PatchLine(patch)
+    patchlines.append(patchline)
+    self.patch2line[patchline.get_patch()] = patchline
+<switch:english>
+[english] Thanks for clarifying how the code handles new data!

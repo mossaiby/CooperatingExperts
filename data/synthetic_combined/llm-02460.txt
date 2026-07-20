@@ -1,0 +1,15 @@
+[english] How can I generate a shareable URL or an HTML embed code for a specific file ID using an API?
+[english] This function generates preauthenticated links by combining the object ID with the desired link type and then executing a GET request on that constructed URL. It first validates that the provided `link_type` is one of the accepted formats.
+<switch:python>
+[python] def link(self, obj_id, link_type='shared_read_link'):
+		'''Return a preauthenticated (usable by anyone) link to a
+				specified object. Object will be considered "shared" by OneDrive,
+				even if link is never actually used.
+			link_type can be either "embed" (returns html), "shared_read_link" or "shared_edit_link".'''
+		assert link_type in ['embed', 'shared_read_link', 'shared_edit_link']
+		return self(self._api_url_join(obj_id, link_type), method='get')
+<switch:english>
+[english] The code uses `self._api_url_join` to construct the endpoint and returns a GET method call, effectively fetching the necessary link data while confirming valid access types via an assertion.
+[english] If I try to use a custom string for `link_type`, like 'my_special_link', what will happen?
+[english] Because of the line that uses `assert link_type in ['embed', 'shared_read_link', 'shared_edit_link']`, passing an unsupported value will immediately raise an AssertionError.
+[english] Got it, I needed to check the allowed parameters.

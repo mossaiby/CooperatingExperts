@@ -1,0 +1,19 @@
+[english] How can I serialize an instance of a class into a specific bytestring format while bundling its state securely?
+[english] To achieve this, the function first retrieves the object's internal attribute dictionary; it then manually constructs a new container, pre-pickling complex components like 'seg,' before performing the final serialization.
+<switch:python>
+[python] def serialize(self):
+        """
+        Serializes into a bytestring.
+
+        :returns: An object of type Bytes.
+        """
+        d = self.__getstate__()
+        return pickle.dumps({
+            'name': d['name'],
+            'seg': pickle.dumps(d['seg'], protocol=-1),
+        }, protocol=-1)
+<switch:english>
+[english] By using `pickle.dumps` with `protocol=-1`, the implementation ensures that even nested objects like 'seg' are serialized correctly into raw bytes. This is a low-level approach to data persistence.
+[english] Does pickling this object create any security concerns?
+[english] Yes, unpickling data from an untrusted source can execute arbitrary code. Always ensure the byte stream comes from a verified and trusted origin.
+[english] Got it, thanks for clarifying the risks!

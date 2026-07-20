@@ -1,0 +1,43 @@
+[english] How can I safely execute an IPython script file (.ipy) while ensuring that its local directory is accessible in the python path?
+[english] This function handles IPy files by first converting any provided filename into an absolute system path. It then checks for file accessibility and prepares the environment to mimic running a module from the current working directory.
+<switch:python>
+[python] def safe_execfile_ipy(self, fname):
+        """Like safe_execfile, but for .ipy files with IPython syntax.
+
+        Parameters
+        ----------
+        fname : str
+            The name of the file to execute.  The filename must have a
+            .ipy extension.
+        """
+        fname = os.path.abspath(os.path.expanduser(fname))
+
+        # Make sure we can open the file
+        try:
+            with open(fname) as thefile:
+                pass
+        except:
+            warn('Could not open file <%s> for safe execution.' % fname)
+            return
+
+        # Find things also in current directory.  This is needed to mimic the
+        # behavior of running a script from the system command line, where
+        # Python inserts the script's directory into sys.path
+        dname = os.path.dirname(fname)
+
+        with prepended_to_syspath(dname):
+            try:
+                with open(fname) as thefile:
+                    # self.run_cell currently captures all exceptions
+                    # raised in user code.  It would be nice if there were
+                    # versions of runlines, execfile that did raise, so
+                    # we could catch the errors.
+                    self.run_cell(thefile.read(), store_history=False)
+            except:
+                self.showtraceback()
+                warn('Unknown failure executing file: <%s>' % fname)
+<switch:english>
+[english] The core logic uses `prepended_to_syspath` so that imports within the executed script correctly resolve local modules, behaving like a standard shell execution.
+[english] What happens if the filename provided by the user is relative but points to the home directory?
+[english] If you provide a path starting with '~', line `os.path.expanduser(fname)` converts it into the full absolute path before checking file accessibility, ensuring robust handling across operating systems.
+[english] Thanks for clarifying how paths are handled!

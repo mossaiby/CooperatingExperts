@@ -1,0 +1,22 @@
+[english] Write a method that combines existing upstream configuration settings with base system defaults, then removes specific keys from the final output.
+[english] To handle this merge, I'll create a new configuration object by combining your current data and the system constants. Once combined, we use a list of target keys to remove unnecessary entries before saving it as the new config.
+<switch:python>
+[python] def _merge_values(self):
+        """
+        Simply merge the older into the new one.
+        """
+
+        to_remove = []
+
+        self.new_config = Dict(
+            Dict(self.upstream_config).merge(PyFunceble.CONFIGURATION)
+        ).remove_key(to_remove)
+<switch:english>
+[english] This approach relies on custom dictionary logic (`.merge()`) which assumes `to_remove` is correctly populated just before this method runs. Make sure your upstream values take precedence during the merge operation.
+[english] What would happen if one of the keys listed in 'to_remove' was not actually present in either configuration?
+[english] Most custom dictionary implementations will ignore non-existent keys, but for robustness, you could add a check:
+<switch:python>
+[python] for key in to_remove: 
+    self.new_config.pop(key, None)
+<switch:english>
+[english] That clarifies the removal of missing keys; thank you!

@@ -1,0 +1,74 @@
+[english] I need a robust way to convert data from one file format, such as HDF5, into another format like PNG.
+[english] This function acts as a conversion dispatcher. It first verifies that the input file exists and then determines the explicit or guessed formats for both the source and target files before proceeding with the conversion logic.
+<switch:python>
+[python] def convert(in_file, out_file, in_fmt="", out_fmt=""):
+    """
+    Converts in_file to out_file, guessing datatype in the absence of
+    in_fmt and out_fmt.
+
+    Arguments:
+        in_file:    The name of the (existing) datafile to read
+        out_file:   The name of the file to create with converted data
+        in_fmt:     Optional. The format of incoming data, if not guessable
+        out_fmt:    Optional. The format of outgoing data, if not guessable
+
+    Returns:
+        String. Output filename
+    """
+    # First verify that in_file exists and out_file doesn't.
+    in_file = os.path.expanduser(in_file)
+    out_file = os.path.expanduser(out_file)
+
+    if not os.path.exists(in_file):
+        raise IOError("Input file {0} does not exist, stopping..."
+                      .format(in_file))
+
+    # Get formats, either by explicitly naming them or by guessing.
+    # TODO: It'd be neat to check here if an explicit fmt matches the guess.
+    in_fmt = in_fmt.lower() or _guess_format_from_extension(
+        in_file.split('.')[-1].lower())
+    out_fmt = out_fmt.lower() or _guess_format_from_extension(
+        out_file.split('.')[-1].lower())
+
+    if not in_fmt or not out_fmt:
+        raise ValueError("Cannot determine conversion formats.")
+        return False
+
+    if in_fmt is out_fmt:
+        # This is the case when this module (intended for LONI) is used
+        # indescriminately to 'funnel' data into one format.
+        shutil.copyfileobj(in_file, out_file)
+        return out_file
+
+    # Import
+    if in_fmt == 'hdf5':
+        from . import hdf5
+        data = hdf5.load(in_file)
+    elif in_fmt == 'tiff':
+        from . import tiff
+        data = tiff.load(in_file)
+    elif in_fmt == 'png':
+        from . import png
+        data = png.load(in_file)
+    else:
+        return _fail_pair_conversion(in_fmt, out_fmt)
+
+    # Export
+    if out_fmt == 'hdf5':
+        from . import hdf5
+        return hdf5.save(out_file, data)
+    elif out_fmt == 'tiff':
+        from . import tiff
+        return tiff.save(out_file, data)
+    elif out_fmt == 'png':
+        from . import png
+        return png.export_png(out_file, data)
+    else:
+        return _fail_pair_conversion(in_fmt, out_fmt)
+
+    return _fail_pair_conversion(in_fmt, out_fmt)
+<switch:english>
+[english] The core functionality relies on internal modules (e.g., hdf5, tiff). If a format isn't explicitly handled in the function body, it will raise an error via `_fail_pair_conversion`.
+[english] What mechanism is used to guess formats if no explicit format strings are provided?
+[english] The function attempts to guess the formats by calling helper functions like `_guess_format_from_extension`, which looks at the file extension. The logic ensures an attempt is made even if you pass empty strings for 'in_fmt' or 'out_fmt'.
+[english] That makes sense, I appreciate the clarification on format handling.

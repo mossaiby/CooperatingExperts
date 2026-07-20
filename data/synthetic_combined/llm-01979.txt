@@ -1,0 +1,42 @@
+[english] How can I write a Python function that deletes a specific layer or the current layer from an MLX script object?
+[english] This function handles deleting layers, supporting both direct script objects and file paths as input. It carefully manages the internal layer stack when operating on a script object to avoid losing context after deletion.
+<switch:python>
+[python] def delete(script, layer_num=None):
+    """ Delete layer
+
+    Args:
+        script: the mlx.FilterScript object or script filename to write
+            the filter to.
+        layer_num (int): the number of the layer to delete. Default is the
+            current layer. Not supported on the file base API.
+
+    Layer stack:
+        Deletes a layer
+        will change current layer if deleted layer is lower in the stack
+
+    MeshLab versions:
+        2016.12
+        1.3.4BETA
+    """
+    filter_xml = '  <filter name="Delete Current Mesh"/>\n'
+    if isinstance(script, mlx.FilterScript):
+        if (layer_num is None) or (layer_num == script.current_layer()):
+            util.write_filter(script, filter_xml)
+            script.del_layer(script.current_layer())
+        else:
+            cur_layer = script.current_layer()
+            change(script, layer_num)
+            util.write_filter(script, filter_xml)
+            if layer_num < script.current_layer():
+                change(script, cur_layer - 1)
+            else:
+                change(script, cur_layer)
+            script.del_layer(layer_num)
+    else:
+        util.write_filter(script, filter_xml)
+    return None
+<switch:english>
+[english] The logic ensures that if you delete a non-current layer, the 'current' layer pointer is adjusted correctly so it stays valid within the new stack structure.
+[english] What happens to the current layer pointer if I call this function without specifying any `layer_num`?
+[english] If `layer_num` is not provided or matches the current layer, the script deletes its own active layer and updates the filter before proceeding. This is only supported when passing an actual MLX object.
+[english] Thanks for clarifying how safe this function makes layer management.

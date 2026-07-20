@@ -1,0 +1,24 @@
+[english] I need to calculate the final log probability for individual fibers within an inverse image computation, ensuring event handling and proper dimensional formatting are taken care of.
+[english] This function is designed to complete the numerical calculations for a specific 'fiber' element by first adjusting dimensions and then calculating the base log-probability using a distribution. It includes logic to handle complex event overrides within TensorFlow tensors before adding any remaining indexed or static bias, which is represented by `ildj`.
+<switch:python>
+[python] def _finish_log_prob_for_one_fiber(self, y, x, ildj, event_ndims,
+                                     **distribution_kwargs):
+    """Finish computation of log_prob on one element of the inverse image."""
+    x = self._maybe_rotate_dims(x, rotate_right=True)
+    log_prob = self.distribution.log_prob(x, **distribution_kwargs)
+    if self._is_maybe_event_override:
+      log_prob = tf.reduce_sum(
+          input_tensor=log_prob, axis=self._reduce_event_indices)
+    log_prob += tf.cast(ildj, log_prob.dtype)
+    if self._is_maybe_event_override and isinstance(event_ndims, int):
+      tensorshape_util.set_shape(
+          log_prob,
+          tf.broadcast_static_shape(
+              tensorshape_util.with_rank_at_least(y.shape, 1)[:-event_ndims],
+              self.batch_shape))
+    return log_prob
+<switch:english>
+[english] The function ensures that if an event override occurs (`self._is_maybe_event_override`), the final shape of the log probability tensor is explicitly set using `tensorshape_util.set_shape` for compatibility with subsequent model layers.
+[english] Could you explain why the code checks for both `self._is_maybe_event_override` and whether `event_ndims` is an integer before setting the final shape?
+[english] The check ensures that the required shape manipulation logic only runs when: 1) An event override flag is active and 2) The user has supplied a specific number of dimensions (`int`) to remove. If either of these conditions fails, no shape modification occurs.
+[english] Perfect, this clarifies how the tensor structure is managed!

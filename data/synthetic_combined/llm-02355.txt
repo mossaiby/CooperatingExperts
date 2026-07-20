@@ -1,0 +1,23 @@
+[english] How can I modify an abstract syntax tree to automatically eliminate simple expressions that don't affect program flow?
+[english] This function acts as a filter by inspecting the node. If it finds that the expression value is just a basic constant or identifier, it flags it for removal.
+<switch:python>
+[python] def visit_Expr(self, node: ast.Expr) -> Optional[ast.Expr]:
+        """Eliminate no-op constant expressions which are in the tree
+        as standalone statements."""
+        if isinstance(
+            node.value,
+            (
+                ast.Constant,  # type: ignore
+                ast.Name,
+                ast.NameConstant,
+                ast.Num,
+                ast.Str,
+            ),
+        ):
+            return None
+        return node
+<switch:english>
+[english] Returning None instructs the parent node in the AST walker to completely discard this particular expression when reconstructing the tree.
+[english] What if the expression is a simple comparison like 'a > b'? Should that be eliminated?
+[english] No, it should not. The function only checks for basic types and will return the node as-is to keep complex expressions in the tree.
+[english] This makes sense; I understand when to preserve vs simplify nodes.

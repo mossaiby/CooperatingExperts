@@ -1,0 +1,28 @@
+[english] I want to convert a deeply nested dictionary structure into a format that prints more cleanly, specifically replacing all standard dictionaries with my custom `PrettyDict` class.
+[english] This function recursively traverses data structures like lists, tuples, and mappings to ensure every instance of the built-in `dict` is transformed. It uses type checking to differentiate between ordered sequences, regular sequences, and general mappings.
+<switch:python>
+[python] def _recursively_replace_dict_for_pretty_dict(x):
+  """Recursively replace `dict`s with `_PrettyDict`."""
+  # We use "PrettyDict" because collections.OrderedDict repr/str has the word
+  # "OrderedDict" in it. We only want to print "OrderedDict" if in fact the
+  # input really is an OrderedDict.
+  if isinstance(x, dict):
+    return _PrettyDict({
+        k: _recursively_replace_dict_for_pretty_dict(v)
+        for k, v in x.items()})
+  if (isinstance(x, collections.Sequence) and
+      not isinstance(x, six.string_types)):
+    args = (_recursively_replace_dict_for_pretty_dict(x_) for x_ in x)
+    is_named_tuple = (isinstance(x, tuple) and
+                      hasattr(x, "_asdict") and
+                      hasattr(x, "_fields"))
+    return type(x)(*args) if is_named_tuple else type(x)(args)
+  if isinstance(x, collections.Mapping):
+    return type(x)(**{k: _recursively_replace_dict_for_pretty_dict(v)
+                      for k, v in x.items()})
+  return x
+<switch:english>
+[english] The logic handles named tuples specifically, preserving their original structure while sanitizing the dictionary contents nested within them.
+[english] Wait, if this function encounters a list of dictionaries, does it convert each one individually?
+[english] Yes, because `x` iterates over elements and applies recursion to every value. For example, in your provided code snippet, when checking sequences, the line `_recursively_replace_dict_for_pretty_dict(x_) for x_ in x` ensures every item is processed.
+[english] Got it, thanks for clearing that up!

@@ -1,0 +1,21 @@
+[english] How can I implement a feature that saves all currently registered model parameters to a specific file path?
+[english] This function is designed to export all state variables managed by the object into a serializable format. It fetches copies of parameter values and then executes the saving logic either directly or in a separate thread for non-blocking operation.
+<switch:python>
+[python] def save_params(self, path, new_thread=False):
+        """
+        Save parameters to file.
+        """
+        save_logger.info(path)
+        param_variables = self.all_parameters
+        params = [p.get_value().copy() for p in param_variables]
+        if new_thread:
+            thread = Thread(target=save_network_params, args=(params, path))
+            thread.start()
+        else:
+            save_network_params(params, path)
+        self.train_logger.save(path)
+<switch:english>
+[english] The code correctly handles concurrency by spawning a new thread if `new_thread` is true, ensuring the main process isn't delayed during I/O.
+[english] If parameters are updated immediately after calling this function (with `new_thread=True`), will those updates be reflected in the saved file?
+[english] No, because a snapshot of all values is taken at the moment of parameter extraction. The code uses list comprehension to create a consistent copy before passing it to saving logic.
+[english] Understood; I need to ensure no critical parameters change after calling this method.

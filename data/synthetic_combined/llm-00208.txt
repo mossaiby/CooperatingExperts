@@ -1,0 +1,59 @@
+[english] How can I serialize a GetAttributes response payload object into a stream while correctly adhering to different KMIP versions?
+[english] This function handles serialization by first ensuring a unique identifier is present. It then dynamically structures the attribute list, adapting its handling based on whether the target version is KMIP 1.0 or later.
+<switch:python>
+[python] def write(self, output_buffer, kmip_version=enums.KMIPVersion.KMIP_1_0):
+        """
+        Write the data encoding the GetAttributes response payload to a
+        stream.
+
+        Args:
+            output_buffer (stream): A data stream in which to encode object
+                data, supporting a write method; usually a BytearrayStream
+                object.
+            kmip_version (KMIPVersion): An enumeration defining the KMIP
+                version with which the object will be encoded. Optional,
+                defaults to KMIP 1.0.
+        """
+        local_buffer = utils.BytearrayStream()
+
+        if self._unique_identifier:
+            self._unique_identifier.write(
+                local_buffer,
+                kmip_version=kmip_version
+            )
+        else:
+            raise exceptions.InvalidField(
+                "The GetAttributes response payload is missing the unique "
+                "identifier field."
+            )
+
+        if kmip_version < enums.KMIPVersion.KMIP_2_0:
+            for attribute in self._attributes:
+                attribute.write(local_buffer, kmip_version=kmip_version)
+        else:
+            if self._attributes:
+                # TODO (ph) Add a new utility to avoid using TemplateAttributes
+                template_attribute = objects.TemplateAttribute(
+                    attributes=self.attributes
+                )
+                attributes = objects.convert_template_attribute_to_attributes(
+                    template_attribute
+                )
+                attributes.write(local_buffer, kmip_version=kmip_version)
+            else:
+                raise exceptions.InvalidField(
+                    "The GetAttributes response payload is missing the "
+                    "attributes list."
+                )
+
+        self.length = local_buffer.length()
+        super(GetAttributesResponsePayload, self).write(
+            output_buffer,
+            kmip_version=kmip_version
+        )
+        output_buffer.write(local_buffer.buffer)
+<switch:english>
+[english] Once the data (identifier and attributes) is formatted into an internal buffer, the length is calculated, and the content of that buffer is finally written to the external stream.
+[english] If I am using KMIP 2.0+, what will happen if the response payload contains a unique identifier but zero actual attributes?
+[english] It raises an exceptions.InvalidField error because the current implementation requires at least one attribute to construct the mandatory TemplateAttribute object for KMIP 2.0.
+[english] Thanks, this clarifies the validation process.

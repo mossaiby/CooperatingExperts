@@ -1,0 +1,19 @@
+[english] How can I implement a check within my application to preemptively raise an error when available RAM drops below a specific threshold?
+[english] To prevent resource exhaustion, we use the psutil library to query system memory status. The function retrieves the available free memory and compares it against a predefined limit.
+<switch:python>
+[python] def __check_mem(self):
+        ''' raise exception on RAM exceeded '''
+        mem_free = psutil.virtual_memory().available / 2**20
+        self.log.debug("Memory free: %s/%s", mem_free, self.mem_limit)
+        if mem_free < self.mem_limit:
+            raise RuntimeError(
+                "Not enough resources: free memory less "
+                "than %sMB: %sMB" % (self.mem_limit, mem_free))
+<switch:english>
+[english] This method converts bytes to megabytes for readability before raising a `RuntimeError` if the threshold is violated.
+[english] If I wanted to ensure this check runs only once at startup, should I modify how this function is called?
+[english] Yes, you could wrap the call within your initialization logic. For example:
+<switch:python>
+[python] i.__class__().check_memory()
+<switch:english>
+[english] That makes sense; I'll add that check to my system boot sequence.

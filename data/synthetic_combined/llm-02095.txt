@@ -1,0 +1,45 @@
+[english] How can I automatically detect a crashed worker process and ensure its assigned tasks are rescheduled while bringing up a replacement?
+[english] This method implements a health check by iterating through all registered workers. If a worker is found to be down, it handles the necessary cleanup of old assignments and then initiates the respawn sequence.
+<switch:python>
+[python] def respawn_dead_workers(self):
+        """Respawn workers / tasks upon crash"""
+        for w_id, p in self.workers.items():
+            if not p.is_alive():
+                # Queue the task for another worker, if required...
+                if self.log_level >= 2:
+                    self.log.info("Worker w_id {0} died".format(w_id))
+                task = self.worker_assignments.get(w_id, {})
+                if self.log_level >= 2 and task != {}:
+                    self.log.info(
+                        "Dead worker w_id {0} was assigned task - {1}".format(
+                            w_id, task
+                        )
+                    )
+                error_suffix = ""
+                if task != {}:
+                    del self.worker_assignments[w_id]
+                    if self.resubmit_on_error or self.hot_loop:
+                        self.work_todo.append(task)
+                        self.queue_task(task)
+                        if self.log_level >= 2:
+                            self.log.info("Resubmitting task - {0}".format(task))
+                        error_suffix = " with task={1}".format(task)
+                if self.log_level >= 1:
+                    self.log.debug(
+                        "TaskMgr.work_todo: {0} tasks left".format(len(self.work_todo))
+                    )
+                if self.log_level >= 2:
+                    self.log.info(
+                        "Respawning worker - w_id={0}{1}".format(w_id, error_suffix)
+                    )
+                self.workers[w_id] = Process(
+                    target=Worker,
+                    args=(w_id, self.t_q, self.r_q, self.worker_cycle_sleep),
+                )
+                self.workers[w_id].daemon = True
+                self.workers[w_id].start()
+<switch:english>
+[english] The code ensures continuous operation by checking specific flags like `self.resubmit_on_error` before queuing tasks for new instances. Note that task resurrection depends heavily on internal state tracking.
+[english] If a dead worker had multiple tasks assigned implicitly, would this function correctly ensure all those associated tasks are resubmitted?
+[english] No, the current logic only retrieves and processes one single item from `self.worker_assignments` using `.get(w_id, {})`. If complex assignments exist, additional loops or checks would be needed.
+[english] Thanks for clarifying how the task state is managed here.

@@ -1,0 +1,28 @@
+[english] I need a Python function that generates an OAuth authorization URL based on provided application details and token expiry settings.
+[english] The function constructs a necessary URI for obtaining access tokens by setting up standard query parameters like `response_type` and defining the required scopes. It then uses internal methods, `build_uri` and `add_authorisation`, to assemble the final link that must be opened in a browser.
+<switch:python>
+[python] def get_authorisation_url(self, application_name, token_expire='1day'):
+        '''
+        Returns a URL that needs to be opened in a browser to retrieve an
+        access token.
+        '''
+        query_params = {
+            'name': application_name,
+            'expiration': token_expire,
+            'response_type': 'token',
+            'scope': 'read,write'
+        }
+
+        authorisation_url = self.build_uri(
+            path='/authorize',
+            query_params=self.add_authorisation(query_params)
+        )
+
+        print('Please go to the following URL and get the user authorisation '
+              'token:\n', authorisation_url)
+        return authorisation_url
+<switch:english>
+[english] The function prints the authorization URL for easy copy-pasting into a terminal or log file before returning it for use elsewhere. Note that this assumes helper methods like `build_uri` are correctly implemented within the class context.
+[english] What happens if the provided token expiration is not in a standard format?
+[english] The function relies on the underlying API integration to parse the `token_expire` string. If it's unrecognized, the authorization server may reject the request or default to its own configured expiry.
+[english] This looks much clearer than I expected.

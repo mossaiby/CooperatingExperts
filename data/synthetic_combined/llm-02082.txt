@@ -1,0 +1,27 @@
+[english] How can I set a custom music service like Spotify or Youtube within my application with automatic key support?
+[english] This function manages setting the active music service for the class instance. It first checks if your desired service is already configured before attempting to instantiate it.
+<switch:python>
+[python] def use_music_service(self, service_name, api_key):
+        """
+        Sets the current music service to service_name.
+
+        :param str service_name: Name of the music service
+        :param str api_key: Optional API key if necessary
+        """
+
+        try:
+            self.current_music = self.music_services[service_name]
+        except KeyError:
+            if service_name == 'youtube':
+                self.music_services['youtube'] = Youtube()
+                self.current_music = self.music_services['youtube']
+            elif service_name == 'soundcloud':
+                self.music_services['soundcloud'] = Soundcloud(api_key=api_key)
+                self.current_music = self.music_services['soundcloud']
+            else:
+                log.error('Music service name is not recognized.')
+<switch:english>
+[english] The use of a try-except block ensures that if the service isn't preloaded, it falls back to creating the necessary instance on demand.
+[english] What happens if an unknown music service name is passed in as input?
+[english] If an unrecognized name is provided for `service_name`, the code will trigger a log.error message and the current music service remains unchanged unless other logic handles it.
+[english] That clarifies how to handle unsupported services.

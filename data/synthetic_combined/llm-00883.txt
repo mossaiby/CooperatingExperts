@@ -1,0 +1,25 @@
+[english] How can I resume receiving data on an existing connection after it has been temporarily paused?
+[english] To effectively unpause the connection and restore full functionality, this function first clears any internal state indicating a paused status. It then triggers a soft re-subscription process.
+<switch:python>
+[python] def _unpause(self):
+        """Unpauses the connection.
+
+        Send a message up to client that he should re-subscribe to all
+        channels.
+
+        :return:
+        """
+        self.log.debug("_unpause(): Clearing paused() Flag!")
+        self.paused.clear()
+        self.log.debug("_unpause(): Re-subscribing softly..")
+        self._resubscribe(soft=True)
+<switch:english>
+[english] The use of `soft=True` in the resubscription step is important because it attempts to restore channel access without causing a disruptive disconnect.
+[english] What happens if `_unpause` fails to fully restore service, and I need to force a complete disconnect and reconnect?
+[english] This function handles soft unpausing. For forcing a hard reset sequence, you would typically implement methods like this:
+<switch:python>
+[python] def _hard_reconnect(self):
+        self._disconnect() # Closes the current session
+        self._initialize_connection()
+<switch:english>
+[english] That makes sense, thanks for the clarification!

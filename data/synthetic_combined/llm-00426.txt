@@ -1,0 +1,44 @@
+[english] Write a Python function that calculates the Scrabble score for a given word, considering available letters on the rack.
+[english] This function determines a tile's worth first, checking if it matches available letter tiles. It handles blanks by applying them to the highest possible scoring slots in the word while also tracking bonus criteria like bingo.
+<switch:python>
+[python] def word_score(word, input_letters, questions=0):
+    """Checks the Scrabble score of a single word.
+
+    Args:
+        word: a string to check the Scrabble score of
+        input_letters: the letters in our rack
+        questions: integer of the tiles already on the board to build on
+
+    Returns:
+        an integer Scrabble score amount for the word
+    """
+
+    score = 0
+    bingo = 0
+    filled_by_blanks = []
+    rack = list(input_letters)  # make a copy to speed up find_anagrams()
+    for letter in word:
+        if letter in rack:
+            bingo += 1
+            score += letter_score(letter)
+            rack.remove(letter)
+        else:
+            filled_by_blanks.append(letter_score(letter))
+
+    # we can have both ?'s and _'s in the word. this will apply the ?s to the
+    # highest scrabble score value letters and leave the blanks for low points.
+    for blank_score in sorted(filled_by_blanks, reverse=True):
+        if questions > 0:
+            score += blank_score
+            questions -= 1
+
+    # 50 bonus points for using all the tiles in your rack
+    if bingo > 6:
+        score += 50
+
+    return score
+<switch:english>
+[english] The logic correctly assigns blank values based on their potential maximum score before calculating final bonuses like the Bingo bonus for using all rack letters.
+[english] What happens if a player tries to score with more than 7 tiles but only has 6 available letters in their input_letters?
+[english] The function will fill any remaining slots with blank values, as it prioritizes filling the entire word structure over strictly matching every tile. If the user provided an example like `word='ABCDEFG'` and `input_letters=['A','B','C']`, the blanks would receive scores for D through G.
+[english] That clarifies how the blanks are handled!

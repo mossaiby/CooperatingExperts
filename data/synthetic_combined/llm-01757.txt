@@ -1,0 +1,45 @@
+[english] I need a way to modify an existing webhook's settings, like its name or destination URL, using its ID.
+[english] This function takes an existing webhook ID and uses an HTTP PUT request to update specific attributes on the server. It first validates the required types before packaging any optional parameters into a dictionary for the API call.
+<switch:python>
+[python] def update(self, webhookId, name=None, targetUrl=None,
+               **request_parameters):
+        """Update a webhook, by ID.
+
+        Args:
+            webhookId(basestring): The webhook ID.
+            name(basestring): A user-friendly name for this webhook.
+            targetUrl(basestring): The URL that receives POST requests for
+                each event.
+            **request_parameters: Additional request parameters (provides
+                support for parameters that may be added in the future).
+
+        Returns:
+            Webhook: A Webhook object with the updated Webex Teams webhook
+                details.
+
+        Raises:
+            TypeError: If the parameter types are incorrect.
+            ApiError: If the Webex Teams cloud returns an error.
+
+        """
+        check_type(webhookId, basestring, may_be_none=False)
+        check_type(name, basestring)
+        check_type(targetUrl, basestring)
+
+        put_data = dict_from_items_with_values(
+            request_parameters,
+            name=name,
+            targetUrl=targetUrl,
+        )
+
+        # API request
+        json_data = self._session.put(API_ENDPOINT + '/' + webhookId,
+                                      json=put_data)
+
+        # Return a webhook object created from the response JSON data
+        return self._object_factory(OBJECT_TYPE, json_data)
+<switch:english>
+[english] The function then executes the update via `self._session.put` using the provided ID as part of the endpoint path. Finally, it wraps the successful response data into a standardized Webhook object for easy handling.
+[english] If I pass other unexpected parameters in `**request_parameters`, how does this function handle them?
+[english] The dictionary construction using `dict_from_items_with_values` likely incorporates all additional arguments from `**request_parameters`. However, the server's API will ultimately determine if those extra fields are valid for an update.
+[english] That clarifies how robust this update mechanism is.

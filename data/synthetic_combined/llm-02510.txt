@@ -1,0 +1,15 @@
+[english] How can I create a generic subcommand to display the current on/off status of a specific debugger setting?
+[english] This function demonstrates how to retrieve and present boolean settings for various subcommands. It relies on attributes within the object structure to fetch the configuration value.
+<switch:python>
+[python] def run_show_bool(obj, what=None):
+    """Generic subcommand showing a boolean-valued debugger setting.
+    'obj' is generally a subcommand that has 'name' and
+    'debugger.setting' attributes."""
+    val = show_onoff(obj.debugger.settings[obj.name])
+    if not what: what = obj.name
+    return obj.msg("%s is %s." % (what, val))
+<switch:english>
+[english] The function dynamically determines the display name using `obj.name` but allows for customization via the optional `what` parameter.
+[english] If I pass a string to generate 'val' and then try to call .strip() on it, will that work?
+[english] No, because the function always returns a complete formatted message from obj.msg(), which is a string, but you should strip whitespace only if you are sure of the input data type.
+[english] That makes sense for structuring these debugger commands.

@@ -1,0 +1,33 @@
+[english] How can I create a dictionary where each key remains, but its value is the string representation of an executable Python expression evaluated within my defined global and local contexts?
+[english] This function iterates over provided expressions, using `eval` to compute their results safely by passing dedicated namespaces. It includes robust error handling in case any expression fails during evaluation.
+<switch:python>
+[python] def user_expressions(self, expressions):
+        """Evaluate a dict of expressions in the user's namespace.
+
+        Parameters
+        ----------
+        expressions : dict
+          A dict with string keys and string values.  The expression values
+          should be valid Python expressions, each of which will be evaluated
+          in the user namespace.
+
+        Returns
+        -------
+        A dict, keyed like the input expressions dict, with the repr() of each
+        value.
+        """
+        out = {}
+        user_ns = self.user_ns
+        global_ns = self.user_global_ns
+        for key, expr in expressions.iteritems():
+            try:
+                value = repr(eval(expr, global_ns, user_ns))
+            except:
+                value = self._simple_error()
+            out[key] = value
+        return out
+<switch:english>
+[english] A key aspect of the code is that `repr()` is used on the result. This ensures values like integers or lists are converted into their precise string representation, making them suitable for logging or serialization.
+[english] What happens to the original expression if it's not executable Python?
+[english] If an exception occurs during evaluation (e.g., syntax error), the function catches it and sets the value for that key using a special method, `self._simple_error()`.
+[english] Got it, thanks for clarifying how the error handling works.

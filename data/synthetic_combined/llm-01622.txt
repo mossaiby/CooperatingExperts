@@ -1,0 +1,24 @@
+[english] How can I standardize inconsistent HTML tag formatting and attribute quoting across a large dataset?
+[english] The function leverages the `html5lib` library to parse the input string into a structured document object. It configures `html5lib` with strict serialization settings that force consistent behavior, specifically requiring attributes to always be quoted.
+<switch:python>
+[python] def uniform_html(html):
+    '''Takes a utf-8-encoded string of HTML as input and returns a new
+    HTML string with fixed quoting and close tags, which generally
+    should not break any of the offsets and makes it easier for
+    functions like
+    :func:`streamcorpus_pipeline.offsets.char_offsets_to_xpaths` to
+    operate without failures.
+
+    '''
+    doc = html5lib.parse(html.decode('utf-8'))
+    config = {
+        'omit_optional_tags': False,
+        'encoding': 'utf-8',
+        'quote_attr_values': 'always',
+    }
+    return html5lib.serializer.serialize(doc, **config)
+<switch:english>
+[english] This standardization ensures that downstream tools like character offset map functions won't fail due to unpredictable tag closing or inconsistent attribute quoting. Keep in mind that the library might slightly reorder elements if they are structurally ambiguous under HTML5 rules.
+[english] Does this function handle cases where the input string is severely malformed or incomplete?
+[english] Yes, because it utilizes `html5lib`, which is specifically designed for robust parsing of even poorly formed HTML by treating it according to HTML5 standards. The library will attempt to construct a valid document structure from the input.
+[english] Thanks, this helps clarify how the standardization works!

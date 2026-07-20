@@ -1,0 +1,37 @@
+[english] How can I execute an external command and ensure it runs detached in the background, even after my main script exits?
+[english] This function abstracts complex process management by utilizing `os.fork()`. It handles standard input/output redirection to `/dev/null` unless explicit file descriptors are provided, ensuring clean execution.
+<switch:python>
+[python] def call(args, stdout=None, stderr=None, stdin=None, daemonize=False,
+         preexec_fn=None, shell=False, cwd=None, env=None):
+    """
+    Run an external command in a separate process and detach it from the current process. Excepting
+    `stdout`, `stderr`, and `stdin` all file descriptors are closed after forking. If `daemonize`
+    is True then the parent process exits. All stdio is redirected to `os.devnull` unless
+    specified. The `preexec_fn`, `shell`, `cwd`, and `env` parameters are the same as their `Popen`
+    counterparts. Return the PID of the child process if not daemonized.
+    """
+    stream = lambda s, m: s is None and os.open(os.devnull, m) or s
+    stdout = stream(stdout, os.O_WRONLY)
+    stderr = stream(stderr, os.O_WRONLY)
+    stdin = stream(stdin, os.O_RDONLY)
+
+    shared_pid = Value('i', 0)
+    pid = os.fork()
+    if pid > 0:
+        os.waitpid(pid, 0)
+        child_pid = shared_pid.value
+        del shared_pid
+        if daemonize:
+            sys.exit(0)
+        return child_pid
+    else:
+        os.setsid()
+        proc = subprocess.Popen(args, stdout=stdout, stderr=stderr, stdin=stdin, close_fds=True,
+                                preexec_fn=preexec_fn, shell=shell, cwd=cwd, env=env)
+        shared_pid.value = proc.pid
+        os._exit(0)
+<switch:english>
+[english] The core logic relies on the parent and child processes behaving differently after the fork. Be mindful that the default handling of standard I/O is aggressive.
+[english] If `daemonize=False`, where does the returned process ID come from, and how does it relate to the actual running child?
+[english] When not daemonizing, PID retrieval occurs in the parent process after waiting for the fork call. The child's PID is stored in a shared memory value before the parent continues execution.
+[english] That makes much more sense about process lifecycle management.

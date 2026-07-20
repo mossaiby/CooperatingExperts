@@ -1,0 +1,34 @@
+[english] How can I programmatically clone a remote Git repository and manage its local storage?
+[english] This function clones the specified Git URI into a directory using the 'git clone --bare' command. It prepares necessary environment variables before execution and calls an internal method to run the shell command.
+<switch:python>
+[python] def clone(cls, uri, dirpath):
+        """Clone a Git repository.
+
+        Make a bare copy of the repository stored in `uri` into `dirpath`.
+        The repository would be either local or remote.
+
+        :param uri: URI of the repository
+        :param dirtpath: directory where the repository will be cloned
+
+        :returns: a `GitRepository` class having cloned the repository
+
+        :raises RepositoryError: when an error occurs cloning the given
+            repository
+        """
+        cmd = ['git', 'clone', '--bare', uri, dirpath]
+        env = {
+            'LANG': 'C',
+            'HOME': os.getenv('HOME', '')
+        }
+
+        cls._exec(cmd, env=env)
+
+        logger.debug("Git %s repository cloned into %s",
+                     uri, dirpath)
+
+        return cls(uri, dirpath)
+<switch:english>
+[english] After successfully executing the cloning command, the function returns a new instance of `cls` representing the newly cloned repository in `dirpath`. Errors encountered during the process raise a `RepositoryError`.
+[english] What happens if the directory where we are trying to clone is already populated with other files?
+[english] If the target directory already contains content, the underlying system command (`git clone`) will typically fail. The function relies on `cls._exec` to catch this error and raise a `RepositoryError`.
+[english] That makes sense; so it's idempotent only if the destination is empty.

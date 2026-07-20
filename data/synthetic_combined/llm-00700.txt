@@ -1,0 +1,29 @@
+[english] How do I securely implement a function to allow existing users to change their passwords?
+[english] This method first attempts to retrieve the user record and then uses `auth.authenticate` to verify that the provided old password matches the stored credentials.
+<switch:python>
+[python] def change_password(self, old_password, new_password):
+        """Change password."""
+        try:
+            user = this.user
+        except self.user_model.DoesNotExist:
+            self.auth_failed()
+        user = auth.authenticate(
+            username=user.get_username(),
+            password=self.get_password(old_password),
+        )
+        if user is None:
+            self.auth_failed()
+        else:
+            user.set_password(self.get_password(new_password))
+            user.save()
+            password_changed.send(
+                sender=__name__,
+                request=this.request,
+                user=user,
+            )
+            return {"passwordChanged": True}
+<switch:english>
+[english] If authentication succeeds, the new password is set using `user.set_password()` and the change is signaled via a custom event dispatch.
+[english] What happens if the initial user object (`this.user`) cannot be found or accessed at the start of the function?
+[english] The code uses a try-except block targeting `self.user_model.DoesNotExist`; if this occurs, it calls `self.auth_failed()` immediately.
+[english] That makes sense, thanks for clarifying how it handles failures!

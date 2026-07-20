@@ -1,0 +1,25 @@
+[english] How can I trim a given waveform object so that it only contains data points within specified minimum and maximum independent variable bounds?
+[english] This function ensures the provided value limits are valid before proceeding. It then checks if the input independent vector types need conversion to floating point numbers since new boundary values might be floats.
+<switch:python>
+[python] def _bound_waveform(wave, indep_min, indep_max):
+    """Add independent variable vector bounds if they are not in vector."""
+    indep_min, indep_max = _validate_min_max(wave, indep_min, indep_max)
+    indep_vector = copy.copy(wave._indep_vector)
+    if (
+        isinstance(indep_min, float) or isinstance(indep_max, float)
+    ) and indep_vector.dtype.name.startswith("int"):
+        indep_vector = indep_vector.astype(float)
+    min_pos = np.searchsorted(indep_vector, indep_min)
+    if not np.isclose(indep_min, indep_vector[min_pos], FP_RTOL, FP_ATOL):
+        indep_vector = np.insert(indep_vector, min_pos, indep_min)
+    max_pos = np.searchsorted(indep_vector, indep_max)
+    if not np.isclose(indep_max, indep_vector[max_pos], FP_RTOL, FP_ATOL):
+        indep_vector = np.insert(indep_vector, max_pos, indep_max)
+    dep_vector = _interp_dep_vector(wave, indep_vector)
+    wave._indep_vector = indep_vector[min_pos : max_pos + 1]
+    wave._dep_vector = dep_vector[min_pos : max_pos + 1]
+<switch:english>
+[english] The function uses `np.searchsorted` to find the index of the new boundaries, interpolates dependent values in between, and then slices both vectors.
+[english] What happens if `indep_vector` is empty when this function is called?
+[english] If the vector is initially empty, operations like slicing or indexing will raise an error. To handle this gracefully, you might add a check at the start of the function to return early.
+[english] That makes sense.

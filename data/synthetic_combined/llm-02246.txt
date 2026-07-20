@@ -1,0 +1,108 @@
+[english] I have raw data in a dictionary format and need to convert it into a standardized list of 'Interval' objects, ensuring they are correctly ordered and filtered by certain criteria.
+[english] This function processes raw data from `data_dict` by first reorganizing key-value pairs. It then sorts the resulting entries and applies filtering rules using provided `include`, `exclude`, and `ignore` parameters before constructing final Interval objects.
+<switch:python>
+[python] def _build_list_of_Intervals(cls,
+                                 data_dict,
+                                 stop=None,
+                                 points=False,
+                                 include=None,
+                                 exclude=None,
+                                 ignore=None,
+                                 lexicon=None):
+        """
+        Private function. Takes a data dictionary and reconstructs a list
+        of Intervals from it.
+
+        Args:
+            data_dict (dict)
+            stop (float): Where to end the last interval.
+            points (bool)
+            include (dict)
+            exclude (dict)
+            ignore (list)
+            lexicon (Lexicon)
+
+        Returns:
+            list.
+        """
+
+        include = include or {}
+        exclude = exclude or {}
+        ignore = ignore or []
+
+        # Reassemble as list of dicts
+        all_data = []
+        for data in zip(*data_dict.values()):
+            all_data.append({k: v for k, v in zip(data_dict.keys(), data)})
+
+        # Sort
+        all_data = sorted(all_data, key=lambda x: x['top'])
+
+        # Filter down:
+        wanted_data = []
+        for dictionary in all_data:
+            keep = True
+            delete = []
+            for k, v in dictionary.items():
+                incl = include.get(k, utils.null_default(True))
+                excl = exclude.get(k, utils.null_default(False))
+                if k in ignore:
+                    delete.append(k)
+                if not incl(v):
+                    keep = False
+                if excl(v):
+                    keep = False
+            if delete:
+                for key in delete:
+                    _ = dictionary.pop(key, None)
+            if keep:
+                wanted_data.append(dictionary)
+
+        # Fill in
+        if not points:
+            for i, iv in enumerate(wanted_data):
+                if iv.get('base', None) is None:
+                    try:  # To set from next interval
+                        iv['base'] = wanted_data[i+1]['top']
+                    except (IndexError, KeyError):
+                        # It's the last interval
+                        if stop is not None:
+                            thick = stop - iv['top']
+                        else:
+                            thick = 1
+                        iv['base'] = iv['top'] + thick
+
+        # Build the list of intervals to pass to __init__()
+        list_of_Intervals = []
+        for iv in wanted_data:
+            top = iv.pop('top')
+            base = iv.pop('base', None)
+            descr = iv.pop('description', '')
+            if iv:
+                c, d = {}, {}
+                for k, v in iv.items():
+                    if (k[:5].lower() == 'comp ') or (k[:9].lower() == 'component'):
+                        k = re.sub(r'comp(?:onent)? ', '', k, flags=re.I)
+                        c[k] = v  # It's a component
+                    else:
+                        if v is not None:
+                            d[k] = v  # It's data
+                comp = [Component(c)] if c else None
+                this = Interval(**{'top': top,
+                                   'base': base,
+                                   'description': descr,
+                                   'data': d,
+                                   'components': comp})
+            else:
+                this = Interval(**{'top': top,
+                                   'base': base,
+                                   'description': descr,
+                                   'lexicon': lexicon})
+            list_of_Intervals.append(this)
+
+        return list_of_Intervals
+<switch:english>
+[english] The code handles complex logic for deriving 'base' values, ensuring that even if data is missing, intervals are continuous up to the specified stop point for the last entry.
+[english] What happens inside the function if an interval key starts with 'comp' or 'component'? Does it affect how the data is stored in the final Interval object?
+[english] Yes, keys starting with those prefixes are treated as components. The code uses regex within `list_of_Interval_s` to strip these prefixes and places them inside a dedicated 'components' list.
+[english] That makes sense; I will use this function for my data processing pipeline.

@@ -1,0 +1,20 @@
+[english] How can I provide a cleaner, more actionable message when catching structured database exceptions?
+[english] This function attempts to enhance error logging by checking if an exception contains rich, structured data commonly found in specific database error objects. If it detects these particular fields, it extracts and combines them into a custom string format.
+<switch:python>
+[python] def _get_pretty_exception_message(e):
+        """
+        Parses some DatabaseError to provide a better error message
+        """
+        if (hasattr(e, 'message') and
+            'errorName' in e.message and
+                'message' in e.message):
+            return ('{name}: {message}'.format(
+                    name=e.message['errorName'],
+                    message=e.message['message']))
+        else:
+            return str(e)
+<switch:english>
+[english] The code manually checks for the existence of nested keys within `e.message` before formatting, ensuring that standard Python exceptions are still handled gracefully if they lack this structure.
+[english] What happens if the exception object has an attribute named 'attribute' but not the specific dictionary structure we check for?
+[english] If the required nested keys ('errorName' and 'message') are absent, even if other attributes exist on `e.message`, the function defaults to returning the standard string representation of the exception using str(e).
+[english] That makes sense, so it only attempts custom formatting when all expected fields are present.

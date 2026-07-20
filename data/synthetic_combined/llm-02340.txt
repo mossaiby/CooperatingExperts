@@ -1,0 +1,32 @@
+[english] I need a function to programmatically generate and retrieve a specific report from a Canvas account given an ID.
+[english] This method constructs the necessary API endpoint URL and prepares the request body by incorporating optional parameters, like a term ID.
+
+Here is how the `create_report` method works:
+<switch:python>
+[python] def create_report(self, report_type, account_id, term_id=None, params={}):
+        """
+        Generates a report instance for the canvas account id.
+
+        https://canvas.instructure.com/doc/api/account_reports.html#method.account_reports.create
+        """
+        if term_id is not None:
+            params["enrollment_term_id"] = term_id
+
+        url = ACCOUNTS_API.format(account_id) + "/reports/{}".format(
+            report_type)
+        body = {"parameters": params}
+
+        data = self._post_resource(url, body)
+        data["account_id"] = account_id
+        return Report(data=data)
+<switch:english>
+[english] It uses its internal helper to post the structured data to the Canvas API and wraps the final response in a custom Report object for easy consumption.
+[english] There seems to be a mutable default argument in the parameters section; what will happen if this function is called multiple times without providing new parameters?
+[english] Using `params={}` as a default creates one dictionary that persists across all calls. For safe code, it should ideally use `params=None` and then initialize it inside the function:
+<switch:python>
+[python] def create_report(self, report_type, account_id, term_id=None, params=None):
+        if params is None:
+            params = {}
+        # ... rest of solution
+<switch:english>
+[english] Thanks for pointing that out; how should I best handle the API key injection?

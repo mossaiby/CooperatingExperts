@@ -1,0 +1,29 @@
+[english] How do I generate a molecule's stereo parent, which means removing all stereochemical information from it?
+[english] To create the stereo parent, we first ensure the molecule is standardized for consistency. Then, we utilize RDKit's `RemoveStereochemistry` function to strip away all tetrahedral and double bond stereocenters.
+<switch:python>
+[python] def stereo_parent(self, mol, skip_standardize=False):
+        """Return the stereo parent of a given molecule.
+
+        The stereo parent has all stereochemistry information removed from tetrahedral centers and double bonds.
+
+        :param mol: The input molecule.
+        :type mol: rdkit.Chem.rdchem.Mol
+        :param bool skip_standardize: Set to True if mol has already been standardized.
+        :returns: The stereo parent molecule.
+        :rtype: rdkit.Chem.rdchem.Mol
+        """
+        if not skip_standardize:
+            mol = self.standardize(mol)
+        else:
+            mol = copy.deepcopy(mol)
+        Chem.RemoveStereochemistry(mol)
+        return mol
+<switch:english>
+[english] The function returns a new molecule object where all explicit stereochemical notations have been cleared.
+[english] What happens to the input molecule `mol` in memory after this operation is complete?
+[english] A copy of the molecule is standardized or copied before modification, so the original input `mol` remains unchanged unless you explicitly reassign it._If you are unsure if standardizing needs to happen,
+<switch:python>
+[python] if not skip_standardize: 
+    mol = self.standardize(mol)
+<switch:english>
+[english] That makes sense, thanks for clarifying!

@@ -1,0 +1,34 @@
+[english] How can I train a label encoder by finding all unique classes in my target variable y?
+[english] This method uses the Spark RDD API to determine every distinct value present in the input array `y`. It maps each partition to its own set of unique values and then merges these sets using a reducer.
+<switch:python>
+[python] def fit(self, y):
+        """Fit label encoder
+        Parameters
+        ----------
+        y : ArrayRDD (n_samples,)
+            Target values.
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+
+        def mapper(y):
+            y = column_or_1d(y, warn=True)
+            _check_numpy_unicode_bug(y)
+            return np.unique(y)
+
+        def reducer(a, b):
+            return np.unique(np.concatenate((a, b)))
+
+        self.classes_ = y.map(mapper).reduce(reducer)
+
+        return self
+<switch:english>
+[english] The method effectively gathers all unique classes into `self.classes_`. It relies on Spark to handle the distributed computation of finding those sets.
+[english] What happens if the input RDD has null or missing values?
+[english] Currently, the function uses numpy's `unique`, which handles common types but will likely treat NaNs as a unique value. To explicitly filter them, you can modify the mapper like this:
+<switch:python>
+[python] def mapper(y):
+    return np.unique(np.array([x for x in y if pd.notna(x)]))
+<switch:english>
+[english] Got it, that clarifies how missing values are processed.

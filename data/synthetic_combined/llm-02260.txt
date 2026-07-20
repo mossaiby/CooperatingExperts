@@ -1,0 +1,36 @@
+[english] How can I execute an external shell command and ensure its output is returned as a structured list or string object that is easy to manipulate?
+[english] This function provides a utility for safely executing commands via subprocess. It handles variable expansion within the command string before capturing the results, providing flexibility in how the final data is formatted.
+<switch:python>
+[python] def getoutput(self, cmd, split=True, depth=0):
+        """Get output (possibly including stderr) from a subprocess.
+
+        Parameters
+        ----------
+        cmd : str
+          Command to execute (can not end in '&', as background processes are
+          not supported.
+        split : bool, optional
+          If True, split the output into an IPython SList.  Otherwise, an
+          IPython LSString is returned.  These are objects similar to normal
+          lists and strings, with a few convenience attributes for easier
+          manipulation of line-based output.  You can use '?' on them for
+          details.
+        depth : int, optional
+          How many frames above the caller are the local variables which should
+          be expanded in the command string? The default (0) assumes that the
+          expansion variables are in the stack frame calling this function.
+        """
+        if cmd.rstrip().endswith('&'):
+            # this is *far* from a rigorous test
+            raise OSError("Background processes not supported.")
+        out = getoutput(self.var_expand(cmd, depth=depth+1))
+        if split:
+            out = SList(out.splitlines())
+        else:
+            out = LSString(out)
+        return out
+<switch:english>
+[english] The function returns specialized objects (`SList` or `LSString`) to make line-based output intuitive to use, but it explicitly prevents execution of background processes via '&' for safety reasons.
+[english] Given this is designed for command expansion, how does the method handle complex shell commands that include internal quoting?
+[english] The function delegates variable substitution to `self.var_expand`, which ideally handles string formatting. For robust execution of nested or quoted arguments, it's often recommended to pass a list of arguments rather than a single command string.
+[english] That clarifies the limitations I was worried about.

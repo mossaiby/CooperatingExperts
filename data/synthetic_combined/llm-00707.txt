@@ -1,0 +1,15 @@
+[english] How do I reliably determine the maximum representable value for a specific TensorFlow data type (like 'tf.int32' or 'tf.float64')?
+[english] To find the max value across different types, the function first checks if the dtype object itself has a `.max` attribute. If not, it uses NumPy's `np.finfo` for floating-point and complex numbers, while falling back to `np.iinfo` for standard integers.
+<switch:python>
+[python] def max(dtype):  # pylint: disable=redefined-builtin
+  """Returns the maximum representable value in this data type."""
+  dtype = tf.as_dtype(dtype)
+  if hasattr(dtype, 'max'):
+    return dtype.max
+  use_finfo = is_floating(dtype) or is_complex(dtype)
+  return np.finfo(dtype).max if use_finfo else np.iinfo(dtype).max
+<switch:english>
+[english] The logic successfully distinguishes between floating-point/complex types that rely on `np.finfo` and purely integer types using `np.iinfo`. Note that the function relies heavily on 'tf' (TensorFlow) and 'np' (NumPy) being imported globally.
+[english] If I tried to use this with a non-numeric data type, such as one specified by tf.string, what kind of error would occur?
+[english] The function expects numeric types; using `tf.string` will result in an AttributeError because string dtypes lack the expected `.max`, `finfo`, or `iinfo` attributes.
+[english] Thanks for explaining how this type handling works.

@@ -1,0 +1,14 @@
+[english] I need a function that verifies if every top-level menu in my system is currently enabled.
+[english] This approach iterates through all available menus to check their status individually.
+<switch:python>
+[python] def IsEnabled(self, *args, **kwargs):
+        "check if all top menus are enabled"
+        for i in range(self.GetMenuCount()):
+            if not self.IsEnabledTop(i):
+                return False
+        return True
+<switch:english>
+[english] The function uses an early exit: it stops and returns False the moment any single menu fails the test, optimizing performance.
+[english] If there are zero top menus defined on the system, what result does this function return?
+[english] If GetMenuCount() is 0, the loop range is empty, so the function correctly returns True because there are no disabled menus to violate the condition. This behavior is sometimes called vacuously true.
+[english] Thanks for clarifying that logic!

@@ -1,0 +1,30 @@
+[english] How can I write a method to upload files and their names to an S3-like storage location?
+[english] This approach first determines the target folder path, using `self.prefix` by default or combining it with the provided `s3_folder`. It then checks if the input files are a list or tuple.
+<switch:python>
+[python] def upload(self, source_files, s3_folder=None):
+        """
+        Upload a list of files to a users account location
+        :param source_files: list of files to upload, or single file name
+        :param s3_folder: the user location to upload to.
+        """
+
+        if s3_folder is None:
+            folder = self.prefix
+        else:
+            folder = '%s/%s' % (self.prefix, s3_folder)
+
+        if isinstance(source_files, list):
+            for file_tuple in source_files:
+                self.__upload_file(file_tuple, folder)
+        elif isinstance(source_files, tuple):
+            self.__upload_file(source_files, folder)
+        else:
+            raise ValueError("Source Files must be a tuple or list of tuples: (filename, keyname)")
+<switch:english>
+[english] The function uses the determined folder path to either loop over the `list` of files or call the upload routine once for a single `tuple` using its internal helper.
+[english] What error happens if I pass something neither a list, tuple, nor None?
+[english] If you pass anything else, like a string or dictionary, it raises a `ValueError`. This ensures that the user only passes valid file collections and formats:
+<switch:python>
+[python] Raises ValueError("Source Files must be a tuple or list of tuples: (filename, keyname)")
+<switch:english>
+[english] That makes sense; I will make sure my input strictly follows the expected types.

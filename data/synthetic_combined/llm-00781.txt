@@ -1,0 +1,39 @@
+[english] I need a way to consistently attach specific Git commit metadata, like SHA and message, onto an existing trajectory data structure.
+[english] This function generates a unique key for a given commit by combining its short hash and formatted timestamp. It then adds essential Git properties, such as the hexsha, message, or date epoch, provided these configurations haven't already been added to the trajectory object.
+<switch:python>
+[python] def add_commit_variables(traj, commit):
+    """Adds commit information to the trajectory."""
+
+    git_time_value = time.strftime('%Y_%m_%d_%Hh%Mm%Ss', time.localtime(commit.committed_date))
+
+    git_short_name = str(commit.hexsha[0:7])
+    git_commit_name = 'commit_%s_' % git_short_name
+    git_commit_name = 'git.' + git_commit_name + git_time_value
+
+    if not traj.f_contains('config.'+git_commit_name, shortcuts=False):
+
+        git_commit_name += '.'
+        # Add the hexsha
+        traj.f_add_config(git_commit_name+'hexsha', commit.hexsha,
+                          comment='SHA-1 hash of commit')
+
+        # Add the description string
+        traj.f_add_config(git_commit_name+'name_rev', commit.name_rev,
+                          comment='String describing the commits hex sha based on '
+                                  'the closest Reference')
+
+        # Add unix epoch
+        traj.f_add_config(git_commit_name+'committed_date',
+                          commit.committed_date, comment='Date of commit as unix epoch seconds')
+
+        # Add commit message
+        traj.f_add_config(git_commit_name+'message', str(commit.message),
+                          comment='The commit message')
+<switch:english>
+[english] The logic ensures no duplicate metadata entries are created in `traj`, relying on a specific key structure for every commit.
+[english] What happens if the input 'commit' object is missing the 'message' attribute, and will the function crash?
+[english] If `commit.message` is missing, accessing it will raise an AttributeError. You should add defensive coding around property access:
+<switch:python>
+[python] if hasattr(commit, 'message'): traj.f_add_config(...)
+<switch:english>
+[english] This makes sense; I appreciate the clear breakdown!

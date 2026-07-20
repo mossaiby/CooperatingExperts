@@ -1,0 +1,23 @@
+[english] How can I create a decorator to protect view functions and redirect users who do not have the required permission?
+[english] This function implements an access control mechanism by leveraging `request_passes_test`. It wraps the decorated view, ensuring that before execution proceeds, the user's permissions are checked against the specified criteria.
+<switch:python>
+[python] def permission_required(function=None, permission=None, object_id=None,
+                        redirect_field_name=REDIRECT_FIELD_NAME,
+                        login_url=None):
+    """
+    Decorator for views that checks that the user is logged in, redirecting
+    to the log-in page if necessary.
+    """
+    actual_decorator = request_passes_test(
+        lambda r: has_permission(r.session.get('user_permissions'), permission, object_id),  # noqa
+        login_url=login_url,
+        redirect_field_name=redirect_field_name
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+<switch:english>
+[english] The decorator allows for flexible configuration, using default values if arguments like `permission` or `login_url` are omitted. This pattern ensures that authorization logic is separated from the view code.
+[english] If the user fails the permission check and is redirected to a login page, does this redirect happen on every subsequent request until they log in?
+[english] Yes, because the decorator evaluates permissions dynamically against `r.session` during each request; it is not inherently cached across multiple hits without additional middleware.
+[english] Thanks for clarifying how that authorization logic works.

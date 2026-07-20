@@ -1,0 +1,57 @@
+[english] I need a function that determines if a given word can be formed using a specific quantity of Scrabble tiles.
+[english] This function simulates drawing letters from a defined tile bag. It iterates through each letter in your input word, checking availability and handling potential wildcards to see if the entire word can be constructed.
+<switch:python>
+[python] def valid_scrabble_word(word):
+    """Checks if the input word could be played with a full bag of tiles.
+
+    Returns:
+        True or false
+    """
+
+    letters_in_bag = {
+        "a": 9,
+        "b": 2,
+        "c": 2,
+        "d": 4,
+        "e": 12,
+        "f": 2,
+        "g": 3,
+        "h": 2,
+        "i": 9,
+        "j": 1,
+        "k": 1,
+        "l": 4,
+        "m": 2,
+        "n": 6,
+        "o": 8,
+        "p": 2,
+        "q": 1,
+        "r": 6,
+        "s": 4,
+        "t": 6,
+        "u": 4,
+        "v": 2,
+        "w": 2,
+        "x": 1,
+        "y": 2,
+        "z": 1,
+        "_": 2,
+    }
+
+    for letter in word:
+        if letter == "?":
+            continue
+        try:
+            letters_in_bag[letter] -= 1
+        except KeyError:
+            return False
+        if letters_in_bag[letter] < 0:
+            letters_in_bag["_"] -= 1
+            if letters_in_bag["_"] < 0:
+                return False
+    return True
+<switch:english>
+[english] The code manages resource depletion by subtracting counts for used tiles and gracefully checks if any necessary substitutions via the general wildcard ('_') are possible before failing.
+[english] If the input uses more than two question marks, how will the function handle it?
+[english] Since '?' is explicitly skipped (`continue`), using an unlimited number of wildcards would not affect the tile count at all. The function only tracks specific letters and underscores for consumption.
+[english] This implementation seems robust enough for my needs.

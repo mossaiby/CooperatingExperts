@@ -1,0 +1,72 @@
+[english] How do I correctly store various data types into a specific HDF5 array location while ensuring that the key does not already exist?
+[english] This function handles the persistence of structured data into an HDF5 format, specifically creating or writing to an array. It first checks if the `key` exists in the specified `group` before attempting to store the data.
+<switch:python>
+[python] def _prm_write_into_array(self, key, data, group, fullname, **kwargs):
+        """Stores data as array.
+
+        :param key:
+
+            Name of data item to store
+
+        :param data:
+
+            Data to store
+
+        :param group:
+
+            Group node where to store data in hdf5 file
+
+        :param fullname:
+
+            Full name of the `data_to_store`s original container, only needed for throwing errors.
+
+        :param recall:
+
+            If container type and data type for perfect recall should be stored
+
+        """
+
+        try:
+            if key in group:
+                raise ValueError(
+                    'Array `%s` already exists in `%s`. Appending is not supported (yet).')
+
+            try:
+
+                array = self._hdf5file.create_array(where=group,
+                                              name=key, obj=data, **kwargs)
+            except (TypeError, ValueError) as exc:
+                try:
+                    if type(data) is dict and len(data) == 0:
+                        # We cannot store an empty dictionary,
+                        # but we can use an empty tuple as a dummy.
+                        conv_data = ()
+                    elif isinstance(data, str):
+                        conv_data = data.encode(self._encoding)
+                    elif isinstance(data, int):
+                        conv_data = np.int64(data)
+                    else:
+                        conv_data = []
+                        for string in data:
+                            conv_data.append(string.encode(self._encoding))
+                    array = self._hdf5file.create_array(where=group,
+                                                  name=key, obj=conv_data, **kwargs)
+                except Exception:
+                    # Re-raise original error
+                    raise exc
+
+            if data is not None:
+                # Remember the types of the original data to recall them on loading
+                self._all_set_attributes_to_recall_natives(data, array,
+                                                           HDF5StorageService.DATA_PREFIX)
+            setattr(array._v_attrs, HDF5StorageService.STORAGE_TYPE,
+                    HDF5StorageService.ARRAY)
+            self._hdf5file.flush()
+        except:
+            self._logger.error('Failed storing array `%s` of `%s`.' % (key, fullname))
+            raise
+<switch:english>
+[english] The code includes robust type checking and conversion logic to ensure different Python types (like strings, ints, dict) can be successfully converted into formats suitable for HDF5 storage.
+[english] If a user passes a completely unrecognized complex object not covered by the initial type checks, what happens?
+[english] The code will attempt to store it as an empty list (`conv_data = []`) and try iterating over its elements. If that fails or if `__init__` is called on a non-primitive type, the overall storage operation might raise an exception.
+[english] This helps me understand the robustness limits of the serialization process.

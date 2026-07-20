@@ -1,0 +1,27 @@
+[english] I need a reliable way to retrieve the dependency trace for an application, ensuring that expensive tracing processes are only run once per request.
+[english] This function is designed to efficiently get the dependency trace by first checking an internal cache. If the result isn't found, it executes an external script and stores the resulting JSON in the cache before returning it.
+<switch:python>
+[python] def trace(self, app):
+        """
+        Trace the dependencies for app.
+
+        A tracer-instance is shortlived, and re-tracing the same app should
+        yield the same results. Since tracing is an expensive process, cache
+        the result on the tracer instance.
+        """
+        if app not in self._trace_cache:
+            process = subprocess.Popen(
+                "trace-deps.js {}".format(app), shell=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=self.env, universal_newlines=True, cwd=self._package_json_dir
+            )
+            out, err = process.communicate()
+            if err:
+                raise TraceError(err)
+            self._trace_cache[app] = json.loads(out)
+        return self._trace_cache[app]
+<switch:english>
+[english] The method uses subprocess execution and relies on the `trace-deps.js` utility; caching ensures that subsequent calls are fast lookups rather than expensive computations.
+[english] What happens if the subprocess successfully runs but fails to parse the output, or if the shell command itself errors out?
+[english] The function checks for errors from the subprocess using `process.communicate()`. If an error is detected (`if err:`), it raises a custom `TraceError` with the captured error message.
+[english] That makes sense; handling external process failures is important.

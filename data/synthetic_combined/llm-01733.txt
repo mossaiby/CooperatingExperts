@@ -1,0 +1,88 @@
+[english] How can I visually disassemble a raw byte string of code into a readable assembly-like format with optional highlighting?
+[english] This function is designed to take bytecode and transform it into a structured disassembly listing. It iterates through all instructions, extracts metadata like line numbers and opcodes, and formats the output using various tokens for readability.
+<switch:python>
+[python] def disassemble_bytes(orig_msg, orig_msg_nocr, code, lasti=-1, cur_line=0,
+                      start_line=-1, end_line=None, relative_pos=False,
+                      varnames=(), names=(), constants=(), cells=(),
+                      freevars=(), linestarts={}, highlight='light',
+                      start_offset=0, end_offset=None):
+    """Disassemble byte string of code. If end_line is negative
+    it counts the number of statement linestarts to use."""
+    statement_count = 10000
+    if end_line is None:
+        end_line = 10000
+    elif relative_pos:
+        end_line += start_line -1
+        pass
+
+    labels = findlabels(code)
+
+    null_print = lambda x: None
+    if start_line > cur_line:
+        msg_nocr = null_print
+        msg = null_print
+    else:
+        msg_nocr = orig_msg_nocr
+        msg = orig_msg
+
+    for instr in get_instructions_bytes(code, opc, varnames, names,
+                                        constants, cells, linestarts):
+        offset = instr.offset
+        if end_offset and offset > end_offset:
+            break
+
+        if instr.starts_line:
+            if offset:
+                msg("")
+
+            cur_line = instr.starts_line
+            if (start_line and ((start_line > cur_line) or
+                                start_offset and start_offset > offset)) :
+                msg_nocr = null_print
+                msg = null_print
+            else:
+                statement_count -= 1
+                msg_nocr = orig_msg_nocr
+                msg = orig_msg
+                pass
+            if ((cur_line > end_line) or
+                (end_offset and offset > end_offset)):
+                break
+            msg_nocr(format_token(Mformat.LineNumber,
+                                  "%4d" % cur_line,
+                                  highlight=highlight))
+        else:
+            if start_offset and offset and start_offset <= offset:
+                msg_nocr = orig_msg_nocr
+                msg = orig_msg
+                pass
+            msg_nocr('    ')
+
+        if offset == lasti: msg_nocr(format_token(Mformat.Arrow, '-->',
+                                                  highlight=highlight))
+        else: msg_nocr('   ')
+        if offset in labels: msg_nocr(format_token(Mformat.Arrow, '>>',
+                                                   highlight=highlight))
+        else: msg_nocr('  ')
+        msg_nocr(repr(offset).rjust(4))
+        msg_nocr(' ')
+        msg_nocr(format_token(Mformat.Opcode,
+                              instr.opname.ljust(20),
+                              highlight=highlight))
+        msg_nocr(repr(instr.arg).ljust(10))
+        msg_nocr(' ')
+        # Show argval?
+        msg(format_token(Mformat.Name,
+                         instr.argrepr.ljust(20),
+                         highlight=highlight))
+        pass
+
+    return code, offset
+<switch:english>
+[english] The core logic handles start and end points via offsets or line numbers. Keep in mind that this function is heavily dependent on its external helper functions, such as `findlabels` and `get_instructions_bytes`, to correctly interpret the code.
+[english] If the input bytecode string contains special characters, are there any limitations on how they will affect the formatting?
+[english] The function uses Python's `repr()` for arguments (`offset`, `arg`), which automatically handles escaping and represents special characters correctly in the output structure. For example:
+<switch:python>
+[python] msg_nocr(f"Special char: {instr.arg}") # internal representation
+<switch:english>
+[english] This function seems like a powerful debugging tool for low-level code analysis.

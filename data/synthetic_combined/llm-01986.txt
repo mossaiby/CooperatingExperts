@@ -1,0 +1,32 @@
+[english] I need a function to verify if every name from a list of target mentions appears as a substring within any strings in a provided list of text chains.
+[english] This approach guarantees that all requirements are met. The code iterates through each potential mention, checking its presence against the entire set of chain mentions before concluding whether all targets were found.
+<switch:python>
+[python] def ALL_mentions(target_mentions, chain_mentions):
+    '''
+    For each name string in the target_mentions list, searches through
+    all chain_mentions looking for any cleansed Token.token that
+    contains the name.  Returns True only if all of the target_mention
+    strings appeared as substrings of at least one cleansed
+    Token.token.  Otherwise, returns False.
+
+    :type target_mentions: list of basestring
+    :type chain_mentions: list of basestring
+
+    :returns bool:
+    '''
+    found_all = True
+    for name in target_mentions:
+        found_one = False
+        for chain_ment in chain_mentions:
+            if name in chain_ment:
+                found_one = True
+                break
+        if not found_one:
+            found_all = False
+            break
+    return found_all
+<switch:english>
+[english] The function confirms coverage by ensuring every target appears at least once in the source text collection. Note that this is a substring search, meaning it matches partial words.
+[english] What if I have 'Sam' as a required mention, but the only match in the chain is 'Samantha'? Does that count?
+[english] The current implementation returns True because 'Sam' is technically a substring of 'Samantha'. If you need exact word matching, regular expressions would be necessary.
+[english] I understand how substring checks work now; thanks for the detailed breakdown!

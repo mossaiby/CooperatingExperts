@@ -1,0 +1,16 @@
+[english] I need a function that determines if a given (key, value) pair duplicates an existing item when performing deduplication.
+[english] This utility function checks for duplication by comparing internal pointers within the `dedup_result` structure. It specifically uses pointer equality between node flags to confirm if an existing match has been found.
+<switch:python>
+[python] def _isdupitem(self, key, val, dedup_result):
+        """Return whether (key, val) duplicates an existing item."""
+        isdupkey, isdupval, nodeinv, nodefwd = dedup_result
+        isdupitem = nodeinv is nodefwd
+        if isdupitem:
+            assert isdupkey
+            assert isdupval
+        return isdupitem
+<switch:english>
+[english] The function ensures that if an item duplication is confirmed, both the key and value must have been explicitly marked as duplicates by earlier logic.
+[english] If `nodeinv` equals `nodefwd`, does this necessarily mean both the key and value were modified?
+[english] Yes, due to the assertion block: `if isdupitem: assert isdupkey; assert isdupval`. If duplication occurs, it enforces that both components must already be flagged as duplicates.
+[english] Perfect! Thanks for clarifying how those internal checks work.

@@ -1,0 +1,24 @@
+[english] How do I set a specific version of my managed machine learning model to be the default in a given project?
+[english] This function addresses your need by constructing the full API path for the target resource and then calling the underlying service endpoint to set that version as the primary one.
+<switch:python>
+[python] def set_default_version(self, project_id, model_name, version_name):
+        """
+        Sets a version to be the default. Blocks until finished.
+        """
+        full_version_name = 'projects/{}/models/{}/versions/{}'.format(
+            project_id, model_name, version_name)
+        request = self._mlengine.projects().models().versions().setDefault(
+            name=full_version_name, body={})
+
+        try:
+            response = request.execute()
+            self.log.info('Successfully set version: %s to default', response)
+            return response
+        except HttpError as e:
+            self.log.error('Something went wrong: %s', e)
+            raise
+<switch:english>
+[english] The method blocks until the operation is complete, providing timely logging for successful changes or catching HTTP errors if the request fails.
+[english] If I call this function repeatedly with the same `version_name`, will it throw an error, or can I assume it's idempotent?
+[english] API calls like this are typically idempotent; running the function multiple times with the same input should not cause issues. However, if you need guaranteed success under transient network failures, consider wrapping the call in a retry mechanism.
+[english] That makes sense for handling API consistency. Thanks!

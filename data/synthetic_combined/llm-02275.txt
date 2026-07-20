@@ -1,0 +1,38 @@
+[english] How can I implement a robust function to download files from our remote storage service and save them locally?
+[english] We will first validate the provided path and ensure it refers to a 'file' entity in the cloud. Then, we use the stored UUID to obtain a signed URL for secure access before streaming the file content.
+<switch:python>
+[python] def download_file(self, path, target_path):
+        '''Download a file from storage service to local disk.
+
+        Existing files on the target path will be overwritten.
+        The download is not recursive, as it only works on files.
+
+        Args:
+            path (str): The path of the entity to be downloaded. Must start with a '/'.
+
+        Returns:
+            None
+
+        Raises:
+            StorageArgumentException: Invalid arguments
+            StorageForbiddenException: Server response code 403
+            StorageNotFoundException: Server response code 404
+            StorageException: other 400-600 error codes
+        '''
+
+        self.__validate_storage_path(path)
+        entity = self.api_client.get_entity_by_query(path=path)
+        if entity['entity_type'] != 'file':
+            raise StorageArgumentException('Only file entities can be downloaded')
+
+        signed_url = self.api_client.get_signed_url(entity['uuid'])
+        response = self.api_client.download_signed_url(signed_url)
+
+        with open(target_path, "wb") as output:
+            for chunk in response.iter_content(chunk_size=1024):
+                output.write(chunk)
+<switch:english>
+[english] This method efficiently handles large files by reading and writing data in 1KB chunks, ensuring memory usage remains low during the operation.
+[english] If the initial entity lookup fails because the path is syntactically valid but doesn't exist (404), which exception will be raised?
+[english] A 404 response from the storage service will trigger a `StorageNotFoundException`, as defined in your error handling structure.
+[english] That clarifies how errors are mapped, I appreciate it.

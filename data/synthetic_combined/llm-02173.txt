@@ -1,0 +1,19 @@
+[english] How can I reliably retrieve a specific build configuration template from a designated installation directory?
+[english] This function attempts to find a hardcoded build template file in an expected location based on the installed directory. It validates if the path exists before proceeding with loading.
+<switch:python>
+[python] def get_build_template():
+    '''get default build template.
+    '''
+    base = get_installdir()
+    name = "%s/main/templates/build/singularity-cloudbuild.json" % base
+
+    if os.path.exists(name):
+        bot.debug("Found template %s" %name)
+        return read_json(name)
+
+    bot.warning("Template %s not found." % name)
+<switch:english>
+[english] If found, the function loads and returns the JSON content; otherwise, it logs a warning for troubleshooting.
+[english] What happens if the template file exists but cannot be read due to permission issues?
+[english] The current setup relies on `read_json` not failing. To handle permissions gracefully, you should wrap the return statement in a try-except block to catch IOErrors or permission errors.
+[english] Perfect; that makes the error handling much safer.

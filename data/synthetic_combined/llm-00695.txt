@@ -1,0 +1,31 @@
+[english] How can I confirm that I have successfully processed a batch of messages from a Cloud Pub/Sub subscription?
+[english] This method handles the process of informing Google Cloud that specific received messages should be deleted. It first establishes a connection to the service and constructs the full string identifier for the target subscription.
+<switch:python>
+[python] def acknowledge(self, project, subscription, ack_ids):
+        """Pulls up to ``max_messages`` messages from Pub/Sub subscription.
+
+        :param project: the GCP project name or ID in which to create
+            the topic
+        :type project: str
+        :param subscription: the Pub/Sub subscription name to delete; do not
+            include the 'projects/{project}/topics/' prefix.
+        :type subscription: str
+        :param ack_ids: List of ReceivedMessage ackIds from a previous pull
+            response
+        :type ack_ids: list
+        """
+        service = self.get_conn()
+        full_subscription = _format_subscription(project, subscription)
+        try:
+            service.projects().subscriptions().acknowledge(
+                subscription=full_subscription, body={'ackIds': ack_ids}
+            ).execute(num_retries=self.num_retries)
+        except HttpError as e:
+            raise PubSubException(
+                'Error acknowledging {} messages pulled from subscription {}'
+                .format(len(ack_ids), full_subscription), e)
+<switch:english>
+[english] The function attempts to acknowledge all provided IDs using the Pub/Sub API endpoint, raising a custom error if any HTTP issues occur during execution.
+[english] If I receive an empty list or invalid message IDs in ack_ids, will this cause the acknowledgment call to fail?
+[english] A failure state is unlikely for an empty list; however, passing malformed IDs would likely trigger a PubSubException because the API cannot map those IDs to actual messages.
+[english] This clarifies how message lifecycle management works!

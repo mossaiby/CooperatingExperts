@@ -1,0 +1,35 @@
+[english] I need a centralized dispatch function to retrieve specialized list data based on a keyword, like 'HEADERS' or 'ACTIVE'.
+[english] This method serves as a dispatcher that routes incoming requests for different types of lists to specific internal generator methods. It ensures robust handling by converting the input keyword to uppercase before routing.
+<switch:python>
+[python] def list_gen(self, keyword=None, arg=None):
+        """Generator for LIST command.
+
+        See list() for more information.
+
+        Yields:
+            An element in the list returned by list().
+        """
+        if keyword:
+            keyword = keyword.upper()
+
+        if keyword is None or keyword == "ACTIVE":
+            return self.list_active_gen(arg)
+        if keyword == "ACTIVE.TIMES":
+            return self.list_active_times_gen()
+        if keyword == "DISTRIB.PATS":
+            return self.list_distrib_pats_gen()
+        if keyword == "HEADERS":
+            return self.list_headers_gen(arg)
+        if keyword == "NEWSGROUPS":
+            return self.list_newsgroups_gen(arg)
+        if keyword == "OVERVIEW.FMT":
+            return self.list_overview_fmt_gen()
+        if keyword == "EXTENSIONS":
+            return self.list_extensions_gen()
+
+        raise NotImplementedError()
+<switch:english>
+[english] The function is designed to act as a gateway; if an unsupported keyword is provided, it correctly raises a NotImplementedError, requiring careful error checking from the caller.
+[english] If I call this method without providing any arguments at all, which list will the generator return?
+[english] Since `keyword` defaults to `None`, the logic triggers the first condition (`if keyword is None or keyword == "ACTIVE":`), causing it to execute and yield elements from `self.list_active_gen(arg)`.
+[english] Got it, so I should always specify a proper keyword unless I want the default active list.
